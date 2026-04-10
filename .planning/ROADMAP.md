@@ -34,7 +34,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A loading state is visible while a Snowflake query executes, and a friendly error message appears if the query fails
   4. The user can trigger a data refresh from the UI without reloading the page and see updated data
   5. Row counts, column names, and sample values from the Snowflake response match expected schema (validated manually)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Scaffold Next.js project with shadcn/ui, dark mode, sidebar layout, and providers
+- [ ] 01-02-PLAN.md — Snowflake data layer, API route, client data display with loading/error/refresh states
 
 ### Phase 2: Core Table and Performance
 **Goal**: Users can view batch performance data in a sortable, interactive table that handles the full dataset without lag
@@ -130,7 +133,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Setup and Snowflake Infrastructure | 0/TBD | Not started | - |
+| 1. Setup and Snowflake Infrastructure | 0/2 | Planning complete | - |
 | 2. Core Table and Performance | 0/TBD | Not started | - |
 | 3. Data Formatting | 0/TBD | Not started | - |
 | 4. Dimension Filtering | 0/TBD | Not started | - |
