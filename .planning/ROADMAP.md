@@ -112,7 +112,9 @@ Plans:
   1. User can click an export button and receive a CSV file download in the browser
   2. The downloaded CSV contains only the rows visible after active filters are applied
   3. The downloaded CSV contains only the columns currently visible in the table (hidden columns are excluded)
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 07-01-PLAN.md — CSV generation utility, browser download trigger, Export button in toolbar with Sonner toast
 
 ### Phase 8: Navigation and Drill-Down
 **Goal**: Users can click into a partner to see their batches, click into a batch to see account-level detail, and navigate back up the hierarchy
@@ -148,6 +150,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 4. Dimension Filtering | 0/2 | Planning complete | - |
 | 5. Column Management | 0/TBD | Not started | - |
 | 6. Saved Views | 0/TBD | Not started | - |
-| 7. Export | 0/TBD | Not started | - |
+| 7. Export | 0/1 | Planning complete | - |
 | 8. Navigation and Drill-Down | 0/TBD | Not started | - |
 | 9. Vercel Deployment and Launch | 0/TBD | Not started | - |
