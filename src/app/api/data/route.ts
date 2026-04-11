@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/snowflake/queries';
-import { ALLOWED_COLUMNS, DEFAULT_COLUMNS } from '@/lib/columns/config';
+import { ALLOWED_COLUMNS } from '@/lib/columns/config';
 import { validateSchema } from '@/lib/columns/schema-validator';
 import type { DataResponse } from '@/types/data';
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     // Determine which columns to select
     let selectedColumns: string[];
     if (!columnsParam || columnsParam === '*') {
-      selectedColumns = DEFAULT_COLUMNS;
+      selectedColumns = Array.from(ALLOWED_COLUMNS);
     } else {
       // Validate requested columns against allow-list (SQL injection prevention)
       selectedColumns = columnsParam
