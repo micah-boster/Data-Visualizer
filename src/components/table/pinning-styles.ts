@@ -29,10 +29,12 @@ export function getCommonPinningStyles<T>(
     position: isPinned ? 'sticky' : 'relative',
     width: column.getSize(),
     zIndex: isPinned ? 1 : 0,
+    // Pinned cells must be fully opaque to hide content scrolling behind them
     backgroundColor: isPinned
       ? isEvenRow
         ? 'hsl(var(--muted))'
         : 'hsl(var(--background))'
       : undefined,
+    opacity: isPinned ? 1 : undefined,
   };
 }
