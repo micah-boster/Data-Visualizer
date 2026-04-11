@@ -30,6 +30,8 @@ interface DataTableProps {
   totalRowCount?: number;
   /** Override column definitions (for account-level view) */
   columnDefs?: ColumnDef<Record<string, unknown>>[];
+  /** Row count for the partner level when at batch level (for breadcrumb) */
+  partnerRowCount?: number;
 }
 
 export function DataTable({
@@ -41,6 +43,7 @@ export function DataTable({
   onNavigateToLevel,
   totalRowCount,
   columnDefs: columnDefsOverride,
+  partnerRowCount,
 }: DataTableProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const { columnFilters, setFilter, clearAll, activeFilters } =
@@ -65,9 +68,11 @@ export function DataTable({
   // Compute breadcrumb row counts
   const breadcrumbRowCounts = {
     root: totalRowCount ?? data.length,
-    partner: drillLevel === 'partner' || drillLevel === 'batch'
-      ? (drillLevel === 'partner' ? table.getRowModel().rows.length : undefined)
-      : undefined,
+    partner: drillLevel === 'partner'
+      ? table.getRowModel().rows.length
+      : drillLevel === 'batch'
+        ? partnerRowCount
+        : undefined,
     batch: drillLevel === 'batch'
       ? table.getRowModel().rows.length
       : undefined,

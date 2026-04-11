@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { useData } from '@/hooks/use-data';
+import { useAccountData } from '@/hooks/use-account-data';
 import { useDrillDown } from '@/hooks/use-drill-down';
 import { useDataFreshness } from '@/contexts/data-freshness';
+import { accountColumnDefs } from '@/lib/columns/account-definitions';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
 import { EmptyState } from '@/components/empty-state';
@@ -16,6 +18,12 @@ export function DataDisplay() {
   const { data, isLoading, isError, error, refetch, isFetching, dataUpdatedAt } = useData();
   const { state: drillState, drillToPartner, drillToBatch, navigateToLevel } =
     useDrillDown();
+  const {
+    data: accountData,
+    isLoading: isAccountLoading,
+    isError: isAccountError,
+    error: accountError,
+  } = useAccountData(drillState.partner, drillState.batch);
   const { setFetchedAt, setIsFetching } = useDataFreshness();
   const [schemaWarningDismissed, setSchemaWarningDismissed] = useState(false);
 
@@ -30,17 +38,21 @@ export function DataDisplay() {
     setIsFetching(isFetching);
   }, [isFetching, setIsFetching]);
 
-  // Client-side filter for partner drill-down (no new API call needed)
+  // Data source depends on drill level:
+  // root/partner: batch data (client-side filtered for partner)
+  // batch: account data from dedicated API
   const tableData = useMemo(() => {
+    if (drillState.level === 'batch') {
+      return accountData?.data ?? [];
+    }
     if (!data?.data) return [];
     if (drillState.level === 'partner' && drillState.partner) {
       return data.data.filter(
         (row) => String(row.PARTNER_NAME ?? '') === drillState.partner,
       );
     }
-    // Root level and batch level (batch handled by Plan 08-02)
     return data.data;
-  }, [data?.data, drillState.level, drillState.partner]);
+  }, [data?.data, accountData?.data, drillState.level, drillState.partner]);
 
   if (isLoading) {
     return <LoadingState />;
@@ -52,6 +64,11 @@ export function DataDisplay() {
 
   if (!data || data.data.length === 0) {
     return <EmptyState />;
+  }
+
+  // Account-level error state (batch data failed but root data loaded fine)
+  if (drillState.level === 'batch' && isAccountError) {
+    return <ErrorState error={accountError} onRetry={() => navigateToLevel('partner')} />;
   }
 
   const hasSchemaWarnings =
@@ -92,16 +109,26 @@ export function DataDisplay() {
 
       {/* Interactive data table with drill-down */}
       <div className="min-h-0 flex-1">
-        <DataTable
-          key={`${drillState.level}-${drillState.partner ?? ''}`}
-          data={tableData}
-          isFetching={isFetching}
-          drillState={drillState}
-          onDrillToPartner={drillToPartner}
-          onDrillToBatch={drillToBatch}
-          onNavigateToLevel={navigateToLevel}
-          totalRowCount={data.data.length}
-        />
+        {drillState.level === 'batch' && isAccountLoading ? (
+          <LoadingState />
+        ) : (
+          <DataTable
+            key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
+            data={tableData}
+            isFetching={drillState.level === 'batch' ? false : isFetching}
+            drillState={drillState}
+            onDrillToPartner={drillToPartner}
+            onDrillToBatch={drillToBatch}
+            onNavigateToLevel={navigateToLevel}
+            totalRowCount={data.data.length}
+            columnDefs={drillState.level === 'batch' ? accountColumnDefs : undefined}
+            partnerRowCount={
+              drillState.level === 'batch' && drillState.partner
+                ? data.data.filter((r) => String(r.PARTNER_NAME ?? '') === drillState.partner).length
+                : undefined
+            }
+          />
+        )}
       </div>
     </div>
   );

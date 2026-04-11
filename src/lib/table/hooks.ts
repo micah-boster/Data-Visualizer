@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -15,7 +15,6 @@ import {
 import { columnDefs } from '@/lib/columns/definitions';
 import type { TableDrillMeta } from '@/lib/columns/definitions';
 import { PRESETS, DEFAULT_PRESET } from '@/lib/columns/presets';
-import { IDENTITY_COLUMNS } from '@/lib/columns/config';
 import type { DrillLevel } from '@/hooks/use-drill-down';
 
 export interface UseDataTableOptions {
@@ -42,15 +41,24 @@ export function useDataTable(
     () => PRESETS[DEFAULT_PRESET]
   );
 
-  const [columnPinning] = useState<ColumnPinningState>({
-    left: IDENTITY_COLUMNS.filter((k) => k === 'PARTNER_NAME' || k === 'BATCH'),
+  const columnPinning = useMemo<ColumnPinningState>(() => ({
+    left: ['PARTNER_NAME', 'BATCH'],
     right: [],
-  });
+  }), []);
 
   const columns = useMemo(
     () => options?.columns ?? columnDefs,
     [options?.columns],
   );
+
+  // Reset sorting when column definitions change (e.g., switching to account columns)
+  const prevColumnsRef = useRef(columns);
+  useEffect(() => {
+    if (prevColumnsRef.current !== columns) {
+      prevColumnsRef.current = columns;
+      setSorting([]);
+    }
+  }, [columns]);
 
   // Build meta object for drill-down callbacks
   const meta: TableDrillMeta | undefined = useMemo(() => {
