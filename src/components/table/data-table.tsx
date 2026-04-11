@@ -1,7 +1,15 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { Columns3 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { useDataTable } from '@/lib/table/hooks';
 import type { UseDataTableOptions } from '@/lib/table/hooks';
 import { useFilterState } from '@/hooks/use-filter-state';
@@ -92,6 +100,34 @@ export function DataTable({
 
   const totalColumns = COLUMN_CONFIGS.length;
 
+  // Drag-to-reorder state
+  const [activeHeaderId, setActiveHeaderId] = useState<string | null>(null);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveHeaderId(event.active.id as string);
+  }, []);
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      setActiveHeaderId(null);
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+
+      const currentOrder = columnManagement.columnOrder;
+      const oldIndex = currentOrder.indexOf(active.id as string);
+      const newIndex = currentOrder.indexOf(over.id as string);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      columnManagement.setColumnOrder(arrayMove(currentOrder, oldIndex, newIndex));
+    },
+    [columnManagement],
+  );
+
+  // Get the label for the currently dragged column (for DragOverlay)
+  const activeColumnLabel = activeHeaderId
+    ? COLUMN_CONFIGS.find((c) => c.key === activeHeaderId)?.label ?? activeHeaderId
+    : null;
+
   const hasFilteredRows = table.getRowModel().rows.length > 0;
   const hasActiveFilters = columnFilters.length > 0;
 
@@ -170,6 +206,11 @@ export function DataTable({
       {!hasFilteredRows && hasActiveFilters && isRoot ? (
         <FilterEmptyState onClearFilters={clearAll} />
       ) : (
+        <DndContext
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
         <div
           ref={tableContainerRef}
           className="flex-1 overflow-auto"
@@ -187,6 +228,14 @@ export function DataTable({
             <TableFooter table={table} />
           </table>
         </div>
+        <DragOverlay>
+          {activeColumnLabel ? (
+            <div className="rounded bg-primary/10 border border-primary/30 px-3 py-1.5 text-xs font-bold shadow-md">
+              {activeColumnLabel}
+            </div>
+          ) : null}
+        </DragOverlay>
+        </DndContext>
       )}
       {/* Column picker sidebar */}
       <ColumnPickerSidebar
