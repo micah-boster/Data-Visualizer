@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Column Management** - Enable users to show/hide columns, drag-reorder them, and filter by value/range within columns
 - [ ] **Phase 6: Saved Views** - Let users save, load, and delete named table configurations that persist across browser sessions
 - [ ] **Phase 7: Export** - Let users download the current filtered and formatted table view as CSV
-- [ ] **Phase 8: Navigation and Drill-Down** - Enable partner-to-batch drill-down with breadcrumb trail and back navigation
+- [x] **Phase 8: Navigation and Drill-Down** - Enable partner-to-batch drill-down with breadcrumb trail and back navigation
 - [ ] **Phase 9: Vercel Deployment and Launch** - Deploy the completed app to Vercel and hand off to the partnerships team
 
 ## Phase Details
@@ -125,10 +125,10 @@ Plans:
   2. User can click a batch identifier and see account-level detail (when additional Snowflake tables are available)
   3. A breadcrumb trail shows the current drill path (e.g., "All > Partner: Acme > Batch: 2024-Q1")
   4. User can click any breadcrumb segment to navigate back up to that level of the hierarchy
-**Plans:** 2 plans
+**Plans:** 2 plans (complete)
 Plans:
-- [ ] 08-01-PLAN.md — Drill-down hook (URL-backed with router.push), breadcrumb trail component, drillable partner cell, wired into DataTable
-- [ ] 08-02-PLAN.md — Account-level API route (master_accounts), account column config/definitions, useAccountData hook, batch drill-down wiring
+- [x] 08-01-PLAN.md — Drill-down hook (URL-backed with router.push), breadcrumb trail component, drillable partner cell, wired into DataTable
+- [x] 08-02-PLAN.md — Account-level API route (master_accounts), account column config/definitions, useAccountData hook, batch drill-down wiring
 
 ### Phase 9: Vercel Deployment and Launch
 **Goal**: The completed app is deployed to Vercel, accessible via URL to all partnerships team members, with Snowflake credentials secured in environment variables
