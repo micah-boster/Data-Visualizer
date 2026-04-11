@@ -1,7 +1,9 @@
 'use client';
 
 import { useRef, useState, useCallback } from 'react';
-import { Columns3 } from 'lucide-react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Columns3, BookmarkCheck } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   DndContext,
   closestCenter,
@@ -15,6 +17,9 @@ import type { UseDataTableOptions } from '@/lib/table/hooks';
 import { useFilterState } from '@/hooks/use-filter-state';
 import { useColumnManagement } from '@/hooks/use-column-management';
 import { useColumnFilters } from '@/hooks/use-column-filters';
+import { useSavedViews } from '@/hooks/use-saved-views';
+import type { SavedView } from '@/lib/views/types';
+import { ViewsSidebar } from '@/components/views/views-sidebar';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import { ColumnPresetTabs } from './column-preset-tabs';
@@ -61,9 +66,22 @@ export function DataTable({
 }: DataTableProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
+  const [viewsSidebarOpen, setViewsSidebarOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const { columnFilters: dimensionFilters, setFilter, clearAll: clearAllDimension, activeFilters } =
+  const { columnFilters: dimensionFilters, setFilter, clearAll: clearAllDimension, activeFilters, searchParams } =
     useFilterState(data);
+
+  const {
+    views,
+    saveView,
+    deleteView,
+    restoreView,
+    hasViewWithName,
+    replaceView,
+    restoreDefaults,
+  } = useSavedViews();
 
   const {
     filterState: columnFilterState,
@@ -116,6 +134,63 @@ export function DataTable({
     // setActivePreset internally calls setColumnVisibility with PRESETS[preset]
     // which is wired to columnManagement.setColumnVisibility via options
   };
+
+  // --- Saved views callbacks ---
+
+  const handleLoadView = useCallback((view: SavedView) => {
+    const { snapshot } = view;
+    // 1. Restore sorting
+    setSorting(snapshot.sorting);
+    // 2. Restore column visibility
+    columnManagement.setColumnVisibility(snapshot.columnVisibility);
+    // 3. Restore column order
+    columnManagement.setColumnOrder(snapshot.columnOrder);
+    // 4. Restore in-column filters — clear all first, then set each
+    clearAllColumnFilters();
+    for (const [colId, value] of Object.entries(snapshot.columnFilters)) {
+      setColumnFilter(colId, value);
+    }
+    // 5. Restore dimension filters via URL (single router.replace)
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(snapshot.dimensionFilters)) {
+      if (value) params.set(key, value);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+    // 6. Restore column sizing
+    if (snapshot.columnSizing && Object.keys(snapshot.columnSizing).length > 0) {
+      table.setColumnSizing(snapshot.columnSizing);
+    }
+    // Close sidebar after loading
+    setViewsSidebarOpen(false);
+  }, [setSorting, columnManagement, clearAllColumnFilters, setColumnFilter, router, pathname, table]);
+
+  const handleDeleteView = useCallback((id: string) => {
+    const { deleted } = deleteView(id);
+    if (deleted) {
+      toast('View deleted', {
+        description: `"${deleted.name}" was removed`,
+        action: {
+          label: 'Undo',
+          onClick: () => restoreView(deleted),
+        },
+        duration: 5000,
+      });
+    }
+  }, [deleteView, restoreView]);
+
+  const handleResetView = useCallback(() => {
+    // Clear sorting to default
+    setSorting([{ id: 'PARTNER_NAME', desc: false }]);
+    // Reset column visibility and order to defaults
+    columnManagement.resetToDefaults();
+    // Clear all filters
+    clearAll();
+    clearAllColumnFilters();
+    // Clear column sizing
+    table.setColumnSizing({});
+    setViewsSidebarOpen(false);
+  }, [setSorting, columnManagement, clearAll, clearAllColumnFilters, table]);
 
   const totalColumns = COLUMN_CONFIGS.length;
 
@@ -183,6 +258,15 @@ export function DataTable({
           >
             <Columns3 className="h-3.5 w-3.5" />
             Columns ({columnManagement.visibleCount}/{totalColumns})
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewsSidebarOpen(true)}
+            className="h-8 gap-1.5 text-xs"
+          >
+            <BookmarkCheck className="h-3.5 w-3.5" />
+            Views ({views.length})
           </Button>
           <SortDialog sorting={sorting} onSortingChange={setSorting} />
           <ExportButton
@@ -275,6 +359,16 @@ export function DataTable({
         showAll={columnManagement.showAll}
         hideAll={columnManagement.hideAll}
         resetToDefaults={columnManagement.resetToDefaults}
+      />
+      {/* Views sidebar */}
+      <ViewsSidebar
+        open={viewsSidebarOpen}
+        onOpenChange={setViewsSidebarOpen}
+        views={views}
+        onLoad={handleLoadView}
+        onDelete={handleDeleteView}
+        onReset={handleResetView}
+        onRestoreDefaults={restoreDefaults}
       />
     </div>
   );
