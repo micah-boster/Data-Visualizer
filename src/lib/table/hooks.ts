@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
   type ColumnDef,
+  type OnChangeFn,
 } from '@tanstack/react-table';
 import { columnDefs } from '@/lib/columns/definitions';
 import type { TableDrillMeta } from '@/lib/columns/definitions';
@@ -24,6 +25,14 @@ export interface UseDataTableOptions {
   drillLevel?: DrillLevel;
   /** Optional override column definitions (used for account-level view) */
   columns?: ColumnDef<Record<string, unknown>>[];
+  /** External column visibility state (from useColumnManagement) */
+  columnVisibility?: VisibilityState;
+  /** External column visibility setter (from useColumnManagement) */
+  onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
+  /** External column order (from useColumnManagement) */
+  columnOrder?: string[];
+  /** External column order setter (from useColumnManagement) */
+  onColumnOrderChange?: OnChangeFn<string[]>;
 }
 
 export function useDataTable(
@@ -37,9 +46,17 @@ export function useDataTable(
 
   const [activePreset, setActivePresetState] = useState(DEFAULT_PRESET);
 
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+  // Use external visibility state if provided, otherwise fall back to internal preset-based state
+  const [internalVisibility, setInternalVisibility] = useState<VisibilityState>(
     () => PRESETS[DEFAULT_PRESET]
   );
+  const columnVisibility = options?.columnVisibility ?? internalVisibility;
+  const setColumnVisibility = options?.onColumnVisibilityChange ?? setInternalVisibility;
+
+  // Column order: external or undefined (TanStack default)
+  const [internalColumnOrder, setInternalColumnOrder] = useState<string[]>([]);
+  const columnOrder = options?.columnOrder ?? internalColumnOrder;
+  const setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
 
   const columnPinning = useMemo<ColumnPinningState>(() => ({
     left: ['PARTNER_NAME', 'BATCH'],
@@ -78,9 +95,11 @@ export function useDataTable(
       columnVisibility,
       columnPinning,
       columnFilters: columnFilters ?? [],
+      columnOrder,
     },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -104,5 +123,7 @@ export function useDataTable(
     setSorting,
     activePreset,
     setActivePreset,
+    columnOrder,
+    setColumnOrder,
   };
 }
