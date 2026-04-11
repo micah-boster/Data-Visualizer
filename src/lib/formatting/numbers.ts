@@ -20,9 +20,14 @@ const numberFmt = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 1,
 });
 
+/** Coerce string values from Snowflake JSON to numbers */
+function toNum(value: number | string): number {
+  return typeof value === 'string' ? Number(value) : value;
+}
+
 /** Format as USD currency: $1,234.56 */
 export function formatCurrency(value: number): string {
-  return currencyFmt.format(value);
+  return currencyFmt.format(toNum(value));
 }
 
 /**
@@ -35,27 +40,28 @@ export function formatCurrency(value: number): string {
  * Very small negative values show as ">-0.1%".
  */
 export function formatPercentage(value: number, decimals: number = 1): string {
+  const v = toNum(value);
   const threshold = Math.pow(10, -decimals);
 
-  if (value > 0 && value < threshold) {
+  if (v > 0 && v < threshold) {
     return `<${threshold.toFixed(decimals)}%`;
   }
 
-  if (value < 0 && value > -threshold) {
+  if (v < 0 && v > -threshold) {
     return `>-${threshold.toFixed(decimals)}%`;
   }
 
-  return `${value.toFixed(decimals)}%`;
+  return `${v.toFixed(decimals)}%`;
 }
 
 /** Format as integer with comma separators: 1,234,567 */
 export function formatCount(value: number): string {
-  return countFmt.format(value);
+  return countFmt.format(toNum(value));
 }
 
 /** Format as number with up to 1 decimal place: 1,234.5 */
 export function formatNumber(value: number): string {
-  return numberFmt.format(value);
+  return numberFmt.format(toNum(value));
 }
 
 /** Check if a column type is numeric (needs right-alignment, tabular nums) */
@@ -77,6 +83,5 @@ export function getFormatter(type: string): (value: number) => string {
     default:
       fn = formatNumber; break;
   }
-  // Coerce strings to numbers (Snowflake JSON returns numeric values as strings)
-  return (value: number) => fn(typeof value === 'string' ? Number(value) : value);
+  return fn;
 }
