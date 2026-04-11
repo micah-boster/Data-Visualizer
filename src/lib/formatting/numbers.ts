@@ -65,15 +65,18 @@ export function isNumericType(type: string): boolean {
 
 /** Return the appropriate formatter function for a column type */
 export function getFormatter(type: string): (value: number) => string {
+  let fn: (value: number) => string;
   switch (type) {
     case 'currency':
-      return formatCurrency;
+      fn = formatCurrency; break;
     case 'percentage':
-      return formatPercentage;
+      fn = formatPercentage; break;
     case 'count':
-      return formatCount;
+      fn = formatCount; break;
     case 'number':
     default:
-      return formatNumber;
+      fn = formatNumber; break;
   }
+  // Coerce strings to numbers (Snowflake JSON returns numeric values as strings)
+  return (value: number) => fn(typeof value === 'string' ? Number(value) : value);
 }
