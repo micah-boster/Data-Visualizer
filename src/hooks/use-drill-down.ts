@@ -39,9 +39,10 @@ export function useDrillDown() {
 
   const drillToPartner = useCallback(
     (partnerName: string) => {
-      // Save current filter state for restoration when returning to root
+      // Read fresh params from URL to avoid stale closure
+      const freshParams = new URLSearchParams(window.location.search);
       const currentFilters: Record<string, string> = {};
-      searchParams.forEach((value, key) => {
+      freshParams.forEach((value, key) => {
         if (!key.startsWith('drill')) {
           currentFilters[key] = value;
         }
@@ -58,25 +59,24 @@ export function useDrillDown() {
       // router.push creates a history entry -- back button works
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [paramsString, pathname, router],
+    [pathname, router],
   );
 
   const drillToBatch = useCallback(
     (batchName: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('drillBatch', batchName);
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      const freshParams = new URLSearchParams(window.location.search);
+      freshParams.set('drillBatch', batchName);
+      router.push(`${pathname}?${freshParams.toString()}`, { scroll: false });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [paramsString, pathname, router],
+    [pathname, router],
   );
 
   const navigateToLevel = useCallback(
     (level: DrillLevel) => {
       if (level === 'root') {
         // Restore pre-drill filters if available
-        const drillFrom = searchParams.get('drillFrom');
+        const freshParams = new URLSearchParams(window.location.search);
+        const drillFrom = freshParams.get('drillFrom');
         if (drillFrom) {
           try {
             const restored = JSON.parse(atob(drillFrom)) as Record<
@@ -93,16 +93,16 @@ export function useDrillDown() {
         router.push(pathname, { scroll: false });
       } else if (level === 'partner') {
         // Remove batch but keep partner and drillFrom
+        const freshParams = new URLSearchParams(window.location.search);
         const params = new URLSearchParams();
-        params.set('drillPartner', state.partner!);
-        const drillFrom = searchParams.get('drillFrom');
+        params.set('drillPartner', freshParams.get('drillPartner') ?? state.partner!);
+        const drillFrom = freshParams.get('drillFrom');
         if (drillFrom) params.set('drillFrom', drillFrom);
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
       }
       // 'batch' level: no-op (already at deepest level)
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [paramsString, pathname, router, state.partner],
+    [pathname, router, state.partner],
   );
 
   return { state, drillToPartner, drillToBatch, navigateToLevel };
