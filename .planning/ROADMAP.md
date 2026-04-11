@@ -91,7 +91,11 @@ Plans:
   2. User can drag a column header to a new position and the column order persists while using the table
   3. User can filter a text column by typing a search string and only matching rows appear
   4. User can filter a numeric column by entering a min/max range
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 05-01-PLAN.md — Column groups, localStorage persistence, useColumnManagement hook, column picker sidebar with grouped toggles
+- [ ] 05-02-PLAN.md — Drag-to-reorder column headers and sidebar items using @dnd-kit
+- [ ] 05-03-PLAN.md — Per-column filtering (text checklist + numeric range) with filter popovers and chip display
 
 ### Phase 6: Saved Views
 **Goal**: Users can save their current table configuration as a named view and reload it in a future session
@@ -151,8 +155,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 2. Core Table and Performance | 0/2 | Planning complete | - |
 | 3. Data Formatting | 0/2 | Planning complete | - |
 | 4. Dimension Filtering | 0/2 | Planning complete | - |
-| 5. Column Management | 0/TBD | Not started | - |
+| 5. Column Management | 0/3 | Planning complete | - |
 | 6. Saved Views | 0/TBD | Not started | - |
 | 7. Export | 0/1 | Planning complete | - |
-| 8. Navigation and Drill-Down | 0/2 | Planning complete | - |
+| 8. Navigation and Drill-Down | 2/2 | Complete | - |
 | 9. Vercel Deployment and Launch | 0/TBD | Not started | - |
