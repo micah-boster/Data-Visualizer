@@ -15,12 +15,12 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Data Table
 
-- [ ] **TABL-01**: User can view batch performance data in an interactive table
-- [ ] **TABL-02**: User can sort any column ascending/descending (single and multi-column)
+- [x] **TABL-01**: User can view batch performance data in an interactive table
+- [x] **TABL-02**: User can sort any column ascending/descending (single and multi-column)
 - [ ] **TABL-03**: User can filter columns by text search, numeric range, or value selection
 - [ ] **TABL-04**: User can show/hide columns from the 61-column schema
 - [ ] **TABL-05**: User can drag to reorder columns
-- [ ] **TABL-06**: Table handles full dataset without lag (virtual scrolling if needed)
+- [x] **TABL-06**: Table handles full dataset without lag (virtual scrolling if needed)
 
 ### Data Formatting
 
@@ -110,9 +110,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 1 | Pending |
 | DEPL-02 | Phase 1 | Pending |
-| TABL-01 | Phase 2 | Pending |
-| TABL-02 | Phase 2 | Pending |
-| TABL-06 | Phase 2 | Pending |
+| TABL-01 | Phase 2 | Complete |
+| TABL-02 | Phase 2 | Complete |
+| TABL-06 | Phase 2 | Complete |
 | FMT-01 | Phase 3 | Pending |
 | FMT-02 | Phase 3 | Pending |
 | FMT-03 | Phase 3 | Pending |
