@@ -77,7 +77,7 @@ export function DataDisplay() {
 
       {/* Interactive data table */}
       <div className="min-h-0 flex-1">
-        <DataTable data={data.data} />
+        <DataTable data={data.data} isFetching={isFetching} />
       </div>
     </div>
   );

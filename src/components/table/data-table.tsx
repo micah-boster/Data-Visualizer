@@ -8,15 +8,17 @@ import { TableHeader } from './table-header';
 import { TableBody } from './table-body';
 import { TableFooter } from './table-footer';
 import { SortDialog } from './sort-dialog';
+import { ExportButton } from './export-button';
 import { FilterBar } from '@/components/filters/filter-bar';
 import { FilterChips } from '@/components/filters/filter-chips';
 import { FilterEmptyState } from '@/components/filters/filter-empty-state';
 
 interface DataTableProps {
   data: Record<string, unknown>[];
+  isFetching?: boolean;
 }
 
-export function DataTable({ data }: DataTableProps) {
+export function DataTable({ data, isFetching = false }: DataTableProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const { columnFilters, setFilter, clearAll, activeFilters } =
     useFilterState(data);
@@ -34,8 +36,14 @@ export function DataTable({ data }: DataTableProps) {
           activePreset={activePreset}
           onPresetChange={setActivePreset}
         />
-        <div className="shrink-0 pr-2">
+        <div className="flex items-center gap-2 shrink-0 pr-2">
           <SortDialog sorting={sorting} onSortingChange={setSorting} />
+          <ExportButton
+            table={table}
+            activeFilters={activeFilters}
+            isFetching={isFetching}
+            disabled={isFetching || table.getRowModel().rows.length === 0}
+          />
         </div>
       </div>
 
