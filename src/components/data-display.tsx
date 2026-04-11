@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 import { useData } from '@/hooks/use-data';
+import { useDrillDown } from '@/hooks/use-drill-down';
 import { useDataFreshness } from '@/contexts/data-freshness';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
@@ -13,6 +14,8 @@ import { DataTable } from '@/components/table/data-table';
 
 export function DataDisplay() {
   const { data, isLoading, isError, error, refetch, isFetching, dataUpdatedAt } = useData();
+  const { state: drillState, drillToPartner, drillToBatch, navigateToLevel } =
+    useDrillDown();
   const { setFetchedAt, setIsFetching } = useDataFreshness();
   const [schemaWarningDismissed, setSchemaWarningDismissed] = useState(false);
 
@@ -26,6 +29,18 @@ export function DataDisplay() {
   useEffect(() => {
     setIsFetching(isFetching);
   }, [isFetching, setIsFetching]);
+
+  // Client-side filter for partner drill-down (no new API call needed)
+  const tableData = useMemo(() => {
+    if (!data?.data) return [];
+    if (drillState.level === 'partner' && drillState.partner) {
+      return data.data.filter(
+        (row) => String(row.PARTNER_NAME ?? '') === drillState.partner,
+      );
+    }
+    // Root level and batch level (batch handled by Plan 08-02)
+    return data.data;
+  }, [data?.data, drillState.level, drillState.partner]);
 
   if (isLoading) {
     return <LoadingState />;
@@ -75,9 +90,18 @@ export function DataDisplay() {
         </Alert>
       )}
 
-      {/* Interactive data table */}
+      {/* Interactive data table with drill-down */}
       <div className="min-h-0 flex-1">
-        <DataTable data={data.data} isFetching={isFetching} />
+        <DataTable
+          key={`${drillState.level}-${drillState.partner ?? ''}`}
+          data={tableData}
+          isFetching={isFetching}
+          drillState={drillState}
+          onDrillToPartner={drillToPartner}
+          onDrillToBatch={drillToBatch}
+          onNavigateToLevel={navigateToLevel}
+          totalRowCount={data.data.length}
+        />
       </div>
     </div>
   );
