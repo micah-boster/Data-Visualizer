@@ -14,6 +14,7 @@ import { useDataTable } from '@/lib/table/hooks';
 import type { UseDataTableOptions } from '@/lib/table/hooks';
 import { useFilterState } from '@/hooks/use-filter-state';
 import { useColumnManagement } from '@/hooks/use-column-management';
+import { useColumnFilters } from '@/hooks/use-column-filters';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import { ColumnPresetTabs } from './column-preset-tabs';
@@ -61,8 +62,25 @@ export function DataTable({
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
 
-  const { columnFilters, setFilter, clearAll, activeFilters } =
+  const { columnFilters: dimensionFilters, setFilter, clearAll: clearAllDimension, activeFilters } =
     useFilterState(data);
+
+  const {
+    setColumnFilter,
+    clearColumnFilter,
+    clearAllColumnFilters,
+    activeColumnFilters,
+    mergedColumnFilters,
+  } = useColumnFilters();
+
+  // Merge dimension filters with in-column filters
+  const columnFilters = mergedColumnFilters(dimensionFilters);
+
+  // Clear all filters (both dimension and in-column)
+  const clearAll = () => {
+    clearAllDimension();
+    clearAllColumnFilters();
+  };
 
   const drillLevel = drillState?.level ?? 'root';
   const isRoot = drillLevel === 'root';

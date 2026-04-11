@@ -9,10 +9,11 @@
  * wraps its value in a DrillableCell (clickable link).
  */
 
-import type { ColumnDef, CellContext } from '@tanstack/react-table';
+import type { ColumnDef, CellContext, FilterFn } from '@tanstack/react-table';
 import { createElement } from 'react';
 import { COLUMN_CONFIGS } from './config';
 import { WIDTH_BY_TYPE, IDENTITY_WIDTH } from './widths';
+import { checklistFilter, rangeFilter } from './filter-functions';
 import { getCellRenderer } from '@/components/table/formatted-cell';
 import { DrillableCell } from '@/components/navigation/drillable-cell';
 import type { DrillLevel } from '@/hooks/use-drill-down';
@@ -61,7 +62,16 @@ function renderDrillableCell(
 }
 
 export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
-  return COLUMN_CONFIGS.map((config) => ({
+  return COLUMN_CONFIGS.map((config) => {
+    // Determine filter function based on column type
+    let filterFn: FilterFn<Record<string, unknown>> | undefined;
+    if (config.type === 'text') {
+      filterFn = checklistFilter;
+    } else if (['currency', 'percentage', 'count', 'number'].includes(config.type)) {
+      filterFn = rangeFilter;
+    }
+
+    return {
     id: config.key,
     accessorKey: config.key,
     header: config.label,
@@ -69,6 +79,8 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
     minSize: 60,
     maxSize: 400,
     enableSorting: true,
+    enableColumnFilter: !config.identity,
+    filterFn: filterFn as FilterFn<Record<string, unknown>> | undefined,
     cell:
       config.key === 'PARTNER_NAME' || config.key === 'BATCH'
         ? (ctx: CellContext<Record<string, unknown>, unknown>) =>
@@ -82,7 +94,8 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
       type: config.type,
       identity: config.identity,
     },
-  }));
+  };
+  });
 }
 
 /** Pre-built column definitions ready for table consumption */
