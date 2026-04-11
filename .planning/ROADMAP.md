@@ -106,7 +106,11 @@ Plans:
   2. User can see a list of previously saved views and click one to restore the full table configuration
   3. User can delete a saved view from the list and it no longer appears
   4. Saved views are still available after closing and reopening the browser (persisted across sessions)
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 06-01-PLAN.md — SavedView types, Zod schema, localStorage CRUD, starter view defaults, useSavedViews hook
+- [ ] 06-02-PLAN.md — Views sidebar (Sheet panel), view item display, load/delete/reset wiring into DataTable
+- [ ] 06-03-PLAN.md — Inline Save View input, snapshot capture, duplicate name handling, DataTable save wiring
 
 ### Phase 7: Export
 **Goal**: Users can download the current filtered and formatted table view as a CSV file
@@ -156,7 +160,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 3. Data Formatting | 0/2 | Planning complete | - |
 | 4. Dimension Filtering | 0/2 | Planning complete | - |
 | 5. Column Management | 0/3 | Planning complete | - |
-| 6. Saved Views | 0/TBD | Not started | - |
+| 6. Saved Views | 0/3 | Planning complete | - |
 | 7. Export | 0/1 | Planning complete | - |
 | 8. Navigation and Drill-Down | 2/2 | Complete | - |
 | 9. Vercel Deployment and Launch | 0/TBD | Not started | - |
