@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { useState, useEffect, type CSSProperties } from 'react';
+import { ChevronRight, GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Checkbox } from '@/components/ui/checkbox';
 import { COLUMN_CONFIGS, IDENTITY_COLUMNS } from '@/lib/columns/config';
 import type { ColumnGroup as ColumnGroupType } from '@/lib/columns/groups';
@@ -11,6 +13,72 @@ const identitySet = new Set(IDENTITY_COLUMNS);
 
 /** Map column key to label for display */
 const labelMap = new Map(COLUMN_CONFIGS.map((c) => [c.key, c.label]));
+
+/** Sortable column row within a group */
+function SortableColumnRow({
+  columnKey,
+  isVisible,
+  isIdentity,
+  onToggle,
+}: {
+  columnKey: string;
+  isVisible: boolean;
+  isIdentity: boolean;
+  onToggle: () => void;
+}) {
+  const label = labelMap.get(columnKey) ?? columnKey;
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: columnKey,
+    disabled: isIdentity,
+  });
+
+  const style: CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group/row flex items-center gap-2 px-3 py-1 pl-6 text-sm hover:bg-muted/30 ${
+        isIdentity ? 'opacity-60' : ''
+      }`}
+    >
+      {!isIdentity && (
+        <button
+          {...attributes}
+          {...listeners}
+          className="shrink-0 cursor-grab opacity-0 group-hover/row:opacity-100 transition-opacity text-muted-foreground hover:text-foreground active:cursor-grabbing"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      )}
+      {isIdentity && <div className="w-3.5 shrink-0" />}
+      <label className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
+        <Checkbox
+          checked={isVisible}
+          disabled={isIdentity}
+          onCheckedChange={() => {
+            if (!isIdentity) onToggle();
+          }}
+          className="shrink-0"
+        />
+        <span className="truncate">{label}</span>
+      </label>
+    </div>
+  );
+}
 
 interface ColumnGroupProps {
   group: ColumnGroupType;
@@ -91,30 +159,15 @@ export function ColumnGroup({
       {/* Column list */}
       {expanded && (
         <div className="pb-1">
-          {filteredColumns.map((key) => {
-            const isIdentity = identitySet.has(key);
-            const label = labelMap.get(key) ?? key;
-            const isVisible = columnVisibility[key] ?? false;
-
-            return (
-              <label
-                key={key}
-                className={`flex items-center gap-2 px-3 py-1 pl-8 text-sm cursor-pointer hover:bg-muted/30 ${
-                  isIdentity ? 'opacity-60' : ''
-                }`}
-              >
-                <Checkbox
-                  checked={isVisible}
-                  disabled={isIdentity}
-                  onCheckedChange={() => {
-                    if (!isIdentity) onToggleColumn(key);
-                  }}
-                  className="shrink-0"
-                />
-                <span className="truncate">{label}</span>
-              </label>
-            );
-          })}
+          {filteredColumns.map((key) => (
+            <SortableColumnRow
+              key={key}
+              columnKey={key}
+              isVisible={columnVisibility[key] ?? false}
+              isIdentity={identitySet.has(key)}
+              onToggle={() => onToggleColumn(key)}
+            />
+          ))}
         </div>
       )}
     </div>

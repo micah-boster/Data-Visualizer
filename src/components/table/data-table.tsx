@@ -242,6 +242,8 @@ export function DataTable({
         open={columnPickerOpen}
         onOpenChange={setColumnPickerOpen}
         columnVisibility={columnManagement.columnVisibility}
+        columnOrder={columnManagement.columnOrder}
+        setColumnOrder={columnManagement.setColumnOrder}
         toggleColumn={columnManagement.toggleColumn}
         toggleGroup={columnManagement.toggleGroup}
         showAll={columnManagement.showAll}
