@@ -24,10 +24,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Data Formatting
 
-- [ ] **FMT-01**: Currency values display with $ and commas
-- [ ] **FMT-02**: Percentages display with % symbol and appropriate decimal places
-- [ ] **FMT-03**: Large numbers display with commas
-- [ ] **FMT-04**: Numeric columns right-aligned
+- [x] **FMT-01**: Currency values display with $ and commas
+- [x] **FMT-02**: Percentages display with % symbol and appropriate decimal places
+- [x] **FMT-03**: Large numbers display with commas
+- [x] **FMT-04**: Numeric columns right-aligned
 
 ### Filtering
 
@@ -113,10 +113,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TABL-01 | Phase 2 | Complete |
 | TABL-02 | Phase 2 | Complete |
 | TABL-06 | Phase 2 | Complete |
-| FMT-01 | Phase 3 | Pending |
-| FMT-02 | Phase 3 | Pending |
-| FMT-03 | Phase 3 | Pending |
-| FMT-04 | Phase 3 | Pending |
+| FMT-01 | Phase 3 | Complete |
+| FMT-02 | Phase 3 | Complete |
+| FMT-03 | Phase 3 | Complete |
+| FMT-04 | Phase 3 | Complete |
 | FILT-01 | Phase 4 | Pending |
 | FILT-02 | Phase 4 | Pending |
 | FILT-03 | Phase 4 | Pending |
