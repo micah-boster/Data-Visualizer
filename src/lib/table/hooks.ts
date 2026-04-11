@@ -4,16 +4,18 @@ import { useState, useMemo } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   type SortingState,
   type ColumnPinningState,
+  type ColumnFiltersState,
   type VisibilityState,
 } from '@tanstack/react-table';
 import { columnDefs } from '@/lib/columns/definitions';
 import { PRESETS, DEFAULT_PRESET } from '@/lib/columns/presets';
 import { IDENTITY_COLUMNS } from '@/lib/columns/config';
 
-export function useDataTable(data: Record<string, unknown>[]) {
+export function useDataTable(data: Record<string, unknown>[], columnFilters?: ColumnFiltersState) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: 'PARTNER_NAME', desc: false },
   ]);
@@ -38,10 +40,12 @@ export function useDataTable(data: Record<string, unknown>[]) {
       sorting,
       columnVisibility,
       columnPinning,
+      columnFilters: columnFilters ?? [],
     },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     enableMultiSort: true,
     isMultiSortEvent: (e: unknown) => (e as MouseEvent).shiftKey,
