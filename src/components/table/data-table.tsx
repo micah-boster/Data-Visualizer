@@ -1,10 +1,13 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import { Columns3 } from 'lucide-react';
 import { useDataTable } from '@/lib/table/hooks';
 import type { UseDataTableOptions } from '@/lib/table/hooks';
 import { useFilterState } from '@/hooks/use-filter-state';
+import { useColumnManagement } from '@/hooks/use-column-management';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
+import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import { ColumnPresetTabs } from './column-preset-tabs';
 import { TableHeader } from './table-header';
 import { TableBody } from './table-body';
@@ -15,6 +18,8 @@ import { FilterBar } from '@/components/filters/filter-bar';
 import { FilterChips } from '@/components/filters/filter-chips';
 import { FilterEmptyState } from '@/components/filters/filter-empty-state';
 import { BreadcrumbTrail } from '@/components/navigation/breadcrumb-trail';
+import { ColumnPickerSidebar } from '@/components/columns/column-picker-sidebar';
+import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface DataTableProps {
@@ -46,21 +51,46 @@ export function DataTable({
   partnerRowCount,
 }: DataTableProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [columnPickerOpen, setColumnPickerOpen] = useState(false);
+
   const { columnFilters, setFilter, clearAll, activeFilters } =
     useFilterState(data);
 
   const drillLevel = drillState?.level ?? 'root';
   const isRoot = drillLevel === 'root';
 
+  // Hoist setActivePreset reference for the column management hook
+  // We need to create a stable reference that can be passed before table init
+  const setActivePresetRef = useRef<((preset: string) => void) | undefined>(undefined);
+  const columnManagement = useColumnManagement(
+    (preset: string) => setActivePresetRef.current?.(preset),
+  );
+
   const tableOptions: UseDataTableOptions = {
     onDrillToPartner,
     onDrillToBatch,
     drillLevel,
     columns: columnDefsOverride,
+    columnVisibility: columnManagement.columnVisibility,
+    onColumnVisibilityChange: columnManagement.setColumnVisibility,
+    columnOrder: columnManagement.columnOrder,
+    onColumnOrderChange: columnManagement.setColumnOrder,
   };
 
   const { table, sorting, setSorting, activePreset, setActivePreset } =
     useDataTable(data, isRoot ? columnFilters : undefined, tableOptions);
+
+  // Wire up the ref so columnManagement can call setActivePreset
+  setActivePresetRef.current = setActivePreset;
+
+  // When a preset tab is clicked, also update the column management visibility
+  const handlePresetChange = (preset: string) => {
+    setActivePreset(preset);
+    // setActivePreset internally calls setColumnVisibility with PRESETS[preset]
+    // which is wired to columnManagement.setColumnVisibility via options
+  };
+
+  const totalColumns = COLUMN_CONFIGS.length;
 
   const hasFilteredRows = table.getRowModel().rows.length > 0;
   const hasActiveFilters = columnFilters.length > 0;
@@ -85,11 +115,20 @@ export function DataTable({
         {isRoot && (
           <ColumnPresetTabs
             activePreset={activePreset}
-            onPresetChange={setActivePreset}
+            onPresetChange={handlePresetChange}
           />
         )}
         {!isRoot && <div />}
         <div className="flex items-center gap-2 shrink-0 pr-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setColumnPickerOpen(true)}
+            className="h-8 gap-1.5 text-xs"
+          >
+            <Columns3 className="h-3.5 w-3.5" />
+            Columns ({columnManagement.visibleCount}/{totalColumns})
+          </Button>
           <SortDialog sorting={sorting} onSortingChange={setSorting} />
           <ExportButton
             table={table}
@@ -149,6 +188,17 @@ export function DataTable({
           </table>
         </div>
       )}
+      {/* Column picker sidebar */}
+      <ColumnPickerSidebar
+        open={columnPickerOpen}
+        onOpenChange={setColumnPickerOpen}
+        columnVisibility={columnManagement.columnVisibility}
+        toggleColumn={columnManagement.toggleColumn}
+        toggleGroup={columnManagement.toggleGroup}
+        showAll={columnManagement.showAll}
+        hideAll={columnManagement.hideAll}
+        resetToDefaults={columnManagement.resetToDefaults}
+      />
     </div>
   );
 }
