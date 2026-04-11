@@ -2,7 +2,7 @@
 
 import { useRef, useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Columns3, BookmarkCheck } from 'lucide-react';
+import { Columns3, BookmarkCheck, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DndContext,
@@ -18,8 +18,9 @@ import { useFilterState } from '@/hooks/use-filter-state';
 import { useColumnManagement } from '@/hooks/use-column-management';
 import { useColumnFilters } from '@/hooks/use-column-filters';
 import { useSavedViews } from '@/hooks/use-saved-views';
-import type { SavedView } from '@/lib/views/types';
+import type { SavedView, ViewSnapshot } from '@/lib/views/types';
 import { ViewsSidebar } from '@/components/views/views-sidebar';
+import { SaveViewInput } from '@/components/views/save-view-input';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import { ColumnPresetTabs } from './column-preset-tabs';
@@ -67,6 +68,7 @@ export function DataTable({
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [viewsSidebarOpen, setViewsSidebarOpen] = useState(false);
+  const [saveInputOpen, setSaveInputOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -192,6 +194,41 @@ export function DataTable({
     setViewsSidebarOpen(false);
   }, [setSorting, columnManagement, clearAll, clearAllColumnFilters, table]);
 
+  const captureSnapshot = useCallback((): ViewSnapshot => {
+    return {
+      sorting,
+      columnVisibility: columnManagement.columnVisibility,
+      columnOrder: columnManagement.columnOrder,
+      columnFilters: { ...columnFilterState },
+      dimensionFilters: {
+        partner: searchParams.get('partner') ?? '',
+        type: searchParams.get('type') ?? '',
+        batch: searchParams.get('batch') ?? '',
+      },
+      columnSizing: table.getState().columnSizing,
+    };
+  }, [sorting, columnManagement.columnVisibility, columnManagement.columnOrder, columnFilterState, searchParams, table]);
+
+  const handleSaveView = useCallback((name: string) => {
+    const snapshot = captureSnapshot();
+    saveView(name, snapshot);
+    setSaveInputOpen(false);
+    toast('View saved', {
+      description: `"${name}" has been saved`,
+      duration: 3000,
+    });
+  }, [captureSnapshot, saveView]);
+
+  const handleReplaceView = useCallback((name: string) => {
+    const snapshot = captureSnapshot();
+    replaceView(name, snapshot);
+    setSaveInputOpen(false);
+    toast('View updated', {
+      description: `"${name}" has been updated`,
+      duration: 3000,
+    });
+  }, [captureSnapshot, replaceView]);
+
   const totalColumns = COLUMN_CONFIGS.length;
 
   // Drag-to-reorder state
@@ -268,6 +305,25 @@ export function DataTable({
             <BookmarkCheck className="h-3.5 w-3.5" />
             Views ({views.length})
           </Button>
+          {saveInputOpen ? (
+            <SaveViewInput
+              isOpen={saveInputOpen}
+              onSave={handleSaveView}
+              onReplace={handleReplaceView}
+              onCancel={() => setSaveInputOpen(false)}
+              hasViewWithName={hasViewWithName}
+            />
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSaveInputOpen(true)}
+              className="h-8 gap-1.5 text-xs"
+            >
+              <Save className="h-3.5 w-3.5" />
+              Save View
+            </Button>
+          )}
           <SortDialog sorting={sorting} onSortingChange={setSorting} />
           <ExportButton
             table={table}
