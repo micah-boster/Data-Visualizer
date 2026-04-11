@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/snowflake/queries';
 import { ACCOUNT_ALLOWED_COLUMNS } from '@/lib/columns/account-config';
+import { isStaticMode, getStaticAccountData } from '@/lib/static-cache/fallback';
 import type { DataResponse } from '@/types/data';
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +16,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required parameters', details: 'Both "partner" and "batch" query params are required.' },
         { status: 400 },
+      );
+    }
+
+    // Serve cached account data when Snowflake credentials are not configured
+    if (isStaticMode()) {
+      const cached = getStaticAccountData(partner, batch);
+      if (cached) return NextResponse.json(cached);
+      return NextResponse.json(
+        { error: 'No cached data', details: `Drill-down for ${partner} / ${batch} is not available in static mode. Connect Snowflake credentials for full access.` },
+        { status: 404 },
       );
     }
 

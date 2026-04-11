@@ -1,0 +1,9 @@
+{
+  "cachedAt": "2026-04-11T14:07:42.931Z",
+  "note": "Static snapshot for deployment without Snowflake credentials",
+  "batchSummary": "batch-summary.json",
+  "accounts": {
+    "Affirm||AFRM_MAR_26_PRI": "accounts-affirm-afrm_mar_26_pri.json",
+    "Affirm||AFRM_MAR_26_SEC": "accounts-affirm-afrm_mar_26_sec.json"
+  }
+}

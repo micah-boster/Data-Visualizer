@@ -2,11 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/snowflake/queries';
 import { ALLOWED_COLUMNS } from '@/lib/columns/config';
 import { validateSchema } from '@/lib/columns/schema-validator';
+import { isStaticMode, getStaticBatchData } from '@/lib/static-cache/fallback';
 import type { DataResponse } from '@/types/data';
 
 export const dynamic = 'force-dynamic'; // Never cache API responses
 
 export async function GET(request: NextRequest) {
+  // Serve cached data when Snowflake credentials are not configured
+  if (isStaticMode()) {
+    return NextResponse.json(getStaticBatchData());
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams;
     const columnsParam = searchParams.get('columns');
