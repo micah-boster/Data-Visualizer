@@ -48,7 +48,10 @@ Plans:
   2. User can click any column header to sort ascending, then click again to sort descending
   3. User can sort by multiple columns simultaneously (e.g., partner then batch date)
   4. The table scrolls and sorts without visible lag on the full 533-row dataset
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 02-01-PLAN.md — Expand column config to all 61 columns, define presets, create ColumnDef builder, update API to fetch all columns
+- [ ] 02-02-PLAN.md — Build full interactive table with virtualization, sorting, column pinning, presets, sticky header/footer
 
 ### Phase 3: Data Formatting
 **Goal**: Every numeric value in the table displays in a human-readable format appropriate to its data type
@@ -129,12 +132,12 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Setup and Snowflake Infrastructure | 0/2 | Planning complete | - |
-| 2. Core Table and Performance | 0/TBD | Not started | - |
+| 2. Core Table and Performance | 0/2 | Planning complete | - |
 | 3. Data Formatting | 0/TBD | Not started | - |
 | 4. Dimension Filtering | 0/TBD | Not started | - |
 | 5. Column Management | 0/TBD | Not started | - |
