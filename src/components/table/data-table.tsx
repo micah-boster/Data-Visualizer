@@ -66,6 +66,7 @@ export function DataTable({
     useFilterState(data);
 
   const {
+    filterState: columnFilterState,
     setColumnFilter,
     clearColumnFilter,
     clearAllColumnFilters,
@@ -208,6 +209,8 @@ export function DataTable({
           activeFilters={activeFilters}
           onRemove={(param) => setFilter(param, null)}
           onClearAll={clearAll}
+          columnFilterChips={activeColumnFilters}
+          onRemoveColumnFilter={clearColumnFilter}
         />
       )}
 
@@ -241,7 +244,12 @@ export function DataTable({
               width: table.getTotalSize(),
             }}
           >
-            <TableHeader table={table} />
+            <TableHeader
+              table={table}
+              filterState={columnFilterState}
+              setColumnFilter={setColumnFilter}
+              clearColumnFilter={clearColumnFilter}
+            />
             <TableBody table={table} tableContainerRef={tableContainerRef} />
             <TableFooter table={table} />
           </table>

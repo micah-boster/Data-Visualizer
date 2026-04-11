@@ -6,14 +6,23 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { flexRender, type Header } from '@tanstack/react-table';
 import { SortIndicator } from './sort-indicator';
+import { ColumnHeaderFilter } from './column-header-filter';
 import { getCommonPinningStyles } from './pinning-styles';
 import { isNumericType } from '@/lib/formatting';
 
 interface DraggableHeaderProps {
   header: Header<Record<string, unknown>, unknown>;
+  filterState?: Record<string, unknown>;
+  setColumnFilter?: (columnId: string, value: unknown) => void;
+  clearColumnFilter?: (columnId: string) => void;
 }
 
-export function DraggableHeader({ header }: DraggableHeaderProps) {
+export function DraggableHeader({
+  header,
+  filterState,
+  setColumnFilter,
+  clearColumnFilter,
+}: DraggableHeaderProps) {
   const isPinned = header.column.getIsPinned();
   const meta = header.column.columnDef.meta as { type?: string } | undefined;
   const isNumeric = meta?.type ? isNumericType(meta.type) : false;
@@ -70,6 +79,14 @@ export function DraggableHeader({ header }: DraggableHeaderProps) {
           {flexRender(header.column.columnDef.header, header.getContext())}
           {header.column.getCanSort() && (
             <SortIndicator column={header.column} />
+          )}
+          {setColumnFilter && clearColumnFilter && (
+            <ColumnHeaderFilter
+              column={header.column}
+              currentFilterValue={filterState?.[header.column.id]}
+              setColumnFilter={setColumnFilter}
+              clearColumnFilter={clearColumnFilter}
+            />
           )}
         </div>
       )}

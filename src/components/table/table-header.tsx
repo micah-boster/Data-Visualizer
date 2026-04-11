@@ -9,13 +9,20 @@ import { DraggableHeader } from './draggable-header';
 
 interface TableHeaderProps {
   table: Table<Record<string, unknown>>;
+  filterState?: Record<string, unknown>;
+  setColumnFilter?: (columnId: string, value: unknown) => void;
+  clearColumnFilter?: (columnId: string) => void;
 }
 
-export function TableHeader({ table }: TableHeaderProps) {
+export function TableHeader({
+  table,
+  filterState,
+  setColumnFilter,
+  clearColumnFilter,
+}: TableHeaderProps) {
   return (
     <thead className="sticky top-0 z-20">
       {table.getHeaderGroups().map((headerGroup) => {
-        // Separate pinned and non-pinned headers for SortableContext
         const sortableIds = headerGroup.headers
           .filter((h) => !h.column.getIsPinned())
           .map((h) => h.id);
@@ -27,7 +34,13 @@ export function TableHeader({ table }: TableHeaderProps) {
               strategy={horizontalListSortingStrategy}
             >
               {headerGroup.headers.map((header) => (
-                <DraggableHeader key={header.id} header={header} />
+                <DraggableHeader
+                  key={header.id}
+                  header={header}
+                  filterState={filterState}
+                  setColumnFilter={setColumnFilter}
+                  clearColumnFilter={clearColumnFilter}
+                />
               ))}
             </SortableContext>
           </tr>
