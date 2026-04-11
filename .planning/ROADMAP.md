@@ -125,7 +125,10 @@ Plans:
   2. User can click a batch identifier and see account-level detail (when additional Snowflake tables are available)
   3. A breadcrumb trail shows the current drill path (e.g., "All > Partner: Acme > Batch: 2024-Q1")
   4. User can click any breadcrumb segment to navigate back up to that level of the hierarchy
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 08-01-PLAN.md — Drill-down hook (URL-backed with router.push), breadcrumb trail component, drillable partner cell, wired into DataTable
+- [ ] 08-02-PLAN.md — Account-level API route (master_accounts), account column config/definitions, useAccountData hook, batch drill-down wiring
 
 ### Phase 9: Vercel Deployment and Launch
 **Goal**: The completed app is deployed to Vercel, accessible via URL to all partnerships team members, with Snowflake credentials secured in environment variables
@@ -151,5 +154,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 5. Column Management | 0/TBD | Not started | - |
 | 6. Saved Views | 0/TBD | Not started | - |
 | 7. Export | 0/1 | Planning complete | - |
-| 8. Navigation and Drill-Down | 0/TBD | Not started | - |
+| 8. Navigation and Drill-Down | 0/2 | Planning complete | - |
 | 9. Vercel Deployment and Launch | 0/TBD | Not started | - |
