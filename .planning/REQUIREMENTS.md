@@ -18,7 +18,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **TABL-01**: User can view batch performance data in an interactive table
 - [x] **TABL-02**: User can sort any column ascending/descending (single and multi-column)
 - [ ] **TABL-03**: User can filter columns by text search, numeric range, or value selection
-- [ ] **TABL-04**: User can show/hide columns from the 61-column schema
+- [x] **TABL-04**: User can show/hide columns from the 61-column schema
 - [ ] **TABL-05**: User can drag to reorder columns
 - [x] **TABL-06**: Table handles full dataset without lag (virtual scrolling if needed)
 
@@ -123,7 +123,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FILT-04 | Phase 4 | Pending |
 | FILT-05 | Phase 4 | Pending |
 | TABL-03 | Phase 5 | Pending |
-| TABL-04 | Phase 5 | Pending |
+| TABL-04 | Phase 5 | Complete |
 | TABL-05 | Phase 5 | Pending |
 | VIEW-01 | Phase 6 | Pending |
 | VIEW-02 | Phase 6 | Pending |
