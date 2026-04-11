@@ -77,7 +77,10 @@ Plans:
   3. User can search for and select a specific batch from a dropdown or search input
   4. When multiple filters are active, only rows matching ALL selected filters are shown
   5. Each active filter is displayed as a visible chip or tag that can be individually removed with a single click
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Filter state hook (URL-backed), reusable combobox component, and horizontal filter bar with three dropdowns
+- [ ] 04-02-PLAN.md — Wire filters into TanStack Table, active filter chips, zero-results empty state, Suspense boundary
 
 ### Phase 5: Column Management
 **Goal**: Users can control which of the 61 columns are visible, reorder them by dragging, and filter within column values
@@ -142,7 +145,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 | 1. Setup and Snowflake Infrastructure | 0/2 | Planning complete | - |
 | 2. Core Table and Performance | 0/2 | Planning complete | - |
 | 3. Data Formatting | 0/2 | Planning complete | - |
-| 4. Dimension Filtering | 0/TBD | Not started | - |
+| 4. Dimension Filtering | 0/2 | Planning complete | - |
 | 5. Column Management | 0/TBD | Not started | - |
 | 6. Saved Views | 0/TBD | Not started | - |
 | 7. Export | 0/TBD | Not started | - |
