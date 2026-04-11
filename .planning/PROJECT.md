@@ -51,6 +51,7 @@ Surface abnormal account and batch performance data so the partnerships team can
 - **Stack**: React/Next.js frontend, API layer for Snowflake queries
 - **Users**: 2-3 internal people — no need for complex auth or multi-tenancy
 - **Snowflake credentials**: Must be handled securely server-side, never exposed to client
+- **Explainable transformations**: Every data transformation must have an explicit, documented algorithm. No black-box calculations. If AI is involved in a transformation (future), the prompts used must be tracked and auditable.
 
 ## Key Decisions
 
