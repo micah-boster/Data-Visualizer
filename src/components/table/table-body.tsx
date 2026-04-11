@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import { flexRender, type Table } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { getCommonPinningStyles } from './pinning-styles';
+import { isNumericType } from '@/lib/formatting';
 
 interface TableBodyProps {
   table: Table<Record<string, unknown>>;
@@ -49,6 +50,8 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
           >
             {row.getVisibleCells().map((cell) => {
               const pinningStyles = getCommonPinningStyles(cell.column, isEvenRow);
+              const meta = cell.column.columnDef.meta as { type?: string } | undefined;
+              const isNumeric = meta?.type ? isNumericType(meta.type) : false;
               return (
                 <td
                   key={cell.id}
@@ -56,7 +59,7 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
                     ...pinningStyles,
                     width: cell.column.getSize(),
                   }}
-                  className="overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2 text-sm"
+                  className={`overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2 text-sm${isNumeric ? ' text-right tabular-nums' : ''}`}
                 >
                   {cell.getValue() != null
                     ? flexRender(cell.column.columnDef.cell, cell.getContext())

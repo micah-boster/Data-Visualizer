@@ -3,6 +3,7 @@
 import { flexRender, type Table } from '@tanstack/react-table';
 import { SortIndicator } from './sort-indicator';
 import { getCommonPinningStyles } from './pinning-styles';
+import { isNumericType } from '@/lib/formatting';
 
 interface TableHeaderProps {
   table: Table<Record<string, unknown>>;
@@ -15,6 +16,8 @@ export function TableHeader({ table }: TableHeaderProps) {
         <tr key={headerGroup.id}>
           {headerGroup.headers.map((header) => {
             const pinningStyles = getCommonPinningStyles(header.column);
+            const meta = header.column.columnDef.meta as { type?: string } | undefined;
+            const isNumeric = meta?.type ? isNumericType(meta.type) : false;
             return (
               <th
                 key={header.id}
@@ -23,14 +26,14 @@ export function TableHeader({ table }: TableHeaderProps) {
                   ...pinningStyles,
                   width: header.getSize(),
                 }}
-                className="relative select-none whitespace-nowrap bg-muted/80 px-3 py-2 text-left text-xs font-bold text-foreground backdrop-blur-sm"
+                className={`relative select-none whitespace-nowrap bg-muted/80 px-3 py-2 text-xs font-bold text-foreground backdrop-blur-sm${isNumeric ? ' text-right' : ' text-left'}`}
               >
                 {header.isPlaceholder ? null : (
                   <div
                     className={
                       header.column.getCanSort()
-                        ? 'flex cursor-pointer items-center'
-                        : 'flex items-center'
+                        ? `flex cursor-pointer items-center${isNumeric ? ' justify-end' : ''}`
+                        : `flex items-center${isNumeric ? ' justify-end' : ''}`
                     }
                     onClick={header.column.getToggleSortingHandler()}
                   >

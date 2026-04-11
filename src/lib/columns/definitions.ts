@@ -8,6 +8,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { COLUMN_CONFIGS } from './config';
 import { WIDTH_BY_TYPE, IDENTITY_WIDTH } from './widths';
+import { getCellRenderer } from '@/components/table/formatted-cell';
 
 export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
   return COLUMN_CONFIGS.map((config) => ({
@@ -18,6 +19,11 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
     minSize: 60,
     maxSize: 400,
     enableSorting: true,
+    cell: ({ getValue }) => {
+      const value = getValue();
+      if (value == null) return null; // table-body handles null display (em dash)
+      return getCellRenderer(config.type, config.key, value);
+    },
     meta: {
       type: config.type,
       identity: config.identity,
