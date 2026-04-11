@@ -61,15 +61,19 @@ export function useDataTable(
   const columnOrder = options?.columnOrder ?? internalColumnOrder;
   const setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
 
-  const columnPinning = useMemo<ColumnPinningState>(() => ({
-    left: ['PARTNER_NAME', 'BATCH'],
-    right: [],
-  }), []);
-
   const columns = useMemo(
     () => options?.columns ?? columnDefs,
     [options?.columns],
   );
+
+  // Pin identity columns for the current column set
+  const columnPinning = useMemo<ColumnPinningState>(() => {
+    const identityCols = columns
+      .filter((c) => (c.meta as { identity?: boolean } | undefined)?.identity)
+      .map((c) => c.id!)
+      .filter(Boolean);
+    return { left: identityCols, right: [] };
+  }, [columns]);
 
   // Reset sorting when column definitions change (e.g., switching to account columns)
   const prevColumnsRef = useRef(columns);

@@ -113,15 +113,18 @@ export function DataTable({
     (preset: string) => setActivePresetRef.current?.(preset),
   );
 
+  // At batch drill-down level, skip column management overrides — account
+  // columns have their own fixed layout, not the persisted batch-summary settings
+  const isBatchLevel = !!columnDefsOverride;
   const tableOptions: UseDataTableOptions = {
     onDrillToPartner,
     onDrillToBatch,
     drillLevel,
     columns: columnDefsOverride,
-    columnVisibility: columnManagement.columnVisibility,
-    onColumnVisibilityChange: columnManagement.setColumnVisibility,
-    columnOrder: columnManagement.columnOrder,
-    onColumnOrderChange: columnManagement.setColumnOrder,
+    columnVisibility: isBatchLevel ? undefined : columnManagement.columnVisibility,
+    onColumnVisibilityChange: isBatchLevel ? undefined : columnManagement.setColumnVisibility,
+    columnOrder: isBatchLevel ? undefined : columnManagement.columnOrder,
+    onColumnOrderChange: isBatchLevel ? undefined : columnManagement.setColumnOrder,
   };
 
   const { table, sorting, setSorting, activePreset, setActivePreset } =
