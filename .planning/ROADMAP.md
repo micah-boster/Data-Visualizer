@@ -62,7 +62,10 @@ Plans:
   2. Percentage values display as "12.3%" — with percent symbol and appropriate decimal places
   3. Large non-currency numbers display with comma separators (e.g., "1,234,567")
   4. All numeric columns are right-aligned in the table
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Create formatting module (pure formatters, thresholds, CSS properties) and FormattedCell component
+- [ ] 03-02-PLAN.md — Wire formatters into column definitions, table body/header/footer alignment and footer aggregates
 
 ### Phase 4: Dimension Filtering
 **Goal**: Users can narrow the table to specific partners, account types, and batches using composable filter controls
@@ -138,7 +141,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
 |-------|----------------|--------|-----------|
 | 1. Setup and Snowflake Infrastructure | 0/2 | Planning complete | - |
 | 2. Core Table and Performance | 0/2 | Planning complete | - |
-| 3. Data Formatting | 0/TBD | Not started | - |
+| 3. Data Formatting | 0/2 | Planning complete | - |
 | 4. Dimension Filtering | 0/TBD | Not started | - |
 | 5. Column Management | 0/TBD | Not started | - |
 | 6. Saved Views | 0/TBD | Not started | - |
