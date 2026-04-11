@@ -146,7 +146,9 @@ Plans:
   1. The app is accessible via a public Vercel URL without requiring local setup
   2. All partnerships team members can load the app and interact with live Snowflake data from their browsers
   3. Snowflake credentials are confirmed to exist only in Vercel environment variables, not in any deployed code or client bundle
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 09-01-PLAN.md — Deploy to Vercel with serverExternalPackages config, health check endpoint, env var setup, and smoke test
 
 ## Progress
 
