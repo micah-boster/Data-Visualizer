@@ -39,10 +39,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Saved Views
 
-- [ ] **VIEW-01**: User can save current table state (filters, columns, sort) as a named view
-- [ ] **VIEW-02**: User can load a saved view from a list
-- [ ] **VIEW-03**: User can delete saved views
-- [ ] **VIEW-04**: Saved views persist across browser sessions
+- [x] **VIEW-01**: User can save current table state (filters, columns, sort) as a named view
+- [x] **VIEW-02**: User can load a saved view from a list
+- [x] **VIEW-03**: User can delete saved views
+- [x] **VIEW-04**: Saved views persist across browser sessions
 
 ### Export
 
@@ -125,10 +125,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TABL-03 | Phase 5 | Complete |
 | TABL-04 | Phase 5 | Complete |
 | TABL-05 | Phase 5 | Complete |
-| VIEW-01 | Phase 6 | Pending |
-| VIEW-02 | Phase 6 | Pending |
-| VIEW-03 | Phase 6 | Pending |
-| VIEW-04 | Phase 6 | Pending |
+| VIEW-01 | Phase 6 | Complete |
+| VIEW-02 | Phase 6 | Complete |
+| VIEW-03 | Phase 6 | Complete |
+| VIEW-04 | Phase 6 | Complete |
 | EXPO-01 | Phase 7 | Complete |
 | EXPO-02 | Phase 7 | Complete |
 | NAV-01 | Phase 8 | Pending |
