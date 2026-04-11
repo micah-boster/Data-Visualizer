@@ -46,8 +46,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Export
 
-- [ ] **EXPO-01**: User can export current filtered/sorted view to CSV
-- [ ] **EXPO-02**: Export respects active filters and column visibility
+- [x] **EXPO-01**: User can export current filtered/sorted view to CSV
+- [x] **EXPO-02**: Export respects active filters and column visibility
 
 ### Navigation
 
@@ -129,8 +129,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIEW-02 | Phase 6 | Pending |
 | VIEW-03 | Phase 6 | Pending |
 | VIEW-04 | Phase 6 | Pending |
-| EXPO-01 | Phase 7 | Pending |
-| EXPO-02 | Phase 7 | Pending |
+| EXPO-01 | Phase 7 | Complete |
+| EXPO-02 | Phase 7 | Complete |
 | NAV-01 | Phase 8 | Pending |
 | NAV-02 | Phase 8 | Pending |
 | NAV-03 | Phase 8 | Pending |
