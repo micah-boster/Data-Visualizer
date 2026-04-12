@@ -77,7 +77,7 @@ export function DataDisplay() {
     (data.schemaWarnings.missing.length > 0 || data.schemaWarnings.unexpected.length > 0);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col gap-2 overflow-x-hidden">
+    <div className="flex h-[calc(100vh-4rem)] flex-col gap-2">
       {/* Schema warnings */}
       {hasSchemaWarnings && (
         <Alert className="relative shrink-0">
