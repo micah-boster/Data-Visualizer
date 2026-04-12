@@ -20,6 +20,7 @@ import { columnDefs } from '@/lib/columns/definitions';
 import type { TableDrillMeta } from '@/lib/columns/definitions';
 import { PRESETS, DEFAULT_PRESET } from '@/lib/columns/presets';
 import type { DrillLevel } from '@/hooks/use-drill-down';
+import type { TrendingData } from '@/types/partner-stats';
 
 export interface UseDataTableOptions {
   /** Optional drill-down callbacks passed to column cell renderers via table meta */
@@ -36,6 +37,8 @@ export interface UseDataTableOptions {
   columnOrder?: string[];
   /** External column order setter (from useColumnManagement) */
   onColumnOrderChange?: OnChangeFn<string[]>;
+  /** Trending data for partner-level batch table */
+  trendingData?: TrendingData | null;
 }
 
 export function useDataTable(
@@ -80,15 +83,16 @@ export function useDataTable(
     }
   }, [columns]);
 
-  // Build meta object for drill-down callbacks
+  // Build meta object for drill-down callbacks and trending data
   const meta: TableDrillMeta | undefined = useMemo(() => {
-    if (!options?.onDrillToPartner && !options?.onDrillToBatch) return undefined;
+    if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData) return undefined;
     return {
-      onDrillToPartner: options.onDrillToPartner,
-      onDrillToBatch: options.onDrillToBatch,
-      drillLevel: options.drillLevel,
+      onDrillToPartner: options?.onDrillToPartner,
+      onDrillToBatch: options?.onDrillToBatch,
+      drillLevel: options?.drillLevel,
+      trending: options?.trendingData ?? undefined,
     };
-  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel]);
+  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData]);
 
   const table = useReactTable({
     data,

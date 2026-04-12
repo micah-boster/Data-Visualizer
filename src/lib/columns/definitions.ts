@@ -16,13 +16,18 @@ import { WIDTH_BY_TYPE, IDENTITY_WIDTH } from './widths';
 import { checklistFilter, rangeFilter } from './filter-functions';
 import { getCellRenderer } from '@/components/table/formatted-cell';
 import { DrillableCell } from '@/components/navigation/drillable-cell';
+import { TrendIndicator, InsufficientTrendIndicator } from '@/components/table/trend-indicator';
+import { TRENDING_METRICS } from '@/lib/computation/compute-trending';
+import { getFormatter, isNumericType } from '@/lib/formatting';
 import type { DrillLevel } from '@/hooks/use-drill-down';
+import type { TrendingData } from '@/types/partner-stats';
 
-/** Drill-down callbacks passed through TanStack Table meta */
+/** Drill-down callbacks and trending data passed through TanStack Table meta */
 export interface TableDrillMeta {
   onDrillToPartner?: (name: string) => void;
   onDrillToBatch?: (name: string) => void;
   drillLevel?: DrillLevel;
+  trending?: TrendingData;
 }
 
 function renderDrillableCell(
@@ -85,9 +90,36 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
       config.key === 'PARTNER_NAME' || config.key === 'BATCH'
         ? (ctx: CellContext<Record<string, unknown>, unknown>) =>
             renderDrillableCell(ctx, config)
-        : ({ getValue }: CellContext<Record<string, unknown>, unknown>) => {
-            const value = getValue();
+        : (ctx: CellContext<Record<string, unknown>, unknown>) => {
+            const value = ctx.getValue();
             if (value == null) return null; // table-body handles null display (em dash)
+
+            // Trending arrows: only at partner level, only for trended metrics
+            const meta = ctx.table.options.meta as TableDrillMeta | undefined;
+            if (
+              meta?.drillLevel === 'partner' &&
+              (TRENDING_METRICS as readonly string[]).includes(config.key) &&
+              meta?.trending
+            ) {
+              const formatter = isNumericType(config.type) ? getFormatter(config.type) : null;
+              const formattedValue = formatter ? formatter(Number(value)) : String(value);
+
+              if (meta.trending.insufficientHistory) {
+                return createElement(InsufficientTrendIndicator, { formattedValue });
+              }
+
+              const trend = meta.trending.trends.find(t => t.metric === config.key);
+              if (trend) {
+                const lowConfidence = meta.trending.batchCount < 5;
+                return createElement(TrendIndicator, {
+                  trend,
+                  formattedValue,
+                  columnType: config.type,
+                  lowConfidence,
+                });
+              }
+            }
+
             return getCellRenderer(config.type, config.key, value);
           },
     meta: {

@@ -37,6 +37,7 @@ import { BreadcrumbTrail } from '@/components/navigation/breadcrumb-trail';
 import { ColumnPickerSidebar } from '@/components/columns/column-picker-sidebar';
 import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
+import type { TrendingData } from '@/types/partner-stats';
 
 interface DataTableProps {
   data: Record<string, unknown>[];
@@ -53,6 +54,8 @@ interface DataTableProps {
   columnDefs?: ColumnDef<Record<string, unknown>>[];
   /** Row count for the partner level when at batch level (for breadcrumb) */
   partnerRowCount?: number;
+  /** Trending data for partner-level batch table */
+  trendingData?: TrendingData | null;
 }
 
 export function DataTable({
@@ -65,6 +68,7 @@ export function DataTable({
   totalRowCount,
   columnDefs: columnDefsOverride,
   partnerRowCount,
+  trendingData,
 }: DataTableProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
@@ -123,6 +127,7 @@ export function DataTable({
     onColumnVisibilityChange: columnManagement.setColumnVisibility,
     columnOrder: columnManagement.columnOrder,
     onColumnOrderChange: columnManagement.setColumnOrder,
+    trendingData,
   };
 
   const { table, sorting, setSorting, activePreset, setActivePreset } =

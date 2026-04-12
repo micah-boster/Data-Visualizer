@@ -7,14 +7,31 @@ import { useAccountData } from '@/hooks/use-account-data';
 import { useDrillDown } from '@/hooks/use-drill-down';
 import { useDataFreshness } from '@/contexts/data-freshness';
 import { accountColumnDefs } from '@/lib/columns/account-definitions';
+import dynamic from 'next/dynamic';
 import { usePartnerStats } from '@/hooks/use-partner-stats';
 import { PartnerNormsProvider } from '@/contexts/partner-norms';
+import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
 import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/table/data-table';
+
+const CollectionCurveChart = dynamic(
+  () =>
+    import('@/components/charts/collection-curve-chart').then(
+      (mod) => mod.CollectionCurveChart,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[40vh] w-full">
+        <Skeleton className="h-full w-full rounded-lg" />
+      </div>
+    ),
+  },
+);
 
 export function DataDisplay() {
   const { data, isLoading, isError, error, refetch, isFetching, dataUpdatedAt } = useData();
@@ -131,6 +148,7 @@ export function DataDisplay() {
                   ? data.data.filter((r) => String(r.PARTNER_NAME ?? '') === drillState.partner).length
                   : undefined
               }
+              trendingData={drillState.level === 'partner' ? partnerStats?.trending ?? null : null}
             />
           )}
         </div>
