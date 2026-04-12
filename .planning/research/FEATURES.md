@@ -1,249 +1,384 @@
-# Feature Landscape: v2.0 Within-Partner Batch Comparison
+# Feature Landscape: v3.0 Intelligence & Cross-Partner Comparison
 
-**Domain:** Debt collection batch analytics -- within-partner comparison and trending
-**Researched:** 2026-04-11
-**Overall confidence:** MEDIUM-HIGH (domain patterns well-established, specific implementation details based on codebase analysis)
+**Domain:** Debt collection batch analytics -- AI query, anomaly detection, cross-partner benchmarking
+**Researched:** 2026-04-12
+**Overall confidence:** MEDIUM-HIGH (patterns well-established in analytics tooling; implementation specifics validated against codebase)
 
 ---
 
-## Table Stakes
+## Pillar 1: Anomaly Detection (Passive, In-App)
 
-Features users expect in any analytics tool that compares cohort/batch performance over time. Missing these makes the v2 upgrade feel hollow.
+### Table Stakes
 
-### TS-1: Collection Curve Overlay Chart
+Features users expect from any anomaly detection surface. Without these, the feature feels like a gimmick.
 
-| Attribute | Detail |
-|-----------|--------|
-| **What** | Multi-line chart overlaying collection curves (cumulative recovery % vs months-on-book) for multiple batches from the same partner. Each batch is a separate line, x-axis is months (1-60), y-axis is cumulative collection rate. |
-| **Why expected** | This is the canonical "vintage analysis" chart used across all credit/collections analytics. Anyone who has seen a portfolio review deck expects this shape. It is the single most important visualization for answering "is this partner's latest batch performing better or worse than historical?" |
-| **Complexity** | Medium |
-| **Data dependency** | `COLLECTION_AFTER_1_MONTH` through `COLLECTION_AFTER_60_MONTH` (20 columns), `BATCH`, `PARTNER_NAME`, `BATCH_AGE_IN_MONTHS` |
-| **Notes** | Lines must truncate at `BATCH_AGE_IN_MONTHS` -- newer batches will have shorter curves. This is standard vintage analysis behavior, not a bug. X-axis should use the actual month values (1,2,3...12,15,18,21,24,30,36,48,60) not equally spaced, since the collection columns are not evenly distributed. |
-
-**Key behaviors:**
-- Show at partner drill-down level (when user clicks into a partner, show their batches overlaid)
-- Each line labeled by batch name
-- Hover/tooltip shows exact collection % at that month for each batch
-- Color-code lines so most recent batch stands out (e.g., bold/primary color for latest, muted for older)
-- Optional: highlight a "partner average" reference line computed as mean of all visible batches
-
-### TS-2: KPI Summary Cards at Partner Level
+#### AD-TS-1: Anomaly Badges on Table Rows
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | 4-6 summary cards displayed above the batch table when drilled into a partner. Show aggregate metrics: total batches, total accounts placed, average collection rate at key milestones (3mo, 6mo, 12mo), total lifetime collected, average penetration rate. |
-| **Why expected** | Every analytics dashboard places KPI cards at the top of a detail view. F-pattern eye tracking research confirms users look top-left first. Without summary cards, users must mentally aggregate the table below, which defeats the purpose of a visualization tool. |
+| **What** | Visual badge/icon on partner rows (root level) and batch rows (partner drill-down) flagging statistically anomalous performance. A colored dot or icon (warning triangle, red circle) in a dedicated "Status" column. |
+| **Why expected** | Every monitoring dashboard uses inline status indicators. If the system detects anomalies but the user has to navigate to a separate screen to see them, it defeats the purpose. Anomalies must surface where the user already looks: the table. |
 | **Complexity** | Low |
-| **Data dependency** | Aggregation across all batches for the selected partner: `TOTAL_ACCOUNTS`, `TOTAL_AMOUNT_PLACED`, `TOTAL_COLLECTED_LIFE_TIME`, `COLLECTION_AFTER_3_MONTH`, `COLLECTION_AFTER_6_MONTH`, `COLLECTION_AFTER_12_MONTH`, `PENETRATION_RATE_POSSIBLE_AND_CONFIRMED` |
-| **Notes** | Cards should show the metric value plus a comparison indicator (e.g., "vs all partners" or trend arrow from previous batch). Keep it to 4-6 cards max -- more creates visual noise. |
+| **Depends on** | Existing `computeNorms()` (mean/stddev already computed per partner), existing `FormattedCell` component |
+| **Notes** | Use the existing norm computation as baseline. A batch is anomalous when 2+ key metrics deviate beyond 2 SD from the partner mean. At root level, a partner is anomalous when their latest batch is flagged. |
 
-**Key behaviors:**
-- Visible only at partner drill-down level (not root level)
-- Large primary number, small label, optional trend indicator
-- Responsive layout: 3 cards per row on typical viewport, stack on narrow
-
-### TS-3: Conditional Formatting Based on Partner Norms
+#### AD-TS-2: Anomaly Summary Panel
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | Cell-level color coding in the batch table showing whether a value is above/below the partner's own historical average for that metric. Green tint = above average (good), red tint = below average (bad), neutral = within normal range. |
-| **Why expected** | The existing codebase already has `thresholds.ts` with static absolute thresholds. v2 needs to upgrade this to relative thresholds -- comparing each batch against that partner's own norm. This is the difference between "penetration rate is below 5%" (absolute) and "penetration rate is 40% below this partner's average" (relative). Relative comparison is far more useful for partnerships work because different partners have wildly different baseline performance. |
+| **What** | A collapsible summary section at the top of the root-level view showing count of flagged partners/batches with one-line descriptions: "Affirm MAR_26: penetration rate 42% below partner average." Clickable to drill into the flagged entity. |
+| **Why expected** | Badges tell you something is wrong; the summary tells you what and where. Without it, users must scan every row looking for badges. The summary is the "inbox" of anomalies -- it answers "what should I look at today?" |
 | **Complexity** | Medium |
-| **Data dependency** | All numeric columns, computed partner-level mean/median as baseline |
-| **Notes** | Must compute partner baselines client-side from the loaded batch data. Use standard deviation or percentage deviation from mean to set green/red thresholds. Extend existing `ThresholdConfig` system rather than replacing it. |
+| **Depends on** | AD-TS-1 (anomaly computation), existing `drillToPartner`/`drillToBatch` navigation |
+| **Notes** | Sort anomalies by severity (largest deviation first). Limit to top 5-10 to avoid alarm fatigue. Collapsible so it doesn't dominate when not needed. |
 
-**Key behaviors:**
-- Active at partner drill-down level (where batches for one partner are visible)
-- Color intensity proportional to deviation magnitude (subtle for small deviations, bold for large)
-- Tooltip explains the deviation: "12.3% vs partner avg 18.7% (-34%)"
-- Toggle on/off (some users prefer clean numbers)
-- Apply to collection curve columns, penetration rates, conversion rates, and financial metrics
-
-### TS-4: Batch-over-Batch Trending Indicators
+#### AD-TS-3: Anomaly Detail in Tooltip/Popover
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | Up/down/flat trend arrows or mini-indicators in the table showing whether key metrics are improving or degrading across the most recent batches for a partner. |
-| **Why expected** | "Is this getting better or worse?" is the first question a partnerships lead asks about any partner. A raw number without directional context forces the user to compare rows manually. |
-| **Complexity** | Low-Medium |
-| **Data dependency** | Same metrics as conditional formatting, plus batch ordering (by `BATCH` name or placement date) to determine "previous" vs "current" |
-| **Notes** | Batches must be sortable chronologically. If batch naming follows a convention (e.g., "Partner_2024Q1"), parse for ordering. Otherwise, rely on `BATCH_AGE_IN_MONTHS` as a proxy for recency. |
+| **What** | Hovering or clicking an anomaly badge shows a popover explaining: which metrics are anomalous, the actual value vs expected range, and the deviation magnitude. |
+| **Why expected** | A badge without explanation is worse than no badge. Users need to trust the detection before acting on it. Explainability is table stakes per the project constraint ("every data transformation must have an explicit, documented algorithm"). |
+| **Complexity** | Low |
+| **Depends on** | AD-TS-1, existing tooltip infrastructure (shadcn Tooltip/Popover) |
+| **Notes** | Format: "Penetration Rate: 3.2% (expected 8.1% - 14.3%). 2.4 SD below mean." Keep language non-technical for the partnerships team. |
 
-**Key behaviors:**
-- Show as small icon (arrow up/down/flat) next to the cell value
-- Green up-arrow = improving, red down-arrow = degrading, gray dash = flat
-- "Flat" threshold: changes within +/-5% of previous batch count as flat
-- Compare current batch to immediately prior batch (not average)
-- Visible at partner drill-down level
-
----
-
-## Differentiators
-
-Features that elevate the tool beyond what a typical BI dashboard provides. Not expected, but make the team say "this is better than anything we had before."
-
-### D-1: Sparkline Mini-Charts in Table Cells
+#### AD-TS-4: Deterministic, Explainable Detection Algorithm
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | Replace the 20 individual collection curve columns in the table with a single sparkline column showing the full curve shape inline. Hovering shows the full chart; clicking drills into the overlay view. |
-| **Value proposition** | Collapses 20 columns into 1, making the table dramatically more scannable. Users can spot anomalous curve shapes (early plateau, sudden drop) at a glance without needing to read 20 numbers. |
-| **Complexity** | Medium-High |
-| **Data dependency** | `COLLECTION_AFTER_1_MONTH` through `COLLECTION_AFTER_60_MONTH`, `BATCH_AGE_IN_MONTHS` |
-| **Notes** | Performance concern: rendering 50+ SVG sparklines in a virtualized table. Use lightweight SVG path generation (no full charting library needed for sparklines). React.memo aggressively. Consider canvas-based rendering if SVG is too slow. |
-
-### D-2: Deviation Heatmap View
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | An alternative view mode that shows the batch table as a heatmap where cell color intensity represents deviation from the partner average. Turns the table into a visual anomaly detector. |
-| **Value proposition** | Instead of reading numbers, the user scans for "hot spots" of red (underperformance) or green (outperformance). Dramatically speeds up identification of problematic batches or metrics. |
+| **What** | Statistical anomaly detection using z-scores against partner norms. No black-box ML. The algorithm must be documentable in a markdown file (like TRENDING-ALGORITHM.md). |
+| **Why expected** | Per project constraints, all transformations must be explainable. The partnerships team needs to trust the flags before acting. "The model said so" is not acceptable for 2-3 internal users who know their data. |
 | **Complexity** | Medium |
-| **Data dependency** | All numeric columns, computed partner baselines |
-| **Notes** | This is an extension of TS-3 (conditional formatting) pushed to its logical extreme. Could be implemented as a toggle: "Numbers" vs "Heatmap" view mode. HSL color interpolation for smooth gradients. |
+| **Depends on** | Existing `computeNorms()` which already computes mean/stddev per metric |
+| **Notes** | Z-score is the right method here. The existing norm computation gives us mean and population stddev. A z-score > 2 flags as anomalous. IQR is more robust to outliers but z-score is simpler and the team already understands standard deviation from the conditional formatting. Consistency matters more than statistical perfection for 2-3 users. |
 
-### D-3: Collection Curve Shape Comparison
+### Differentiators
 
-| Attribute | Detail |
-|-----------|--------|
-| **What** | Automatically classify batch collection curves into shape categories (early ramp, steady growth, plateau, s-curve, underperformer) and flag batches whose curve shape diverges from the partner's typical pattern. |
-| **Value proposition** | Answers "this batch isn't just lower, it has a fundamentally different collection pattern" -- which suggests a different problem (bad data quality, different account mix, operational issue) vs just a weaker batch. |
-| **Complexity** | High |
-| **Data dependency** | Collection curve columns, partner historical curves |
-| **Notes** | Simpler version: compute derivative of curve (slope at each interval) and flag batches where slope profile differs significantly. Full version would need clustering, which is v3 territory. |
-
-### D-4: Time-Aligned Curve Comparison
+#### AD-D-1: Anomaly Severity Ranking
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | On the collection curve overlay chart, allow toggling between "absolute time" (calendar date on x-axis) and "relative time" (months-since-placement on x-axis). Default to relative time. |
-| **Value proposition** | Relative time answers "at the same point in their lifecycle, how do these batches compare?" while absolute time answers "what was happening across all batches during Q3 2024?" Both questions matter. |
-| **Complexity** | Low (if chart is already built) |
-| **Data dependency** | Collection curve columns plus batch placement dates (may need to be derived or added) |
+| **What** | Rank anomalies by a composite severity score that weights multiple flagged metrics and their deviation magnitudes. "This partner has 4 flagged metrics with an average 3.1 SD deviation" outranks "1 flagged metric at 2.1 SD." |
+| **Value proposition** | Prioritization. The team has limited time -- they need to know not just what is anomalous but what is most anomalous. |
+| **Complexity** | Low (computation is straightforward once individual anomalies are detected) |
 
-### D-5: Exportable Partner Summary Report
+#### AD-D-2: Anomaly Highlighting in Charts
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | One-click export of the partner drill-down view (KPI cards + collection curve chart + batch table) as a formatted PDF or image for sharing in Slack/email. |
-| **Value proposition** | Partnerships team frequently shares batch performance summaries with leadership. Currently they screenshot. A clean export saves time and looks professional. |
-| **Complexity** | Medium |
-| **Notes** | html2canvas or similar for screenshot-to-image. PDF generation adds complexity. Start with "copy chart as image" and "download as PNG." |
+| **What** | On the collection curve chart, visually distinguish anomalous batches (bold line, different color, or annotation marker) from normal batches. |
+| **Value proposition** | When a user drills into a partner, the anomalous batch immediately stands out on the curve chart without needing to cross-reference the table. |
+| **Complexity** | Low (Recharts supports conditional line styling) |
 
----
+#### AD-D-3: Metric Polarity Awareness
 
-## Anti-Features
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Anomaly detection respects metric polarity: high penetration rate is good (flag when low), high delinquency is bad (flag when high). The existing `metric-polarity.ts` module already defines this. |
+| **Value proposition** | Without polarity, the system flags a partner for having unusually HIGH collection rates, which is not a problem. Polarity-aware detection only flags in the bad direction. |
+| **Complexity** | Low (existing `metric-polarity.ts` provides the mapping) |
 
-Features to explicitly NOT build in v2.
+### Anti-Features
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| Cross-partner normalization/comparison | Requires statistical baseline model to normalize across different partner characteristics (balance sizes, account types, vintages). Premature without understanding what "comparable" means for this team. Explicitly scoped as v3+. | Keep comparison within-partner only. Surface raw numbers side by side if users want to glance across partners. |
-| AI-powered anomaly detection | v3 feature per PROJECT.md. Adding ML/AI to the anomaly detection before the team even has the basic visualizations would be premature. The conditional formatting (TS-3) gives them 80% of the value with 10% of the complexity. | Use statistical deviation (mean +/- 1.5 SD) for conditional formatting. Simple, explainable, debuggable. |
-| Predictive curve projection | "Given the first 6 months, where will this batch be at 12 months?" is appealing but requires a forecasting model. Out of scope per PROJECT.md. | Show the curve as-is, truncated at `BATCH_AGE_IN_MONTHS`. Users can visually extrapolate from the overlay. |
-| Real-time data streaming | Batch/scheduled refresh is sufficient per PROJECT.md. Collection data updates daily at most. | Keep existing React Query refetch with appropriate stale times. |
-| Mobile-responsive charts | 2-3 desktop users. Charts need hover interactions that don't translate to mobile well. | Desktop-first. Charts can be responsive within reason but don't optimize for phone. |
-| Editable thresholds UI | Building a UI for users to customize conditional formatting thresholds adds significant complexity for 2-3 users. | Hardcode sensible defaults (1 SD, 1.5 SD). Can always add a settings panel later if users request it. |
-| Dashboard drag-and-drop layout | v3 feature. The current single-page drill-down model is the right UX for now. | Keep the linear flow: root table -> partner view (cards + chart + table) -> batch detail. |
+| ML-based anomaly detection (isolation forest, DBSCAN) | Overkill for 477 rows across a handful of partners. Adds opaque model behavior that violates the explainability constraint. Z-scores cover 90% of the need. | Z-score against partner norms. Document the algorithm. |
+| Active notifications (Slack/email) | Explicitly out of scope per PROJECT.md (v4+). Passive anomaly detection must prove its value first before investing in notification infrastructure. | In-app summary panel. Users check the dashboard daily anyway. |
+| User-configurable thresholds | For 2-3 users, hardcoded 2 SD threshold is fine. Building a settings UI doubles the complexity for marginal benefit. | Hardcode 2 SD. Revisit if users request adjustment. |
+| Anomaly history/timeline | Tracking how anomalies change over time requires state persistence beyond the current session. Premature for v3. | Show current anomalies only. Historical trending via the existing batch-over-batch trending indicators. |
 
 ---
 
-## Feature Dependencies
+## Pillar 2: Claude Natural Language Query Layer
+
+### Table Stakes
+
+Features users expect from an AI-powered data query interface integrated into an analytics tool.
+
+#### NLQ-TS-1: Query Input with Suggested Prompts
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | A text input (search bar style, not chat) where users type natural language questions about their data. Below it, 3-5 suggested starter prompts contextualized to the current view: "Which partner has the highest 6-month collection rate?" or "Compare Affirm's latest batch to their historical average." |
+| **Why expected** | Every NLQ tool provides suggested prompts. The blank input box is intimidating -- users don't know what they can ask. Suggestions teach the system's capabilities through examples. The search bar pattern (vs chat) is correct here because these are point queries, not conversations. |
+| **Complexity** | Low (UI), Medium (prompt engineering) |
+| **Depends on** | New API route for Claude integration |
+| **Notes** | Suggested prompts should update based on drill context: root level shows cross-partner questions, partner level shows within-partner questions, batch level shows account-level questions. |
+
+#### NLQ-TS-2: Narrative Response with Supporting Data
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | AI responses rendered as a short narrative paragraph (2-4 sentences) accompanied by the specific data points referenced. Not just "the answer is 42" -- explain the context. Example: "Affirm's March batch penetration rate is 3.2%, significantly below their 6-batch average of 11.4%. This is the lowest penetration rate across all their batches. The next lowest was January at 7.8%." |
+| **Why expected** | Narrative + data is the standard pattern in analytics NLQ tools (ThoughtSpot, Looker, Power BI Copilot all do this). Raw answers without context are not useful because the user doesn't know if the answer is good or bad without comparison. |
+| **Complexity** | Medium |
+| **Depends on** | NLQ-TS-1, Claude API, data context injection |
+| **Notes** | The narrative must reference actual data from the dataset, not hallucinate. Include the specific numbers cited. This means the API route must pass relevant data rows to Claude as context. |
+
+#### NLQ-TS-3: Data-Grounded Responses (No Hallucination)
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Every claim in the AI response must be verifiable against the actual dataset. The system prompt constrains Claude to only reference data present in the context window. If the question cannot be answered from available data, say so explicitly. |
+| **Why expected** | Trust. The entire reason this tool exists (per PROJECT.md) is to replace "non-deterministic Claude + Snowflake queries." If the AI layer itself hallucinates, it defeats the tool's core value proposition. |
+| **Complexity** | Medium (prompt engineering, context management) |
+| **Depends on** | Data serialization strategy for context injection |
+| **Notes** | Two approaches: (1) pass relevant data rows as JSON in the system prompt, or (2) give Claude SQL-generation capability against Snowflake. Approach 1 is safer and simpler for v3 -- the dataset is small enough (477 rows x key columns) to fit in context. Approach 2 (text-to-SQL) is v4 if data grows. |
+
+#### NLQ-TS-4: Loading State and Error Handling
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Clear loading indicator while waiting for AI response (streaming preferred). Graceful error handling when Claude API fails or rate-limits. Timeout after 30 seconds with a retry option. |
+| **Why expected** | AI responses take 2-10 seconds. Without a loading state, users think the UI is broken. Without error handling, a single API failure breaks trust in the entire feature. |
+| **Complexity** | Low |
+| **Depends on** | Existing loading/error state patterns in the codebase |
+
+### Differentiators
+
+#### NLQ-D-1: Context-Aware Queries Based on Current View
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | The AI automatically knows what the user is looking at. If drilled into Affirm's partner view, questions like "why is the latest batch underperforming?" automatically scope to Affirm without the user needing to specify. If filters are applied, the AI knows. |
+| **Value proposition** | Eliminates the most common NLQ failure mode: the user asks a scoped question but the AI answers about the entire dataset. Context awareness makes the AI feel like an assistant who is looking at the same screen. |
+| **Complexity** | Medium |
+
+#### NLQ-D-2: Response with Actionable Follow-Up Suggestions
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | After each response, show 2-3 follow-up question suggestions based on the answer: "You might also want to know: Which accounts are driving the low penetration rate? How does this compare to other partners?" |
+| **Value proposition** | Guides exploration. Most users ask one question and stop -- not because they're satisfied, but because they don't know what to ask next. Follow-ups keep the analysis going. |
+| **Complexity** | Low (Claude can generate these as part of the response) |
+
+#### NLQ-D-3: Response References Clickable Data Points
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | When the AI mentions a partner or batch by name, it is rendered as a clickable link that drills the user into that entity. "Affirm's March batch" links to `drillToPartner('Affirm')` then `drillToBatch('MAR_26')`. |
+| **Value proposition** | Bridges AI answers to the existing deterministic UI. The user reads the narrative, clicks a reference, and sees the full table/chart context. This is what differentiates an embedded AI from a standalone chatbot. |
+| **Complexity** | Medium (parsing entity references from AI response, linking to drill-down actions) |
+
+### Anti-Features
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Full chat/conversation interface | This is an analytics tool, not a chatbot. Multi-turn conversations add state management complexity and rarely provide value for data queries. Users ask one question at a time. | Search bar with suggested prompts. Each query is independent. Follow-up suggestions provide continuity without conversation state. |
+| Text-to-SQL generation | The dataset is small enough to pass directly to Claude. Text-to-SQL introduces SQL injection risk, hallucinated table/column names, and requires a validation layer. Massively over-engineered for 477 rows. | Pass filtered data as JSON context to Claude. Simpler, safer, and more reliable. |
+| AI-generated charts/visualizations | The tool already has excellent charts (Recharts). Having the AI generate separate charts creates a dual visualization system that is confusing and hard to maintain. | AI responses reference existing charts and suggest the user "check the collection curve chart for visual confirmation." |
+| Autonomous data exploration agents | Agentic systems that run multiple queries iteratively are slow, expensive, and unpredictable. Not appropriate for a 2-3 person internal tool. | Single-turn query with data context. Fast, cheap, predictable. |
+| Query history persistence | Adds storage complexity for minimal value with 2-3 users. The team discusses findings in Slack, not in the tool. | Session-only query display. Previous response visible until new query submitted. |
+
+---
+
+## Pillar 3: Cross-Partner Comparison
+
+### Table Stakes
+
+Features users expect from any cross-entity benchmarking surface.
+
+#### XPC-TS-1: Percentile Rankings at Root Level
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | At the root partner table, show each partner's percentile rank for key metrics (penetration rate, 6-month collection rate, 12-month collection rate) relative to all partners. Rendered as a percentile number (e.g., "P72") or a position indicator (e.g., "3 of 8"). |
+| **Why expected** | "How does this partner compare to others?" is the most natural cross-partner question. Raw numbers are meaningless without context -- a 12% penetration rate could be excellent or terrible depending on the portfolio. Percentile ranks immediately answer "better or worse than peers." |
+| **Complexity** | Low-Medium |
+| **Depends on** | Root-level aggregation (new: must compute per-partner aggregates across all batches, similar to how `usePartnerStats` works but for ALL partners) |
+| **Notes** | This requires a `useAllPartnerStats` or similar hook that computes aggregate metrics for every partner, not just the selected one. The existing `usePartnerStats` filters to one partner -- cross-partner needs all. |
+
+#### XPC-TS-2: Normalized Trajectory Overlay Chart
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | A chart showing collection curves from different partners normalized to enable comparison. Since partners have different balance sizes, absolute dollar amounts are not comparable. Normalize by showing recovery rate (% of placed amount collected) on the y-axis. Each line is a partner's average curve (mean across their batches). |
+| **Why expected** | The existing collection curve chart shows within-partner batch comparison. The cross-partner equivalent is the obvious next question: "How does Affirm's typical curve compare to Klarna's?" Normalization via recovery rate makes this meaningful. |
+| **Complexity** | Medium |
+| **Depends on** | Existing `reshapeCurves()` computation, existing Recharts infrastructure |
+| **Notes** | Recovery rate normalization already exists in `CurvePoint.recoveryRate`. The cross-partner chart averages each partner's batch curves into a single representative line per partner. Show at root level as a new chart section. |
+
+#### XPC-TS-3: Partner Comparison Table/Matrix
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | A summary comparison view showing key metrics for all partners side-by-side in a compact matrix. Rows = metrics, columns = partners. Or a horizontal bar chart ranking partners on a selected metric. |
+| **Why expected** | The existing root table shows batches, not partner aggregates. Users currently have to mentally aggregate across batches to compare partners. A dedicated comparison view does this aggregation for them. |
+| **Complexity** | Medium |
+| **Depends on** | XPC-TS-1 (per-partner aggregation) |
+| **Notes** | Could be a separate tab/view or a collapsible section at root level. Key metrics to compare: total placed volume, weighted penetration rate, 6-month and 12-month collection rates, total collected, batch count. |
+
+### Differentiators
+
+#### XPC-D-1: Partner Cohort Segmentation
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Allow grouping partners by characteristics (account type, balance range, batch frequency) and compare cohort averages. "How do BNPL partners compare to traditional credit partners?" |
+| **Value proposition** | Raw cross-partner comparison can be misleading if partners have fundamentally different account mixes. Cohort segmentation makes comparisons fair. |
+| **Complexity** | Medium-High |
+| **Notes** | Depends on having enough metadata to segment meaningfully. May not be possible with current data if all partners are BNPL. Check data diversity before building. |
+
+#### XPC-D-2: Best-in-Class Benchmark Line
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | On the cross-partner trajectory overlay, add a "best-in-class" reference line representing the top-performing partner's curve, plus a "portfolio average" line. Each partner can see where they sit relative to the best and the average. |
+| **Value proposition** | Gives an aspirational target. "Affirm is tracking 15% below best-in-class at 6 months" is more actionable than just seeing all curves overlaid. |
+| **Complexity** | Low (if XPC-TS-2 is built) |
+
+#### XPC-D-3: Cross-Partner Anomaly Flags
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Flag partners whose aggregate performance is anomalous relative to the portfolio -- not just within their own history but compared to peers. "This partner's 6-month collection rate is in the bottom 10th percentile." |
+| **Value proposition** | Combines anomaly detection with cross-partner comparison. A partner might be consistent with their own history but still be a portfolio outlier. |
+| **Complexity** | Low (if both AD and XPC pillar table stakes are built) |
+
+#### XPC-D-4: Time-Period Scoped Comparison
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Compare partners only across batches from the same time period. "How did all partners' Q1 2026 batches perform relative to each other?" filters out historical noise. |
+| **Value proposition** | Macro conditions (economic environment, regulatory changes) affect all partners simultaneously. Comparing same-period batches isolates partner-specific performance from macro effects. |
+| **Complexity** | Medium |
+
+### Anti-Features
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Statistical significance testing | For 5-10 partners with varying batch counts, formal hypothesis testing (t-tests, ANOVA) is misleading. Small samples, unequal groups, non-normal distributions. The math would be "correct" but the conclusions unreliable. | Show ranks and percentiles. Let the team apply domain judgment about whether differences are meaningful. |
+| Weighted composite scoring | Creating a single "partner health score" by weighting metrics together buries information and creates debates about weights. | Show individual metric ranks. The team knows which metrics matter for each partner relationship. |
+| Automated partner tiering (A/B/C classification) | Artificial bucketing with 5-10 partners creates false precision and potential relationship damage if shared externally. | Percentile ranks and visual position on charts convey relative standing without hard labels. |
+| External benchmarking data | Comparing to industry averages requires external data sources the tool does not have. The portfolio IS the benchmark universe for now. | Compare within the portfolio. "Best in class" means best among Bounce's partners, which is the actionable comparison. |
+
+---
+
+## Feature Dependencies (Cross-Pillar)
 
 ```
-KPI Summary Cards (TS-2)
-  |-- Requires: partner drill-down (already exists)
-  |-- Requires: client-side aggregation of batch data (new)
+ANOMALY DETECTION
+  AD-TS-4 (Algorithm)
+    --> AD-TS-1 (Badges) -- algorithm powers badge display
+    --> AD-TS-3 (Tooltips) -- algorithm provides explanation data
+    --> AD-TS-2 (Summary Panel) -- aggregates badge results
+    --> AD-D-1 (Severity Ranking) -- weights anomaly scores
+    --> AD-D-2 (Chart Highlighting) -- feeds anomaly flags to charts
+  Existing dependency: computeNorms() already provides mean/stddev
 
-Collection Curve Overlay (TS-1)
-  |-- Requires: charting library (new dependency -- Recharts recommended)
-  |-- Requires: partner drill-down (already exists)
-  |-- Requires: collection curve columns (already in data)
+NATURAL LANGUAGE QUERY
+  NLQ-TS-1 (Input UI)
+    --> NLQ-TS-4 (Loading/Error) -- wraps the input interaction
+    --> NLQ-TS-2 (Narrative Response) -- renders the result
+    --> NLQ-TS-3 (Grounding) -- constrains the response
+    --> NLQ-D-1 (Context-Aware) -- injects drill state
+    --> NLQ-D-2 (Follow-Ups) -- extends response rendering
+  New dependency: Claude API route (server-side), API key management
 
-Conditional Formatting (TS-3)
-  |-- Requires: partner baseline computation (new)
-  |-- Extends: existing thresholds.ts system
-  |-- Requires: partner drill-down (already exists)
+CROSS-PARTNER COMPARISON
+  XPC-TS-1 (Percentile Rankings)
+    --> XPC-TS-3 (Comparison Matrix) -- uses same aggregation
+    --> XPC-D-3 (Cross-Partner Anomaly) -- uses same aggregation
+  XPC-TS-2 (Trajectory Overlay)
+    --> XPC-D-2 (Benchmark Line) -- adds reference lines to chart
+  Existing dependency: reshapeCurves(), computeKpis(), Recharts
 
-Batch Trending Indicators (TS-4)
-  |-- Requires: batch chronological ordering (may need logic)
-  |-- Requires: partner drill-down (already exists)
-  |-- Depends on: TS-3 baseline computation (shared logic)
-
-Sparkline Mini-Charts (D-1)
-  |-- Requires: TS-1 charting infrastructure or lightweight SVG
-  |-- Requires: virtual scrolling compatibility (already exists)
-
-Deviation Heatmap (D-2)
-  |-- Requires: TS-3 conditional formatting system (extends it)
-
-Collection Curve Shape Comparison (D-3)
-  |-- Requires: TS-1 (overlay chart)
-  |-- Requires: curve classification logic (new, complex)
+CROSS-PILLAR DEPENDENCIES
+  XPC-TS-1 (Percentile Rankings) + AD-TS-4 (Algorithm)
+    --> XPC-D-3 (Cross-Partner Anomaly Flags)
+  XPC-TS-1 + NLQ (Context-Aware)
+    --> NLQ can answer "how does this partner rank?" when drilled in
+  AD-TS-2 (Summary Panel) + NLQ
+    --> NLQ can explain flagged anomalies when asked
 ```
 
-**Build order implication:** TS-2 (KPI cards) is independent and low complexity -- build first. TS-1 (chart) introduces the charting library -- build second. TS-3 (conditional formatting) builds the baseline computation -- third. TS-4 (trending) reuses TS-3 logic -- fourth. Differentiators layer on top.
+**Build order implication:** Anomaly detection builds directly on existing `computeNorms()` -- lowest new-code effort. Cross-partner comparison requires a new aggregation layer across all partners but reuses existing computation patterns. NLQ requires a new API route and Claude integration but is UI-independent of the other two pillars. All three can be built in parallel with a shared "all-partner aggregation" module as the common foundation.
 
 ---
 
 ## MVP Recommendation
 
-**Phase 1 -- Foundation (build first):**
-1. **KPI Summary Cards (TS-2)** -- Low complexity, high visibility, no new dependencies
-2. **Collection Curve Overlay Chart (TS-1)** -- Core v2 value prop, introduces Recharts
+**Phase 1 -- Foundation (shared infrastructure):**
+1. **All-partner aggregation module** -- Compute per-partner aggregates for all partners (extends `usePartnerStats` pattern). Powers both anomaly detection and cross-partner comparison.
+2. **Anomaly detection algorithm (AD-TS-4)** -- Z-score based, documented. Low complexity since norms already exist.
+3. **Anomaly badges (AD-TS-1)** -- Immediate visual value in the existing table.
 
-**Phase 2 -- Intelligence (build second):**
-3. **Conditional Formatting with Partner Norms (TS-3)** -- Upgrades existing threshold system
-4. **Batch-over-Batch Trending (TS-4)** -- Shares baseline computation with TS-3
+**Phase 2 -- Core features (parallel tracks):**
+4. **Anomaly summary panel (AD-TS-2)** -- "What should I look at today?"
+5. **Anomaly tooltips (AD-TS-3)** -- Explainability for badges.
+6. **Percentile rankings (XPC-TS-1)** -- First cross-partner metric.
+7. **Cross-partner trajectory overlay (XPC-TS-2)** -- Visual comparison at root level.
 
-**Phase 3 -- Polish (if time permits):**
-5. **Sparkline Mini-Charts (D-1)** -- Nice-to-have compression of 20 columns
+**Phase 3 -- AI layer:**
+8. **NLQ input with suggested prompts (NLQ-TS-1)** -- UI entry point.
+9. **Claude API route with data context (NLQ-TS-2, NLQ-TS-3)** -- Server-side integration.
+10. **Context-aware scoping (NLQ-D-1)** -- Drill state injection.
+11. **Loading/error handling (NLQ-TS-4)** -- Polish.
 
-**Defer to v3:**
-- Deviation Heatmap (D-2) -- cool but the conditional formatting handles 80% of the need
-- Curve Shape Comparison (D-3) -- needs more sophisticated analysis
-- Exportable Reports (D-5) -- nice but not core to the comparison workflow
+**Phase 4 -- Polish and differentiators:**
+12. **Partner comparison matrix (XPC-TS-3)** -- Summary view.
+13. **Anomaly severity ranking (AD-D-1)** -- Prioritization.
+14. **Best-in-class benchmark line (XPC-D-2)** -- Chart enhancement.
+15. **Follow-up suggestions (NLQ-D-2)** -- AI enhancement.
+16. **Clickable data references (NLQ-D-3)** -- Bridge AI to drill-down.
+
+**Defer to v4:**
+- Partner cohort segmentation (XPC-D-1) -- Requires richer metadata than currently available.
+- Time-period scoped comparison (XPC-D-4) -- Useful but not essential for initial cross-partner view.
+- Cross-partner anomaly flags (XPC-D-3) -- Needs both AD and XPC mature before layering.
+- Anomaly chart highlighting (AD-D-2) -- Nice but badges handle 80% of the need.
 
 ---
 
-## Data Column Mapping
+## Data Requirements
 
-How existing 61 columns map to v2 features:
+### Existing Data (No New Snowflake Queries)
 
-| Feature | Columns Used | Column Group |
-|---------|-------------|--------------|
-| Collection Curve Chart | `COLLECTION_AFTER_{1..60}_MONTH` (20 cols) | collection-curves |
-| Curve Truncation | `BATCH_AGE_IN_MONTHS` | identity |
-| KPI Cards | `TOTAL_ACCOUNTS`, `TOTAL_AMOUNT_PLACED`, `TOTAL_COLLECTED_LIFE_TIME`, `COLLECTION_AFTER_{3,6,12}_MONTH`, `PENETRATION_RATE_POSSIBLE_AND_CONFIRMED` | Various |
-| Conditional Formatting | All numeric columns (40+ cols) | All groups |
-| Trending Indicators | Key metrics subset: `COLLECTION_AFTER_{3,6,12}_MONTH`, `PENETRATION_RATE_*`, `RAITO_FIRST_TIME_CONVERTED_ACCOUNTS`, `TOTAL_COLLECTED_LIFE_TIME` | collection-curves, penetration, conversion, payments |
-| Batch Ordering | `BATCH`, `BATCH_AGE_IN_MONTHS` | identity |
-| Sparklines | `COLLECTION_AFTER_{1..60}_MONTH` (20 cols), `BATCH_AGE_IN_MONTHS` | collection-curves, identity |
+| Feature | Data Source | Notes |
+|---------|------------|-------|
+| Anomaly detection | `agg_batch_performance_summary` (all 477 rows) | Already loaded at root level |
+| Cross-partner percentiles | `agg_batch_performance_summary` (all 477 rows) | Aggregation computed client-side |
+| Cross-partner curves | `agg_batch_performance_summary` (collection columns) | `reshapeCurves()` per partner, already exists |
+| NLQ context data | `agg_batch_performance_summary` + `master_accounts` | Both already fetched by existing API routes |
 
-**No new Snowflake columns needed.** All v2 features derive from existing `agg_batch_performance_summary` data. The `ACCOUNT_PUBLIC_ID` column (listed as active requirement) is for account-level drill-down, not for within-partner comparison features.
+### New API Requirements
+
+| Feature | Endpoint | Notes |
+|---------|----------|-------|
+| NLQ | `POST /api/query` | Server-side Claude API call. Accepts question + context (drill state, relevant data). Returns narrative + data points. Snowflake credentials stay server-side. Claude API key needed as new env var. |
+
+**No new Snowflake tables needed.** All v3 features derive from existing data. The NLQ feature needs a new Claude API key but no Snowflake schema changes.
 
 ---
 
 ## Existing Infrastructure to Extend
 
-| Existing System | v2 Extension |
+| Existing System | v3 Extension |
 |----------------|--------------|
-| `thresholds.ts` (static absolute thresholds) | Add relative threshold computation: per-partner mean/SD calculation, extend `ThresholdConfig` with a `relative` mode |
-| `use-drill-down.ts` (partner/batch state) | KPI cards and chart render conditionally based on `drillState.level === 'partner'` |
-| `data-display.tsx` (layout orchestrator) | Add chart and KPI card components between breadcrumb and table at partner level |
-| `groups.ts` (column grouping) | Sparkline feature would add a synthetic "Curve" column that reads from the collection-curves group |
-| `FormattedCell` component | Extend to render trend arrows and relative-deviation colors |
-| TanStack Virtual (virtualization) | Must remain performant with sparklines added to cells |
+| `computeNorms()` (mean/stddev per metric) | Anomaly detection: add z-score computation and threshold flagging on top of existing norms |
+| `computeKpis()` (partner-level KPI aggregation) | Cross-partner: run for ALL partners, not just selected one |
+| `reshapeCurves()` (batch curve reshaping) | Cross-partner: compute average curve per partner for overlay |
+| `metric-polarity.ts` (good/bad direction per metric) | Anomaly detection: only flag anomalies in the "bad" direction |
+| `computeTrending()` (batch-over-batch trends) | Anomaly detection: trending + anomaly detection complement each other |
+| `PartnerNormsProvider` (React context for norms) | Anomaly detection: extend to include anomaly flags, or create parallel `AnomalyProvider` |
+| `data-display.tsx` (layout orchestrator) | All three pillars add new UI sections to this component |
+| `use-drill-down.ts` (navigation state) | NLQ: inject current drill state as context for Claude |
+| Existing Snowflake `executeQuery()` | NLQ: no change needed (data already in client; Claude call is separate) |
+| shadcn/ui Tooltip, Popover, Card | Anomaly tooltips, NLQ response display, comparison cards |
 
 ---
 
 ## Sources
 
-- [Vintage analysis methodology](https://www.listendata.com/2019/09/credit-risk-vintage-analysis.html) -- canonical structure for collection curve overlay charts
-- [Vintage curves explanation](https://www.finleycms.com/blog/what-are-vintage-curves/) -- x-axis = age, y-axis = cumulative metric, each line = one cohort
-- [KPI dashboard best practices](https://tabulareditor.com/blog/kpi-card-best-practices-dashboard-design) -- F-pattern layout, comparison context, 4-6 card limit
-- [Dashboard design principles](https://www.datacamp.com/tutorial/dashboard-design-tutorial) -- visual hierarchy, summary-then-detail pattern
-- [React charting libraries 2025](https://blog.logrocket.com/best-react-chart-libraries-2025/) -- Recharts recommended for composable React-first charting
-- [Batch comparison analytics](https://www.trendminer.com/resources/batch-comparison-and-live-monitoring) -- overlay visualization for multi-batch comparison
-- [React sparklines in tables](https://www.shadcn.io/blocks/tables-sparkline) -- sparkline integration patterns with shadcn/ui tables
-- [Heatmap visualization guide](https://www.atlassian.com/data/charts/heatmap-complete-guide) -- when and how to use color-coded data matrices
+- [AI-Powered BI Tools Comparison 2026](https://www.holistics.io/bi-tools/ai-powered/) -- semantic layer importance, NLQ patterns across tools
+- [Natural Language Query Analytics Guide](https://supaboard.ai/blog/natural-language-query-analytics) -- search bar vs chat interface patterns
+- [NLQ Implementation Patterns](https://lansa.com/blog/business-intelligence/nlq-natural-language-query/) -- guided NLQ, suggested prompts
+- [AI Design Patterns for Enterprise Dashboards](https://www.aufaitux.com/blog/ai-design-patterns-enterprise-dashboards/) -- anomaly insight cards, passive detection UX
+- [Anomaly Detection in Time Series Using Statistics](https://medium.com/booking-com-development/anomaly-detection-in-time-series-using-statistical-analysis-cc587b21d008) -- z-score vs IQR for business metrics
+- [Z-Score for Anomaly Detection in Seasonal Data](https://dev.to/qvfagundes/anomaly-detection-in-seasonal-data-why-z-score-still-wins-but-you-need-to-use-it-right-4ec1) -- z-score practical guidance
+- [Simple Statistics for Anomaly Detection](https://www.tinybird.co/blog/anomaly-detection) -- when statistical methods beat ML
+- [Status Indicator Patterns (Carbon Design)](https://carbondesignsystem.com/patterns/status-indicator-pattern/) -- badge and inline status UX patterns
+- [NNGroup Indicators vs Notifications](https://www.nngroup.com/articles/indicators-validations-notifications/) -- passive vs active notification design
+- [Dashboard Design Patterns Research](https://dashboarddesignpatterns.github.io/) -- comparison matrix and metrics-repeated-across-dimensions pattern
+- [Text-to-SQL Best Practices (Google Cloud)](https://cloud.google.com/blog/products/databases/techniques-for-improving-text-to-sql) -- why to avoid text-to-SQL for small datasets
+- [LLM Text-to-SQL Architectures](https://github.com/arunpshankar/LLM-Text-to-SQL-Architectures) -- architectural patterns and when they apply

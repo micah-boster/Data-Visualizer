@@ -1,157 +1,155 @@
-# Stack Research
+# Technology Stack
 
-**Domain:** Within-partner comparison and visualization additions to existing data table app
-**Researched:** 2026-04-11
-**Confidence:** HIGH
+**Project:** Bounce Data Visualizer v3.0 -- Intelligence & Cross-Partner Comparison
+**Researched:** 2026-04-12
+**Scope:** NEW additions only. Existing stack (Next.js 16, React 19, TanStack Table, React Query, Recharts 3.8, Tailwind 4, shadcn/ui, Snowflake SDK, Zod 4) is validated and unchanged.
 
-> This is a v2.0 addendum. The existing validated stack (Next.js 16, TanStack Table 8, React Query 5, Tailwind 4, shadcn/ui, Snowflake connector, Zod 4) is not re-researched here. This focuses exclusively on what NEW libraries/approaches are needed for collection curve charts, conditional formatting, batch-over-batch trending, and KPI summary cards.
+> v2.0 stack research (Recharts, conditional formatting, KPI cards) remains valid and is not repeated here. This document covers only v3.0 additions.
 
 ## Recommended Stack Additions
 
-### Core Technologies
+### Claude AI Query Layer
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Recharts | ^3.8.1 | Collection curve charts, trending line charts, area charts | shadcn/ui's official chart component is built on Recharts. React 19 support confirmed in peer deps (`react: ^19.0.0`). SVG-based rendering integrates with Tailwind theming via CSS variables. Declarative JSX API matches existing component patterns. |
-| react-is | ^19.2.0 | Required peer dependency of Recharts 3.x | Recharts 3.x lists `react-is` as a peer dependency supporting `^19.0.0`. Must be installed explicitly since it does not ship with React 19 core. |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `ai` (Vercel AI SDK) | ^6.0.158 | Streaming text generation, `useChat` hook, server/client bridge | First-class Next.js integration. Handles streaming, abort signals, message history, and UI state out of the box. Eliminates manual SSE/WebSocket plumbing. Already deployed on Vercel so zero config for edge runtime. |
+| `@ai-sdk/anthropic` | ^3.0.69 | Anthropic provider for AI SDK | Plugs Claude models into AI SDK's `streamText`/`generateText`. One-line model swap if needed later. |
 
-### Supporting Libraries
+**Why AI SDK instead of raw `@anthropic-ai/sdk`:** The raw Anthropic SDK gives you a streaming API but you still need to build: message serialization, abort handling, client-side state management, token-by-token rendering, and error recovery. AI SDK wraps all of that with `useChat` (client) + `streamText` (server route handler). Since the app is already on Next.js + Vercel, this is the path of least resistance. The raw SDK makes sense for server-to-server pipelines; AI SDK makes sense for interactive chat UIs.
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| shadcn/ui Chart component | N/A (copy-paste) | Pre-styled ChartContainer, ChartTooltip, ChartLegend wrappers around Recharts | Use for all charts. Provides consistent theming via `--chart-1` through `--chart-5` CSS variables and accessible tooltip/legend components. |
+**Integration pattern:**
+- Route handler at `app/api/chat/route.ts` using `streamText` with `@ai-sdk/anthropic`
+- Client component using `useChat` hook from `ai/react`
+- System prompt injects serialized data context (partner stats, norms, anomalies) so Claude answers about *this* data
+- `ANTHROPIC_API_KEY` env var in Vercel, server-side only (same pattern as existing Snowflake creds)
 
-### No New Libraries Needed For
+**Confidence:** HIGH -- AI SDK v6 + @ai-sdk/anthropic are actively maintained (published within last 24 hours), well-documented, and purpose-built for this exact pattern.
 
-| Feature | Approach | Why No Library |
-|---------|----------|----------------|
-| **Conditional formatting** | Pure Tailwind + `cn()` utility | Already have `cn()` in `src/lib/utils.ts`. Cell background/text colors driven by threshold logic in cell renderer functions. No library can do this better than inline conditional classes. |
-| **KPI summary cards** | Existing shadcn Card component | `Card`, `CardHeader`, `CardTitle`, `CardContent` already in `src/components/ui/card.tsx`. KPI cards are Card + formatted number + delta indicator. |
-| **Batch-over-batch trending** | Recharts LineChart + computation utils | Trending is a data transformation (compute deltas between batches) rendered as a chart. No separate trending library needed. |
-| **Delta/change indicators** | Lucide React icons (already installed) | `ArrowUp`, `ArrowDown`, `Minus` icons from `lucide-react` (already at ^1.8.0) for trend direction indicators on KPI cards. |
+### Anomaly Detection & Statistical Computation
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `simple-statistics` | ^7.8.8 | z-scores, percentiles, standard deviation, IQR, quantile ranks | Zero dependencies. Tree-shakeable. Battle-tested (10+ years, millions of weekly downloads). Provides exactly the statistical primitives needed without pulling in an ML framework. |
+
+**Why simple-statistics instead of an ML library (isolation-forest, etc.):**
+1. The dataset is small -- hundreds of batch rows, not millions. ML-based anomaly detection (Isolation Forest, DBSCAN) is overkill and adds complexity without proportional value.
+2. The `isolation-forest` npm package was last published 4 years ago (v0.0.9) -- effectively abandoned.
+3. The existing codebase already computes mean/stddev/norms manually in `compute-norms.ts`. `simple-statistics` replaces that hand-rolled math with tested implementations and adds percentile/IQR/z-score functions needed for anomaly flagging.
+4. Financial batch data has clear expected distributions -- z-score thresholds (e.g., |z| > 2.0) are interpretable and explainable, which matters per the project's "explainable transformations" constraint.
+
+**Why NOT build anomaly detection into Claude:** Claude should narrate and explain anomalies, not detect them. Detection must be deterministic and reproducible -- if you ask Claude "is this anomalous?" twice, you may get different answers. Compute anomaly scores server-side, pass them to Claude as context for narrative generation.
+
+**Integration pattern:**
+- New computation module `compute-anomalies.ts` alongside existing `compute-norms.ts` and `compute-trending.ts`
+- Extends `usePartnerStats` to include anomaly scores in `PartnerStats` type
+- Uses z-scores against partner norms (already computed) and cross-partner percentiles
+- Anomaly thresholds are configurable constants, not magic numbers
+- Can also refactor `compute-norms.ts` to use `simple-statistics` for mean/stddev (reduces hand-rolled math)
+
+**Confidence:** HIGH -- simple-statistics is stable, well-maintained, zero-dependency, and the z-score/IQR approach is standard for this type of structured financial data.
+
+### Cross-Partner Comparison & Normalization
+
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| (No new dependency) | -- | Cross-partner percentile rankings and normalized trajectory overlays | `simple-statistics` provides `quantileRank` and `quantile` functions. Combined with existing `computeNorms` pattern, no additional library needed. |
+
+**Why no additional library:** Cross-partner comparison is a computation pattern, not a library problem. The work is:
+1. Compute per-metric percentile ranks across all partners (one `quantileRank` call per metric per partner)
+2. Normalize collection curves to recovery-rate basis (already done in `reshape-curves.ts` -- `recoveryRate` field exists on `CurvePoint`)
+3. Overlay normalized curves in Recharts (existing charting infrastructure)
+
+The existing `computeNorms` module computes within-partner norms. The new work adds cross-partner norms computed at the root level (all rows, not filtered to one partner). This is a new computation module, not a new dependency.
+
+**Confidence:** HIGH -- the existing computation architecture (`compute-*.ts` modules composed by `usePartnerStats`) is well-suited for this extension.
+
+## What NOT to Add
+
+| Library | Why Skip |
+|---------|----------|
+| `@anthropic-ai/sdk` (raw) | AI SDK wraps it with streaming UI primitives. Adding both creates confusion about which to use. |
+| `langchain` / `@langchain/anthropic` | Massive dependency tree, abstraction overkill for a single-model chat with injected context. LangChain adds value for multi-model orchestration, RAG pipelines, and agent chains -- none of which apply here. |
+| `isolation-forest` | Abandoned (4 years stale, v0.0.9), overkill for structured batch data with hundreds of rows. |
+| `@azure/ai-anomaly-detector` | Cloud dependency for something computable in-process in milliseconds. |
+| `ml-regression` / `tensorflow.js` | No regression/forecasting in v3 scope. Dynamic curve re-projection is explicitly v4+. |
+| `d3` or additional charting lib | Recharts 3.8 already handles multi-line overlays for curve comparison. No need for a second charting library. |
+| `openai` / `@ai-sdk/openai` | Project uses Claude. Don't install providers you won't use. |
+| `lodash` / `ramda` | The codebase already uses native array methods. simple-statistics covers the math gap. |
+| `mathjs` | 700KB+ with matrix algebra, complex numbers, symbolic math. We need percentiles and z-scores. |
+| Database for chat history | 2-3 internal users, no persistence requirement stated. React state or localStorage is sufficient for v3. |
 
 ## Installation
 
 ```bash
-# New dependencies (only 2 packages)
-npm install recharts@^3.8.1 react-is@^19.2.0
+# AI query layer
+npm install ai @ai-sdk/anthropic
+
+# Statistical computation
+npm install simple-statistics
 ```
 
-That's it. Two packages. Everything else is already in the project or built with existing tools.
+**Total new dependencies: 3 packages** (ai, @ai-sdk/anthropic, simple-statistics)
 
-## Chart CSS Variable Update Required
+## Environment Variables
 
-The existing `globals.css` has chart variables defined but they are all grayscale:
-
-```css
---chart-1: oklch(0.87 0 0);   /* light gray */
---chart-2: oklch(0.556 0 0);  /* medium gray */
+```env
+# Add to Vercel environment variables (server-side only)
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-These MUST be updated to distinguishable colors for collection curve overlays where 3-8 batch lines appear on the same chart. Recommended update:
-
-```css
-/* Light mode */
---chart-1: oklch(0.65 0.19 252);  /* blue */
---chart-2: oklch(0.63 0.17 145);  /* green */
---chart-3: oklch(0.63 0.19 25);   /* orange */
---chart-4: oklch(0.55 0.19 325);  /* purple */
---chart-5: oklch(0.60 0.17 15);   /* red */
-```
-
-This is a config change, not a library addition. Use oklch for perceptual uniformity so lines are equally visible.
+No other infrastructure changes. No new databases. No new services. The AI query layer runs through Anthropic's API; anomaly detection and comparison run in-process on the server.
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| Recharts 3.x | Recharts 2.x (^2.15.4) | Never for this project. 2.x pins `react-is: ^18.3.1` which conflicts with React 19.2.4. The `react-is` mismatch causes blank chart rendering (documented in recharts issue #6857). 3.x properly peers React 19. |
-| Recharts 3.x | Tremor | If you want pre-built KPI card + chart combos. But Tremor wraps Recharts anyway, adds another abstraction layer, and locks you into their component API. Since we already have shadcn Card components, Tremor adds weight without value. |
-| Recharts 3.x | Chart.js / react-chartjs-2 | Never for this project. Canvas-based rendering means tooltips and legends exist outside React's component tree. Custom tooltips require portal hacks. SVG (Recharts) integrates naturally with React and is inspectable in devtools. |
-| Recharts 3.x | Nivo | If you need very specific chart types (heatmaps, waffle charts). Nivo is heavier and more opinionated. For line/area/bar charts, Recharts is simpler and better documented. |
-| Recharts 3.x | visx (Airbnb) | If you need D3-level control with React primitives. visx is lower-level than Recharts -- you build charts from graphic primitives. Overkill when Recharts' LineChart/AreaChart components do exactly what collection curves need. |
-| Recharts 3.x | Observable Plot | If you need statistical visualization (distributions, regressions). Collection curves are standard multi-series line charts. Observable Plot's React integration is also less mature. |
-| Pure Tailwind conditional formatting | react-data-grid / AG Grid conditional formatting | Never. These replace TanStack Table entirely. We already have a working TanStack Table with 61 columns. Conditional formatting is cell-level CSS, not a table engine concern. |
-
-## What NOT to Use
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| **Recharts 2.x** | `react-is: ^18.3.1` hard dep conflicts with React 19.2.4. Known blank rendering issue. | Recharts 3.x |
-| **Tremor** | Wraps Recharts + adds another component system alongside shadcn. Redundant abstraction for a project that already has shadcn Card/Tooltip. | Recharts directly via shadcn Chart component |
-| **Chart.js** | Canvas rendering breaks React component model. Tooltip/legend customization requires imperative workarounds. | Recharts (SVG, declarative) |
-| **A "conditional formatting library"** | No such thing exists that is worth using. Conditional formatting is `cn()` + threshold logic. Any library would be more complex than the 5 lines of code needed. | `cn()` with Tailwind classes |
-| **Redux / state management additions** | Recharts 3.x pulls in `@reduxjs/toolkit` as its own internal dependency. Do NOT add Redux to your app code. Let Recharts manage its own Redux internals. Your app state stays in React Query + React state. | Existing React Query + useState/useReducer |
-| **Separate KPI/dashboard component library** | Libraries like `react-dashboard` or dashboard templates add coupling. KPI cards are Card + number + icon. Build them in 30 minutes. | shadcn Card + Lucide icons |
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| AI Integration | AI SDK + @ai-sdk/anthropic | Raw @anthropic-ai/sdk | AI SDK handles streaming UI, abort, message state. Raw SDK requires building all of that manually. |
+| AI Integration | AI SDK + @ai-sdk/anthropic | LangChain.js | Massive dependency tree, abstraction overkill for a single-model chat with injected data context. |
+| Statistics | simple-statistics | Hand-rolled (current approach in compute-norms.ts) | Adding z-scores, percentiles, IQR on top of hand-rolled code increases bug surface. simple-statistics is tested and tree-shakeable. |
+| Statistics | simple-statistics | mathjs | mathjs is 700KB+ with matrix algebra, complex numbers, symbolic math. We need percentiles and z-scores. |
+| Anomaly Detection | Z-score/IQR via simple-statistics | Isolation Forest npm | Dataset too small (hundreds of rows), library abandoned (v0.0.9, 4 years stale), results not easily explainable to partnerships team. |
+| Anomaly Detection | Z-score/IQR via simple-statistics | Claude-based detection | Non-deterministic. Same data may get different anomaly flags on different runs. Violates project's "explainable transformations" constraint. |
+| Chat UI | AI SDK `useChat` hook | Custom WebSocket/SSE implementation | useChat provides message state, loading state, abort, error handling, and streaming out of the box. Building custom gains nothing. |
 
 ## Integration Points with Existing Stack
 
-### Recharts + shadcn/ui
-shadcn provides a `chart` component (via `npx shadcn@latest add chart`) that wraps Recharts with:
-- `ChartContainer` -- handles responsive sizing and CSS variable theming
-- `ChartTooltip` + `ChartTooltipContent` -- styled tooltips matching shadcn design
-- `ChartLegend` + `ChartLegendContent` -- styled legends
+### AI SDK + Existing API Route Pattern
+The app already has route handlers at `app/api/data/route.ts`, `app/api/accounts/route.ts`, and `app/api/health/route.ts`. The Claude chat endpoint follows the same pattern at `app/api/chat/route.ts`. Snowflake queries can be called within the route handler to fetch fresh data context before streaming to Claude.
 
-Install via: `npx shadcn@latest add chart` (copies source into `src/components/ui/chart.tsx`)
+### AI SDK + React Query
+`useChat` manages its own message state (it does not use React Query). This is correct -- chat messages are ephemeral UI state, not cacheable server data. The two systems coexist without conflict.
 
-### Recharts + Tailwind CSS Variables
-Recharts fill/stroke colors reference CSS variables: `fill="var(--color-chart-1)"`. This means dark mode works automatically when CSS variables switch. No Recharts config changes needed for theme switching.
+### simple-statistics + Existing Computation Modules
+The existing `src/lib/computation/` directory has a clean pattern: pure functions that take `Record<string, unknown>[]` and return typed results. `compute-anomalies.ts` and `compute-cross-partner.ts` follow the same pattern. `simple-statistics` functions are called inside these modules -- they are implementation details, not exposed to components.
 
-### Recharts + React Query
-Chart data comes from the same React Query hooks that power the table. Pattern:
-```typescript
-const { data: batchData } = useQuery({ queryKey: ['batches', partnerId], ... });
-// Same data feeds both table AND charts
-// No duplicate API calls
-```
+### Anomaly Data + Existing Norms/Trending
+Anomaly detection builds directly on existing infrastructure:
+- `compute-norms.ts` already produces `{ mean, stddev, count }` per metric -- z-score is `(value - mean) / stddev`
+- `compute-trending.ts` already flags direction changes -- anomalies extend this with severity scoring
+- `MetricNorm` type already exists in `types/partner-stats.ts` -- extend with anomaly fields
 
-### Conditional Formatting + TanStack Table
-TanStack Table's cell renderer functions already receive the cell value. Add threshold logic:
-```typescript
-cell: ({ getValue }) => {
-  const value = getValue<number>();
-  const deviation = computeDeviation(value, partnerAverage);
-  return (
-    <span className={cn(
-      deviation > 0.1 && 'text-green-600 bg-green-50',
-      deviation < -0.1 && 'text-red-600 bg-red-50',
-    )}>
-      {formatPercent(value)}
-    </span>
-  );
-}
-```
+### Cross-Partner Comparison + Existing Recharts
+Normalized curve overlays use the same Recharts `LineChart` + `Line` components already rendering per-partner curves. The `recoveryRate` field on `CurvePoint` (already computed in `reshape-curves.ts`) is the normalized basis for comparison -- no new chart type needed.
 
-### KPI Cards + Existing Card Component
-The existing `Card` component in `src/components/ui/card.tsx` supports a `size="sm"` variant. KPI cards compose:
-```
-Card > CardHeader > CardTitle (metric name)
-Card > CardContent > big number + delta badge
-```
+## Version Verification
 
-## Recharts 3.x Dependency Note
-
-Recharts 3.x internally depends on `@reduxjs/toolkit`, `react-redux`, `immer`, `reselect`, and `es-toolkit`. These are Recharts internals for its own state management and will be tree-shaken by Next.js bundler for any parts not used by Recharts. This adds ~150-200KB to the client bundle (gzipped). For an internal tool with 2-3 users, this is acceptable. Do NOT refactor your app to use Redux just because Recharts brings it in.
-
-## Version Compatibility
-
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| recharts@3.8.1 | react@19.2.4 | Officially supported via `peerDependencies: { react: "^19.0.0" }` |
-| recharts@3.8.1 | react-is@19.2.0+ | Must install explicitly. Recharts peers `react-is: "^19.0.0"` |
-| recharts@3.8.1 | next@16.2.3 | No known issues. Recharts is a client component (needs `"use client"` directive). |
-| recharts@3.8.1 | tailwindcss@4.x | No conflict. Recharts uses SVG attributes for styling. CSS variables bridge the two. |
-| shadcn chart component | recharts@3.x | shadcn docs provide Recharts v3 migration guide. Uses `var(--chart-N)` not `hsl(var(--chart-N))`. |
+| Package | Verified Source | Version | Last Published |
+|---------|----------------|---------|----------------|
+| `ai` | [npm registry](https://www.npmjs.com/package/ai) | 6.0.158 | 2026-04-11 |
+| `@ai-sdk/anthropic` | [npm registry](https://www.npmjs.com/package/@ai-sdk/anthropic) | 3.0.69 | 2026-04-12 |
+| `simple-statistics` | [npm registry](https://www.npmjs.com/package/simple-statistics) | 7.8.8 | ~2025-06 |
 
 ## Sources
 
-- [recharts npm](https://www.npmjs.com/package/recharts) -- version 3.8.1, peer deps verified via `npm view` (HIGH confidence)
-- [recharts GitHub issue #6857](https://github.com/recharts/recharts/issues/6857) -- React 19.2.3 blank rendering with v2.x (HIGH confidence)
-- [recharts GitHub issue #4558](https://github.com/recharts/recharts/issues/4558) -- React 19 support tracking (HIGH confidence)
-- [shadcn/ui Chart docs](https://ui.shadcn.com/docs/components/radix/chart) -- built on Recharts, theming via CSS variables (HIGH confidence)
-- [shadcn/ui Recharts v3 issue #7669](https://github.com/shadcn-ui/ui/issues/7669) -- v3 support confirmed (MEDIUM confidence)
-- [Tremor](https://www.tremor.so/) -- evaluated and rejected; wraps Recharts, redundant with shadcn (MEDIUM confidence)
+- [AI SDK documentation](https://ai-sdk.dev/docs/introduction) -- HIGH confidence
+- [AI SDK Next.js App Router guide](https://ai-sdk.dev/docs/getting-started/nextjs-app-router) -- HIGH confidence
+- [AI SDK v6 announcement](https://vercel.com/blog/ai-sdk-6) -- HIGH confidence
+- [@ai-sdk/anthropic on npm](https://www.npmjs.com/package/@ai-sdk/anthropic) -- HIGH confidence
+- [simple-statistics on npm](https://www.npmjs.com/package/simple-statistics) -- HIGH confidence
+- [simple-statistics GitHub](https://github.com/simple-statistics/simple-statistics) -- HIGH confidence
+- [isolation-forest on npm](https://www.npmjs.com/package/isolation-forest) -- evaluated and rejected (last publish 4 years ago)
+- [Anthropic TypeScript SDK](https://github.com/anthropics/anthropic-sdk-typescript) -- evaluated, AI SDK preferred for interactive UI use case
 
 ---
-*Stack research for: Bounce Data Visualizer v2.0 within-partner comparison features*
-*Researched: 2026-04-11*
+*Stack research for: Bounce Data Visualizer v3.0 intelligence & cross-partner comparison features*
+*Researched: 2026-04-12*

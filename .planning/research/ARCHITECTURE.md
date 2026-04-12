@@ -1,341 +1,583 @@
 # Architecture Patterns
 
-**Domain:** Within-partner batch comparison visualization (charts, conditional formatting, trending, KPI cards)
-**Researched:** 2026-04-11
-**Confidence:** HIGH -- based on direct codebase analysis of existing architecture
+**Domain:** AI-augmented data visualization (NLQ + anomaly detection + cross-partner comparison)
+**Researched:** 2026-04-12
+**Confidence:** HIGH (existing codebase fully analyzed, Vercel AI SDK well-documented)
 
-## Executive Summary
-
-The existing app has a clean separation: React Query fetches all data upfront, drill-down is React state, TanStack Table handles rendering/filtering/sorting, and formatting+thresholds are pure functions. The v2 visualization features integrate naturally because **the data already exists client-side** -- batch rows include 19 `COLLECTION_AFTER_*_MONTH` columns and all the metrics needed for KPIs and trending. No new API endpoints are required. The work is entirely new client-side components that consume the same React Query cache, filtered by drill state.
-
-## Current Architecture (As-Is)
+## Current Architecture (Baseline)
 
 ```
-page.tsx
+Browser (React 19)
+  |
+  +-- useData() -----> GET /api/data -----> Snowflake (agg_batch_performance_summary)
+  |                                          or static cache fallback
+  +-- useAccountData() -> GET /api/accounts -> Snowflake (master_accounts)
+  |
+  +-- usePartnerStats(partnerName, allRows)
+  |     |-- computeKpis()       (lib/computation/compute-kpis.ts)
+  |     |-- computeNorms()      (lib/computation/compute-norms.ts)
+  |     |-- reshapeCurves()     (lib/computation/reshape-curves.ts)
+  |     |-- computeTrending()   (lib/computation/compute-trending.ts)
+  |
+  +-- PartnerNormsProvider (React Context)
+  |     |-- deviation coloring in FormattedCell
+  |
   +-- DataDisplay (orchestrator)
-       |-- useData()           -> React Query -> /api/data -> Snowflake (477+ rows, 61 cols)
-       |-- useAccountData()    -> React Query -> /api/accounts -> Snowflake (partner+batch filter)
-       |-- useDrillDown()      -> React state: root -> partner -> batch
-       +-- DataTable
-            |-- useDataTable()      -> TanStack Table instance
-            |-- useFilterState()    -> URL-param dimension filters
-            |-- useColumnFilters()  -> In-column numeric/text filters
-            |-- useColumnManagement() -> Visibility, order, presets (localStorage)
-            |-- useSavedViews()     -> View snapshots (localStorage)
-            |-- TableHeader / TableBody / TableFooter
-            |-- FilterBar / FilterChips
-            +-- BreadcrumbTrail
+        |-- KpiSummaryCards (partner level)
+        |-- CollectionCurveChart (partner level, dynamic import)
+        |-- DataTable (TanStack Table + virtual scrolling)
 ```
 
-**Key architectural facts:**
-- All 477+ batch rows (61 columns each) are fetched once and cached client-side via React Query
-- Partner drill-down is a client-side filter on `PARTNER_NAME`
-- Batch drill-down triggers a separate API call for account-level data (`useAccountData`)
-- The `COLLECTION_AFTER_*_MONTH` columns (M1 through M60, 19 columns) are already in every row
-- Threshold-based conditional formatting already exists in `FormattedCell` + `thresholds.ts`
-- `BATCH_AGE_IN_MONTHS` is an identity column -- always present, used for curve truncation
-- `DataDisplay` already switches data sources by drill level in a `useMemo`
+**Key characteristics:**
+- All 477+ batch rows (61 columns) fetched once, cached client-side via React Query
+- Partner drill-down is client-side filter on PARTNER_NAME
+- Computation is client-side in `usePartnerStats` composing 4 pure modules
+- `computeNorms()` already computes mean + population stddev per metric
+- `computeTrending()` already computes batch-over-batch rolling averages with 5% threshold
+- `metric-polarity.ts` already defines which metrics are "higher_is_better" vs "lower_is_better"
+- Drill-down state is React state, managed by `useDrillDown()`
+- Snowflake connection pooled server-side, 45s timeout under Vercel's 60s limit
+- `executeQuery()` in `lib/snowflake/queries.ts` supports parameterized queries
 
-## Recommended Architecture (To-Be)
+## Recommended Architecture (v3.0)
 
-### Principle: Same Data, New Views
-
-All four v2 features consume data already in the React Query cache. No new API endpoints. No new Snowflake queries. The architecture change is adding **visualization components alongside the table** at the partner drill-down level.
+Three new capabilities slot into the existing architecture without restructuring it:
 
 ```
-page.tsx
-  +-- DataDisplay (orchestrator -- MODIFIED)
-       |-- useData()              -> (unchanged)
-       |-- useAccountData()       -> (unchanged)
-       |-- useDrillDown()         -> (unchanged)
-       |-- usePartnerStats()      -> NEW: derives KPIs + norms from partner batch rows
-       |
-       |-- [root level]           -> DataTable (unchanged)
-       |
-       +-- [partner level]        -> NEW LAYOUT
-            |-- PartnerDashboard   -> NEW: container for partner-level viz
-            |    |-- KPISummaryCards     -> NEW: 4-6 metric cards
-            |    |-- CollectionCurveChart -> NEW: Recharts line chart
-            |    +-- TrendingMetrics      -> NEW: sparklines or delta indicators
-            |-- DataTable           -> MODIFIED: conditional formatting via norms
-            +-- BreadcrumbTrail     -> (unchanged)
+Browser (React 19)
+  |
+  +-- [EXISTING] useData() ---------> GET /api/data -----> Snowflake
+  +-- [EXISTING] useAccountData() --> GET /api/accounts -> Snowflake
+  +-- [EXISTING] usePartnerStats()
+  |
+  +-- [NEW] useAnomalies(allRows) --> Pure computation (no API call)
+  |     |-- detectPartnerAnomalies()   Z-score against cross-partner norms
+  |     |-- detectBatchAnomalies()     Z-score against within-partner norms
+  |     Returns: AnomalyReport with flagged partners/batches + reasons
+  |
+  +-- [NEW] AnomalyContext (React Context)
+  |     |-- Provides anomaly badges + highlights to DataTable cells
+  |     |-- Anomaly summary panel at root level
+  |
+  +-- [NEW] useChat() (Vercel AI SDK) --> POST /api/chat --> Claude API
+  |     |-- Streams narrative responses
+  |     |-- Receives structured data context as system prompt
+  |     |-- Tool calls for live Snowflake queries
+  |
+  +-- [NEW] useCrossPartnerComparison(allRows)
+  |     |-- computePercentileRankings()
+  |     |-- computeNormalizedTrajectories()
+  |     Returns: PercentileRanking[], NormalizedCurve[]
+  |
+  +-- [NEW COMPONENTS]
+        |-- AnomalySummaryPanel (root level)
+        |-- AnomalyBadge (table cells)
+        |-- ChatPanel (slide-out drawer)
+        |-- CrossPartnerRankingTable
+        |-- NormalizedCurveOverlay (Recharts)
 ```
 
 ### Component Boundaries
 
-| Component | Responsibility | Data Source | New/Modified |
-|-----------|---------------|-------------|--------------|
-| `DataDisplay` | Orchestration, layout switching by drill level | `useData()`, `useDrillDown()` | MODIFIED -- add partner dashboard layout |
-| `usePartnerStats` | Compute partner historical norms, KPI aggregates, curve data | Filtered rows from `useData()` cache | NEW hook |
-| `PartnerDashboard` | Layout container for viz components at partner level | Props from DataDisplay | NEW component |
-| `KPISummaryCards` | Display 4-6 key metrics as cards | `usePartnerStats` output | NEW component |
-| `CollectionCurveChart` | Recharts `<LineChart>` overlaying batch curves | Partner batch rows, collection columns | NEW component |
-| `TrendingMetrics` | Batch-over-batch deltas for key metrics | `usePartnerStats` output | NEW component |
-| `FormattedCell` | Cell rendering with conditional formatting | Threshold config + partner norms | MODIFIED -- accept norm-based thresholds |
-| `thresholds.ts` | Threshold definitions and checking | Static config + computed norms | MODIFIED -- add dynamic norm thresholds |
-| `DataTable` | Interactive table with all existing features | (unchanged) | MINOR -- pass norm context down |
+| Component | Responsibility | Communicates With |
+|-----------|---------------|-------------------|
+| `useAnomalies` hook | Detect statistical anomalies across all batch data | Consumes `useData()` output, feeds AnomalyContext |
+| `AnomalyContext` | Distribute anomaly flags to cell renderers | Consumed by DataTable cells, AnomalySummaryPanel |
+| `POST /api/chat` | Server-side Claude API route with Snowflake tool access | Claude API, Snowflake via `executeQuery` |
+| `ChatPanel` | Slide-out UI for natural language queries | `useChat()` from Vercel AI SDK |
+| `useCrossPartnerComparison` | Compute percentile rankings and normalized curves | Consumes `useData()` output |
+| `CrossPartnerRankingTable` | Percentile ranking display at root level | `useCrossPartnerComparison` output |
+| `NormalizedCurveOverlay` | Recharts overlay comparing partner trajectories | `useCrossPartnerComparison` output |
 
-### Data Flow
+## Integration Points with Existing Code
+
+### 1. Anomaly Detection -- Extends Existing Computation Pattern
+
+**Why it fits:** The existing `usePartnerStats` composes 4 pure computation modules. Anomaly detection is a 5th computation that follows the same pattern but operates on ALL rows (cross-partner) rather than one partner's rows.
+
+**Reuse of existing code:**
+- `computeNorms()` logic (mean + stddev) reused for cross-partner norms
+- `metric-polarity.ts` reused to determine whether anomaly is good or bad
+- `TRENDING_METRICS` list reused for which metrics to flag
+
+**Integration:**
+- New `lib/computation/detect-anomalies.ts` follows exact same pattern as `compute-trending.ts`
+- New `useAnomalies(allRows)` hook mirrors `usePartnerStats` structure
+- `AnomalyContext` parallels `PartnerNormsContext` -- wraps DataTable, consumed by cells
+
+**What changes in existing code:**
+- `DataDisplay` -- add `AnomalyProvider` wrapping the layout (same pattern as `PartnerNormsProvider`)
+- `FormattedCell` -- optionally render anomaly badge when `AnomalyContext` flags the cell
+- Root-level layout -- add `AnomalySummaryPanel` above the table
+
+**What does NOT change:**
+- `useData`, `usePartnerStats`, `computeNorms`, `computeTrending` -- untouched
+- API routes -- no changes needed, anomaly detection is client-side
+- DataTable core, column configs, drill-down logic -- untouched
+
+### 2. Claude Query Layer -- New Server Route + Client Panel
+
+**Why Vercel AI SDK:** Already deployed on Vercel, already using Next.js 16. The AI SDK provides `streamText` server-side and `useChat` client-side with streaming baked in. No custom SSE or WebSocket plumbing. Anthropic is a first-class provider.
+
+**Packages:** `ai`, `@ai-sdk/anthropic`, `@ai-sdk/react`
+
+**Server side** (`/api/chat/route.ts`):
+```typescript
+import { streamText } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
+import { executeQuery } from '@/lib/snowflake/queries';
+import { z } from 'zod';
+
+export async function POST(req: Request) {
+  const { messages, context } = await req.json();
+
+  const result = streamText({
+    model: anthropic('claude-sonnet-4-5'),
+    system: buildSystemPrompt(context),
+    messages,
+    tools: {
+      querySnowflake: {
+        description: 'Run a read-only SQL query against batch performance or account data',
+        parameters: z.object({
+          sql: z.string().describe('SELECT query against allowed tables'),
+        }),
+        execute: async ({ sql }) => {
+          // Validate: must be SELECT, allowed tables only, enforce LIMIT
+          const validated = validateAndSanitizeSQL(sql);
+          const rows = await executeQuery(validated);
+          return { rows: rows.slice(0, 100) };
+        },
+      },
+    },
+  });
+
+  return result.toDataStreamResponse();
+}
+```
+
+**Client side:**
+```typescript
+import { useChat } from '@ai-sdk/react';
+
+const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat({
+  api: '/api/chat',
+  body: { context: { drillState, anomalySummary, partnerName } },
+});
+```
+
+**What changes in existing code:**
+- `DataDisplay` or `layout.tsx` -- add ChatPanel trigger button (FAB or header button)
+- New env var: `ANTHROPIC_API_KEY` in Vercel environment
+
+**What does NOT change:**
+- All existing data fetching, computation, rendering -- untouched
+- Snowflake connection module -- reused as-is by the chat tool
+- `providers.tsx` -- no changes needed (useChat manages its own state)
+
+### 3. Cross-Partner Comparison -- Extends Computation + New Charts
+
+**Integration:**
+- New `lib/computation/compute-percentiles.ts` -- rank partners on key metrics
+- New `lib/computation/normalize-curves.ts` -- normalize collection curves to % of total placed
+- New `useCrossPartnerComparison(allRows)` hook at root level
+- New chart components extend existing Recharts + shadcn Chart patterns
+
+**What changes in existing code:**
+- `DataDisplay` -- add comparison view at root level (tab or section below table)
+
+**What does NOT change:**
+- Existing charts, KPIs, table -- untouched
+- API routes -- no changes, all computation is client-side
+
+## Data Flow
+
+### Anomaly Detection Data Flow
 
 ```
-React Query Cache (useData -> 477+ rows, 61 cols)
-    |
-    |--- [root level] ---> DataTable (all rows, no change)
-    |
-    +--- [partner level] ---> filter rows by PARTNER_NAME (existing logic in DataDisplay)
-              |
-              |--- usePartnerStats(partnerRows)
-              |       |-- KPI aggregates (avg placed, total collected, penetration rate, etc.)
-              |       |-- Historical norms (mean + stddev per metric across batches)
-              |       +-- Collection curve data (reshape rows -> chart series)
-              |
-              |--- KPISummaryCards   <-- KPI aggregates
-              |--- CollectionCurveChart <-- curve series data
-              |--- TrendingMetrics   <-- batch-over-batch deltas
-              +--- DataTable         <-- rows + norms (for conditional formatting)
+GET /api/data (existing, already cached)
+  |
+  v
+allRows (477+ batch records, cached in React Query)
+  |
+  +---> useAnomalies(allRows)
+  |       |
+  |       +---> computeCrossPartnerNorms(allRows)
+  |       |       Group by PARTNER_NAME
+  |       |       Aggregate each partner's metrics (weighted or averaged)
+  |       |       Compute mean + stddev ACROSS partners
+  |       |
+  |       +---> For each partner:
+  |       |       For each metric:
+  |       |         Z-score = (partnerAggregate - crossPartnerMean) / crossPartnerStddev
+  |       |         |Z| > 2.0 --> WARNING
+  |       |         |Z| > 3.0 --> CRITICAL
+  |       |         Use metric-polarity.ts to label "good" vs "bad" anomaly
+  |       |
+  |       +---> For each partner's batches:
+  |       |       Within-partner norms (same as computeNorms but for anomaly flags)
+  |       |       Flag batches deviating > 2 stddev from their own partner's norms
+  |       |
+  |       v
+  |     AnomalyReport {
+  |       partnerAnomalies: Map<partnerName, Anomaly[]>
+  |       batchAnomalies: Map<batchKey, Anomaly[]>
+  |       summary: { totalFlags, criticalCount, warningCount }
+  |     }
+  |
+  +---> AnomalyContext.Provider
+          |
+          +---> AnomalySummaryPanel (root level: "3 partners need attention")
+          +---> DataTable cells (badge overlay when metric is flagged)
+          +---> KpiSummaryCards (anomaly indicator on partner-level KPIs)
 ```
 
-**Critical insight:** The collection curve columns (`COLLECTION_AFTER_1_MONTH` through `COLLECTION_AFTER_60_MONTH`) need to be reshaped from wide format (19 columns per row) to long format (array of `{month, amount}` per batch) for charting. Each batch becomes a line series. `BATCH_AGE_IN_MONTHS` determines how many months of data are valid -- truncate nulls beyond batch age.
-
-## New and Modified Files
+### Claude Query Layer Data Flow
 
 ```
-src/
-  hooks/
-    use-partner-stats.ts              # NEW: derive KPIs, norms, curve data from partner rows
-  lib/
-    charts/
-      collection-curves.ts            # NEW: reshape wide->long, series builder
-    formatting/
-      thresholds.ts                   # MODIFIED: add norm-based dynamic thresholds
-  components/
-    partner/
-      partner-dashboard.tsx           # NEW: layout container
-      kpi-summary-cards.tsx           # NEW: metric cards using shadcn/ui Card
-      collection-curve-chart.tsx      # NEW: Recharts LineChart
-      trending-metrics.tsx            # NEW: delta indicators / sparklines
-    table/
-      formatted-cell.tsx              # MODIFIED: accept norm context via React Context
-    data-display.tsx                  # MODIFIED: partner-level layout branching
+User types question in ChatPanel
+  |
+  v
+useChat() sends POST /api/chat
+  |  Body: { messages, context: { drillState, filters, anomalySummary } }
+  |
+  v
+/api/chat/route.ts
+  |
+  +---> Builds system prompt with:
+  |       - Available tables: agg_batch_performance_summary (61 cols), master_accounts (78 cols)
+  |       - Current drill context (which partner/batch user is viewing)
+  |       - Current anomaly flags (so Claude can reference them)
+  |       - Summary statistics (partner count, batch count, date range)
+  |
+  +---> streamText({ model: anthropic('claude-sonnet-4-5'), system, messages, tools })
+  |       |
+  |       +---> Claude generates narrative response
+  |       |       OR
+  |       +---> Claude calls querySnowflake tool
+  |               |
+  |               v
+  |             validateAndSanitizeSQL(sql)
+  |               - Must start with SELECT
+  |               - Only allowed tables: agg_batch_performance_summary, master_accounts
+  |               - Enforce LIMIT 100
+  |               - Strip any DDL/DML keywords
+  |               |
+  |               v
+  |             executeQuery() (existing Snowflake module, reused as-is)
+  |               |
+  |               v
+  |             Results returned to Claude for interpretation
+  |
+  v
+Streaming response --> useChat() --> ChatPanel UI
+  (tokens appear in real-time via SSE)
+```
+
+### Cross-Partner Comparison Data Flow
+
+```
+GET /api/data (existing, already cached)
+  |
+  v
+allRows (477+ batch records)
+  |
+  +---> useCrossPartnerComparison(allRows)
+          |
+          +---> computePercentileRankings(allRows)
+          |       Group by PARTNER_NAME
+          |       For each partner: compute aggregate KPIs (reuse computeKpis pattern)
+          |       For each metric: rank all partners, compute percentile position
+          |       Return: PercentileRanking[] { partnerName, metric, value, percentile }
+          |
+          +---> computeNormalizedTrajectories(allRows)
+          |       For each partner: get collection curves (reuse reshapeCurves pattern)
+          |       Normalize: convert amounts to % of TOTAL_AMOUNT_PLACED
+          |       Align on BATCH_AGE_IN_MONTHS for x-axis comparability
+          |       Average across batches per partner to get single trajectory
+          |       Return: NormalizedCurve[] { partnerName, points: {month, pctRecovered}[] }
+          |
+          v
+        CrossPartnerData {
+          rankings: PercentileRanking[]
+          normalizedCurves: NormalizedCurve[]
+        }
+          |
+          +---> CrossPartnerRankingTable (root level, sortable by any metric)
+          +---> NormalizedCurveOverlay (root level, Recharts multi-line)
 ```
 
 ## Patterns to Follow
 
-### Pattern 1: Derived State Hook (usePartnerStats)
+### Pattern 1: Client-Side Computation Hook
 
-All v2 computations derive from existing cached data. Use a custom hook with `useMemo` to avoid recomputation.
-
-**What:** Single hook that takes partner batch rows and returns all computed values (KPIs, norms, chart series).
-**When:** Whenever the user drills into a partner.
-**Why:** Centralizes all partner-level computation. Components receive pre-computed data, staying pure/presentational.
+**What:** Pure computation in `useMemo`, following `usePartnerStats` pattern.
+**When:** Transforming already-fetched data without additional API calls.
+**Why:** Data is already client-side via React Query. No reason to round-trip to server. With 477 rows, computation is trivial (~1ms).
 
 ```typescript
-interface PartnerStats {
-  kpis: KPIData[];
-  norms: Record<string, { mean: number; stddev: number }>;
-  collectionCurves: ChartSeries[];
-  trending: TrendingMetric[];
-}
-
-function usePartnerStats(partnerRows: Record<string, unknown>[]): PartnerStats {
+// hooks/use-anomalies.ts
+export function useAnomalies(allRows: Record<string, unknown>[]): AnomalyReport | null {
   return useMemo(() => {
-    const kpis = computeKPIs(partnerRows);
-    const norms = computeNorms(partnerRows);
-    const collectionCurves = reshapeCollectionCurves(partnerRows);
-    const trending = computeTrending(partnerRows);
-    return { kpis, norms, collectionCurves, trending };
-  }, [partnerRows]);
+    if (allRows.length === 0) return null;
+    return detectAnomalies(allRows);
+  }, [allRows]);
 }
 ```
 
-### Pattern 2: Wide-to-Long Reshape for Charts
+### Pattern 2: React Context for Cross-Cutting UI State
 
-Collection data is stored as 19 columns per row (Snowflake convention). Charts need it as arrays.
-
-**What:** Pure function that transforms `{COLLECTION_AFTER_1_MONTH: 5000, COLLECTION_AFTER_2_MONTH: 8000, ...}` into `[{month: 1, amount: 5000}, {month: 2, amount: 8000}, ...]` per batch.
-**When:** Building chart series for `CollectionCurveChart`.
+**What:** Context provider distributing computed state to deeply nested components.
+**When:** Multiple unrelated components need the same derived data.
+**Why:** Mirrors existing `PartnerNormsContext`. Avoids prop drilling anomaly data through DataTable.
 
 ```typescript
-const COLLECTION_MONTHS = [1,2,3,4,5,6,7,8,9,10,11,12,15,18,21,24,30,36,48,60];
+// contexts/anomaly.tsx -- follows exact same shape as contexts/partner-norms.tsx
+const AnomalyContext = createContext<AnomalyReport | null>(null);
 
-interface CurvePoint { month: number; amount: number | null; }
-interface ChartSeries { batchName: string; batchAge: number; data: CurvePoint[]; }
+export function AnomalyProvider({ report, children }: { report: AnomalyReport | null; children: ReactNode }) {
+  return (
+    <AnomalyContext.Provider value={report}>
+      {children}
+    </AnomalyContext.Provider>
+  );
+}
 
-function reshapeCollectionCurves(rows: Record<string, unknown>[]): ChartSeries[] {
-  return rows.map(row => ({
-    batchName: String(row.BATCH),
-    batchAge: Number(row.BATCH_AGE_IN_MONTHS) || 0,
-    data: COLLECTION_MONTHS
-      .filter(m => m <= (Number(row.BATCH_AGE_IN_MONTHS) || 0))
-      .map(m => ({
-        month: m,
-        amount: row[`COLLECTION_AFTER_${m}_MONTH`] as number | null,
-      })),
-  }));
+export function useAnomalyFlags() {
+  const ctx = useContext(AnomalyContext);
+  if (!ctx) throw new Error('useAnomalyFlags must be used within AnomalyProvider');
+  return ctx;
 }
 ```
 
-### Pattern 3: Norm-Based Conditional Formatting (Extending Existing)
+### Pattern 3: Vercel AI SDK for Streaming Chat
 
-The existing `thresholds.ts` uses static absolute thresholds (e.g., penetration rate below 5%). Extend it to support dynamic norms computed per-partner.
+**What:** `streamText` on server, `useChat` on client, tool calling for Snowflake access.
+**When:** Building the natural language query interface.
+**Why:** First-party Vercel integration. Handles streaming/SSE, manages conversation state, supports Anthropic tool use natively. No custom WebSocket or event source code needed.
 
-**What:** Compute mean and standard deviation per metric across a partner's batches. Flag values >1.5 stddev from mean.
-**When:** At partner drill-down level, applied to the DataTable cells.
-**Integration point:** Use React Context (`PartnerNormsContext`) to provide norms without prop-drilling through TanStack Table column definitions.
+### Pattern 4: System Prompt as Data Context Bridge
+
+**What:** Inject current application state into Claude's system prompt so it knows what the user is looking at.
+**When:** Every chat message.
+**Why:** Claude needs context about the current view, filters, and anomalies to give relevant answers.
 
 ```typescript
-// New type alongside existing ThresholdConfig
-interface NormThreshold {
-  mean: number;
-  stddev: number;
-}
+function buildSystemPrompt(context: ChatContext): string {
+  return `You are a data analyst for Bounce's partnerships team.
+The user is viewing: ${context.drillState.level} level
+${context.drillState.partner ? `Partner: ${context.drillState.partner}` : 'All partners'}
+${context.anomalySummary ? `Current anomaly flags:\n${context.anomalySummary}` : 'No anomalies flagged.'}
 
-// New function alongside existing checkThreshold
-function checkNormThreshold(
-  value: number,
-  norm: NormThreshold,
-  zThreshold: number = 1.5
-): ThresholdResult {
-  const zScore = (value - norm.mean) / norm.stddev;
-  if (zScore < -zThreshold) {
-    return { isLow: true, isHigh: false, reason: `${Math.abs(zScore).toFixed(1)} std devs below partner avg` };
+Available tables:
+- agg_batch_performance_summary (${context.batchCount} rows, 61 columns including penetration rate, collection amounts at months 1-60, batch age)
+- master_accounts (account-level detail, 78 columns)
+
+When querying, always include a LIMIT clause. Explain findings in plain language for a non-technical partnerships team.`;
+}
+```
+
+### Pattern 5: SQL Safety Layer for Chat Tool
+
+**What:** Validate and sanitize any SQL Claude generates before executing against Snowflake.
+**When:** Every querySnowflake tool call.
+**Why:** Claude generates SQL from user prompts. Must prevent injection, DDL, and runaway queries.
+
+```typescript
+function validateAndSanitizeSQL(sql: string): string {
+  const trimmed = sql.trim();
+
+  // Must be a SELECT
+  if (!/^SELECT\s/i.test(trimmed)) {
+    throw new Error('Only SELECT queries are allowed');
   }
-  if (zScore > zThreshold) {
-    return { isLow: false, isHigh: true, reason: `${zScore.toFixed(1)} std devs above partner avg` };
+
+  // Block dangerous keywords
+  const blocked = /\b(DROP|DELETE|UPDATE|INSERT|ALTER|CREATE|TRUNCATE|GRANT|REVOKE)\b/i;
+  if (blocked.test(trimmed)) {
+    throw new Error('Query contains disallowed keywords');
   }
-  return { isLow: false, isHigh: false, reason: null };
+
+  // Only allowed tables
+  const allowedTables = ['agg_batch_performance_summary', 'master_accounts'];
+  const fromMatch = trimmed.match(/FROM\s+(\w+)/i);
+  if (fromMatch && !allowedTables.includes(fromMatch[1].toLowerCase())) {
+    throw new Error(`Table ${fromMatch[1]} is not accessible`);
+  }
+
+  // Enforce LIMIT
+  if (!/LIMIT\s+\d+/i.test(trimmed)) {
+    return trimmed.replace(/;?\s*$/, ' LIMIT 100');
+  }
+
+  return trimmed;
 }
 ```
-
-**How FormattedCell changes:** Currently `FormattedCell` calls `getThreshold(columnKey)` for static thresholds. Add a `useContext(PartnerNormsContext)` call. When norms are present (partner level), check norm thresholds in addition to static thresholds. Norm-based formatting uses a different visual treatment (e.g., amber tint vs. existing blue/red tint) so users can distinguish "absolute outlier" from "relative to partner norm."
-
-### Pattern 4: Conditional Layout by Drill Level
-
-DataDisplay already switches data source by drill level. Extend this to switch layout.
-
-**What:** At root level, show only the DataTable. At partner level, show PartnerDashboard above the DataTable. At batch level, show account DataTable (existing).
-
-```typescript
-// In DataDisplay, within the return JSX
-{drillState.level === 'partner' && partnerStats && (
-  <PartnerDashboard
-    stats={partnerStats}
-    partnerName={drillState.partner!}
-  />
-)}
-```
-
-The `PartnerDashboard` renders in the gap between breadcrumbs and table, taking a fixed height (e.g., 320px) with the table flexing below it.
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Separate API Endpoints for Chart Data
-**What:** Creating `/api/charts/collection-curves` or similar.
-**Why bad:** The data is already client-side in the React Query cache. A new endpoint would duplicate data transfer, add Snowflake query latency, and create a sync problem between table and chart data.
-**Instead:** Derive chart data from the existing React Query cache using `useMemo`.
+### Anti-Pattern 1: Server-Side Anomaly Detection
 
-### Anti-Pattern 2: Global Charting State
-**What:** Putting chart selection state, zoom level, or highlighted series in a global store or saved views.
-**Why bad:** Chart state is local to the partner view. It resets when navigating away, and that is the correct behavior.
-**Instead:** Keep chart interaction state local to `CollectionCurveChart` with `useState`.
+**What:** Computing anomalies in an API route instead of client-side.
+**Why bad:** Data is already fetched and cached client-side via React Query. Server round-trip adds latency for no benefit. With 477 rows, computation is ~1ms in the browser.
+**Instead:** Pure computation in `useMemo`, same as `usePartnerStats`.
 
-### Anti-Pattern 3: Computing Norms on Every Render
-**What:** Recomputing mean/stddev inside `FormattedCell` for each cell.
-**Why bad:** With 477+ rows x 61 columns, this creates O(rows * columns * rows) computation on every table interaction.
-**Instead:** Compute norms once in `usePartnerStats` (memoized), provide via React Context.
+### Anti-Pattern 2: Giving Claude Unrestricted SQL Access
 
-### Anti-Pattern 4: Canvas-Based Charts for This Dataset
-**What:** Using Canvas rendering (Nivo Canvas, ECharts Canvas) for collection curves.
-**Why bad:** Overkill. The dataset per partner is small (typically 5-20 batches with 19 data points each, so max ~380 SVG points). Canvas adds complexity without benefit.
-**Instead:** Use Recharts SVG-based `<LineChart>` -- simple API, composable, React-native.
+**What:** Letting Claude generate and execute arbitrary SQL without validation.
+**Why bad:** SQL injection risk, runaway queries hitting Vercel's 60s timeout, accidental full table scans.
+**Instead:** Validate server-side: must be SELECT, allowed tables only, LIMIT enforced. See Pattern 5 above.
 
-### Anti-Pattern 5: Reshaping Data in the Chart Component
-**What:** Doing the wide-to-long column reshape inside the chart render function.
-**Why bad:** Couples data transformation to presentation. Makes testing harder. Runs on every re-render.
-**Instead:** Reshape in `usePartnerStats` (or in `lib/charts/collection-curves.ts`), pass clean series data to chart component.
+### Anti-Pattern 3: Sending All Data in the Chat Context
 
-## Charting Library: Recharts
+**What:** Stuffing 477 rows x 61 columns into the system prompt.
+**Why bad:** ~500K+ tokens, slow, expensive, unnecessary.
+**Instead:** Send summary statistics in the system prompt. Let Claude use the `querySnowflake` tool when it needs specific data.
 
-**Recommendation:** Recharts. It is the most popular React charting library (13M+ weekly npm downloads), uses a declarative component API that matches the existing codebase style (shadcn/ui + Tailwind), and handles the dataset size (max ~20 lines x 19 points) with zero performance concerns.
+### Anti-Pattern 4: Custom WebSocket/SSE for Chat
 
-**React 19.2 compatibility note:** Recharts has a known `react-is` dependency mismatch with React 19. Fix by adding to `package.json`:
-```json
-"overrides": {
-  "react-is": "^19.2.0"
-}
-```
+**What:** Building custom streaming infrastructure for the chat interface.
+**Why bad:** Vercel AI SDK's `useChat` handles all of this out of the box.
+**Instead:** `useChat()` hook with `body` parameter to pass context.
 
-**Alternatives rejected:**
-| Library | Why Not |
-|---------|---------|
-| Nivo | Heavier bundle, D3 dependency, more complex API. Overkill for line charts + sparklines. |
-| Victory | Less community adoption (360K vs 13M weekly downloads), cross-platform focus not relevant. |
-| Tremor | Built on Recharts anyway -- adds an abstraction layer the project does not need. |
+### Anti-Pattern 5: New API Routes for Anomaly/Comparison Data
 
-## Integration Points (Explicit)
+**What:** Creating `/api/anomalies` or `/api/comparison` endpoints.
+**Why bad:** Data is already on the client. Server routes add complexity and latency for zero benefit.
+**Instead:** Client-side computation hooks following existing patterns.
 
-### 1. DataDisplay.tsx -- Layout Change (MODIFIED)
-**Current:** Renders `<DataTable>` inside a flex column for all drill levels.
-**Change:** At partner level, insert `<PartnerDashboard>` between breadcrumbs and DataTable. Pass `partnerRows` (already computed in the `tableData` useMemo at line 44-55) to `usePartnerStats`.
-**Risk:** Low. The existing `drillState.level` branching pattern is already established.
+### Anti-Pattern 6: Real-Time Anomaly Monitoring
 
-### 2. FormattedCell.tsx -- Norm-Based Formatting (MODIFIED)
-**Current:** Uses static `COLUMN_THRESHOLDS` from `thresholds.ts` (lines 49-68).
-**Change:** Add `useContext(PartnerNormsContext)` call. When norms are available and a column has a norm, apply norm-based tinting alongside existing static thresholds. Use amber for "above partner norm" vs. existing blue/red for absolute thresholds.
-**Risk:** Medium. Must not break existing formatting behavior at root level (where norms context is empty/null).
+**What:** Polling for anomalies, WebSocket updates, background workers.
+**Why bad:** This is a dashboard viewed by 2-3 people on demand. Data refreshes when they load the page. Real-time adds massive complexity for no value.
+**Instead:** Compute anomalies once when data loads. Re-compute when data refetches (React Query handles this naturally).
 
-### 3. thresholds.ts -- Dynamic Threshold Support (MODIFIED)
-**Current:** Only static thresholds keyed by column name, `checkThreshold()` function.
-**Change:** Add `NormThreshold` type and `checkNormThreshold()` function. Existing code untouched.
-**Risk:** Low. Additive change only.
+## New Files Needed
 
-### 4. package.json -- Add Recharts (MODIFIED)
-**Change:** `npm install recharts` + add `"overrides": { "react-is": "^19.2.0" }` to package.json.
-**Risk:** Low-Medium. The react-is override is well-documented but should be tested before building chart components.
+### API Routes (1 new)
 
-## Suggested Build Order
+| File | Purpose |
+|------|---------|
+| `src/app/api/chat/route.ts` | Claude query layer -- POST with streamText + Snowflake tool |
 
-Build order is driven by dependencies -- each phase unlocks the next.
+### Computation Modules (3 new)
 
-```
-Phase 1: usePartnerStats + data reshaping utilities (no UI)
-   |  (everything else depends on this computation layer)
-   v
-Phase 2: KPI Summary Cards (simplest viz, validates data flow)
-   |  (proves the dashboard layout and DataDisplay changes work)
-   v
-Phase 3: Collection Curve Chart (Recharts, most impactful feature)
-   |  (chart infrastructure now exists, Recharts proven to work)
-   v
-Phase 4: Conditional Formatting with partner norms
-   |  (extends existing threshold system, needs stable norms)
-   v
-Phase 5: Trending Metrics (batch-over-batch deltas, optional sparklines)
-```
+| File | Purpose |
+|------|---------|
+| `src/lib/computation/detect-anomalies.ts` | Z-score anomaly detection (cross-partner + within-partner) |
+| `src/lib/computation/compute-percentiles.ts` | Percentile ranking of partners on key metrics |
+| `src/lib/computation/normalize-curves.ts` | Normalize collection curves for cross-partner overlay |
 
-**Rationale:**
-1. **usePartnerStats first** because every other feature consumes its output. Building the pure computation layer with tests ensures correctness before any UI work.
-2. **KPIs second** because they are the simplest visualization (shadcn/ui Card components with numbers) and validate the DataDisplay layout change + data flow end-to-end.
-3. **Collection curves third** because they are the highest-value feature (the core "within-partner comparison" goal) and require the Recharts dependency to be added and verified.
-4. **Conditional formatting fourth** because it modifies existing components (`FormattedCell`) and needs the norms computation to be stable and tested.
-5. **Trending fifth** because it builds on the same stats infrastructure and can optionally reuse Recharts for sparklines.
+### Utility Modules (1 new)
+
+| File | Purpose |
+|------|---------|
+| `src/lib/chat/system-prompt.ts` | Build context-aware system prompt for Claude |
+| `src/lib/chat/sql-validator.ts` | Validate and sanitize Claude-generated SQL |
+
+### Hooks (2 new)
+
+| File | Purpose |
+|------|---------|
+| `src/hooks/use-anomalies.ts` | Memoized anomaly computation from allRows |
+| `src/hooks/use-cross-partner-comparison.ts` | Memoized percentile + normalized curve computation |
+
+### Contexts (1 new)
+
+| File | Purpose |
+|------|---------|
+| `src/contexts/anomaly.tsx` | AnomalyProvider + useAnomalyFlags hook |
+
+### Types (2 new)
+
+| File | Purpose |
+|------|---------|
+| `src/types/anomaly.ts` | Anomaly, AnomalyReport, AnomalySeverity types |
+| `src/types/comparison.ts` | PercentileRanking, NormalizedCurve types |
+
+### Components (5-6 new)
+
+| File | Purpose |
+|------|---------|
+| `src/components/anomaly/anomaly-summary-panel.tsx` | Root-level anomaly overview ("3 partners need attention") |
+| `src/components/anomaly/anomaly-badge.tsx` | Inline badge for flagged cells/rows |
+| `src/components/chat/chat-panel.tsx` | Slide-out drawer with chat interface |
+| `src/components/chat/chat-message.tsx` | Individual message rendering (user + assistant) |
+| `src/components/comparison/cross-partner-ranking.tsx` | Percentile ranking table |
+| `src/components/comparison/normalized-curve-overlay.tsx` | Recharts multi-partner normalized overlay |
+
+### Modified Files (3 existing)
+
+| File | Change |
+|------|--------|
+| `src/components/data-display.tsx` | Add AnomalyProvider, AnomalySummaryPanel, ChatPanel trigger, comparison section |
+| `src/components/table/formatted-cell.tsx` | Consume AnomalyContext for optional badge rendering on flagged cells |
+| `package.json` | Add `ai`, `@ai-sdk/anthropic`, `@ai-sdk/react` |
 
 ## Scalability Considerations
 
-| Concern | Current (477 rows) | At 2K rows | At 10K rows |
+| Concern | At 477 rows (now) | At 5K rows | At 50K rows |
 |---------|-------------------|------------|-------------|
-| Partner stats computation | Instant (<1ms for ~20 rows per partner) | Instant | Consider server-side computation |
-| Collection curve rendering | 5-20 lines x 19 points, trivial SVG | Same (per-partner) | Same (per-partner, not data-dependent) |
-| Norm computation | O(batches x metrics), trivial | Trivial | May want to precompute in Snowflake |
-| React Query cache size | ~2MB estimated | ~8MB | Consider pagination or partial loading |
-| FormattedCell with norms | Context lookup per cell, negligible | Negligible | Negligible (norms are precomputed) |
+| Anomaly computation | <1ms, useMemo | <10ms, fine | Web Worker or server-side |
+| Chat system prompt | Summary stats (~500 tokens) | Same approach | Same approach |
+| Cross-partner charts | All partners overlay | Filter to top 15-20 | Cluster/sample |
+| Snowflake query via chat | 45s timeout, fine | Add LIMIT enforcement | Add query cost estimation |
+| Cross-partner percentiles | Trivial grouping | Trivial | Consider server-side aggregation |
 
-At current scale (477 rows, ~37 partners averaging ~13 batches each), all computations are trivially fast client-side. No architecture changes needed until total row count exceeds ~5K.
+With 477 rows and 2-3 users, all client-side computation is trivially fast. The architecture scales to ~5K rows without changes. Beyond that, move heavy computation to Web Workers or server-side aggregation in Snowflake views.
+
+## Build Order (Dependency-Driven)
+
+```
+Phase 1: Anomaly Detection (no new dependencies, no API keys)
+  - types/anomaly.ts
+  - lib/computation/detect-anomalies.ts (reuses computeNorms pattern)
+  - hooks/use-anomalies.ts
+  - contexts/anomaly.tsx
+  - components/anomaly/anomaly-summary-panel.tsx
+  - components/anomaly/anomaly-badge.tsx
+  - Modified: data-display.tsx (add AnomalyProvider)
+  - Modified: formatted-cell.tsx (consume AnomalyContext)
+  WHY FIRST: Pure computation, no external dependencies, no API keys.
+  Immediately surfaces value. Provides anomaly data that enriches
+  both the chat layer (Phase 3) and comparison views (Phase 2).
+
+Phase 2: Cross-Partner Comparison (no new dependencies)
+  - types/comparison.ts
+  - lib/computation/compute-percentiles.ts
+  - lib/computation/normalize-curves.ts
+  - hooks/use-cross-partner-comparison.ts
+  - components/comparison/cross-partner-ranking.tsx
+  - components/comparison/normalized-curve-overlay.tsx
+  - Modified: data-display.tsx (add comparison section at root level)
+  WHY SECOND: Also pure computation. Extends existing Recharts patterns.
+  No external service dependencies.
+
+Phase 3: Claude Query Layer (requires ANTHROPIC_API_KEY)
+  - npm install ai @ai-sdk/anthropic @ai-sdk/react
+  - lib/chat/system-prompt.ts
+  - lib/chat/sql-validator.ts
+  - app/api/chat/route.ts
+  - components/chat/chat-panel.tsx
+  - components/chat/chat-message.tsx
+  - Modified: data-display.tsx (add chat trigger)
+  - New env var: ANTHROPIC_API_KEY
+  WHY LAST: Requires API key, incurs per-query cost, most complex
+  (prompt engineering, SQL safety, streaming UI). Anomaly detection
+  and comparison provide context that makes chat smarter -- Claude
+  can reference flagged anomalies and ranking data.
+```
+
+**Phase ordering rationale:**
+1. Anomaly detection is foundational -- it produces data consumed by both the comparison layer (which anomalies to highlight) and the chat layer (anomaly context in system prompt).
+2. Cross-partner comparison is self-contained and extends existing patterns.
+3. Chat depends on both prior features for richest context, plus requires external API setup.
 
 ## Sources
 
-- Codebase analysis: direct file reads of `data-display.tsx`, `use-drill-down.ts`, `use-data.ts`, `formatted-cell.tsx`, `thresholds.ts`, `config.ts`, `aggregations.ts`, `data-table.tsx`, `use-account-data.ts`, `queries.ts`, `route.ts`
-- [Recharts vs Nivo vs Victory -- npm-compare](https://npm-compare.com/@nivo/bar,recharts,victory) (download statistics, feature comparison)
-- [Recharts React 19 compatibility -- GitHub Issue #4558](https://github.com/recharts/recharts/issues/4558) (react-is override fix)
-- [Recharts React 19.2 rendering issue -- GitHub Issue #6857](https://github.com/recharts/recharts/issues/6857) (confirms override still needed for 19.2)
-- [npm trends: nivo vs recharts vs victory](https://npmtrends.com/nivo-vs-recharts-vs-victory) (adoption data)
+- Existing codebase analysis: full read of all hooks, API routes, computation modules, types, contexts, components
+- [Vercel AI SDK documentation](https://ai-sdk.dev/docs/introduction) -- streamText, useChat, tool calling
+- [Vercel AI SDK Anthropic provider](https://sdk.vercel.ai/docs/guides/providers/anthropic) -- model configuration
+- [AI SDK useChat reference](https://ai-sdk.dev/docs/reference/ai-sdk-ui/use-chat) -- hook API, streaming, body parameter
+- [Claude structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs) -- output_config.format
+- [Statistical anomaly detection methods](https://www.tinybird.co/blog/anomaly-detection) -- Z-score for time series
+- [Moving Z-Score vs Moving IQR](https://medium.com/@kis.andras.nandor/detecting-time-series-anomalies-moving-z-score-vs-moving-iqr-70754d853105) -- method comparison

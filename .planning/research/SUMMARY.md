@@ -1,48 +1,72 @@
-# Research Summary: v2.0 Within-Partner Comparison
+# Research Summary: v3.0 Intelligence & Cross-Partner Comparison
 
-**Synthesized:** 2026-04-12
+**Domain:** AI-powered data analytics with anomaly detection and cross-partner benchmarking
+**Researched:** 2026-04-12
+**Overall confidence:** HIGH
+
+## Executive Summary
+
+The v3.0 milestone adds three capabilities to the Bounce Data Visualizer: a Claude-powered natural language query layer, passive anomaly detection, and cross-partner comparison with normalization. The good news is that the existing architecture -- pure computation modules composed by `usePartnerStats`, React Query cache holding all batch data client-side, and the established route handler pattern -- is well-suited for all three features with minimal structural changes.
+
+The stack additions are small: Vercel AI SDK (`ai` + `@ai-sdk/anthropic`) for the query layer and `simple-statistics` for statistical computation. That is three new npm packages total. No new databases, no new services, no infrastructure changes beyond adding an `ANTHROPIC_API_KEY` environment variable to Vercel.
+
+The key architectural insight is separation of concerns between deterministic computation and AI narration. Anomaly detection must be deterministic (z-scores, percentile thresholds) so the same data always produces the same flags. Claude's role is to explain anomalies and answer questions about them, not to detect them. This separation satisfies the project's "explainable transformations" constraint and avoids the non-determinism trap that plagued the original Claude + Snowflake queries the tool was built to replace.
+
+Cross-partner comparison extends the existing within-partner norms pattern. The v2 computation layer already computes mean/stddev per metric within a partner. v3 adds a cross-partner layer that computes the same statistics across all partners, producing percentile rankings. The `recoveryRate` field already exists on `CurvePoint` in the types, so normalized curve overlays require no new data transformation -- just a new chart view that selects curves from multiple partners.
 
 ## Key Findings
 
-1. **Only 2 new packages needed:** Recharts 3.x + react-is. Everything else (shadcn Card, cn(), Lucide icons) already exists.
-2. **No new API endpoints or Snowflake queries.** All 19 collection curve columns and every metric for KPIs/trending are already in the React Query cache. v2 is entirely client-side derived state + new components.
-3. **One keystone hook (`usePartnerStats`)** computes KPIs, historical norms (mean/stddev), collection curve series, and trending — all from existing partner-filtered rows.
-4. **Collection curves need wide-to-long reshape** from 19 columns per row to arrays per batch. Must truncate at `BATCH_AGE_IN_MONTHS` and default to recovery rate %, not absolute dollars.
-5. **Conditional formatting extends existing threshold system** — no replacement needed. Add norm-based dynamic thresholds via React Context.
-6. **Charts must NOT go inside table cells** — detail panel or above-table dashboard only. SVG charts in virtualized rows kill scroll performance.
-7. **Critical pitfall: truncation and normalization.** Young batches showing false zero cliffs, and absolute dollar comparison without normalization, produce plausible-looking wrong answers.
+**Stack:** 3 new packages: `ai` (Vercel AI SDK), `@ai-sdk/anthropic`, `simple-statistics`. Nothing else.
+**Architecture:** Deterministic anomaly detection feeds into Claude context; Claude narrates, does not detect.
+**Critical pitfall:** Context window management -- serializing all 477 rows x 61 columns into a Claude system prompt exceeds token limits. Must summarize/aggregate data before injection.
 
-## Stack Decision
+## Implications for Roadmap
 
-| Add | Version | Purpose |
-|-----|---------|---------|
-| recharts | ^3.8.1 | Collection curve charts, trending lines |
-| react-is | ^19.2.0 | Required peer dep for Recharts on React 19 |
-| shadcn chart component | N/A (copy-paste) | Themed chart wrappers |
+Based on research, suggested phase structure:
 
-No new libraries for: conditional formatting (cn() + Tailwind), KPI cards (existing Card), trending indicators (Lucide icons).
+1. **Anomaly Detection Engine** - Build the computation layer first
+   - Addresses: `compute-anomalies.ts`, anomaly types, z-score/IQR thresholds
+   - Avoids: Building AI without deterministic data to feed it
+   - Rationale: Every subsequent feature (anomaly badges, Claude context, cross-partner flags) depends on having anomaly scores computed. This is pure TypeScript with no API dependencies.
 
-## Build Order (Dependency-Driven)
+2. **Anomaly UI (badges, highlights, summary)** - Surface anomalies in existing views
+   - Addresses: Anomaly badges on partner/batch rows, anomaly summary panel, highlighting flagged metrics
+   - Avoids: Premature AI integration before the data pipeline works
+   - Rationale: Users get immediate value from passive anomaly flagging without needing Claude. Validates detection accuracy with the team before layering AI narration on top.
 
-1. **Snowflake + foundation** — Live data, Recharts install, chart colors, usePartnerStats hook
-2. **KPI Summary Cards** — Simplest viz, validates data flow, no Recharts needed
-3. **Collection Curve Chart** — Core v2 value, highest-impact, uses Recharts
-4. **Conditional Formatting** — Extends existing thresholds with partner norms
-5. **Batch-over-Batch Trending** — Reuses norm computation, optional sparklines
+3. **Claude Query Layer** - Natural language data exploration
+   - Addresses: Chat UI, route handler, system prompt with data context injection, streaming responses
+   - Avoids: Token overflow from naive data serialization
+   - Rationale: Depends on anomaly data being available to inject as context. Also benefits from user feedback on which anomalies are actually interesting (from Phase 2 usage).
 
-## Top Pitfalls
+4. **Cross-Partner Comparison** - Percentile rankings and normalized overlays
+   - Addresses: Cross-partner norms computation, percentile rank table, normalized curve overlay chart
+   - Avoids: Trying to normalize before within-partner anomaly detection is validated
+   - Rationale: Cross-partner comparison is conceptually independent but benefits from anomaly detection being in place (anomalous partners are more interesting to compare). Can be built in parallel with Phase 3 if team capacity allows.
 
-| # | Pitfall | Severity | Prevention |
-|---|---------|----------|------------|
-| P1 | Curve truncation: young batches show false zero cliff | Critical | Truncate at BATCH_AGE_IN_MONTHS |
-| P2 | Absolute dollars without normalization | Critical | Default to recovery rate % |
-| P3 | Conditional formatting re-renders entire table | Critical | Pre-compute norms in useMemo, pass via Context |
-| P5 | KPI cards disagree with table totals | Critical | Wire to same filtered row model |
-| P4 | Charts in table cells kill virtual scrolling | Critical | Charts in detail panel only |
+**Phase ordering rationale:**
+- Anomaly detection is the foundation -- both the Claude layer and cross-partner comparison consume anomaly data
+- Anomaly UI before Claude lets the team validate detection quality with zero API cost
+- Claude layer third because it depends on having structured anomaly data to contextualize
+- Cross-partner comparison last because it is the most self-contained and least dependent on other v3 features
 
-## Open Questions for Requirements
+**Research flags for phases:**
+- Phase 3 (Claude Query Layer): Needs deeper research on prompt engineering for financial data narration and token budget management
+- Phase 1-2 (Anomaly Detection): Standard statistical patterns, unlikely to need additional research
+- Phase 4 (Cross-Partner): May need research on normalization approaches if partners have fundamentally different portfolio characteristics
 
-- Which 4-6 KPI metrics to display at partner level?
-- Z-score threshold for norm-based formatting (1.5 stddev suggested)?
-- Minimum batches for meaningful partner comparison (3 suggested)?
-- Chart color palette update (current is grayscale, need distinguishable colors)?
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| Stack | HIGH | AI SDK and simple-statistics are well-established, actively maintained, versions verified on npm |
+| Features | HIGH | Feature scope is well-defined in PROJECT.md, clear boundaries with v4 |
+| Architecture | HIGH | Extends existing computation module pattern, no structural changes needed |
+| Pitfalls | MEDIUM-HIGH | Context window management and prompt engineering are less predictable than deterministic computation |
+
+## Gaps to Address
+
+- Token budget strategy for Claude context injection (how much data can fit in a system prompt?)
+- Prompt engineering patterns for financial data narration (may need iteration)
+- Whether anomaly thresholds should be configurable by users or hardcoded
+- How to handle partners with very few batches (< 3) in cross-partner percentile rankings
