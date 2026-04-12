@@ -5,11 +5,11 @@
 
 export const WIDTH_BY_TYPE: Record<string, number> = {
   text: 180,
-  currency: 130,
-  percentage: 100,
-  count: 100,
-  date: 120,
-  number: 110,
+  currency: 150,
+  percentage: 150,
+  count: 140,
+  date: 130,
+  number: 140,
 };
 
 /** Width for pinned identity columns */
