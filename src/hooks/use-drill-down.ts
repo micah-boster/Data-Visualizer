@@ -25,10 +25,10 @@ export function useDrillDown() {
     setState({ level: 'partner', partner: partnerName, batch: null });
   }, []);
 
-  const drillToBatch = useCallback((batchName: string) => {
+  const drillToBatch = useCallback((batchName: string, partnerName?: string) => {
     setState((prev) => ({
       level: 'batch',
-      partner: prev.partner,
+      partner: partnerName ?? prev.partner,
       batch: batchName,
     }));
   }, []);

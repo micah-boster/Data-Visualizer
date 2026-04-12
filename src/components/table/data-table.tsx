@@ -47,7 +47,7 @@ interface DataTableProps {
   drillState?: DrillState;
   /** Drill-down callbacks */
   onDrillToPartner?: (name: string) => void;
-  onDrillToBatch?: (name: string) => void;
+  onDrillToBatch?: (name: string, partnerName?: string) => void;
   onNavigateToLevel?: (level: DrillLevel) => void;
   /** Total row count at root level (for breadcrumb when drilled in) */
   totalRowCount?: number;

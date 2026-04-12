@@ -25,7 +25,7 @@ import type { TrendingData, MetricNorm } from '@/types/partner-stats';
 /** Drill-down callbacks and trending data passed through TanStack Table meta */
 export interface TableDrillMeta {
   onDrillToPartner?: (name: string) => void;
-  onDrillToBatch?: (name: string) => void;
+  onDrillToBatch?: (name: string, partnerName?: string) => void;
   drillLevel?: DrillLevel;
   trending?: TrendingData;
   /** Partner norms for heatmap deviation formatting */
@@ -55,15 +55,17 @@ function renderDrillableCell(
     });
   }
 
-  // BATCH: drillable at partner level
+  // BATCH: drillable at root and partner levels
   if (
     config.key === 'BATCH' &&
     meta?.onDrillToBatch &&
-    meta.drillLevel === 'partner'
+    meta.drillLevel !== 'batch'
   ) {
+    const row = ctx.row.original;
+    const partner = row.PARTNER_NAME ? String(row.PARTNER_NAME) : undefined;
     return createElement(DrillableCell, {
       value: String(value),
-      onDrill: () => meta.onDrillToBatch!(String(value)),
+      onDrill: () => meta.onDrillToBatch!(String(value), partner),
     });
   }
 

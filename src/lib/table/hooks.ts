@@ -25,7 +25,7 @@ import type { TrendingData, MetricNorm } from '@/types/partner-stats';
 export interface UseDataTableOptions {
   /** Optional drill-down callbacks passed to column cell renderers via table meta */
   onDrillToPartner?: (name: string) => void;
-  onDrillToBatch?: (name: string) => void;
+  onDrillToBatch?: (name: string, partnerName?: string) => void;
   drillLevel?: DrillLevel;
   /** Optional override column definitions (used for account-level view) */
   columns?: ColumnDef<Record<string, unknown>>[];

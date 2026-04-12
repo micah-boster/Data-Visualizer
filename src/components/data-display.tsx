@@ -147,6 +147,20 @@ export function DataDisplay() {
           </div>
         )}
 
+      {/* Single-batch curve at batch drill-down level */}
+      {drillState.level === 'batch' &&
+        drillState.batch &&
+        partnerStats?.curves && (() => {
+          const batchCurve = partnerStats.curves.filter(
+            (c) => c.batchName === drillState.batch,
+          );
+          return batchCurve.length > 0 ? (
+            <div className="shrink-0">
+              <CollectionCurveChart curves={batchCurve} />
+            </div>
+          ) : null;
+        })()}
+
       {/* Interactive data table with drill-down */}
       <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
         <div className="min-h-0 flex-1">

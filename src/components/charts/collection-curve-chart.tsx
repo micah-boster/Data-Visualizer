@@ -80,14 +80,12 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
     return cfg;
   }, [sortedCurves, showAverage]);
 
-  // Empty state: fewer than 2 batches
-  if (curves.length < 2) {
+  // Empty state: no curves at all
+  if (curves.length === 0) {
     return (
       <div className="flex h-[40vh] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
         <BarChart3 className="h-10 w-10 opacity-30" />
-        <p className="text-sm">
-          Need at least 2 batches to compare collection curves
-        </p>
+        <p className="text-sm">No collection curve data available</p>
       </div>
     );
   }
