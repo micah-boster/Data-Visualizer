@@ -102,10 +102,13 @@ export function KpiCard({
         : `${sign}${trend.deltaPercent.toFixed(1)}%`;
 
     trendElement = (
-      <span className={`ml-1.5 inline-flex items-center gap-0.5 text-xs font-medium ${colorClass}`}>
-        {arrow}
-        {deltaText && <span>{deltaText}</span>}
-      </span>
+      <Tooltip>
+        <TooltipTrigger className={`ml-1.5 inline-flex items-center gap-0.5 text-xs font-medium ${colorClass}`}>
+          {arrow}
+          {deltaText && <span>{deltaText}</span>}
+        </TooltipTrigger>
+        <TooltipContent>vs rolling avg of prior batches</TooltipContent>
+      </Tooltip>
     );
   }
 
