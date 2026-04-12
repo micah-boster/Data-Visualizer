@@ -53,7 +53,7 @@ export function TableFooter({ table }: TableFooterProps) {
     <tfoot className="sticky bottom-0 z-20">
       <tr>
         {visibleColumns.map((column) => {
-          const pinningStyles = getCommonPinningStyles(column);
+          const pinningStyles = getCommonPinningStyles(column, { isHeader: true });
           const meta = column.columnDef.meta as { type?: string; identity?: boolean } | undefined;
           const colType = meta?.type ?? 'text';
           const agg = aggregates[column.id];
@@ -77,8 +77,9 @@ export function TableFooter({ table }: TableFooterProps) {
               style={{
                 ...pinningStyles,
                 width: column.getSize(),
+                minWidth: column.getSize(),
               }}
-              className={`whitespace-nowrap bg-muted/80 px-3 py-2 text-xs text-muted-foreground backdrop-blur-sm${isNumeric ? ' text-right tabular-nums' : ''}`}
+              className={`whitespace-nowrap bg-muted px-3 py-2 text-xs text-muted-foreground${isNumeric ? ' text-right tabular-nums' : ''}`}
             >
               {displayValue}
             </td>

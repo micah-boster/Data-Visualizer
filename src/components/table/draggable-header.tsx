@@ -26,7 +26,7 @@ export function DraggableHeader({
   const isPinned = header.column.getIsPinned();
   const meta = header.column.columnDef.meta as { type?: string } | undefined;
   const isNumeric = meta?.type ? isNumericType(meta.type) : false;
-  const pinningStyles = getCommonPinningStyles(header.column);
+  const pinningStyles = getCommonPinningStyles(header.column, { isHeader: true });
 
   const {
     attributes,
@@ -43,6 +43,7 @@ export function DraggableHeader({
   const dragStyle: CSSProperties = {
     ...pinningStyles,
     width: header.getSize(),
+    minWidth: header.getSize(),
     transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,

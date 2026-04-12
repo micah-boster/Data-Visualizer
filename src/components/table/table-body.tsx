@@ -49,7 +49,7 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
             }`}
           >
             {row.getVisibleCells().map((cell) => {
-              const pinningStyles = getCommonPinningStyles(cell.column, isEvenRow);
+              const pinningStyles = getCommonPinningStyles(cell.column, { isEvenRow });
               const meta = cell.column.columnDef.meta as { type?: string } | undefined;
               const isNumeric = meta?.type ? isNumericType(meta.type) : false;
               return (
@@ -58,6 +58,7 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
                   style={{
                     ...pinningStyles,
                     width: cell.column.getSize(),
+                    minWidth: cell.column.getSize(),
                   }}
                   className={`overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2 text-sm${isNumeric ? ' text-right tabular-nums' : ''}`}
                 >
