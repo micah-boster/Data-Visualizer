@@ -47,7 +47,7 @@ export function DraggableHeader({
     transform: CSS.Translate.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 30 : undefined,
+    ...(isDragging ? { zIndex: 30 } : {}),
   };
 
   return (
