@@ -77,7 +77,9 @@ export function DraggableHeader({
               <GripVertical className="h-3.5 w-3.5" />
             </button>
           )}
-          {flexRender(header.column.columnDef.header, header.getContext())}
+          <span className="truncate">
+            {flexRender(header.column.columnDef.header, header.getContext())}
+          </span>
           {header.column.getCanSort() && (
             <SortIndicator column={header.column} />
           )}
