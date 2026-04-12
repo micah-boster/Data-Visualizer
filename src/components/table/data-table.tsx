@@ -374,7 +374,7 @@ export function DataTable({
         >
         <div
           ref={tableContainerRef}
-          className="flex-1 overflow-auto"
+          className="relative z-0 flex-1 overflow-auto"
           style={{ minHeight: 0 }}
         >
           <table
