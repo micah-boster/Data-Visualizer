@@ -2,13 +2,11 @@ import type { Column } from '@tanstack/react-table';
 import type { CSSProperties } from 'react';
 
 /**
- * Get CSS styles for sticky column pinning.
+ * Sticky column pinning styles — matches the official TanStack Table
+ * column-pinning-sticky example pattern.
  *
- * Pinned cells MUST have fully opaque backgrounds so scrolling content
- * doesn't show through. The background color depends on context:
- * - Headers/footers: always use --color-muted (matches bg-muted class)
- * - Body even rows: use --color-muted
- * - Body odd rows: use --color-background
+ * REQUIRES: the <table> must use border-collapse: separate (not collapse),
+ * otherwise browsers break z-index stacking for sticky cells.
  */
 export function getCommonPinningStyles<T>(
   column: Column<T>,
@@ -20,26 +18,22 @@ export function getCommonPinningStyles<T>(
   const isFirstRightPinnedColumn =
     isPinned === 'right' && column.getIsFirstColumn('right');
 
-  let backgroundColor: string | undefined;
-  if (isPinned) {
-    if (opts?.isHeader || opts?.isEvenRow) {
-      backgroundColor = 'var(--color-muted)';
-    } else {
-      backgroundColor = 'var(--color-background)';
-    }
-  }
-
   return {
     boxShadow: isLastLeftPinnedColumn
-      ? '-4px 0 4px -4px var(--color-border) inset'
+      ? '-4px 0 4px -4px gray inset'
       : isFirstRightPinnedColumn
-        ? '4px 0 4px -4px var(--color-border) inset'
+        ? '4px 0 4px -4px gray inset'
         : undefined,
     left: isPinned === 'left' ? `${column.getStart('left')}px` : undefined,
     right: isPinned === 'right' ? `${column.getAfter('right')}px` : undefined,
-    position: isPinned ? 'sticky' : undefined,
+    position: isPinned ? 'sticky' : 'relative',
     width: column.getSize(),
-    zIndex: isPinned ? 10 : undefined,
-    backgroundColor,
+    zIndex: isPinned ? 1 : 0,
+    // Pinned cells need opaque backgrounds so content doesn't show through
+    backgroundColor: isPinned
+      ? (opts?.isHeader || opts?.isEvenRow)
+        ? 'var(--color-muted)'
+        : 'var(--color-background)'
+      : undefined,
   };
 }

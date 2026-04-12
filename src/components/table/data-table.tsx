@@ -378,7 +378,7 @@ export function DataTable({
           style={{ minHeight: 0 }}
         >
           <table
-            className="w-full border-collapse"
+            className="w-full border-separate border-spacing-0"
             style={{
               tableLayout: 'fixed',
               width: table.getTotalSize(),
