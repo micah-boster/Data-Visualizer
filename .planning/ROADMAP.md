@@ -27,7 +27,7 @@ Five phases that add within-partner batch comparison capabilities on top of the 
 </details>
 
 - [x] **Phase 10: Computation Layer & Charting Foundation** — Install Recharts, update chart colors, build usePartnerStats hook with curve reshape, norms, and KPI aggregation (completed 2026-04-12)
-- [ ] **Phase 11: KPI Summary Cards** — Display 4-6 metric cards above the batch table at partner drill-down level
+- [x] **Phase 11: KPI Summary Cards** — Display 4-6 metric cards above the batch table at partner drill-down level (completed 2026-04-12)
 - [x] **Phase 12: Collection Curve Charts** — Multi-line Recharts overlay of batch collection curves at partner level (completed 2026-04-12)
 - [x] **Phase 13: Conditional Formatting** — Cell color-coding by deviation from partner historical norms (completed 2026-04-12)
 - [x] **Phase 14: Batch-over-Batch Trending** — Trending indicators showing metric direction across recent batches (completed 2026-04-12)
@@ -58,7 +58,7 @@ Plans:
   2. Cards show total batches, total accounts, weighted penetration rate, collection rates at 6mo/12mo, total collected
   3. Card values match the table footer aggregations (same filtered data source)
   4. Each card has a trend indicator comparing latest batch to rolling average
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 11-01-PLAN.md — KPI card components, abbreviated currency formatter, and integration into partner drill-down view
 
@@ -109,7 +109,7 @@ Phases 10 first (foundation), then 11-14 can proceed. Phases 11, 12, 13 depend o
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 10. Computation Layer & Charting Foundation | 2/2 | Complete    | 2026-04-12 |
-| 11. KPI Summary Cards | 0/1 | Planning complete | - |
+| 11. KPI Summary Cards | 1/1 | Complete    | 2026-04-12 |
 | 12. Collection Curve Charts | 2/2 | Complete    | 2026-04-12 |
 | 13. Conditional Formatting | 2/2 | Complete    | 2026-04-12 |
 | 14. Batch-over-Batch Trending | 2/2 | Complete    | 2026-04-12 |
