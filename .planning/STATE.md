@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Within-Partner Comparison
-status: complete
+milestone: v3.0
+milestone_name: Intelligence & Cross-Partner Comparison
+status: defining_requirements
 last_updated: "2026-04-12"
 progress:
-  total_phases: 14
-  completed_phases: 14
-  total_plans: 27
-  completed_plans: 27
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -18,35 +18,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-12)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** Planning next milestone
+**Current focus:** v3.0 — defining requirements
 
 ## Current Position
 
-Milestone: v2.0 Within-Partner Comparison — SHIPPED 2026-04-12
-Status: Complete, archived
-Next: /gsd:new-milestone when ready
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-12 — Milestone v3.0 started
 
 ## Accumulated Context
 
 ### Decisions
 
-- v2 focuses on within-partner comparison only — cross-partner comparison deferred to v3+
-- Collection curves are the highest-value feature — data already exists in 22 collection columns
-- Conditional formatting baseline is partner's own history, not portfolio average
-- Dynamic curve re-projection is v3+ — requires a model, not just UI
-- usePartnerStats composition pattern established for computation layer
+- v3 focuses on three pillars: anomaly detection (passive), Claude query layer, cross-partner comparison
+- Anomaly detection is the primary entry point — user opens tool, sees what's off first
+- Claude query layer is the investigation tool — ask follow-up questions when something looks weird
+- Cross-partner comparison is the analytical backbone — rankings + normalized trajectories
+- Active notifications (Slack/email) deferred to v4 — prove passive value first
+- Dashboard layout, summary reports, dynamic re-projection all deferred to v4
+- usePartnerStats composition pattern established for computation layer (from v2)
 
 ### Pending Todos
 
 - Snowflake credentials need to be provisioned in Vercel env vars
-- Dimension filter at root level doesn't reduce table rows (bug)
+- Dimension filter at root level doesn't reduce table rows (bug from v2)
 
 ### Blockers/Concerns
 
 - Snowflake credentials: needed for live data instead of static cache
-
-## Session Continuity
-
-Last session: 2026-04-12
-Stopped at: v2.0 milestone complete
-Resume file: .planning/ROADMAP.md
+- Claude API integration: Will need API key and rate limiting strategy for query layer
+- Normalization model for cross-partner comparison: Need to define what "normalized" means for different account types/debt categories

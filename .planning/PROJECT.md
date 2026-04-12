@@ -4,10 +4,14 @@
 
 A custom interactive data exploration tool for Bounce's partnerships team to visualize batch performance, compare within-partner trends, drill into account-level detail, and track collection curves. Deployed on Vercel with live Snowflake data (or static cache when credentials aren't configured). Replaces static Metabase dashboards and non-deterministic Claude + Snowflake queries.
 
-## Current State
+## Current Milestone: v3.0 Intelligence & Cross-Partner Comparison
 
-**Shipped:** v2.0 (2026-04-12)
-**No active milestone** — planning next
+**Goal:** The tool tells you what to look at, lets you ask why, and benchmarks partners against each other.
+
+**Target features:**
+- Anomaly detection (passive, in-app) — anomaly summary, badges, highlights for flagged partners/batches
+- Claude natural language query layer — ask questions about the data, get narrative + supporting data
+- Cross-partner comparison — percentile rankings + normalized trajectory overlays across partners
 
 ## Core Value
 
@@ -40,14 +44,16 @@ Surface abnormal account and batch performance data so the partnerships team can
 ### Active
 
 - [ ] Snowflake credentials in Vercel env vars (live data instead of static cache)
+- [ ] Anomaly detection — passive in-app flagging of abnormal partners/batches
+- [ ] Claude natural language query layer — ask questions, get narrative answers from data
+- [ ] Cross-partner comparison — percentile rankings and normalized trajectory overlays
 
 ### Out of Scope
 
-- AI/Claude natural language query layer — v3 feature
-- Claude-powered anomaly detection — v3 feature
-- Cross-partner comparison with normalization — requires baseline model, v3+
-- Dynamic curve re-projection based on actuals — requires forecasting model, v3+
-- Dashboard layout with drag/drop widgets — v3 feature
+- Dynamic curve re-projection based on actuals — requires forecasting model, v4+
+- Dashboard layout with drag/drop widgets — v4 feature
+- Exportable partner summary reports — v4 feature
+- Active anomaly notifications (Slack/email) — v4, after passive anomaly detection proves value
 - Real-time data streaming — batch/scheduled refresh is sufficient
 - Mobile-optimized UI — desktop-first for 2-3 internal users
 - User authentication — small team, can add later if needed
@@ -90,4 +96,4 @@ Surface abnormal account and batch performance data so the partnerships team can
 | Trending algorithm documented in docs/ | Per project constraint on explainability | ✓ Good — TRENDING-ALGORITHM.md |
 
 ---
-*Last updated: 2026-04-12 after v2.0 milestone completion*
+*Last updated: 2026-04-12 after v3.0 milestone start*
