@@ -1,241 +1,249 @@
-# Features Research: Bounce Data Visualizer
+# Feature Landscape: v2.0 Within-Partner Batch Comparison
 
-> **Research type**: Features dimension for internal data analytics dashboard
-> **Domain**: Debt collection partnerships team — account health, batch performance, collection curves, engagement metrics
-> **Data source**: Snowflake (`agg_batch_performance_summary` + future tables)
-> **Users**: 2-3 internal partnerships team members, desktop only
-> **Replaces**: Static Metabase dashboards + non-deterministic Claude/Snowflake queries
+**Domain:** Debt collection batch analytics -- within-partner comparison and trending
+**Researched:** 2026-04-11
+**Overall confidence:** MEDIUM-HIGH (domain patterns well-established, specific implementation details based on codebase analysis)
 
 ---
 
-## Table Stakes (Must-Have or Users Leave)
+## Table Stakes
 
-These are baseline features users expect from any data exploration tool. Missing any of these makes the tool feel broken compared to even Metabase.
+Features users expect in any analytics tool that compares cohort/batch performance over time. Missing these makes the v2 upgrade feel hollow.
 
-### TS-1: Interactive Data Table with Sort/Filter
-**What**: Tabular view of batch performance data with column sorting (asc/desc), column-level filtering (text search, numeric ranges, date ranges), and multi-column sort.
-**Why table stakes**: Every spreadsheet and BI tool has this. Users will immediately try to click column headers to sort and type to filter. If it does not work, the tool feels broken.
-**Complexity**: Low-Medium. Standard data grid component (AG Grid, TanStack Table). The 61-column width of `agg_batch_performance_summary` adds complexity around horizontal scrolling and column management.
-**Dependencies**: Data fetching layer (API to Snowflake), column type detection for appropriate filter controls.
+### TS-1: Collection Curve Overlay Chart
 
-### TS-2: Column Visibility and Reordering
-**What**: Show/hide columns, drag-to-reorder columns, resize column widths. Persist preferences within a session at minimum.
-**Why table stakes**: With 61 columns, users cannot work without hiding irrelevant ones. Metabase already supports column hiding. This is the bare minimum for a wide-table tool.
-**Complexity**: Low. Built into most data grid libraries. The main work is a clean column picker UI.
-**Dependencies**: TS-1 (data table).
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Multi-line chart overlaying collection curves (cumulative recovery % vs months-on-book) for multiple batches from the same partner. Each batch is a separate line, x-axis is months (1-60), y-axis is cumulative collection rate. |
+| **Why expected** | This is the canonical "vintage analysis" chart used across all credit/collections analytics. Anyone who has seen a portfolio review deck expects this shape. It is the single most important visualization for answering "is this partner's latest batch performing better or worse than historical?" |
+| **Complexity** | Medium |
+| **Data dependency** | `COLLECTION_AFTER_1_MONTH` through `COLLECTION_AFTER_60_MONTH` (20 columns), `BATCH`, `PARTNER_NAME`, `BATCH_AGE_IN_MONTHS` |
+| **Notes** | Lines must truncate at `BATCH_AGE_IN_MONTHS` -- newer batches will have shorter curves. This is standard vintage analysis behavior, not a bug. X-axis should use the actual month values (1,2,3...12,15,18,21,24,30,36,48,60) not equally spaced, since the collection columns are not evenly distributed. |
 
-### TS-3: Global and Dimension Filters
-**What**: Filter the entire dataset by partner, account type, batch, time period. Applied above the table as persistent filter controls (dropdowns, date pickers). Filters compose with AND logic.
-**Why table stakes**: The PROJECT.md lists this as an active requirement. Users need to slice data by partner/batch/period to do their job. Without this, every view shows everything, which is useless for a partnerships team managing specific accounts.
-**Complexity**: Medium. Requires fetching distinct filter values from Snowflake, maintaining filter state, and passing filter criteria to queries. Cascading filters (partner selection narrows batch options) adds complexity but is expected.
-**Dependencies**: Data fetching layer, knowledge of dimension columns in the schema.
+**Key behaviors:**
+- Show at partner drill-down level (when user clicks into a partner, show their batches overlaid)
+- Each line labeled by batch name
+- Hover/tooltip shows exact collection % at that month for each batch
+- Color-code lines so most recent batch stands out (e.g., bold/primary color for latest, muted for older)
+- Optional: highlight a "partner average" reference line computed as mean of all visible batches
 
-### TS-4: Data Loading and Refresh
-**What**: Load data from Snowflake on page load or explicit refresh. Show loading states. Handle errors gracefully (connection failures, timeouts, empty results).
-**Why table stakes**: The tool is useless if it cannot reliably fetch and display data. Users need to know when data is stale and be able to refresh.
-**Complexity**: Medium. Snowflake query execution, server-side credential management, caching strategy (to avoid hitting Snowflake on every interaction), and error handling.
-**Dependencies**: Snowflake connector, API layer, secure credential storage.
+### TS-2: KPI Summary Cards at Partner Level
 
-### TS-5: Saved Views
-**What**: Save the current state of filters, column visibility, column order, sort order, and any applied configurations as a named view. Load saved views from a list. Support both personal and shared views (for 2-3 users, shared is fine as default).
-**Why table stakes**: PROJECT.md lists this as a core requirement. The whole point of building custom tooling over Claude+Snowflake is that Claude queries are non-deterministic and cannot be saved/reused. If users cannot save and return to their views, they lose the primary advantage over the current workflow.
-**Complexity**: Medium. Serializing view state to JSON, storing in a database or local storage (for MVP, localStorage or a simple DB table is fine), loading/applying state on selection.
-**Dependencies**: TS-1, TS-2, TS-3 (all contribute state that needs saving).
+| Attribute | Detail |
+|-----------|--------|
+| **What** | 4-6 summary cards displayed above the batch table when drilled into a partner. Show aggregate metrics: total batches, total accounts placed, average collection rate at key milestones (3mo, 6mo, 12mo), total lifetime collected, average penetration rate. |
+| **Why expected** | Every analytics dashboard places KPI cards at the top of a detail view. F-pattern eye tracking research confirms users look top-left first. Without summary cards, users must mentally aggregate the table below, which defeats the purpose of a visualization tool. |
+| **Complexity** | Low |
+| **Data dependency** | Aggregation across all batches for the selected partner: `TOTAL_ACCOUNTS`, `TOTAL_AMOUNT_PLACED`, `TOTAL_COLLECTED_LIFE_TIME`, `COLLECTION_AFTER_3_MONTH`, `COLLECTION_AFTER_6_MONTH`, `COLLECTION_AFTER_12_MONTH`, `PENETRATION_RATE_POSSIBLE_AND_CONFIRMED` |
+| **Notes** | Cards should show the metric value plus a comparison indicator (e.g., "vs all partners" or trend arrow from previous batch). Keep it to 4-6 cards max -- more creates visual noise. |
 
-### TS-6: Basic Data Formatting
-**What**: Appropriate formatting for different data types: currency with dollar signs and commas, percentages with % symbol, dates in readable format, large numbers with abbreviations or commas. Right-align numeric columns.
-**Why table stakes**: Raw unformatted numbers from Snowflake (e.g., `0.0342` instead of `3.42%`, `1234567.89` instead of `$1,234,567.89`) make data unreadable. Every BI tool formats data.
-**Complexity**: Low. Column-type-based formatters. Requires a mapping of columns to their data types/display formats.
-**Dependencies**: TS-1 (data table), schema metadata.
+**Key behaviors:**
+- Visible only at partner drill-down level (not root level)
+- Large primary number, small label, optional trend indicator
+- Responsive layout: 3 cards per row on typical viewport, stack on narrow
 
-### TS-7: Export to CSV/Excel
-**What**: Export the current filtered/sorted view to CSV or Excel file. Include applied filters in the filename or a header row.
-**Why table stakes**: Users will need to share data with others who do not have tool access, paste into presentations, or do one-off analysis in Excel. This is expected from any data tool.
-**Complexity**: Low. Client-side CSV generation from current table data. Excel export adds slight complexity (library like SheetJS).
-**Dependencies**: TS-1 (data table), current filter/sort state.
+### TS-3: Conditional Formatting Based on Partner Norms
 
-### TS-8: Responsive Data Grid Performance
-**What**: The table must handle the full dataset without freezing, lagging, or becoming unusable. Pagination or virtual scrolling for large result sets. Target: render 10,000+ rows at 61 columns without degradation.
-**Why table stakes**: If the tool is slow, users go back to Metabase or Excel. Performance is not a feature, it is a prerequisite.
-**Complexity**: Medium. Virtual scrolling (only render visible rows), server-side pagination, or a hybrid approach. Most React data grid libraries handle this, but configuration matters.
-**Dependencies**: TS-1 (data table), data fetching strategy (paginated queries vs. full load).
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Cell-level color coding in the batch table showing whether a value is above/below the partner's own historical average for that metric. Green tint = above average (good), red tint = below average (bad), neutral = within normal range. |
+| **Why expected** | The existing codebase already has `thresholds.ts` with static absolute thresholds. v2 needs to upgrade this to relative thresholds -- comparing each batch against that partner's own norm. This is the difference between "penetration rate is below 5%" (absolute) and "penetration rate is 40% below this partner's average" (relative). Relative comparison is far more useful for partnerships work because different partners have wildly different baseline performance. |
+| **Complexity** | Medium |
+| **Data dependency** | All numeric columns, computed partner-level mean/median as baseline |
+| **Notes** | Must compute partner baselines client-side from the loaded batch data. Use standard deviation or percentage deviation from mean to set green/red thresholds. Extend existing `ThresholdConfig` system rather than replacing it. |
 
----
+**Key behaviors:**
+- Active at partner drill-down level (where batches for one partner are visible)
+- Color intensity proportional to deviation magnitude (subtle for small deviations, bold for large)
+- Tooltip explains the deviation: "12.3% vs partner avg 18.7% (-34%)"
+- Toggle on/off (some users prefer clean numbers)
+- Apply to collection curve columns, penetration rates, conversion rates, and financial metrics
 
-## Differentiators (Competitive Advantage)
+### TS-4: Batch-over-Batch Trending Indicators
 
-These features make the tool meaningfully better than Metabase + Claude/Snowflake. They justify building custom tooling.
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Up/down/flat trend arrows or mini-indicators in the table showing whether key metrics are improving or degrading across the most recent batches for a partner. |
+| **Why expected** | "Is this getting better or worse?" is the first question a partnerships lead asks about any partner. A raw number without directional context forces the user to compare rows manually. |
+| **Complexity** | Low-Medium |
+| **Data dependency** | Same metrics as conditional formatting, plus batch ordering (by `BATCH` name or placement date) to determine "previous" vs "current" |
+| **Notes** | Batches must be sortable chronologically. If batch naming follows a convention (e.g., "Partner_2024Q1"), parse for ordering. Otherwise, rely on `BATCH_AGE_IN_MONTHS` as a proxy for recency. |
 
-### D-1: Anomaly Highlighting / Threshold-Based Visual Indicators
-**What**: Automatically flag cells, rows, or metrics that are outside expected thresholds. Color-code cells (red/yellow/green) based on configurable rules. Examples: penetration rate below 2%, sudden MoM drop > 15%, collection curve falling below portfolio benchmark.
-**Why differentiating**: This is the core value proposition from PROJECT.md: "Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most." Metabase does not do conditional cell formatting well. This is the single biggest reason to build custom tooling.
-**Complexity**: Medium-High. Requires defining threshold rules (hardcoded initially, user-configurable later), applying them across metrics, and rendering visual indicators. The "what is abnormal" logic is domain-specific and needs partnerships team input.
-**Dependencies**: TS-1 (data table), TS-6 (formatting), domain knowledge of normal ranges for each metric.
-
-### D-2: Period-Over-Period Change Tracking
-**What**: Show MoM (month-over-month), WoW (week-over-week), and batch-over-batch deltas inline in the table or as a dedicated comparison view. Display as absolute change and percentage change. Highlight significant changes.
-**Why differentiating**: PROJECT.md lists this as an active requirement. Currently users manually compare Metabase snapshots or ask Claude to compute deltas. Having this built-in with visual indicators (arrows, color coding) makes trend detection instant rather than manual.
-**Complexity**: High. Requires querying multiple time periods, computing deltas, and aligning data across periods. Batch-over-batch comparison requires matching batches across time. The data model needs to support temporal joins.
-**Dependencies**: TS-4 (data loading), TS-3 (time period filters), schema understanding of temporal dimensions.
-
-### D-3: Collection Curve Visualization
-**What**: Line/area chart showing collection progression from month 1 through month 60 for selected batches or accounts. Overlay multiple batches for comparison. Show portfolio benchmark as a reference line.
-**Why differentiating**: Collection curves are the fundamental performance metric in debt collection. The `agg_batch_performance_summary` table includes this data (1-60 month columns). Visualizing curves rather than staring at 60 numeric columns is a massive usability improvement that Metabase struggles with for this column layout.
-**Complexity**: Medium. Charting library (Recharts, Nivo, or similar). The data transformation from wide-format (60 columns) to chart-friendly format (rows of month/value) is the main complexity.
-**Dependencies**: TS-4 (data loading), TS-3 (filters to select which batches to plot).
-
-### D-4: Benchmark Comparison
-**What**: Compare any batch or account's metrics against portfolio-level benchmarks, partner-level averages, or custom peer groups. Show deviation from benchmark as a percentage or absolute value. Integrate with anomaly highlighting (D-1).
-**Why differentiating**: PROJECT.md explicitly mentions "vs. portfolio benchmarks" as a change tracking dimension. Knowing that a batch is at 3.2% penetration is only meaningful if you know the benchmark is 4.5%. This contextualizes every metric.
-**Complexity**: Medium. Requires computing or storing benchmarks (portfolio averages, partner averages), and displaying them alongside actual values. Benchmark computation can be a scheduled Snowflake query.
-**Dependencies**: D-1 (anomaly highlighting), TS-4 (data loading), benchmark data source.
-
-### D-5: Dashboard Layout with Reorderable Widgets
-**What**: A dashboard view (separate from the table view) with draggable, resizable widgets: summary KPI cards, charts, mini-tables. Users can arrange widgets and save layouts. Think: a personalized command center, not just a data table.
-**Why differentiating**: PROJECT.md mentions "custom dashboard layouts" as a requirement. Metabase dashboards exist but are rigid and hard to customize. A drag-and-drop dashboard where each user arranges their own view is a genuine workflow improvement.
-**Complexity**: High. Requires a layout engine (react-grid-layout or similar), widget system (KPI card, chart, table as widget types), layout persistence, and state management across widgets.
-**Dependencies**: TS-5 (saved views), D-3 (charts as widgets), TS-1 (tables as widgets).
-
-### D-6: Drill-Down Navigation
-**What**: Click on a partner to see their batches. Click on a batch to see account-level detail. Click on an account to see its full metric history. Breadcrumb navigation to track drill path.
-**Why differentiating**: The partnerships team workflow moves from portfolio overview to specific problem accounts. A drill-down path (portfolio > partner > batch > account) matches this workflow. Currently this requires multiple separate Metabase queries or Claude conversations.
-**Complexity**: Medium-High. Requires multiple query levels, context passing between views, and a navigation model. Depends on which Snowflake tables are available at each level.
-**Dependencies**: TS-3 (filters), TS-4 (data loading), multiple Snowflake tables (starts with `agg_batch_performance_summary`, expands to `master_accounts` etc.).
-
-### D-7: Inline Sparklines and Mini-Charts
-**What**: Small trend indicators within table cells showing the last N periods of a metric. Lets users scan a table of 50 batches and instantly see which ones are trending up/down without opening a full chart.
-**Why differentiating**: This is information density that no standard BI tool provides well. A partnerships person scanning batch performance can see trends at a glance without clicking into each one.
-**Complexity**: Medium. Sparkline rendering in table cells (lightweight SVG or canvas). Requires historical data for each metric to be available or fetchable.
-**Dependencies**: TS-1 (data table), D-2 (period-over-period data availability).
-
-### D-8: Quick Summary / KPI Cards
-**What**: Top-of-page summary showing key portfolio-level metrics: total accounts, total balance, average penetration rate, average engagement rate, counts of accounts in different health categories. Updates based on active filters.
-**Why differentiating**: Gives immediate context before diving into the table. Answers "how are we doing overall?" in 2 seconds. Metabase can do this but requires separate dashboard tiles that do not update with table filters.
-**Complexity**: Low-Medium. Aggregate queries, summary card components. The key is making them reactive to the same filters as the table.
-**Dependencies**: TS-3 (filters), TS-4 (data loading).
+**Key behaviors:**
+- Show as small icon (arrow up/down/flat) next to the cell value
+- Green up-arrow = improving, red down-arrow = degrading, gray dash = flat
+- "Flat" threshold: changes within +/-5% of previous batch count as flat
+- Compare current batch to immediately prior batch (not average)
+- Visible at partner drill-down level
 
 ---
 
-## Anti-Features (Deliberately NOT Building)
+## Differentiators
 
-These are features that seem logical but would add complexity, distract from core value, or are explicitly out of scope for the MVP.
+Features that elevate the tool beyond what a typical BI dashboard provides. Not expected, but make the team say "this is better than anything we had before."
 
-### AF-1: Natural Language / AI Query Interface
-**Why not**: PROJECT.md explicitly puts this in v2 scope. The whole rationale for the tool is that Claude+Snowflake queries are non-deterministic. Building deterministic, saveable views is the priority. Adding AI querying back in contradicts the core value proposition until the deterministic foundation is solid.
-**Risk of including**: Scope creep, distraction from core table/view features, and it reintroduces the non-determinism problem the tool is meant to solve.
+### D-1: Sparkline Mini-Charts in Table Cells
 
-### AF-2: User Authentication / Multi-Tenancy
-**Why not**: 2-3 internal users. Adding auth adds login friction, session management complexity, and solves no real problem for this team size. PROJECT.md explicitly defers this.
-**Risk of including**: Over-engineering for 2-3 users. Adds 1-2 weeks of work for zero user value.
-**Revisit when**: Team grows beyond 5 users or data sensitivity requires access controls.
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Replace the 20 individual collection curve columns in the table with a single sparkline column showing the full curve shape inline. Hovering shows the full chart; clicking drills into the overlay view. |
+| **Value proposition** | Collapses 20 columns into 1, making the table dramatically more scannable. Users can spot anomalous curve shapes (early plateau, sudden drop) at a glance without needing to read 20 numbers. |
+| **Complexity** | Medium-High |
+| **Data dependency** | `COLLECTION_AFTER_1_MONTH` through `COLLECTION_AFTER_60_MONTH`, `BATCH_AGE_IN_MONTHS` |
+| **Notes** | Performance concern: rendering 50+ SVG sparklines in a virtualized table. Use lightweight SVG path generation (no full charting library needed for sparklines). React.memo aggressively. Consider canvas-based rendering if SVG is too slow. |
 
-### AF-3: Write-Back to Snowflake
-**Why not**: This is a read-only analytics tool. Allowing edits creates data integrity risks, requires audit logging, and conflates the tool's purpose. PROJECT.md explicitly marks this out of scope.
-**Risk of including**: Accidental data corruption, need for undo/audit trail, and scope expansion into data management territory.
+### D-2: Deviation Heatmap View
 
-### AF-4: Real-Time Data Streaming
-**Why not**: Debt collection data changes on batch/scheduled refresh cycles (daily or weekly), not in real-time. WebSocket connections, streaming infrastructure, and real-time UI updates add massive complexity for data that changes once a day.
-**Risk of including**: Infrastructure complexity (websockets, event streams), increased Snowflake costs, and no user benefit since the underlying data is batch-processed anyway.
+| Attribute | Detail |
+|-----------|--------|
+| **What** | An alternative view mode that shows the batch table as a heatmap where cell color intensity represents deviation from the partner average. Turns the table into a visual anomaly detector. |
+| **Value proposition** | Instead of reading numbers, the user scans for "hot spots" of red (underperformance) or green (outperformance). Dramatically speeds up identification of problematic batches or metrics. |
+| **Complexity** | Medium |
+| **Data dependency** | All numeric columns, computed partner baselines |
+| **Notes** | This is an extension of TS-3 (conditional formatting) pushed to its logical extreme. Could be implemented as a toggle: "Numbers" vs "Heatmap" view mode. HSL color interpolation for smooth gradients. |
 
-### AF-5: Mobile-Responsive UI
-**Why not**: 2-3 desktop users. Wide data tables with 61 columns are fundamentally incompatible with mobile screens. The effort to make this responsive would compromise the desktop experience.
-**Risk of including**: Worse desktop UX from responsive compromises, significant CSS/layout work for zero actual mobile usage.
+### D-3: Collection Curve Shape Comparison
 
-### AF-6: Complex Alerting / Notification System
-**Why not**: With 2-3 users who check the tool regularly, push notifications, email alerts, and Slack integrations are premature. The anomaly highlighting (D-1) surfaces issues when users look at the tool, which is sufficient for MVP.
-**Risk of including**: Notification fatigue, infrastructure for email/Slack integration, alert rule management UI.
-**Revisit when**: If users express they want to be notified without opening the tool, or if the user base grows.
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Automatically classify batch collection curves into shape categories (early ramp, steady growth, plateau, s-curve, underperformer) and flag batches whose curve shape diverges from the partner's typical pattern. |
+| **Value proposition** | Answers "this batch isn't just lower, it has a fundamentally different collection pattern" -- which suggests a different problem (bad data quality, different account mix, operational issue) vs just a weaker batch. |
+| **Complexity** | High |
+| **Data dependency** | Collection curve columns, partner historical curves |
+| **Notes** | Simpler version: compute derivative of curve (slope at each interval) and flag batches where slope profile differs significantly. Full version would need clustering, which is v3 territory. |
 
-### AF-7: Pixel-Perfect PDF Report Generation
-**Why not**: CSV/Excel export (TS-7) covers the "share with others" use case. PDF reports require a templating engine, layout system, and design effort disproportionate to the value for 2-3 internal users.
-**Risk of including**: Significant frontend complexity, maintenance burden for report templates, and it is a different product (reporting) vs. the product being built (exploration).
+### D-4: Time-Aligned Curve Comparison
 
-### AF-8: Custom SQL Query Editor
-**Why not**: The tool's value is pre-built, deterministic views. A SQL editor re-introduces the "unstructured query" problem and requires SQL injection protection, query timeouts, result caching, and Snowflake cost controls.
-**Risk of including**: Security surface area, Snowflake cost risk from expensive queries, and it undercuts the "saved views" value proposition.
+| Attribute | Detail |
+|-----------|--------|
+| **What** | On the collection curve overlay chart, allow toggling between "absolute time" (calendar date on x-axis) and "relative time" (months-since-placement on x-axis). Default to relative time. |
+| **Value proposition** | Relative time answers "at the same point in their lifecycle, how do these batches compare?" while absolute time answers "what was happening across all batches during Q3 2024?" Both questions matter. |
+| **Complexity** | Low (if chart is already built) |
+| **Data dependency** | Collection curve columns plus batch placement dates (may need to be derived or added) |
+
+### D-5: Exportable Partner Summary Report
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | One-click export of the partner drill-down view (KPI cards + collection curve chart + batch table) as a formatted PDF or image for sharing in Slack/email. |
+| **Value proposition** | Partnerships team frequently shares batch performance summaries with leadership. Currently they screenshot. A clean export saves time and looks professional. |
+| **Complexity** | Medium |
+| **Notes** | html2canvas or similar for screenshot-to-image. PDF generation adds complexity. Start with "copy chart as image" and "download as PNG." |
 
 ---
 
-## Feature Dependencies Map
+## Anti-Features
+
+Features to explicitly NOT build in v2.
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Cross-partner normalization/comparison | Requires statistical baseline model to normalize across different partner characteristics (balance sizes, account types, vintages). Premature without understanding what "comparable" means for this team. Explicitly scoped as v3+. | Keep comparison within-partner only. Surface raw numbers side by side if users want to glance across partners. |
+| AI-powered anomaly detection | v3 feature per PROJECT.md. Adding ML/AI to the anomaly detection before the team even has the basic visualizations would be premature. The conditional formatting (TS-3) gives them 80% of the value with 10% of the complexity. | Use statistical deviation (mean +/- 1.5 SD) for conditional formatting. Simple, explainable, debuggable. |
+| Predictive curve projection | "Given the first 6 months, where will this batch be at 12 months?" is appealing but requires a forecasting model. Out of scope per PROJECT.md. | Show the curve as-is, truncated at `BATCH_AGE_IN_MONTHS`. Users can visually extrapolate from the overlay. |
+| Real-time data streaming | Batch/scheduled refresh is sufficient per PROJECT.md. Collection data updates daily at most. | Keep existing React Query refetch with appropriate stale times. |
+| Mobile-responsive charts | 2-3 desktop users. Charts need hover interactions that don't translate to mobile well. | Desktop-first. Charts can be responsive within reason but don't optimize for phone. |
+| Editable thresholds UI | Building a UI for users to customize conditional formatting thresholds adds significant complexity for 2-3 users. | Hardcode sensible defaults (1 SD, 1.5 SD). Can always add a settings panel later if users request it. |
+| Dashboard drag-and-drop layout | v3 feature. The current single-page drill-down model is the right UX for now. | Keep the linear flow: root table -> partner view (cards + chart + table) -> batch detail. |
+
+---
+
+## Feature Dependencies
 
 ```
-TS-4 (Data Loading)
-  |
-  +-- TS-1 (Data Table)
-  |     |
-  |     +-- TS-2 (Column Visibility/Reorder)
-  |     +-- TS-6 (Data Formatting)
-  |     +-- TS-7 (Export CSV/Excel)
-  |     +-- TS-8 (Grid Performance)
-  |     +-- D-7 (Sparklines) --> needs D-2
-  |
-  +-- TS-3 (Filters)
-  |     |
-  |     +-- D-2 (Period-over-Period) --> needs temporal data model
-  |     +-- D-3 (Collection Curves)
-  |     +-- D-8 (KPI Cards)
-  |
-  +-- TS-5 (Saved Views) --> needs TS-1, TS-2, TS-3
-  |
-  +-- D-1 (Anomaly Highlighting) --> needs TS-1, TS-6, domain thresholds
-  |     |
-  |     +-- D-4 (Benchmark Comparison)
-  |
-  +-- D-5 (Dashboard Layout) --> needs TS-5, D-3, TS-1
-  |
-  +-- D-6 (Drill-Down) --> needs TS-3, multiple Snowflake tables
+KPI Summary Cards (TS-2)
+  |-- Requires: partner drill-down (already exists)
+  |-- Requires: client-side aggregation of batch data (new)
+
+Collection Curve Overlay (TS-1)
+  |-- Requires: charting library (new dependency -- Recharts recommended)
+  |-- Requires: partner drill-down (already exists)
+  |-- Requires: collection curve columns (already in data)
+
+Conditional Formatting (TS-3)
+  |-- Requires: partner baseline computation (new)
+  |-- Extends: existing thresholds.ts system
+  |-- Requires: partner drill-down (already exists)
+
+Batch Trending Indicators (TS-4)
+  |-- Requires: batch chronological ordering (may need logic)
+  |-- Requires: partner drill-down (already exists)
+  |-- Depends on: TS-3 baseline computation (shared logic)
+
+Sparkline Mini-Charts (D-1)
+  |-- Requires: TS-1 charting infrastructure or lightweight SVG
+  |-- Requires: virtual scrolling compatibility (already exists)
+
+Deviation Heatmap (D-2)
+  |-- Requires: TS-3 conditional formatting system (extends it)
+
+Collection Curve Shape Comparison (D-3)
+  |-- Requires: TS-1 (overlay chart)
+  |-- Requires: curve classification logic (new, complex)
 ```
 
-## Recommended Build Order
-
-**Wave 1 — Foundation (must ship first)**
-1. TS-4: Data Loading (Snowflake connection, API layer)
-2. TS-1: Interactive Data Table
-3. TS-6: Data Formatting
-4. TS-8: Grid Performance
-
-**Wave 2 — Usability (makes it usable daily)**
-5. TS-2: Column Visibility/Reorder
-6. TS-3: Global Filters
-7. TS-7: Export
-
-**Wave 3 — Core Value (the reason to build this)**
-8. D-1: Anomaly Highlighting
-9. D-2: Period-over-Period Change Tracking
-10. TS-5: Saved Views
-11. D-8: KPI Summary Cards
-
-**Wave 4 — Power Features (delight)**
-12. D-3: Collection Curve Visualization
-13. D-4: Benchmark Comparison
-14. D-7: Sparklines
-15. D-5: Dashboard Layout
-16. D-6: Drill-Down Navigation
+**Build order implication:** TS-2 (KPI cards) is independent and low complexity -- build first. TS-1 (chart) introduces the charting library -- build second. TS-3 (conditional formatting) builds the baseline computation -- third. TS-4 (trending) reuses TS-3 logic -- fourth. Differentiators layer on top.
 
 ---
 
-## Complexity Summary
+## MVP Recommendation
 
-| Feature | Complexity | Category |
-|---------|-----------|----------|
-| TS-1: Data Table | Low-Medium | Table Stakes |
-| TS-2: Column Visibility | Low | Table Stakes |
-| TS-3: Global Filters | Medium | Table Stakes |
-| TS-4: Data Loading | Medium | Table Stakes |
-| TS-5: Saved Views | Medium | Table Stakes |
-| TS-6: Data Formatting | Low | Table Stakes |
-| TS-7: Export | Low | Table Stakes |
-| TS-8: Grid Performance | Medium | Table Stakes |
-| D-1: Anomaly Highlighting | Medium-High | Differentiator |
-| D-2: Period-over-Period | High | Differentiator |
-| D-3: Collection Curves | Medium | Differentiator |
-| D-4: Benchmark Comparison | Medium | Differentiator |
-| D-5: Dashboard Layout | High | Differentiator |
-| D-6: Drill-Down | Medium-High | Differentiator |
-| D-7: Sparklines | Medium | Differentiator |
-| D-8: KPI Cards | Low-Medium | Differentiator |
+**Phase 1 -- Foundation (build first):**
+1. **KPI Summary Cards (TS-2)** -- Low complexity, high visibility, no new dependencies
+2. **Collection Curve Overlay Chart (TS-1)** -- Core v2 value prop, introduces Recharts
+
+**Phase 2 -- Intelligence (build second):**
+3. **Conditional Formatting with Partner Norms (TS-3)** -- Upgrades existing threshold system
+4. **Batch-over-Batch Trending (TS-4)** -- Shares baseline computation with TS-3
+
+**Phase 3 -- Polish (if time permits):**
+5. **Sparkline Mini-Charts (D-1)** -- Nice-to-have compression of 20 columns
+
+**Defer to v3:**
+- Deviation Heatmap (D-2) -- cool but the conditional formatting handles 80% of the need
+- Curve Shape Comparison (D-3) -- needs more sophisticated analysis
+- Exportable Reports (D-5) -- nice but not core to the comparison workflow
 
 ---
 
-*Research completed: 2026-04-10*
-*Source: Domain analysis of internal analytics tooling patterns, PROJECT.md requirements, debt collection industry data workflows*
+## Data Column Mapping
+
+How existing 61 columns map to v2 features:
+
+| Feature | Columns Used | Column Group |
+|---------|-------------|--------------|
+| Collection Curve Chart | `COLLECTION_AFTER_{1..60}_MONTH` (20 cols) | collection-curves |
+| Curve Truncation | `BATCH_AGE_IN_MONTHS` | identity |
+| KPI Cards | `TOTAL_ACCOUNTS`, `TOTAL_AMOUNT_PLACED`, `TOTAL_COLLECTED_LIFE_TIME`, `COLLECTION_AFTER_{3,6,12}_MONTH`, `PENETRATION_RATE_POSSIBLE_AND_CONFIRMED` | Various |
+| Conditional Formatting | All numeric columns (40+ cols) | All groups |
+| Trending Indicators | Key metrics subset: `COLLECTION_AFTER_{3,6,12}_MONTH`, `PENETRATION_RATE_*`, `RAITO_FIRST_TIME_CONVERTED_ACCOUNTS`, `TOTAL_COLLECTED_LIFE_TIME` | collection-curves, penetration, conversion, payments |
+| Batch Ordering | `BATCH`, `BATCH_AGE_IN_MONTHS` | identity |
+| Sparklines | `COLLECTION_AFTER_{1..60}_MONTH` (20 cols), `BATCH_AGE_IN_MONTHS` | collection-curves, identity |
+
+**No new Snowflake columns needed.** All v2 features derive from existing `agg_batch_performance_summary` data. The `ACCOUNT_PUBLIC_ID` column (listed as active requirement) is for account-level drill-down, not for within-partner comparison features.
+
+---
+
+## Existing Infrastructure to Extend
+
+| Existing System | v2 Extension |
+|----------------|--------------|
+| `thresholds.ts` (static absolute thresholds) | Add relative threshold computation: per-partner mean/SD calculation, extend `ThresholdConfig` with a `relative` mode |
+| `use-drill-down.ts` (partner/batch state) | KPI cards and chart render conditionally based on `drillState.level === 'partner'` |
+| `data-display.tsx` (layout orchestrator) | Add chart and KPI card components between breadcrumb and table at partner level |
+| `groups.ts` (column grouping) | Sparkline feature would add a synthetic "Curve" column that reads from the collection-curves group |
+| `FormattedCell` component | Extend to render trend arrows and relative-deviation colors |
+| TanStack Virtual (virtualization) | Must remain performant with sparklines added to cells |
+
+---
+
+## Sources
+
+- [Vintage analysis methodology](https://www.listendata.com/2019/09/credit-risk-vintage-analysis.html) -- canonical structure for collection curve overlay charts
+- [Vintage curves explanation](https://www.finleycms.com/blog/what-are-vintage-curves/) -- x-axis = age, y-axis = cumulative metric, each line = one cohort
+- [KPI dashboard best practices](https://tabulareditor.com/blog/kpi-card-best-practices-dashboard-design) -- F-pattern layout, comparison context, 4-6 card limit
+- [Dashboard design principles](https://www.datacamp.com/tutorial/dashboard-design-tutorial) -- visual hierarchy, summary-then-detail pattern
+- [React charting libraries 2025](https://blog.logrocket.com/best-react-chart-libraries-2025/) -- Recharts recommended for composable React-first charting
+- [Batch comparison analytics](https://www.trendminer.com/resources/batch-comparison-and-live-monitoring) -- overlay visualization for multi-batch comparison
+- [React sparklines in tables](https://www.shadcn.io/blocks/tables-sparkline) -- sparkline integration patterns with shadcn/ui tables
+- [Heatmap visualization guide](https://www.atlassian.com/data/charts/heatmap-complete-guide) -- when and how to use color-coded data matrices

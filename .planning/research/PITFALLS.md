@@ -1,312 +1,271 @@
-# Pitfalls Research: Bounce Data Visualizer
+# Domain Pitfalls
 
-> Internal data analytics dashboard connecting React/Next.js to Snowflake for a debt collection company's partnerships team. Key concerns: Snowflake query performance, large datasets, saved view persistence, anomaly detection thresholds.
-
----
-
-## Pitfall 1: Snowflake Cold Warehouse Latency Killing UX
-
-**Risk Level:** Critical
-**Phase Relevance:** Phase 1 (data layer), carries through all phases
-
-### The Problem
-
-Snowflake warehouses auto-suspend after idle periods. The first query after suspension triggers a cold start that takes 5-30 seconds depending on warehouse size. With only 2-3 users hitting the dashboard sporadically throughout the day, the warehouse will be cold *most of the time*. Users will experience the dashboard as "slow" even though subsequent queries are fast.
-
-### Warning Signs
-
-- First dashboard load of the day takes 10x longer than subsequent loads
-- Users start refreshing the page thinking it is broken
-- Complaints about "the dashboard being slow" that are hard to reproduce because developer testing keeps the warehouse warm
-
-### Prevention Strategy
-
-- **Set warehouse auto-suspend to 5-10 minutes** (not the default 10 minutes or lower) to balance cost vs. cold start frequency during work hours
-- **Implement a server-side caching layer** (Redis or even in-memory with Next.js API routes) for the most common queries — the `agg_batch_performance_summary` table data does not change in real-time so caching for 15-60 minutes is safe
-- **Add a loading skeleton UI** from day one so cold starts feel responsive rather than broken
-- **Pre-warm with a lightweight scheduled query** (a cron job that runs `SELECT 1` every 4 minutes during business hours) if cost allows
-- **Show "data as of [timestamp]"** so users understand they are seeing cached data, not a stuck query
+**Domain:** Adding visualization, conditional formatting, and comparison features to an existing data table application
+**Project:** Bounce Data Visualizer v2.0 — Within-Partner Comparison
+**Researched:** 2026-04-11
+**Context:** Existing deployed app with 477 batch rows, 61 columns, TanStack Table with virtual scrolling, drill-down navigation, and static/dynamic Snowflake data.
 
 ---
 
-## Pitfall 2: Fetching All 61 Columns When Users Need 8
+## Critical Pitfalls
 
-**Risk Level:** High
-**Phase Relevance:** Phase 1 (API design), Phase 2 (table views)
+Mistakes that cause rewrites, broken data interpretation, or major performance regressions.
 
-### The Problem
+### Pitfall 1: Collection Curve Truncation Creates False Performance Narratives
 
-The `agg_batch_performance_summary` table has 61 columns. The natural instinct is to run `SELECT *` and let the frontend decide what to show. This is catastrophic for performance and bandwidth: Snowflake charges by data scanned, wide result sets serialize slowly over the wire, and the frontend chokes parsing massive JSON payloads when there are thousands of rows across 61 columns.
+**What goes wrong:** Batches at different ages have different numbers of valid collection curve data points. A 3-month-old batch only has COLLECTION_AFTER_1_MONTH through COLLECTION_AFTER_3_MONTH -- everything beyond that is null or zero. If the chart treats null/zero as "collected $0 at month 6," it creates a false cliff that makes young batches look like failures compared to mature batches.
 
-### Warning Signs
+**Why it happens:** The data has 20 collection curve columns (M1 through M60) but BATCH_AGE_IN_MONTHS determines how many are populated. The natural instinct is to plot all 20 points for every batch -- nulls silently become zeros in most charting libraries (Recharts renders null as 0 by default unless explicitly handled).
 
-- API responses exceed 1MB for routine table views
-- Snowflake credit consumption grows faster than expected
-- Browser memory usage spikes when loading the dashboard
-- Network tab shows response times dominated by transfer time, not query time
+**Consequences:** The partnerships team draws wrong conclusions about batch quality. A new batch that is actually outperforming its cohort at the same age looks terrible because its line drops to zero at month 4 while older batches continue climbing. This directly undermines the v2.0 value proposition: surfacing abnormal performance accurately.
 
-### Prevention Strategy
+**Prevention:**
+- Truncate each batch's curve series at its BATCH_AGE_IN_MONTHS value. Only plot data points where month <= batch age.
+- Use explicit null handling in the charting library (Recharts accepts `connectNulls={false}` to end lines at null values).
+- Add a visual indicator (dot or marker at the terminus) showing "data ends here, batch is X months old."
+- Build a `truncateCurveAtAge(row)` utility tested with unit tests for batches at ages 1, 6, 12, 24, and 60 months.
 
-- **Design the API to accept a column list** — every query should specify exactly which columns to fetch, driven by the current view configuration
-- **Define "column groups"** (e.g., collection_curves, penetration_rates, engagement_metrics, demographics) that map to logical sets of 5-10 columns users typically view together
-- **Never use SELECT * in production queries** — enforce this as a code review rule from the start
-- **Paginate server-side** — return 50-100 rows per request, not the full dataset
-- **Add response size monitoring** in the API layer to catch regressions early
+**Detection:** If any collection curve line touches zero on the Y-axis after previously being positive, that is almost certainly a truncation bug rather than real data.
+
+**Phase relevance:** Collection Curve Charts -- this must be correct before any overlay comparison works.
 
 ---
 
-## Pitfall 3: Saved Views That Break When Schema Changes
+### Pitfall 2: Absolute Dollar Comparison Without Normalization
 
-**Risk Level:** High
-**Phase Relevance:** Phase 2 (saved views), ongoing maintenance
+**What goes wrong:** Overlaying collection curves from batches with different TOTAL_AMOUNT_PLACED values makes comparison meaningless. A batch with $10M placed that collected $500K at M3 looks like it is destroying a $1M batch that collected $200K -- but the smaller batch actually has a 20% recovery rate vs 5%.
 
-### The Problem
+**Why it happens:** The raw COLLECTION_AFTER_X_MONTH columns are absolute dollar amounts (type: 'currency' in COLUMN_CONFIGS). Plotting raw values is the path of least resistance. Engineers see currency columns and chart currency values.
 
-Saved views store column selections, sort orders, filters, and layout configurations. When Snowflake table schemas evolve (columns renamed, added, removed, types changed), saved views that reference old column names silently break. Users see blank columns, error states, or worse — wrong data in the wrong column. This is especially dangerous because the project explicitly plans to add more tables over time (`master_accounts`, `master_outbound_interactions`, payment tables).
+**Consequences:** Every visual comparison becomes misleading. The team focuses on high-dollar batches that may actually be underperforming relative to their size. The tool adds visual confidence to wrong conclusions -- worse than no chart at all.
 
-### Warning Signs
+**Prevention:**
+- Default the collection curve chart to show recovery rate (COLLECTION_AFTER_X / TOTAL_AMOUNT_PLACED * 100) rather than absolute dollars.
+- Provide a toggle for absolute vs. percentage view, but percentage must be the default.
+- Pre-compute the percentage series during data transformation (in a useMemo), not inside the chart render loop.
+- Handle division by zero: if TOTAL_AMOUNT_PLACED is 0 or null, show "N/A" instead of Infinity% or 0%.
 
-- Users report "my saved view stopped working" after a data team change
-- Columns in a saved view show null/empty when the underlying data exists
-- Filter configurations silently match nothing because a column was renamed
-- Different users see different results from "the same" saved view
+**Detection:** If collection curves from the same partner fan out dramatically based on batch size rather than clustering by performance quality, the normalization is missing.
 
-### Prevention Strategy
-
-- **Store saved views with column metadata** — include column name, expected type, and a schema version identifier, not just column names
-- **Validate saved views on load** — when a view is opened, compare its column references against the current schema and surface clear warnings for any mismatches rather than rendering broken data
-- **Build a schema migration utility** — when a column is renamed or removed, provide a way to bulk-update affected saved views
-- **Add a "view health check" indicator** that shows green/yellow/red based on whether all referenced columns still exist
-- **Version your API schemas** from day one so frontend and backend expectations are explicit
+**Phase relevance:** Collection Curve Charts -- must be baked into the data transformation layer before chart rendering.
 
 ---
 
-## Pitfall 4: Hardcoded Anomaly Thresholds That Nobody Updates
+### Pitfall 3: Conditional Formatting That Re-renders the Entire Table
 
-**Risk Level:** High
-**Phase Relevance:** Phase 3 (anomaly highlighting), ongoing
+**What goes wrong:** The existing FormattedCell component (src/components/table/formatted-cell.tsx) runs threshold checks per-cell using static COLUMN_THRESHOLDS. Adding partner-relative conditional formatting (deviation from partner historical norms) requires computing the partner average first, then comparing each cell. If this computation happens inside the cell renderer, every cell recalculates on every table interaction (sort, filter, scroll).
 
-### The Problem
+**Why it happens:** The current threshold system uses a static O(1) lookup in getThreshold(). Partner-relative thresholds require aggregating across multiple rows to compute the partner mean. The temptation is to compute this inline: "just calculate the partner average in the cell renderer."
 
-"Metrics outside normal thresholds" requires defining what "normal" means. The common mistake is hardcoding thresholds (e.g., penetration rate below 5% is bad, collection curve deviation above 15% is an anomaly). These hardcoded values become stale as the portfolio changes, new partners onboard with different baselines, and market conditions shift. After a few months, either everything is flagged (threshold too tight) or nothing is (threshold too loose), and users stop trusting the anomaly indicators entirely.
+**Consequences:** With 477 rows x ~20 visible columns = ~9,500 visible cells, computing partner aggregates inside cell renderers means each sort/filter/scroll triggers thousands of redundant aggregate calculations. TanStack Table issue #4794 documents how unstable cell.getContext() references already cause unnecessary re-renders -- adding expensive computations per cell amplifies this.
 
-### Warning Signs
+**Prevention:**
+- Pre-compute partner aggregates in a useMemo that depends only on the raw data, not on table state (sorting, filtering, column visibility).
+- Store the computed norms in a lookup: `Map<partnerName, Map<columnKey, { mean, stddev }>>`.
+- Pass the lookup to FormattedCell via React context or a stable prop reference.
+- Extend the existing ThresholdConfig/ThresholdResult interfaces to support dynamic thresholds alongside existing static ones -- do not create a parallel system.
+- Profile with React DevTools before and after: FormattedCell render time should not increase by more than 0.1ms per cell.
 
-- More than 30% of rows are flagged as anomalous (threshold too loose relative to data)
-- Anomaly indicators have not been adjusted since initial deployment
-- Users say "I just ignore the red highlights now"
-- New partners with legitimately different performance profiles are always flagged
+**Detection:** Sort a column after adding conditional formatting. If there is a visible delay (>200ms) that did not exist before, aggregation is leaking into the render path.
 
-### Prevention Strategy
-
-- **Use relative thresholds, not absolute** — flag metrics that deviate more than N standard deviations from the peer group (same account type, similar vintage) rather than a fixed number
-- **Make thresholds user-configurable per view** — let the partnerships team adjust sensitivity by metric, partner, or account type
-- **Implement threshold presets** (conservative, moderate, aggressive) rather than requiring users to set exact numbers
-- **Store thresholds separately from code** — in a configuration table or the saved view definition, not hardcoded in the React components or API
-- **Add a "threshold tuning" interface early** — even if simple (a slider per metric), this avoids the situation where changing a threshold requires a code deploy
-- **Log threshold hit rates** — if a threshold flags more than 40% or fewer than 1% of records, surface that as a signal to recalibrate
+**Phase relevance:** Conditional Formatting -- the aggregation layer must be built and memoized before touching FormattedCell.
 
 ---
 
-## Pitfall 5: Building the Full Dashboard Before Validating the Data Layer
+### Pitfall 4: Chart Components Inside Table Rows Kill Virtual Scrolling
 
-**Risk Level:** Critical
-**Phase Relevance:** Phase 1 (foundation)
+**What goes wrong:** If sparklines or mini collection curve charts are embedded directly in table cells, each chart creates a heavy React subtree with SVG elements. The virtualizer (TanStack Virtual, currently configured with overscan: 10) creates and destroys these as rows scroll in and out of view, causing visible jank and GC pressure.
 
-### The Problem
+**Why it happens:** The natural UX idea is "show a mini collection curve right in the table row." This works in static tables but fights with TanStack Virtual's recycling model. The existing TableBody component already processes each visible cell through flexRender -- adding SVG chart components multiplies the cost per cell by 10-50x.
 
-Teams often jump to building beautiful charts and interactive tables before confirming that the underlying data is correct, complete, and query-able at the needed granularity. With Snowflake as the source, there are specific risks: the `agg_batch_performance_summary` table may have NULL values in key columns, aggregation levels may not match what the UI assumes, date fields may have timezone inconsistencies, and joins across the planned additional tables may produce unexpected duplicates or fan-outs.
+**Consequences:** Scroll performance degrades from smooth 60fps to stuttering. Each row entering the viewport mounts a new chart component with SVG nodes. With overscan of 10, that is 10 chart instances mounting on every scroll event.
 
-### Warning Signs
+**Prevention:**
+- Do NOT embed chart components in table cells. Show collection curves in a detail panel/drawer that opens on row click, outside the virtual scroll container.
+- If inline visualization is truly needed, use CSS-only approaches (gradient backgrounds representing values) or pre-rendered static SVG strings, not React chart components.
+- The detail panel approach also works better with the existing drill-down UX (click partner -> see batches + chart).
 
-- Frontend shows nonsensical numbers that "look right" in Snowflake but wrong in the UI due to aggregation mismatches
-- Charts show gaps or spikes caused by NULL handling differences between Snowflake SQL and JavaScript
-- Collection curve data points are missing for certain months because the source table skips zero-value periods
-- Period-over-period calculations produce NaN or Infinity when the prior period value is zero or NULL
+**Detection:** Scroll the table after adding any visualization to cells. If it feels noticeably worse than before, chart-in-cell is the cause.
 
-### Prevention Strategy
-
-- **Build and validate the data layer in isolation first** — write and test every Snowflake query before building any UI, with assertions on expected row counts, NULL rates, and value ranges
-- **Create a data validation checklist** for `agg_batch_performance_summary`: NULL rates per column, distinct value counts for categorical columns, min/max/mean for numeric columns, date range coverage
-- **Handle division-by-zero and NULL explicitly** in every calculation — define a project-wide convention (e.g., NULL prior period = show "N/A", zero denominator = show 0% not Infinity)
-- **Test with real Snowflake data from day one**, not mock data — mock data hides schema surprises
-- **Document assumed aggregation levels** — is each row a batch? A batch-month? A partner-batch-month? Verify this assumption before building any group-by logic in the UI
+**Phase relevance:** Collection Curve Charts -- architecture decision that must be made before any chart implementation.
 
 ---
 
-## Pitfall 6: Snowflake Query Cost Spiraling from Unoptimized Queries
+### Pitfall 5: KPI Aggregation Disagreeing with Table Totals
 
-**Risk Level:** Medium-High
-**Phase Relevance:** Phase 1 (API design), ongoing
+**What goes wrong:** KPI summary cards show one number (e.g., "Total Collected: $4.2M") while the table footer (TableFooter component) shows a different number. This happens when KPI cards aggregate over the full dataset while the table footer aggregates over filtered/visible rows, or vice versa.
 
-### The Problem
+**Why it happens:** The existing TableFooter aggregates over `table.getRowModel().rows` -- which reflects current filters and sorting. KPI cards that compute from the raw `data` prop or from a separate React Query cache will show unfiltered totals. The mismatch is subtle and erodes trust immediately.
 
-Snowflake bills by compute time (credits). Every unoptimized query costs real money. Common causes: queries without WHERE clauses scanning full tables, repeated identical queries that could be cached, JOINs across large tables without partition pruning, and the auto-scaling warehouse responding to concurrent queries by spinning up additional clusters. With a small team, costs start low and the problem is invisible — until the table grows or additional tables are added and monthly bills spike.
+**Consequences:** Users lose confidence in the tool. "Why does the card say $4.2M but the table says $3.8M?" The answer (filters) is correct but not obvious. With only 2-3 users, one bad trust experience can kill adoption.
 
-### Warning Signs
+**Prevention:**
+- KPI cards must aggregate from the same row set as the table. Use `table.getFilteredRowModel().rows` for filter-respecting totals.
+- If showing both filtered and unfiltered, label explicitly: "Filtered: $3.8M of $4.2M total."
+- Show context: "Showing 234 of 477 batches" next to filtered KPIs.
+- Never silently mix filtered and unfiltered aggregations in the same view.
+- Wire KPI aggregation through a single `useKpiAggregation(rows)` hook that both cards and footer can share.
 
-- Snowflake credit usage grows month-over-month without a corresponding increase in users or data
-- Query history shows the same expensive query running dozens of times per day
-- Warehouse auto-scaling kicks in regularly despite having only 2-3 users
-- No query monitoring or cost alerting is configured
+**Detection:** Apply any filter, then compare KPI card values to table footer values. If they diverge, the aggregation sources differ.
 
-### Prevention Strategy
-
-- **Use Snowflake's query profiling** (`QUERY_HISTORY` view) from day one to track the most expensive queries
-- **Set a Snowflake resource monitor** with alerts at 75% and a hard stop at 100% of monthly budget
-- **Implement server-side query result caching** — the data refreshes in batches, so cache validity can be tied to the last batch load timestamp
-- **Use clustering keys** if table scans become expensive on `agg_batch_performance_summary`
-- **Design the API to batch related queries** — one round-trip that returns table data + summary stats, not separate calls for each widget
-- **Use Snowflake's RESULT_SCAN** for follow-up queries against the same result set within a session
+**Phase relevance:** KPI Summary Cards -- must be wired to the correct data source from the start.
 
 ---
 
-## Pitfall 7: Client-Side State Management Becoming Unmanageable
+## Moderate Pitfalls
 
-**Risk Level:** Medium
-**Phase Relevance:** Phase 2 (interactive tables), Phase 3 (saved views)
+### Pitfall 6: Charting Library Bundle Size Regression
 
-### The Problem
+**What goes wrong:** Adding Recharts adds ~150KB gzipped to the JavaScript bundle. The current app loads fast on Vercel -- this can noticeably increase initial paint time, especially since charts are only needed at the partner drill-down level, not on the root table view.
 
-An interactive dashboard has complex interrelated state: active filters, sort orders, selected columns, column widths, row selection, comparison mode, time period, anomaly threshold settings, and which saved view is active. The common mistake is managing this with scattered `useState` hooks across components, leading to state synchronization bugs (filter changes that do not propagate to the chart, sort state that resets when switching tabs, saved views that do not capture all current settings).
+**Prevention:**
+- Lazy-load chart components with Next.js `dynamic()` and `{ ssr: false }` -- charts are only needed at drill-down, not on initial page load.
+- Consider lightweight alternatives if Recharts proves too heavy: raw SVG for simple line charts with 20 data points per series is straightforward and zero-dependency.
+- Measure bundle size before and after with `next build` output -- set a budget of <50KB added to the initial route.
 
-### Warning Signs
-
-- Changing a filter updates the table but not the summary stats above it
-- The URL does not reflect the current view state (users cannot share links to specific views)
-- "Save View" captures most but not all of the current configuration
-- Undo/redo is impossible because there is no centralized state history
-
-### Prevention Strategy
-
-- **Choose a state management approach on day one** — for this scale, URL-based state (query params) combined with a single state store (Zustand, Jotai, or React Context with useReducer) is appropriate
-- **Define the view state schema upfront** as a TypeScript type — every piece of UI state that constitutes a "view" should be in one serializable object
-- **Derive URL from state** — every meaningful state change should update the URL so views are shareable and bookmarkable
-- **Make saved views a serialization of this state object** — no separate "save" logic, just persist the state blob
-- **Test state round-trips** — serialize state to URL, deserialize back, confirm equality. Do this in unit tests from the start
+**Phase relevance:** Collection Curve Charts -- the import strategy is an early architecture decision.
 
 ---
 
-## Pitfall 8: Period-over-Period Calculations That Silently Produce Wrong Results
+### Pitfall 7: Conditional Formatting Color Conflicts with Existing Theme
 
-**Risk Level:** High
-**Phase Relevance:** Phase 2-3 (change tracking, anomaly detection)
+**What goes wrong:** The app already has conditional styling in FormattedCell: zero values get dimmed text (--cell-zero), negatives get red (text-destructive), outliers get tinted backgrounds (--cell-tint-low, --cell-tint-high). Adding partner-deviation formatting introduces a second layer of color meaning. A cell could simultaneously be "high outlier" by static threshold AND "below partner average" by dynamic threshold -- two conflicting visual signals on the same cell.
 
-### The Problem
+**Prevention:**
+- Define a clear priority: partner-relative deviation overrides static thresholds when both apply, since deviation from norm is the v2.0 value proposition.
+- Use distinct visual channels: keep existing background tints for static outliers, use left-border color for partner-deviation signals.
+- Document the visual language and test all combinations: what does a cell look like when it is zero AND below partner norm? Below static threshold AND above partner norm?
+- Never stack two background colors.
 
-MoM (month-over-month), WoW (week-over-week), and batch-over-batch comparisons are a core feature. These calculations are deceptively tricky with real debt collection data: months have different numbers of days, batches are placed at irregular intervals, some months have no data for certain accounts, and comparing absolute values vs. percentage changes yields different anomaly signals. Getting these calculations wrong means the partnerships team makes decisions based on phantom trends.
-
-### Warning Signs
-
-- MoM changes show wild swings in short months (February) vs. long months (March) due to day-count differences
-- Batch-over-batch comparisons are nonsensical because batches have different sizes or compositions
-- Zero-to-nonzero transitions show as "infinite% increase"
-- Users question the numbers because they do not match their mental math from looking at raw data
-
-### Prevention Strategy
-
-- **Normalize by day count** for any time-period comparison, or clearly label whether the comparison is "calendar month" vs. "30-day period"
-- **Define comparison semantics precisely** — does "MoM" mean same calendar month last year, prior calendar month, or rolling 30 days? Document this and make it visible in the UI
-- **Handle missing periods explicitly** — if a batch has no data for a comparison period, show "No prior data" rather than 0% change or a blank
-- **Build a comparison calculation library** with unit tests covering edge cases: zero-to-nonzero, nonzero-to-zero, NULL periods, partial periods, February vs. March
-- **Add a "show calculation" tooltip** or detail panel so users can verify how a specific change number was derived
+**Phase relevance:** Conditional Formatting -- design the visual hierarchy before writing CSS.
 
 ---
 
-## Pitfall 9: Deploying to Vercel Without Considering Snowflake Connection Limits
+### Pitfall 8: Batch-Over-Batch Trending Computed from Wrong Baseline
 
-**Risk Level:** Medium
-**Phase Relevance:** Phase 1 (deployment architecture)
+**What goes wrong:** "Trending" implies comparison to a baseline, but which one? Common mistakes: comparing to the immediately previous batch (volatile -- one bad batch skews everything), comparing to the global average (meaningless for partners with unique profiles), or comparing to a fixed historical period that no longer represents current portfolio quality.
 
-### The Problem
+**Why it happens:** There is no single "right" baseline. Without deliberate design, each developer picks whatever makes sense to them, leading to inconsistent trend calculations across different metrics.
 
-Vercel runs Next.js API routes as serverless functions. Each invocation creates a new connection to Snowflake. Snowflake has connection limits per account and per warehouse. Serverless functions cannot share connection pools across invocations easily. This means: slow connection establishment on every API call (Snowflake connections take 1-3 seconds to establish), potential connection limit exhaustion under even moderate load, and no ability to use prepared statements or session-level caching.
+**Prevention:**
+- Use rolling partner average (last 4-6 batches for the same partner) as baseline -- not global average and not single-batch comparison.
+- Exclude the current batch from its own baseline (avoid self-reference bias).
+- Handle partners with fewer than 3 historical batches: show "Insufficient history" rather than computing a misleading trend from 1-2 data points.
+- Document the algorithm explicitly per the project constraint: "Every data transformation must have an explicit, documented algorithm."
+- Make the baseline window configurable (3/6/12 batches) but default to 6.
 
-### Warning Signs
-
-- API response times include 1-3 seconds of overhead before any query even runs
-- Intermittent "too many connections" errors from Snowflake
-- Dashboard loads are consistently slower than local development where a persistent connection exists
-- Connection establishment dominates query execution time for simple queries
-
-### Prevention Strategy
-
-- **Use a connection pooling service** — consider Snowflake's own connection pooling, or an intermediary like a lightweight persistent API server (e.g., a small always-on service on Railway/Render) that pools Snowflake connections and is called by Vercel functions
-- **Cache aggressively on the Vercel edge** — use Vercel's ISR (Incremental Static Regeneration) or edge middleware caching for data that updates on a known schedule
-- **Batch API calls** — design the frontend to make one API call per view load, not one per widget, to minimize connection overhead
-- **Evaluate Vercel's serverless function connection reuse** — warm functions can reuse connections within a short window; architect routes to take advantage of this
-- **Set Snowflake connection timeout and retry logic** — do not let a failed connection hang the UI for 30 seconds; fail fast and retry once
+**Phase relevance:** Batch-Over-Batch Trending -- the algorithm design phase, before any UI.
 
 ---
 
-## Pitfall 10: Building Features Nobody Uses Because You Skipped User Observation
+### Pitfall 9: Drill-Down State Lost When Charts Mount
 
-**Risk Level:** Medium
-**Phase Relevance:** All phases, especially Phase 1
+**What goes wrong:** The existing drill-down uses React state (known tech debt -- not URL params). The DataTable component already has `key={...drillState...}` which remounts the entire table on drill-down changes. If chart components trigger state changes or re-renders in the DataDisplay component tree, the user's drill-down position could be lost.
 
-### The Problem
+**Why it happens:** Charts that fetch their own data or manage their own state can trigger cascading re-renders up the component tree. A new useEffect in a chart component that runs on mount could inadvertently trigger a state update that resets drill-down.
 
-With only 2-3 users, there is a temptation to guess their workflows rather than observe them. Internal tools commonly fail because the builder assumes which metrics matter, how data should be grouped, and what "abnormal" means — without watching the actual users work. The partnerships team may spend 80% of their time on 3 specific queries that could be one-click shortcuts, while the fancy collection curve visualization gets used once a month.
+**Prevention:**
+- Charts must be children of the drill-down view, not siblings that could trigger a key change on DataTable.
+- If charts need their own data fetching, use separate React Query keys that do not invalidate the main `['data']` query key.
+- Test the full drill-down flow (root -> partner -> batch -> back to partner) after adding every chart component.
+- Consider this the right time to finally move drill-down to URL params (fixing the known tech debt) -- it would make the state resilient to any re-render.
 
-### Warning Signs
-
-- Building complex features (multi-axis charts, nested drill-downs) before confirming anyone wants them
-- Users still open Metabase alongside the new tool because it has one thing the new tool does not
-- Saved view feature is built but nobody saves views because the default view already shows what they need
-- Most complex features have zero usage after 2 weeks of deployment
-
-### Prevention Strategy
-
-- **Spend 30 minutes watching each user work in Metabase before building anything** — note what queries they run, what they copy to spreadsheets, what they complain about
-- **Ship the simplest possible table view first** and get feedback within days, not weeks
-- **Add basic usage tracking** (even just server-side logging of which API endpoints are hit) to see which features are actually used
-- **Keep a "user said" log** — literal quotes from the 2-3 users about what they want, updated weekly
-- **Resist building the collection curve visualization until someone asks for it twice** — the list of active requirements should be validated against observed usage
+**Phase relevance:** Architecture -- decide chart placement relative to the drill-down hierarchy before building.
 
 ---
 
-## Pitfall 11: Ignoring Snowflake Data Freshness Leading to Stale Dashboards
+### Pitfall 10: Collection Curve X-Axis Gaps at Non-Linear Intervals
 
-**Risk Level:** Medium
-**Phase Relevance:** Phase 1 (data layer), Phase 2 (UI indicators)
+**What goes wrong:** The collection curve columns are M1-M12 (monthly), then M15, M18, M21, M24, M30, M36, M48, M60. If plotted with equal categorical spacing, the visual implies monthly granularity throughout, making the 3-year gap between M36 and M60 look like a one-month gap.
 
-### The Problem
+**Prevention:**
+- Use a true numeric X-axis (months as numbers: 1, 2, 3, ..., 15, 18, ..., 60) with proportional spacing, not categorical labels.
+- This naturally shows the data density difference between early months and later milestones.
+- Label the X-axis "Months Since Placement" to make the scale clear.
 
-The project states "batch/scheduled refresh is sufficient" and real-time is out of scope. But if the dashboard does not clearly communicate *when* data was last updated, users will not trust it. Worse, if the batch ETL job fails silently, the dashboard will show yesterday's data (or last week's) without any indication that something is wrong. The partnerships team may make decisions based on stale data without knowing it.
-
-### Warning Signs
-
-- Users ask "is this data up to date?" repeatedly
-- A batch load fails and nobody notices for days because the dashboard still shows data
-- Different data sources update at different frequencies but the dashboard does not distinguish between them
-- Users export dashboard data into spreadsheets "just to be safe" because they do not trust freshness
-
-### Prevention Strategy
-
-- **Display a "Data as of: [timestamp]" indicator prominently** on every view — query the max timestamp from the source table and show it
-- **Implement a data freshness health check** — if the latest data is older than expected (e.g., more than 26 hours for a daily batch), show a warning banner
-- **Log and alert on ETL failures** — even a simple Slack webhook when the last batch load timestamp is stale
-- **Show freshness per data source** once multiple tables are added — `agg_batch_performance_summary` may update daily while `master_accounts` updates hourly
+**Phase relevance:** Collection Curve Charts -- axis configuration detail, easy to miss.
 
 ---
 
-## Summary: Pitfall Priority Matrix
+### Pitfall 11: Saved Views Not Capturing Chart State
 
-| Pitfall | Risk | Earliest Phase to Address |
-|---------|------|---------------------------|
-| 1. Cold warehouse latency | Critical | Phase 1 - Data layer |
-| 5. Building UI before validating data | Critical | Phase 1 - Foundation |
-| 2. Fetching all 61 columns | High | Phase 1 - API design |
-| 3. Saved views breaking on schema change | High | Phase 2 - Saved views |
-| 4. Hardcoded anomaly thresholds | High | Phase 3 - Anomaly detection |
-| 8. Wrong period-over-period calculations | High | Phase 2-3 - Change tracking |
-| 6. Snowflake query cost spiral | Medium-High | Phase 1 - API design |
-| 9. Vercel + Snowflake connection limits | Medium | Phase 1 - Deployment |
-| 7. Unmanageable client state | Medium | Phase 2 - Interactive tables |
-| 10. Features nobody uses | Medium | All phases |
-| 11. Stale data without freshness indicators | Medium | Phase 1-2 |
+**What goes wrong:** The existing ViewSnapshot captures sorting, columnVisibility, columnOrder, columnFilters, dimensionFilters, and columnSizing. It does not capture chart-specific state: which batches are selected for overlay, absolute vs. percentage toggle, zoom level. Loading a saved view restores the table but resets chart settings to defaults.
+
+**Prevention:**
+- Extend ViewSnapshot interface early with optional chart state fields (even if initially empty).
+- Design chart state as serializable from the start -- no React refs or DOM state.
+- Make chart state restoration backwards-compatible: old saved views missing chart fields load with sensible defaults.
+- Add chart state fields incrementally as each chart feature ships.
+
+**Phase relevance:** All chart phases -- extend the type early, populate it as features land.
 
 ---
 
-*Research completed: 2026-04-10*
-*Source: Domain expertise in Snowflake-connected dashboard architecture, debt collection analytics, and React/Next.js deployment patterns*
+## Minor Pitfalls
+
+### Pitfall 12: Currency Formatting Inconsistency Between Table and Charts
+
+**What goes wrong:** The table uses formatCurrency/formatPercentage from src/lib/formatting/numbers.ts. Charts use their own axis/tooltip formatters. If these are different functions, "$1,234,567" in the table might appear as "$1.2M" on the chart axis.
+
+**Prevention:**
+- Reuse existing formatCurrency and formatPercentage functions as chart axis tick formatters and tooltip formatters.
+- Create a small `chartFormatters.ts` utility that wraps existing formatters for the charting library's tick/label API.
+
+**Phase relevance:** Collection Curve Charts -- use existing formatters from day one.
+
+---
+
+### Pitfall 13: Chart Tooltips Clashing with Table Tooltips
+
+**What goes wrong:** The existing app uses radix-based tooltips (shadcn/ui) on table cells for threshold explanations. Charting libraries (Recharts) have their own built-in tooltip system. When charts appear near the table, z-index collisions cause chart tooltips to render behind sticky table headers or vice versa.
+
+**Prevention:**
+- Set explicit z-index layers in a shared constants file: table headers > chart tooltips > table cells.
+- Prefer custom chart tooltips using the existing shadcn/ui Tooltip component over Recharts' built-in tooltip, for visual consistency.
+- Test chart interactions with sticky headers visible.
+
+**Phase relevance:** Collection Curve Charts -- test during implementation.
+
+---
+
+### Pitfall 14: Overloading the Partner Drill-Down View
+
+**What goes wrong:** The partner drill-down currently shows a filtered batch table. Adding KPI cards, collection curve charts, trending indicators, and conditional formatting all at once creates a cluttered, slow-loading view.
+
+**Prevention:**
+- Use progressive disclosure: KPI cards at top (lightweight summary), table below (existing), charts in expandable section or tab.
+- Do not render all charts on mount -- use lazy rendering triggered by user interaction (click to expand, tab to switch).
+- Set a performance budget: partner drill-down must reach interactive state within 200ms of click.
+
+**Phase relevance:** All v2.0 phases -- monitor cumulative UI density as each feature lands.
+
+---
+
+## Phase-Specific Warnings
+
+| Phase Topic | Most Likely Pitfall | Severity | Mitigation |
+|-------------|-------------------|----------|------------|
+| Collection Curve Charts | Truncation at batch age (P1) | Critical | Truncate by BATCH_AGE_IN_MONTHS, never plot past age |
+| Collection Curve Charts | Absolute vs. normalized (P2) | Critical | Default to recovery rate %, toggle for absolute |
+| Collection Curve Charts | Charts in table cells (P4) | Critical | Detail panel, not inline |
+| Collection Curve Charts | Non-linear x-axis (P10) | Minor | Numeric axis with proportional spacing |
+| Conditional Formatting | Re-render cascade (P3) | Critical | Pre-compute in useMemo, pass via context |
+| Conditional Formatting | Color conflicts (P7) | Moderate | Define visual priority, separate channels |
+| Batch-Over-Batch Trending | Wrong baseline (P8) | Moderate | Rolling partner avg, min 3 batches |
+| KPI Summary Cards | Aggregation mismatch (P5) | Critical | Wire to table's filtered row model |
+| KPI Summary Cards | Bundle size (P6) | Moderate | Lazy-load with dynamic() |
+| All Visualization | Drill-down state (P9) | Moderate | Charts inside drill hierarchy |
+| All Visualization | Saved view gaps (P11) | Minor | Extend ViewSnapshot early |
+| All Visualization | View overload (P14) | Minor | Progressive disclosure, lazy render |
+
+---
+
+## Sources
+
+- **Codebase analysis (HIGH confidence):** `src/components/table/formatted-cell.tsx`, `src/lib/formatting/thresholds.ts`, `src/components/table/table-body.tsx`, `src/lib/columns/config.ts`, `src/components/data-display.tsx`, `src/hooks/use-drill-down.ts`
+- [Recharts Performance Optimization Guide](https://recharts.github.io/en-US/guide/performance/) -- data reduction and memoization strategies
+- [TanStack Table re-render issue #4794](https://github.com/TanStack/table/issues/4794) -- cell.getContext() causing full table re-renders
+- [React Dashboard Re-render Optimization](https://medium.com/@sosohappy/react-rendering-bottleneck-how-i-cut-re-renders-by-60-in-a-complex-dashboard-ed14d5891c72) -- KPI card re-render patterns
+- [Recovery Curves in Collection Management](https://www.happyprime.co.nz/post/the-use-of-recovery-curves-in-collection-and-write-off-management) -- collection curve visualization domain patterns
+- [Recharts slow with large data issue #1146](https://github.com/recharts/recharts/issues/1146) -- SVG rendering performance limits
+- [Best React Chart Libraries 2025](https://blog.logrocket.com/best-react-chart-libraries-2025/) -- library comparison and performance characteristics
