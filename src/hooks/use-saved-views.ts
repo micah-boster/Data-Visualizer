@@ -24,12 +24,18 @@ const KNOWN_COLUMNS = new Set(COLUMN_CONFIGS.map((c) => c.key));
 function sanitizeSnapshot(snapshot: ViewSnapshot): ViewSnapshot {
   return {
     ...snapshot,
+    sorting: (snapshot.sorting ?? []).filter((s) => KNOWN_COLUMNS.has(s.id)),
     columnVisibility: Object.fromEntries(
       Object.entries(snapshot.columnVisibility).filter(([k]) =>
         KNOWN_COLUMNS.has(k),
       ),
     ),
     columnOrder: snapshot.columnOrder.filter((k) => KNOWN_COLUMNS.has(k)),
+    columnFilters: Object.fromEntries(
+      Object.entries(snapshot.columnFilters ?? {}).filter(([k]) =>
+        KNOWN_COLUMNS.has(k),
+      ),
+    ),
     columnSizing: Object.fromEntries(
       Object.entries(snapshot.columnSizing ?? {}).filter(([k]) =>
         KNOWN_COLUMNS.has(k),

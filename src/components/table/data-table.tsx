@@ -153,16 +153,26 @@ export function DataTable({
 
   const handleLoadView = useCallback((view: SavedView) => {
     const { snapshot } = view;
-    // 1. Restore sorting
-    setSorting(snapshot.sorting);
-    // 2. Restore column visibility
-    columnManagement.setColumnVisibility(snapshot.columnVisibility);
-    // 3. Restore column order
-    columnManagement.setColumnOrder(snapshot.columnOrder);
-    // 4. Restore in-column filters — clear all first, then set each
+    // Guard: only apply state for columns that exist in the current table
+    const validIds = new Set(table.getAllColumns().map((c) => c.id));
+    // 1. Restore sorting — filter to valid columns
+    setSorting((snapshot.sorting ?? []).filter((s) => validIds.has(s.id)));
+    // 2. Restore column visibility — filter to valid columns
+    columnManagement.setColumnVisibility(
+      Object.fromEntries(
+        Object.entries(snapshot.columnVisibility).filter(([k]) => validIds.has(k)),
+      ),
+    );
+    // 3. Restore column order — filter to valid columns
+    columnManagement.setColumnOrder(
+      snapshot.columnOrder.filter((k) => validIds.has(k)),
+    );
+    // 4. Restore in-column filters — clear all first, then set only valid
     clearAllColumnFilters();
-    for (const [colId, value] of Object.entries(snapshot.columnFilters)) {
-      setColumnFilter(colId, value);
+    for (const [colId, value] of Object.entries(snapshot.columnFilters ?? {})) {
+      if (validIds.has(colId)) {
+        setColumnFilter(colId, value);
+      }
     }
     // 5. Restore dimension filters via URL (single router.replace)
     const params = new URLSearchParams();
@@ -171,9 +181,12 @@ export function DataTable({
     }
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
-    // 6. Restore column sizing
-    if (snapshot.columnSizing && Object.keys(snapshot.columnSizing).length > 0) {
-      table.setColumnSizing(snapshot.columnSizing);
+    // 6. Restore column sizing — filter to valid columns
+    const validSizing = Object.fromEntries(
+      Object.entries(snapshot.columnSizing ?? {}).filter(([k]) => validIds.has(k)),
+    );
+    if (Object.keys(validSizing).length > 0) {
+      table.setColumnSizing(validSizing);
     }
     // Close sidebar after loading
     setViewsSidebarOpen(false);
