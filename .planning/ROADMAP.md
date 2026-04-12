@@ -71,7 +71,10 @@ Plans:
   4. Most recent batch is visually highlighted, older batches muted
   5. Hover shows batch name and value at each point
   6. Chart is lazy-loaded (not in initial page bundle)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — Data pivot utility, chart state hook, and extended CSS color palette
+- [ ] 12-02-PLAN.md — Chart component with tooltip, legend, lazy-loaded integration into partner view
 
 ### Phase 13: Conditional Formatting
 **Goal**: The batch table highlights values that deviate significantly from the partner's own historical norm, making outliers instantly visible
@@ -105,9 +108,9 @@ Phases 10 first (foundation), then 11-14 can proceed. Phases 11, 12, 13 depend o
 |-------|----------------|--------|-----------|
 | 10. Computation Layer & Charting Foundation | 2/2 | Complete    | 2026-04-12 |
 | 11. KPI Summary Cards | 0/TBD | Not started | - |
-| 12. Collection Curve Charts | 0/TBD | Not started | - |
+| 12. Collection Curve Charts | 0/2 | Planned | - |
 | 13. Conditional Formatting | 0/TBD | Not started | - |
 | 14. Batch-over-Batch Trending | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-04-12 after Phase 10 planning*
+*Last updated: 2026-04-12 after Phase 12 planning*
