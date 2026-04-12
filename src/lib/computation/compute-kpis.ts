@@ -21,10 +21,10 @@ export function computeKpis(
   let weightDenominator = 0;
 
   for (const row of rows) {
-    const accounts = Number(row.TOTAL_NUMBER_OF_ACCOUNTS) || 0;
+    const accounts = Number(row.TOTAL_ACCOUNTS) || 0;
     const placed = Number(row.TOTAL_AMOUNT_PLACED) || 0;
-    const collected = Number(row.TOTAL_COLLECTED) || 0;
-    const pen = Number(row.PENETRATION_RATE) || 0;
+    const collected = Number(row.TOTAL_COLLECTED_LIFE_TIME) || 0;
+    const pen = Number(row.PENETRATION_RATE_POSSIBLE_AND_CONFIRMED) || 0;
     const col6 = Number(row.COLLECTION_AFTER_6_MONTH) || 0;
     const col12 = Number(row.COLLECTION_AFTER_12_MONTH) || 0;
 
