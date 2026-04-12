@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "max_entries": 50,
+  "entries": [
+    {
+      "agent_id": "wave1-05-01",
+      "task_description": "Execute plan 05-01 column picker sidebar",
+      "phase": "05",
+      "plan": "01",
+      "segment": null,
+      "timestamp": "2026-04-11T11:45:19.966Z",
+      "status": "spawned",
+      "completion_timestamp": null
+    }
+  ]
+}

@@ -61,7 +61,9 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
                   }}
                   className={`overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2 text-sm${isNumeric ? ' text-right tabular-nums' : ''}`}
                 >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext()) ?? '\u2014'}
+                  {cell.getValue() != null
+                    ? flexRender(cell.column.columnDef.cell, cell.getContext())
+                    : '\u2014'}
                 </td>
               );
             })}

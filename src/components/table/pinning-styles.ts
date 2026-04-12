@@ -5,8 +5,8 @@ import type { CSSProperties } from 'react';
  * Get CSS styles for sticky column pinning.
  * Based on the TanStack Table official sticky column pinning example.
  *
- * Pinned cells use fully-opaque backgrounds so scrolling content
- * doesn't show through.
+ * @param column - The TanStack Table column
+ * @param isEvenRow - Whether this is an even row (for zebra stripe background on pinned cells)
  */
 export function getCommonPinningStyles<T>(
   column: Column<T>,
@@ -29,7 +29,6 @@ export function getCommonPinningStyles<T>(
     position: isPinned ? 'sticky' : 'relative',
     width: column.getSize(),
     zIndex: isPinned ? 1 : 0,
-    // Pinned cells MUST be fully opaque so content doesn't show through
     backgroundColor: isPinned
       ? isEvenRow
         ? 'hsl(var(--muted))'

@@ -43,11 +43,9 @@ export function useDataTable(
   columnFilters?: ColumnFiltersState,
   options?: UseDataTableOptions,
 ) {
-  const [sorting, setSorting] = useState<SortingState>(() => {
-    // Only default-sort by PARTNER_NAME if it's in the column set
-    const hasPartner = (options?.columns ?? columnDefs).some((c) => c.id === 'PARTNER_NAME');
-    return hasPartner ? [{ id: 'PARTNER_NAME', desc: false }] : [];
-  });
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'PARTNER_NAME', desc: false },
+  ]);
 
   const [activePreset, setActivePresetState] = useState(DEFAULT_PRESET);
 
@@ -63,17 +61,15 @@ export function useDataTable(
   const columnOrder = options?.columnOrder ?? internalColumnOrder;
   const setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
 
+  const columnPinning = useMemo<ColumnPinningState>(() => ({
+    left: ['PARTNER_NAME', 'BATCH'],
+    right: [],
+  }), []);
+
   const columns = useMemo(
     () => options?.columns ?? columnDefs,
     [options?.columns],
   );
-
-  // Pin PARTNER_NAME and BATCH at root/partner level, nothing at batch level
-  const drillLevel = options?.drillLevel ?? 'root';
-  const columnPinning = useMemo<ColumnPinningState>(() => {
-    if (drillLevel === 'batch') return { left: [], right: [] };
-    return { left: ['PARTNER_NAME', 'BATCH'], right: [] };
-  }, [drillLevel]);
 
   // Reset sorting when column definitions change (e.g., switching to account columns)
   const prevColumnsRef = useRef(columns);

@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowLeft, X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import { useData } from '@/hooks/use-data';
 import { useAccountData } from '@/hooks/use-account-data';
 import { useDrillDown } from '@/hooks/use-drill-down';
 import { useDataFreshness } from '@/contexts/data-freshness';
 import { accountColumnDefs } from '@/lib/columns/account-definitions';
-import { BreadcrumbTrail } from '@/components/navigation/breadcrumb-trail';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
 import { EmptyState } from '@/components/empty-state';
@@ -68,31 +67,8 @@ export function DataDisplay() {
   }
 
   // Account-level error state (batch data failed but root data loaded fine)
-  // Render breadcrumbs + error inline so user can navigate back
   if (drillState.level === 'batch' && isAccountError) {
-    return (
-      <div className="flex h-[calc(100vh-4rem)] flex-col gap-2">
-        <BreadcrumbTrail
-          state={drillState}
-          rowCounts={{}}
-          onNavigate={navigateToLevel}
-        />
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4">
-          <div className="w-full max-w-md text-center">
-            <p className="text-sm text-muted-foreground mb-4">
-              {accountError?.message || 'Account data is not available for this batch.'}
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => navigateToLevel('partner')}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Go Back
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+    return <ErrorState error={accountError} onRetry={() => navigateToLevel('partner')} />;
   }
 
   const hasSchemaWarnings =
@@ -137,6 +113,7 @@ export function DataDisplay() {
           <LoadingState />
         ) : (
           <DataTable
+            key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
             data={tableData}
             isFetching={drillState.level === 'batch' ? false : isFetching}
             drillState={drillState}

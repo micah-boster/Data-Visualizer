@@ -1,7 +1,6 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useState, useCallback } from 'react';
 
 export type DrillLevel = 'root' | 'partner' | 'batch';
 
@@ -11,122 +10,36 @@ export interface DrillState {
   batch: string | null;
 }
 
-/**
- * Subscribe to URL search param changes via popstate + custom event.
- * This avoids Next.js useSearchParams which can go stale after router.push.
- */
-function subscribeToSearch(callback: () => void) {
-  window.addEventListener('popstate', callback);
-  window.addEventListener('pushstate', callback);
-  return () => {
-    window.removeEventListener('popstate', callback);
-    window.removeEventListener('pushstate', callback);
-  };
-}
-
-function getSearchSnapshot() {
-  return window.location.search;
-}
-
-function getServerSnapshot() {
-  return '';
-}
+const ROOT_STATE: DrillState = { level: 'root', partner: null, batch: null };
 
 /**
  * Drill-down state management hook.
  *
- * Uses window.location.search directly (via useSyncExternalStore) instead
- * of Next.js useSearchParams to avoid stale closure issues with router.push.
+ * Uses plain React state — no URL search params, no closures over
+ * stale router state. Simple and reliable.
  */
 export function useDrillDown() {
-  const pathname = usePathname();
-  const router = useRouter();
+  const [state, setState] = useState<DrillState>(ROOT_STATE);
 
-  const searchString = useSyncExternalStore(
-    subscribeToSearch,
-    getSearchSnapshot,
-    getServerSnapshot,
-  );
+  const drillToPartner = useCallback((partnerName: string) => {
+    setState({ level: 'partner', partner: partnerName, batch: null });
+  }, []);
 
-  const state: DrillState = useMemo(() => {
-    const params = new URLSearchParams(searchString);
-    const partner = params.get('drillPartner');
-    const batch = params.get('drillBatch');
-    if (batch && partner) return { level: 'batch', partner, batch };
-    if (partner) return { level: 'partner', partner, batch: null };
-    return { level: 'root', partner: null, batch: null };
-  }, [searchString]);
+  const drillToBatch = useCallback((batchName: string) => {
+    setState((prev) => ({
+      level: 'batch',
+      partner: prev.partner,
+      batch: batchName,
+    }));
+  }, []);
 
-  /** Push URL and fire custom event so useSyncExternalStore picks it up */
-  const push = useCallback(
-    (url: string) => {
-      router.push(url, { scroll: false });
-      // Notify subscribers since router.push doesn't fire popstate
-      window.dispatchEvent(new Event('pushstate'));
-    },
-    [router],
-  );
-
-  const drillToPartner = useCallback(
-    (partnerName: string) => {
-      const freshParams = new URLSearchParams(window.location.search);
-      const currentFilters: Record<string, string> = {};
-      freshParams.forEach((value, key) => {
-        if (!key.startsWith('drill')) {
-          currentFilters[key] = value;
-        }
-      });
-      const drillFrom =
-        Object.keys(currentFilters).length > 0
-          ? btoa(JSON.stringify(currentFilters))
-          : undefined;
-
-      const params = new URLSearchParams();
-      params.set('drillPartner', partnerName);
-      if (drillFrom) params.set('drillFrom', drillFrom);
-
-      push(`${pathname}?${params.toString()}`);
-    },
-    [pathname, push],
-  );
-
-  const drillToBatch = useCallback(
-    (batchName: string) => {
-      const freshParams = new URLSearchParams(window.location.search);
-      freshParams.set('drillBatch', batchName);
-      push(`${pathname}?${freshParams.toString()}`);
-    },
-    [pathname, push],
-  );
-
-  const navigateToLevel = useCallback(
-    (level: DrillLevel) => {
-      const freshParams = new URLSearchParams(window.location.search);
-
-      if (level === 'root') {
-        const drillFrom = freshParams.get('drillFrom');
-        if (drillFrom) {
-          try {
-            const restored = JSON.parse(atob(drillFrom)) as Record<string, string>;
-            const params = new URLSearchParams(restored);
-            push(`${pathname}?${params.toString()}`);
-            return;
-          } catch {
-            // Malformed drillFrom -- fall through
-          }
-        }
-        push(pathname);
-      } else if (level === 'partner') {
-        const params = new URLSearchParams();
-        const partner = freshParams.get('drillPartner');
-        if (partner) params.set('drillPartner', partner);
-        const drillFrom = freshParams.get('drillFrom');
-        if (drillFrom) params.set('drillFrom', drillFrom);
-        push(`${pathname}?${params.toString()}`);
-      }
-    },
-    [pathname, push],
-  );
+  const navigateToLevel = useCallback((level: DrillLevel) => {
+    setState((prev) => {
+      if (level === 'root') return ROOT_STATE;
+      if (level === 'partner') return { level: 'partner', partner: prev.partner, batch: null };
+      return prev; // batch — already at deepest level
+    });
+  }, []);
 
   return { state, drillToPartner, drillToBatch, navigateToLevel };
 }
