@@ -11,7 +11,19 @@ import { WIDTH_BY_TYPE, IDENTITY_WIDTH } from './widths';
 import { getCellRenderer } from '@/components/table/formatted-cell';
 
 export function buildAccountColumnDefs(): ColumnDef<Record<string, unknown>>[] {
-  return ACCOUNT_COLUMN_CONFIGS.map((config) => ({
+  // Row number as a placeholder identifier until account IDs are available
+  const rowNumCol: ColumnDef<Record<string, unknown>> = {
+    id: '_row_num',
+    header: '#',
+    size: 50,
+    minSize: 50,
+    maxSize: 50,
+    enableSorting: false,
+    cell: ({ row }) => row.index + 1,
+    meta: { type: 'text' },
+  };
+
+  const dataCols: ColumnDef<Record<string, unknown>>[] = ACCOUNT_COLUMN_CONFIGS.map((config) => ({
     id: config.key,
     accessorKey: config.key,
     header: config.label,
@@ -29,6 +41,8 @@ export function buildAccountColumnDefs(): ColumnDef<Record<string, unknown>>[] {
       identity: config.identity,
     },
   }));
+
+  return [rowNumCol, ...dataCols];
 }
 
 /** Pre-built account column definitions ready for table consumption */
