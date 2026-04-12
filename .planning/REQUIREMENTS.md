@@ -23,13 +23,13 @@
 
 ### Collection Curve Charts
 
-- [ ] **CURVE-01**: Multi-line chart at partner drill-down level overlaying collection curves for all batches from that partner
+- [x] **CURVE-01**: Multi-line chart at partner drill-down level overlaying collection curves for all batches from that partner
 - [x] **CURVE-02**: X-axis is months-since-placement (numeric, proportionally spaced — not categorical), Y-axis is recovery rate %
 - [x] **CURVE-03**: Lines truncate at each batch's `BATCH_AGE_IN_MONTHS` — no false zero cliffs for young batches
 - [x] **CURVE-04**: Most recent batch highlighted (bold/primary color), older batches in muted colors
-- [ ] **CURVE-05**: Hover tooltip shows batch name and exact value at that month
+- [x] **CURVE-05**: Hover tooltip shows batch name and exact value at that month
 - [x] **CURVE-06**: Optional partner average reference line (mean of all batches at each month)
-- [ ] **CURVE-07**: Charts lazy-loaded (not in initial bundle) — only loaded when user drills into a partner
+- [x] **CURVE-07**: Charts lazy-loaded (not in initial bundle) — only loaded when user drills into a partner
 
 ### Conditional Formatting
 
@@ -78,13 +78,13 @@
 | KPI-02 | Phase 11 | Pending |
 | KPI-03 | Phase 11 | Pending |
 | KPI-04 | Phase 11 | Pending |
-| CURVE-01 | Phase 12 | Pending |
+| CURVE-01 | Phase 12 | Complete |
 | CURVE-02 | Phase 12 | Complete |
 | CURVE-03 | Phase 12 | Complete |
 | CURVE-04 | Phase 12 | Complete |
-| CURVE-05 | Phase 12 | Pending |
+| CURVE-05 | Phase 12 | Complete |
 | CURVE-06 | Phase 12 | Complete |
-| CURVE-07 | Phase 12 | Pending |
+| CURVE-07 | Phase 12 | Complete |
 | COND-01 | Phase 13 | Pending |
 | COND-02 | Phase 13 | Pending |
 | COND-03 | Phase 13 | Pending |
