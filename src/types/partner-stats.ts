@@ -35,11 +35,14 @@ export interface BatchTrend {
   value: number;
   rollingAvg: number;
   direction: 'up' | 'down' | 'flat';
+  deltaPercent: number;
+  baselineCount: number;
 }
 
 export interface TrendingData {
   trends: BatchTrend[];
   insufficientHistory: boolean;
+  batchCount: number;
 }
 
 export interface PartnerStats {
