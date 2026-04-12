@@ -22,12 +22,10 @@ export function getCommonPinningStyles<T>(
 
   let backgroundColor: string | undefined;
   if (isPinned) {
-    if (opts?.isHeader) {
-      backgroundColor = 'hsl(var(--muted))';
-    } else if (opts?.isEvenRow) {
-      backgroundColor = 'hsl(var(--muted))';
+    if (opts?.isHeader || opts?.isEvenRow) {
+      backgroundColor = 'var(--color-muted)';
     } else {
-      backgroundColor = 'hsl(var(--background))';
+      backgroundColor = 'var(--color-background)';
     }
   }
 
