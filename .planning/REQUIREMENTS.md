@@ -16,10 +16,10 @@
 
 ### KPI Summary Cards
 
-- [ ] **KPI-01**: 4-6 KPI cards displayed above the batch table at partner drill-down level
-- [ ] **KPI-02**: Cards show: total batches, total accounts placed, weighted avg penetration rate, avg collection rate at 6mo and 12mo, total lifetime collected
-- [ ] **KPI-03**: Cards aggregate from the same filtered row set as the table (not raw data)
-- [ ] **KPI-04**: Each card shows trend indicator (up/down/flat arrow) comparing latest batch to partner rolling average
+- [x] **KPI-01**: 4-6 KPI cards displayed above the batch table at partner drill-down level
+- [x] **KPI-02**: Cards show: total batches, total accounts placed, weighted avg penetration rate, avg collection rate at 6mo and 12mo, total lifetime collected
+- [x] **KPI-03**: Cards aggregate from the same filtered row set as the table (not raw data)
+- [x] **KPI-04**: Each card shows trend indicator (up/down/flat arrow) comparing latest batch to partner rolling average
 
 ### Collection Curve Charts
 
@@ -33,21 +33,21 @@
 
 ### Conditional Formatting
 
-- [ ] **COND-01**: Cells in the batch table color-coded by deviation from partner historical norm (green = above avg, red = below avg, neutral = within range)
-- [ ] **COND-02**: Norms computed as partner mean ± 1.5 stddev per metric, pre-computed in `usePartnerStats` and provided via React Context
-- [ ] **COND-03**: Color intensity proportional to deviation magnitude
-- [ ] **COND-04**: Active at partner drill-down level only (root level uses existing static thresholds)
-- [ ] **COND-05**: Applied to: collection curve milestones, penetration rates, conversion rate, total collected
-- [ ] **COND-06**: Tooltip explains deviation: "12.3% vs partner avg 18.7% (-34%)"
-- [ ] **COND-07**: Toggle on/off for users who prefer clean numbers
+- [x] **COND-01**: Cells in the batch table color-coded by deviation from partner historical norm (green = above avg, red = below avg, neutral = within range)
+- [x] **COND-02**: Norms computed as partner mean ± 1.5 stddev per metric, pre-computed in `usePartnerStats` and provided via React Context
+- [x] **COND-03**: Color intensity proportional to deviation magnitude
+- [x] **COND-04**: Active at partner drill-down level only (root level uses existing static thresholds)
+- [x] **COND-05**: Applied to: collection curve milestones, penetration rates, conversion rate, total collected
+- [x] **COND-06**: Tooltip explains deviation: "12.3% vs partner avg 18.7% (-34%)"
+- [x] **COND-07**: Toggle on/off for users who prefer clean numbers
 
 ### Batch-over-Batch Trending
 
-- [ ] **TREND-01**: Trending indicators (up/down/flat) shown next to key metrics in the batch table at partner level
-- [ ] **TREND-02**: Comparison baseline is rolling partner average (last 4-6 batches), excluding the current batch
-- [ ] **TREND-03**: Partners with fewer than 3 historical batches show "Insufficient history" instead of misleading trends
-- [ ] **TREND-04**: Flat threshold: changes within ±5% count as flat
-- [ ] **TREND-05**: Trending algorithm explicitly documented per project constraint
+- [x] **TREND-01**: Trending indicators (up/down/flat) shown next to key metrics in the batch table at partner level
+- [x] **TREND-02**: Comparison baseline is rolling partner average (last 4-6 batches), excluding the current batch
+- [x] **TREND-03**: Partners with fewer than 3 historical batches show "Insufficient history" instead of misleading trends
+- [x] **TREND-04**: Flat threshold: changes within ±5% count as flat
+- [x] **TREND-05**: Trending algorithm explicitly documented per project constraint
 
 ### Carry-Forward from v1
 
@@ -74,10 +74,10 @@
 | FOUND-03 | Phase 10 | Complete |
 | FOUND-04 | Phase 10 | Complete |
 | FOUND-05 | Phase 10 | Complete |
-| KPI-01 | Phase 11 | Pending |
-| KPI-02 | Phase 11 | Pending |
-| KPI-03 | Phase 11 | Pending |
-| KPI-04 | Phase 11 | Pending |
+| KPI-01 | Phase 11 | Complete |
+| KPI-02 | Phase 11 | Complete |
+| KPI-03 | Phase 11 | Complete |
+| KPI-04 | Phase 11 | Complete |
 | CURVE-01 | Phase 12 | Complete |
 | CURVE-02 | Phase 12 | Complete |
 | CURVE-03 | Phase 12 | Complete |
@@ -85,18 +85,18 @@
 | CURVE-05 | Phase 12 | Complete |
 | CURVE-06 | Phase 12 | Complete |
 | CURVE-07 | Phase 12 | Complete |
-| COND-01 | Phase 13 | Pending |
-| COND-02 | Phase 13 | Pending |
-| COND-03 | Phase 13 | Pending |
-| COND-04 | Phase 13 | Pending |
-| COND-05 | Phase 13 | Pending |
-| COND-06 | Phase 13 | Pending |
-| COND-07 | Phase 13 | Pending |
-| TREND-01 | Phase 14 | Pending |
-| TREND-02 | Phase 14 | Pending |
-| TREND-03 | Phase 14 | Pending |
-| TREND-04 | Phase 14 | Pending |
-| TREND-05 | Phase 14 | Pending |
+| COND-01 | Phase 13 | Complete |
+| COND-02 | Phase 13 | Complete |
+| COND-03 | Phase 13 | Complete |
+| COND-04 | Phase 13 | Complete |
+| COND-05 | Phase 13 | Complete |
+| COND-06 | Phase 13 | Complete |
+| COND-07 | Phase 13 | Complete |
+| TREND-01 | Phase 14 | Complete |
+| TREND-02 | Phase 14 | Complete |
+| TREND-03 | Phase 14 | Complete |
+| TREND-04 | Phase 14 | Complete |
+| TREND-05 | Phase 14 | Complete |
 | CARRY-01 | Phase 10 | Complete |
 
 ---
