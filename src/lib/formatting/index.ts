@@ -26,3 +26,13 @@ export type {
   ThresholdConfig,
   ThresholdResult,
 } from './thresholds';
+
+export {
+  computeDeviation,
+  formatDeviationTooltip,
+  HEATMAP_COLUMNS,
+} from './deviation';
+
+export type {
+  DeviationResult,
+} from './deviation';
