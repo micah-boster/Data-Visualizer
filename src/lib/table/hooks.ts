@@ -68,14 +68,12 @@ export function useDataTable(
     [options?.columns],
   );
 
-  // Pin identity columns for the current column set
+  // Pin PARTNER_NAME and BATCH at root/partner level, nothing at batch level
+  const drillLevel = options?.drillLevel ?? 'root';
   const columnPinning = useMemo<ColumnPinningState>(() => {
-    const identityCols = columns
-      .filter((c) => (c.meta as { identity?: boolean } | undefined)?.identity)
-      .map((c) => c.id!)
-      .filter(Boolean);
-    return { left: identityCols, right: [] };
-  }, [columns]);
+    if (drillLevel === 'batch') return { left: [], right: [] };
+    return { left: ['PARTNER_NAME', 'BATCH'], right: [] };
+  }, [drillLevel]);
 
   // Reset sorting when column definitions change (e.g., switching to account columns)
   const prevColumnsRef = useRef(columns);

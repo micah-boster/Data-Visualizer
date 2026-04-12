@@ -24,7 +24,7 @@ export function buildAccountColumnDefs(): ColumnDef<Record<string, unknown>>[] {
     maxSize: 50,
     enableSorting: false,
     cell: ({ row }) => row.index + 1,
-    meta: { type: 'text', identity: true },
+    meta: { type: 'text' },
   };
 
   const dataCols = ACCOUNT_COLUMN_CONFIGS

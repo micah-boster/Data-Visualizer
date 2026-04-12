@@ -137,7 +137,6 @@ export function DataDisplay() {
           <LoadingState />
         ) : (
           <DataTable
-            key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
             data={tableData}
             isFetching={drillState.level === 'batch' ? false : isFetching}
             drillState={drillState}
