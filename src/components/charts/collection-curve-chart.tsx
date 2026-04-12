@@ -124,9 +124,9 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
       {/* Chart + Legend layout */}
       <div className="flex gap-4">
         {/* Chart area */}
-        <div className="h-[40vh] flex-1">
-          <ChartContainer config={chartConfig} className="h-full w-full">
-            <LineChart data={pivotedData}>
+        <div className="flex-1 flex flex-col">
+          <ChartContainer config={chartConfig} className="h-[40vh] w-full">
+            <LineChart data={pivotedData} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 className="stroke-muted"
@@ -136,7 +136,7 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
                 dataKey="month"
                 ticks={collectionMonthsTicks}
                 domain={[1, "dataMax"]}
-                tickFormatter={(m: number) => `${m}mo`}
+                tickFormatter={(m: number) => `${m}`}
                 className="text-[10px]"
               />
               <YAxis
@@ -149,6 +149,7 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
                           : `$${v}`
                 }
                 width={55}
+                label={{ value: metric === "recoveryRate" ? "Recovery Rate %" : "Dollars Collected", angle: -90, position: "insideLeft", offset: 5, className: "fill-muted-foreground text-[11px]" }}
               />
               <Tooltip
                 content={
@@ -195,6 +196,7 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
               )}
             </LineChart>
           </ChartContainer>
+          <p className="text-center text-[11px] text-muted-foreground -mt-1">Months Since Placement</p>
         </div>
 
         {/* Right-side legend */}
