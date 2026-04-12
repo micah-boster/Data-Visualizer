@@ -55,7 +55,7 @@ export function DraggableHeader({
       ref={setNodeRef}
       colSpan={header.colSpan}
       style={dragStyle}
-      className={`group/header relative select-none overflow-hidden whitespace-nowrap bg-muted px-3 py-2 text-xs font-bold text-foreground${isNumeric ? ' text-right' : ' text-left'}`}
+      className={`group/header relative select-none overflow-hidden bg-muted px-3 py-2 text-xs font-bold text-foreground${isNumeric ? ' text-right' : ' text-left'}`}
     >
       {header.isPlaceholder ? null : (
         <div
@@ -77,7 +77,7 @@ export function DraggableHeader({
               <GripVertical className="h-3.5 w-3.5" />
             </button>
           )}
-          <span className="truncate">
+          <span className="line-clamp-2 break-words leading-tight">
             {flexRender(header.column.columnDef.header, header.getContext())}
           </span>
           {header.column.getCanSort() && (
