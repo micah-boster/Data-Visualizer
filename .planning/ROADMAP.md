@@ -29,7 +29,7 @@ Five phases that add within-partner batch comparison capabilities on top of the 
 - [x] **Phase 10: Computation Layer & Charting Foundation** — Install Recharts, update chart colors, build usePartnerStats hook with curve reshape, norms, and KPI aggregation (completed 2026-04-12)
 - [ ] **Phase 11: KPI Summary Cards** — Display 4-6 metric cards above the batch table at partner drill-down level
 - [ ] **Phase 12: Collection Curve Charts** — Multi-line Recharts overlay of batch collection curves at partner level
-- [ ] **Phase 13: Conditional Formatting** — Cell color-coding by deviation from partner historical norms
+- [x] **Phase 13: Conditional Formatting** — Cell color-coding by deviation from partner historical norms (completed 2026-04-12)
 - [ ] **Phase 14: Batch-over-Batch Trending** — Trending indicators showing metric direction across recent batches
 
 ## Phase Details
@@ -109,8 +109,8 @@ Phases 10 first (foundation), then 11-14 can proceed. Phases 11, 12, 13 depend o
 | 10. Computation Layer & Charting Foundation | 2/2 | Complete    | 2026-04-12 |
 | 11. KPI Summary Cards | 0/TBD | Not started | - |
 | 12. Collection Curve Charts | 1/2 | In Progress|  |
-| 13. Conditional Formatting | 1/2 | In Progress|  |
-| 14. Batch-over-Batch Trending | 0/TBD | Not started | - |
+| 13. Conditional Formatting | 2/2 | Complete   | 2026-04-12 |
+| 14. Batch-over-Batch Trending | 1/2 | In Progress|  |
 
 ---
 *Last updated: 2026-04-12 after Phase 12 planning*
