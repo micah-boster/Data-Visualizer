@@ -2,9 +2,9 @@ import type { BatchTrend, TrendingData } from '@/types/partner-stats';
 
 /** Metrics to compute trending for. */
 export const TRENDING_METRICS = [
-  'PENETRATION_RATE',
-  'CONVERSION_RATE',
-  'TOTAL_COLLECTED',
+  'PENETRATION_RATE_POSSIBLE_AND_CONFIRMED',
+  'RAITO_FIRST_TIME_CONVERTED_ACCOUNTS',
+  'TOTAL_COLLECTED_LIFE_TIME',
   'COLLECTION_AFTER_6_MONTH',
   'COLLECTION_AFTER_12_MONTH',
 ] as const;

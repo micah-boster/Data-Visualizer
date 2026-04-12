@@ -8,12 +8,15 @@ import {
 import { getPolarity } from '@/lib/computation/metric-polarity';
 import { getFormatter, isNumericType } from '@/lib/formatting';
 import type { BatchTrend } from '@/types/partner-stats';
+import type { DeviationResult } from '@/lib/formatting/deviation';
 
 interface TrendIndicatorProps {
   trend: BatchTrend;
   formattedValue: string;
   columnType: string;
   lowConfidence: boolean;
+  /** Deviation info for heatmap background tint */
+  deviation?: DeviationResult | null;
 }
 
 /**
@@ -29,6 +32,7 @@ export function TrendIndicator({
   formattedValue,
   columnType,
   lowConfidence,
+  deviation,
 }: TrendIndicatorProps) {
   const arrow = trend.direction === 'up' ? '\u2191' : trend.direction === 'down' ? '\u2193' : '\u2014';
   const polarity = getPolarity(trend.metric);
@@ -61,9 +65,20 @@ export function TrendIndicator({
     tooltipText = `${directionLabel} ${Math.abs(trend.deltaPercent).toFixed(1)}% vs ${trend.baselineCount}-batch avg (${formattedAvg})`;
   }
 
+  // Heatmap background tint from deviation data
+  const bgStyle: React.CSSProperties | undefined =
+    deviation && deviation.direction !== 'neutral'
+      ? {
+          backgroundColor: `oklch(0.55 0.15 ${deviation.direction === 'above' ? 145 : 25} / ${deviation.opacity})`,
+        }
+      : undefined;
+
   return (
     <Tooltip>
-      <TooltipTrigger className="inline-flex items-center gap-1">
+      <TooltipTrigger
+        className={`inline-flex items-center gap-1${bgStyle ? ' rounded px-1 -mx-1 transition-colors duration-150' : ''}`}
+        style={bgStyle}
+      >
         {formattedValue}
         <span className={`text-xs font-medium ${colorClass} ${opacityClass}`}>
           {arrow}

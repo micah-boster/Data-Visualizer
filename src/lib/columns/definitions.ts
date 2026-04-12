@@ -18,9 +18,9 @@ import { getCellRenderer } from '@/components/table/formatted-cell';
 import { DrillableCell } from '@/components/navigation/drillable-cell';
 import { TrendIndicator, InsufficientTrendIndicator } from '@/components/table/trend-indicator';
 import { TRENDING_METRICS } from '@/lib/computation/compute-trending';
-import { getFormatter, isNumericType } from '@/lib/formatting';
+import { getFormatter, isNumericType, computeDeviation, HEATMAP_COLUMNS } from '@/lib/formatting';
 import type { DrillLevel } from '@/hooks/use-drill-down';
-import type { TrendingData } from '@/types/partner-stats';
+import type { TrendingData, MetricNorm } from '@/types/partner-stats';
 
 /** Drill-down callbacks and trending data passed through TanStack Table meta */
 export interface TableDrillMeta {
@@ -28,6 +28,10 @@ export interface TableDrillMeta {
   onDrillToBatch?: (name: string) => void;
   drillLevel?: DrillLevel;
   trending?: TrendingData;
+  /** Partner norms for heatmap deviation formatting */
+  norms?: Record<string, MetricNorm> | null;
+  /** Whether heatmap is enabled (user toggle) */
+  heatmapEnabled?: boolean;
 }
 
 function renderDrillableCell(
@@ -111,11 +115,20 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
               const trend = meta.trending.trends.find(t => t.metric === config.key);
               if (trend) {
                 const lowConfidence = meta.trending.batchCount < 5;
+                // Compute deviation for heatmap background on trending cells
+                let deviation = null;
+                if (meta.heatmapEnabled && meta.norms && HEATMAP_COLUMNS.has(config.key)) {
+                  const norm = meta.norms[config.key];
+                  if (norm) {
+                    deviation = computeDeviation(Number(value), norm);
+                  }
+                }
                 return createElement(TrendIndicator, {
                   trend,
                   formattedValue,
                   columnType: config.type,
                   lowConfidence,
+                  deviation,
                 });
               }
             }

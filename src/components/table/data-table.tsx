@@ -23,6 +23,7 @@ import { ViewsSidebar } from '@/components/views/views-sidebar';
 import { SaveViewInput } from '@/components/views/save-view-input';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
+import { usePartnerNorms } from '@/contexts/partner-norms';
 import { ColumnPresetTabs } from './column-preset-tabs';
 import { HeatmapToggle } from './heatmap-toggle';
 import { TableHeader } from './table-header';
@@ -111,6 +112,9 @@ export function DataTable({
   const drillLevel = drillState?.level ?? 'root';
   const isRoot = drillLevel === 'root';
 
+  // Partner norms for heatmap deviation formatting
+  const { norms, heatmapEnabled } = usePartnerNorms();
+
   // Hoist setActivePreset reference for the column management hook
   // We need to create a stable reference that can be passed before table init
   const setActivePresetRef = useRef<((preset: string) => void) | undefined>(undefined);
@@ -128,6 +132,8 @@ export function DataTable({
     columnOrder: columnManagement.columnOrder,
     onColumnOrderChange: columnManagement.setColumnOrder,
     trendingData,
+    norms,
+    heatmapEnabled,
   };
 
   const { table, sorting, setSorting, activePreset, setActivePreset } =

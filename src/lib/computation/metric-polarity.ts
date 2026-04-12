@@ -10,9 +10,9 @@
 export type MetricPolarity = 'higher_is_better' | 'lower_is_better';
 
 export const METRIC_POLARITY: Record<string, MetricPolarity> = {
-  PENETRATION_RATE: 'higher_is_better',
-  CONVERSION_RATE: 'higher_is_better',
-  TOTAL_COLLECTED: 'higher_is_better',
+  PENETRATION_RATE_POSSIBLE_AND_CONFIRMED: 'higher_is_better',
+  RAITO_FIRST_TIME_CONVERTED_ACCOUNTS: 'higher_is_better',
+  TOTAL_COLLECTED_LIFE_TIME: 'higher_is_better',
   COLLECTION_AFTER_6_MONTH: 'higher_is_better',
   COLLECTION_AFTER_12_MONTH: 'higher_is_better',
 };

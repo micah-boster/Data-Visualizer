@@ -20,7 +20,7 @@ import { columnDefs } from '@/lib/columns/definitions';
 import type { TableDrillMeta } from '@/lib/columns/definitions';
 import { PRESETS, DEFAULT_PRESET } from '@/lib/columns/presets';
 import type { DrillLevel } from '@/hooks/use-drill-down';
-import type { TrendingData } from '@/types/partner-stats';
+import type { TrendingData, MetricNorm } from '@/types/partner-stats';
 
 export interface UseDataTableOptions {
   /** Optional drill-down callbacks passed to column cell renderers via table meta */
@@ -39,6 +39,10 @@ export interface UseDataTableOptions {
   onColumnOrderChange?: OnChangeFn<string[]>;
   /** Trending data for partner-level batch table */
   trendingData?: TrendingData | null;
+  /** Partner norms for heatmap deviation formatting */
+  norms?: Record<string, MetricNorm> | null;
+  /** Whether heatmap is enabled */
+  heatmapEnabled?: boolean;
 }
 
 export function useDataTable(
@@ -83,16 +87,18 @@ export function useDataTable(
     }
   }, [columns]);
 
-  // Build meta object for drill-down callbacks and trending data
+  // Build meta object for drill-down callbacks, trending data, and norms
   const meta: TableDrillMeta | undefined = useMemo(() => {
-    if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData) return undefined;
+    if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData && !options?.norms) return undefined;
     return {
       onDrillToPartner: options?.onDrillToPartner,
       onDrillToBatch: options?.onDrillToBatch,
       drillLevel: options?.drillLevel,
       trending: options?.trendingData ?? undefined,
+      norms: options?.norms ?? undefined,
+      heatmapEnabled: options?.heatmapEnabled ?? false,
     };
-  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData]);
+  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled]);
 
   const table = useReactTable({
     data,

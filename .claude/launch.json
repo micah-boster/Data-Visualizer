@@ -4,7 +4,8 @@
     {
       "name": "dev",
       "runtimeExecutable": "/Users/micah/.nvm/versions/node/v24.14.0/bin/node",
-      "runtimeArgs": ["/Users/micah/.nvm/versions/node/v24.14.0/bin/npx", "next", "dev"],
+      "runtimeArgs": ["/Users/micah/Desktop/CODE/DATA VISUALIZER/node_modules/next/dist/bin/next", "dev"],
+      "env": { "PATH": "/Users/micah/.nvm/versions/node/v24.14.0/bin:/usr/bin:/bin" },
       "port": 3000
     }
   ]

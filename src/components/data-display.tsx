@@ -131,7 +131,7 @@ export function DataDisplay() {
       {drillState.level === 'partner' &&
         partnerStats?.curves &&
         partnerStats.curves.length >= 2 && (
-          <div className="shrink-0">
+          <div className="max-h-[40vh] shrink-0 overflow-hidden">
             <CollectionCurveChart curves={partnerStats.curves} />
           </div>
         )}
