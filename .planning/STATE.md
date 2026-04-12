@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-04-12T18:39:31.223Z"
+milestone: v2.0
+milestone_name: Within-Partner Comparison
+status: complete
+last_updated: "2026-04-12"
 progress:
   total_phases: 14
   completed_phases: 14
@@ -18,36 +18,35 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-12)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** v2.0 — defining requirements
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 12 — Collection Curve Charts (COMPLETE)
-Plan: 2/2 complete
-Status: Phase 12 complete, ready for verification
-Last activity: 2026-04-12 — Phase 12 all plans complete
+Milestone: v2.0 Within-Partner Comparison — SHIPPED 2026-04-12
+Status: Complete, archived
+Next: /gsd:new-milestone when ready
 
 ## Accumulated Context
 
 ### Decisions
 
-- v2 focuses on within-partner comparison only — cross-partner comparison deferred to v3+ because it requires normalization/reprojection
+- v2 focuses on within-partner comparison only — cross-partner comparison deferred to v3+
 - Collection curves are the highest-value feature — data already exists in 22 collection columns
 - Conditional formatting baseline is partner's own history, not portfolio average
-- Dynamic curve re-projection (adjusting based on actuals) is v3+ — requires a model, not just UI
-- Comparison is the unifying concept for v2 — anomaly detection, visualization, and trending are all different views of comparison
+- Dynamic curve re-projection is v3+ — requires a model, not just UI
+- usePartnerStats composition pattern established for computation layer
 
 ### Pending Todos
 
 - Snowflake credentials need to be provisioned in Vercel env vars
-- Static cache will be replaced by live data once credentials are added
+- Dimension filter at root level doesn't reduce table rows (bug)
 
 ### Blockers/Concerns
 
-- Snowflake credentials: Micah working on getting these next week. Static cache covers basic demo needs until then.
+- Snowflake credentials: needed for live data instead of static cache
 
 ## Session Continuity
 
 Last session: 2026-04-12
-Stopped at: Phase 12 complete, pending verification
+Stopped at: v2.0 milestone complete
 Resume file: .planning/ROADMAP.md

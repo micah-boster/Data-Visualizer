@@ -22,3 +22,13 @@
 
 ---
 
+
+## v2.0 Within-Partner Comparison (Shipped: 2026-04-12)
+
+**Phases completed:** 14 phases, 27 plans, 0 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
