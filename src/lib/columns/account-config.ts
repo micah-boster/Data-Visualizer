@@ -10,6 +10,7 @@ import type { ColumnConfig } from './config';
 
 export const ACCOUNT_COLUMN_CONFIGS: ColumnConfig[] = [
   // --- Identity ---
+  { key: 'ACCOUNT_PUBLIC_ID', label: 'Account ID', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'PARTNER_NAME', label: 'Partner', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'BATCH', label: 'Batch', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'ACCOUNT_TYPE', label: 'Account Type', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
