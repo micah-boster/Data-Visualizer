@@ -109,7 +109,7 @@ Phases 10 first (foundation), then 11-14 can proceed. Phases 11, 12, 13 depend o
 | 10. Computation Layer & Charting Foundation | 2/2 | Complete    | 2026-04-12 |
 | 11. KPI Summary Cards | 0/TBD | Not started | - |
 | 12. Collection Curve Charts | 0/2 | Planned | - |
-| 13. Conditional Formatting | 0/TBD | Not started | - |
+| 13. Conditional Formatting | 1/2 | In Progress|  |
 | 14. Batch-over-Batch Trending | 0/TBD | Not started | - |
 
 ---
