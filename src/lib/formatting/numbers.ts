@@ -69,6 +69,26 @@ export function isNumericType(type: string): boolean {
   return type === 'currency' || type === 'percentage' || type === 'count' || type === 'number';
 }
 
+/**
+ * Format currency in abbreviated form: $1.2M, $450K, $999.
+ * Handles negative values with sign prefix.
+ */
+export function formatAbbreviatedCurrency(value: number): string {
+  const v = toNum(value);
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+
+  if (abs >= 1_000_000) {
+    const millions = abs / 1_000_000;
+    return `${sign}$${millions.toFixed(1)}M`;
+  }
+  if (abs >= 1_000) {
+    const thousands = Math.round(abs / 1_000);
+    return `${sign}$${thousands}K`;
+  }
+  return `${sign}$${Math.round(abs)}`;
+}
+
 /** Return the appropriate formatter function for a column type */
 export function getFormatter(type: string): (value: number) => string {
   let fn: (value: number) => string;

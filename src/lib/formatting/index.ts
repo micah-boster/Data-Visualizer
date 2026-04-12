@@ -7,6 +7,7 @@ export {
   formatPercentage,
   formatCount,
   formatNumber,
+  formatAbbreviatedCurrency,
   isNumericType,
   getFormatter,
 } from './numbers';
