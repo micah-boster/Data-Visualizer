@@ -4,6 +4,18 @@
 
 A custom interactive data exploration tool for Bounce's partnerships team to visualize batch performance, drill into account-level detail, and track collection trends. Deployed on Vercel with live Snowflake data (or static cache when credentials aren't configured). Replaces static Metabase dashboards and non-deterministic Claude + Snowflake queries.
 
+## Current Milestone: v2.0 Within-Partner Comparison
+
+**Goal:** Enable within-partner batch comparison so the team can see whether a partner's latest batches are performing better or worse than their historical norm — through collection curve charts, conditional formatting, and trending metrics.
+
+**Target features:**
+- Collection curve charts (overlay batches from same partner)
+- Conditional formatting (deviation from partner historical norms)
+- Batch-over-batch trending for key metrics
+- KPI summary cards at partner drill-down level
+- Live Snowflake data (carry from v1)
+- Account-level unique identifiers
+
 ## Core Value
 
 Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
@@ -79,4 +91,4 @@ Surface abnormal account and batch performance data so the partnerships team can
 | border-separate on table | Required for sticky column z-index to work | ✓ Good |
 
 ---
-*Last updated: 2026-04-12 after v1.0 milestone*
+*Last updated: 2026-04-12 after v2.0 milestone start*

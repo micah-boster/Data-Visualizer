@@ -1,77 +1,53 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-04-12T04:19:09.294Z"
+milestone: v2.0
+milestone_name: Within-Partner Comparison
+status: defining_requirements
+last_updated: "2026-04-12"
 progress:
-  total_phases: 9
-  completed_phases: 9
-  total_plans: 18
-  completed_plans: 18
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-10)
+See: .planning/PROJECT.md (updated 2026-04-12)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** Phase 7 — Export
+**Current focus:** v2.0 — defining requirements
 
 ## Current Position
 
-Phase: 7 of 9 (Export)
-Plan: 1 of 1 in current phase
-Status: Phase complete, verifying
-Last activity: 2026-04-11 — Plan 07-01 complete (CSV export)
-
-Progress: [███████░░░] 78%
-
-## Performance Metrics
-
-**Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
-
-**By Phase:**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| - | - | - | - |
-
-**Recent Trend:**
-- Last 5 plans: —
-- Trend: —
-
-*Updated after each plan completion*
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-12 — Milestone v2.0 started
 
 ## Accumulated Context
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
-
-- Roadmap: DEPL-02 (credentials) placed in Phase 1 alongside DATA requirements — Snowflake credentials must be proven secure before any UI work, not deferred to deployment phase
-- Roadmap: NAV-02 (account-level drill-down) kept in v1 but placed last — depends on additional Snowflake tables that may not be ready; can be deferred to v2 if those tables are unavailable at Phase 8 time
-- Research: Validate Snowflake cold start behavior on Vercel Hobby tier before committing — 10-second function timeout may conflict with warehouse warm-up
+- v2 focuses on within-partner comparison only — cross-partner comparison deferred to v3+ because it requires normalization/reprojection
+- Collection curves are the highest-value feature — data already exists in 22 collection columns
+- Conditional formatting baseline is partner's own history, not portfolio average
+- Dynamic curve re-projection (adjusting based on actuals) is v3+ — requires a model, not just UI
+- Comparison is the unifying concept for v2 — anomaly detection, visualization, and trending are all different views of comparison
 
 ### Pending Todos
 
-None yet.
+- Snowflake credentials need to be provisioned in Vercel env vars
+- Static cache will be replaced by live data once credentials are added
 
 ### Blockers/Concerns
 
-- Phase 1: Snowflake warehouse size and auto-suspend settings unknown — affects cold start UX and caching strategy. Confirm before planning Phase 1.
-- Phase 1: Data refresh frequency of `agg_batch_performance_summary` unknown — determines appropriate staleTime in TanStack Query.
-- Phase 6: Anomaly threshold defaults require a 30-minute session with the partnerships team before Phase 3 work begins. (Note: anomaly highlighting is v2, but saved view config shape in Phase 6 should anticipate threshold storage.)
-- Phase 8: NAV-02 (account-level detail) requires `master_accounts` table to be available in Snowflake. Confirm timeline before Phase 8 begins.
+- Snowflake credentials: Micah working on getting these next week. Static cache covers basic demo needs until then.
 
 ## Session Continuity
 
-Last session: 2026-04-11
-Stopped at: Phase 07 complete, all plans executed, verifying
+Last session: 2026-04-12
+Stopped at: v2.0 milestone started, defining requirements
 Resume file: None
