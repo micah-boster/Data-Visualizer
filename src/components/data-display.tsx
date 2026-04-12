@@ -127,6 +127,15 @@ export function DataDisplay() {
         </Alert>
       )}
 
+      {/* Collection curve chart at partner drill-down level */}
+      {drillState.level === 'partner' &&
+        partnerStats?.curves &&
+        partnerStats.curves.length >= 2 && (
+          <div className="shrink-0">
+            <CollectionCurveChart curves={partnerStats.curves} />
+          </div>
+        )}
+
       {/* Interactive data table with drill-down */}
       <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
         <div className="min-h-0 flex-1">
