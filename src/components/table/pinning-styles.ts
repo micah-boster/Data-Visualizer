@@ -6,9 +6,9 @@ import type { CSSProperties } from 'react';
  *
  * Pinned cells MUST have fully opaque backgrounds so scrolling content
  * doesn't show through. The background color depends on context:
- * - Headers/footers: always use --muted (matches bg-muted class)
- * - Body even rows: use --muted (matches bg-muted/30 but fully opaque)
- * - Body odd rows: use --background (page background, fully opaque)
+ * - Headers/footers: always use --color-muted (matches bg-muted class)
+ * - Body even rows: use --color-muted
+ * - Body odd rows: use --color-background
  */
 export function getCommonPinningStyles<T>(
   column: Column<T>,
@@ -31,15 +31,15 @@ export function getCommonPinningStyles<T>(
 
   return {
     boxShadow: isLastLeftPinnedColumn
-      ? '-4px 0 4px -4px hsl(var(--border)) inset'
+      ? '-4px 0 4px -4px var(--color-border) inset'
       : isFirstRightPinnedColumn
-        ? '4px 0 4px -4px hsl(var(--border)) inset'
+        ? '4px 0 4px -4px var(--color-border) inset'
         : undefined,
     left: isPinned === 'left' ? `${column.getStart('left')}px` : undefined,
     right: isPinned === 'right' ? `${column.getAfter('right')}px` : undefined,
-    position: isPinned ? 'sticky' : 'relative',
+    position: isPinned ? 'sticky' : undefined,
     width: column.getSize(),
-    zIndex: isPinned ? 1 : 0,
+    zIndex: isPinned ? 10 : undefined,
     backgroundColor,
   };
 }
