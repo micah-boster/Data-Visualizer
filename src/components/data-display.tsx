@@ -17,6 +17,7 @@ import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/table/data-table';
+import { KpiSummaryCards } from '@/components/kpi/kpi-summary-cards';
 
 const CollectionCurveChart = dynamic(
   () =>
@@ -125,6 +126,16 @@ export function DataDisplay() {
             <span className="sr-only">Dismiss</span>
           </Button>
         </Alert>
+      )}
+
+      {/* KPI summary cards at partner drill-down level */}
+      {drillState.level === 'partner' && (
+        <div className="shrink-0">
+          <KpiSummaryCards
+            kpis={partnerStats?.kpis ?? null}
+            trending={partnerStats?.trending ?? null}
+          />
+        </div>
       )}
 
       {/* Collection curve chart at partner drill-down level */}
