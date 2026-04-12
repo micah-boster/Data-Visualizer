@@ -49,5 +49,5 @@ Last activity: 2026-04-12 — Milestone v2.0 started
 ## Session Continuity
 
 Last session: 2026-04-12
-Stopped at: v2.0 milestone started, defining requirements
-Resume file: None
+Stopped at: Phase 10 planned — 2 plans in 1 wave, verification passed
+Resume file: .planning/phases/10-computation-layer-charting-foundation/10-01-PLAN.md
