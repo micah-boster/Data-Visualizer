@@ -24,6 +24,7 @@ import { SaveViewInput } from '@/components/views/save-view-input';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import { ColumnPresetTabs } from './column-preset-tabs';
+import { HeatmapToggle } from './heatmap-toggle';
 import { TableHeader } from './table-header';
 import { TableBody } from './table-body';
 import { TableFooter } from './table-footer';
@@ -287,6 +288,7 @@ export function DataTable({
         )}
         {!isRoot && <div />}
         <div className="flex items-center gap-2 shrink-0 pr-2">
+          <HeatmapToggle />
           <Button
             variant="outline"
             size="sm"

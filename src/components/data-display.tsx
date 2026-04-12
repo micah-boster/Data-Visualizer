@@ -7,6 +7,8 @@ import { useAccountData } from '@/hooks/use-account-data';
 import { useDrillDown } from '@/hooks/use-drill-down';
 import { useDataFreshness } from '@/contexts/data-freshness';
 import { accountColumnDefs } from '@/lib/columns/account-definitions';
+import { usePartnerStats } from '@/hooks/use-partner-stats';
+import { PartnerNormsProvider } from '@/contexts/partner-norms';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
 import { EmptyState } from '@/components/empty-state';
@@ -26,6 +28,7 @@ export function DataDisplay() {
   } = useAccountData(drillState.partner, drillState.batch);
   const { setFetchedAt, setIsFetching } = useDataFreshness();
   const [schemaWarningDismissed, setSchemaWarningDismissed] = useState(false);
+  const partnerStats = usePartnerStats(drillState.partner, data?.data ?? []);
 
   // Sync freshness state to context so header can display it
   useEffect(() => {
@@ -108,28 +111,30 @@ export function DataDisplay() {
       )}
 
       {/* Interactive data table with drill-down */}
-      <div className="min-h-0 flex-1">
-        {drillState.level === 'batch' && isAccountLoading ? (
-          <LoadingState />
-        ) : (
-          <DataTable
-            key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
-            data={tableData}
-            isFetching={drillState.level === 'batch' ? false : isFetching}
-            drillState={drillState}
-            onDrillToPartner={drillToPartner}
-            onDrillToBatch={drillToBatch}
-            onNavigateToLevel={navigateToLevel}
-            totalRowCount={data.data.length}
-            columnDefs={drillState.level === 'batch' ? accountColumnDefs : undefined}
-            partnerRowCount={
-              drillState.level === 'batch' && drillState.partner
-                ? data.data.filter((r) => String(r.PARTNER_NAME ?? '') === drillState.partner).length
-                : undefined
-            }
-          />
-        )}
-      </div>
+      <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
+        <div className="min-h-0 flex-1">
+          {drillState.level === 'batch' && isAccountLoading ? (
+            <LoadingState />
+          ) : (
+            <DataTable
+              key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
+              data={tableData}
+              isFetching={drillState.level === 'batch' ? false : isFetching}
+              drillState={drillState}
+              onDrillToPartner={drillToPartner}
+              onDrillToBatch={drillToBatch}
+              onNavigateToLevel={navigateToLevel}
+              totalRowCount={data.data.length}
+              columnDefs={drillState.level === 'batch' ? accountColumnDefs : undefined}
+              partnerRowCount={
+                drillState.level === 'batch' && drillState.partner
+                  ? data.data.filter((r) => String(r.PARTNER_NAME ?? '') === drillState.partner).length
+                  : undefined
+              }
+            />
+          )}
+        </div>
+      </PartnerNormsProvider>
     </div>
   );
 }
