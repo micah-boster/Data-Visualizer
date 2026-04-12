@@ -31,7 +31,7 @@ export function getStaticBatchData(): DataResponse {
     ...cached,
     meta: {
       ...cached.meta,
-      fetchedAt: cached.meta.fetchedAt + ' (static cache)',
+      fetchedAt: cached.meta.fetchedAt,
     },
   };
 }
@@ -46,7 +46,7 @@ export function getStaticAccountData(partner: string, batch: string): DataRespon
     ...cached,
     meta: {
       ...cached.meta,
-      fetchedAt: cached.meta.fetchedAt + ' (static cache)',
+      fetchedAt: cached.meta.fetchedAt,
     },
   };
 }
