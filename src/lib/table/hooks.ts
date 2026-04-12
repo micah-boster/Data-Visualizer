@@ -43,9 +43,11 @@ export function useDataTable(
   columnFilters?: ColumnFiltersState,
   options?: UseDataTableOptions,
 ) {
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: 'PARTNER_NAME', desc: false },
-  ]);
+  const [sorting, setSorting] = useState<SortingState>(() => {
+    // Only default-sort by PARTNER_NAME if it's in the column set
+    const hasPartner = (options?.columns ?? columnDefs).some((c) => c.id === 'PARTNER_NAME');
+    return hasPartner ? [{ id: 'PARTNER_NAME', desc: false }] : [];
+  });
 
   const [activePreset, setActivePresetState] = useState(DEFAULT_PRESET);
 

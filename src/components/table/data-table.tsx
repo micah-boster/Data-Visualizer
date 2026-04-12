@@ -113,18 +113,20 @@ export function DataTable({
     (preset: string) => setActivePresetRef.current?.(preset),
   );
 
-  // At batch drill-down level, skip column management overrides — account
-  // columns have their own fixed layout, not the persisted batch-summary settings
+  // At batch drill-down level, use empty/default states instead of the
+  // persisted batch-summary column management (wrong column set)
   const isBatchLevel = !!columnDefsOverride;
+  const noopVisibility = useCallback(() => {}, []);
+  const noopOrder = useCallback(() => {}, []);
   const tableOptions: UseDataTableOptions = {
     onDrillToPartner,
     onDrillToBatch,
     drillLevel,
     columns: columnDefsOverride,
-    columnVisibility: isBatchLevel ? undefined : columnManagement.columnVisibility,
-    onColumnVisibilityChange: isBatchLevel ? undefined : columnManagement.setColumnVisibility,
-    columnOrder: isBatchLevel ? undefined : columnManagement.columnOrder,
-    onColumnOrderChange: isBatchLevel ? undefined : columnManagement.setColumnOrder,
+    columnVisibility: isBatchLevel ? {} : columnManagement.columnVisibility,
+    onColumnVisibilityChange: isBatchLevel ? noopVisibility as never : columnManagement.setColumnVisibility,
+    columnOrder: isBatchLevel ? [] : columnManagement.columnOrder,
+    onColumnOrderChange: isBatchLevel ? noopOrder as never : columnManagement.setColumnOrder,
   };
 
   const { table, sorting, setSorting, activePreset, setActivePreset } =

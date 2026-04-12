@@ -56,7 +56,7 @@ export function DraggableHeader({
       ref={setNodeRef}
       colSpan={header.colSpan}
       style={dragStyle}
-      className={`group/header relative select-none overflow-hidden whitespace-nowrap px-3 py-2 text-xs font-bold text-foreground${isPinned ? ' bg-muted' : ' bg-muted/80 backdrop-blur-sm'}${isNumeric ? ' text-right' : ' text-left'}`}
+      className={`group/header relative select-none overflow-hidden whitespace-nowrap bg-muted px-3 py-2 text-xs font-bold text-foreground${isNumeric ? ' text-right' : ' text-left'}`}
     >
       {header.isPlaceholder ? null : (
         <div
