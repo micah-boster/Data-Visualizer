@@ -33,9 +33,6 @@ function renderDrillableCell(
   if (value == null) return null;
 
   const meta = ctx.table.options.meta as TableDrillMeta | undefined;
-  if (config.key === 'PARTNER_NAME') {
-    console.log('[drill-debug] PARTNER_NAME cell:', { hasMeta: !!meta, onDrill: !!meta?.onDrillToPartner, level: meta?.drillLevel });
-  }
 
   // PARTNER_NAME: drillable at root level
   if (
