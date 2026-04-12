@@ -8,11 +8,11 @@
 
 ### Foundation & Data Layer
 
-- [ ] **FOUND-01**: `usePartnerStats` hook computes KPI aggregates, historical norms (mean/stddev per metric), collection curve series, and batch-over-batch trending from partner-filtered batch rows
-- [ ] **FOUND-02**: Collection curve data reshaped from wide (19 columns per row) to long (array of {month, amount} per batch), truncated at `BATCH_AGE_IN_MONTHS`
-- [ ] **FOUND-03**: Collection curves default to recovery rate % (collection / total_amount_placed), not absolute dollars, with toggle for absolute view
-- [ ] **FOUND-04**: Recharts 3.x and shadcn Chart component installed and working with React 19
-- [ ] **FOUND-05**: Chart CSS variables updated from grayscale to distinguishable colors for multi-line overlays
+- [x] **FOUND-01**: `usePartnerStats` hook computes KPI aggregates, historical norms (mean/stddev per metric), collection curve series, and batch-over-batch trending from partner-filtered batch rows
+- [x] **FOUND-02**: Collection curve data reshaped from wide (19 columns per row) to long (array of {month, amount} per batch), truncated at `BATCH_AGE_IN_MONTHS`
+- [x] **FOUND-03**: Collection curves default to recovery rate % (collection / total_amount_placed), not absolute dollars, with toggle for absolute view
+- [x] **FOUND-04**: Recharts 3.x and shadcn Chart component installed and working with React 19
+- [x] **FOUND-05**: Chart CSS variables updated from grayscale to distinguishable colors for multi-line overlays
 
 ### KPI Summary Cards
 
@@ -51,7 +51,7 @@
 
 ### Carry-Forward from v1
 
-- [ ] **CARRY-01**: Account drill-down rows use ACCOUNT_PUBLIC_ID from Snowflake as unique identifier (replacing row numbers)
+- [x] **CARRY-01**: Account drill-down rows use ACCOUNT_PUBLIC_ID from Snowflake as unique identifier (replacing row numbers)
 
 ## Out of Scope (v2)
 
@@ -69,11 +69,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 10 | Pending |
-| FOUND-02 | Phase 10 | Pending |
-| FOUND-03 | Phase 10 | Pending |
-| FOUND-04 | Phase 10 | Pending |
-| FOUND-05 | Phase 10 | Pending |
+| FOUND-01 | Phase 10 | Complete |
+| FOUND-02 | Phase 10 | Complete |
+| FOUND-03 | Phase 10 | Complete |
+| FOUND-04 | Phase 10 | Complete |
+| FOUND-05 | Phase 10 | Complete |
 | KPI-01 | Phase 11 | Pending |
 | KPI-02 | Phase 11 | Pending |
 | KPI-03 | Phase 11 | Pending |
@@ -97,7 +97,7 @@
 | TREND-03 | Phase 14 | Pending |
 | TREND-04 | Phase 14 | Pending |
 | TREND-05 | Phase 14 | Pending |
-| CARRY-01 | Phase 10 | Pending |
+| CARRY-01 | Phase 10 | Complete |
 
 ---
 *Requirements defined: 2026-04-12*
