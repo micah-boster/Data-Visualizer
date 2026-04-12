@@ -71,7 +71,7 @@ Plans:
   4. Most recent batch is visually highlighted, older batches muted
   5. Hover shows batch name and value at each point
   6. Chart is lazy-loaded (not in initial page bundle)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 12-01-PLAN.md — Data pivot utility, chart state hook, and extended CSS color palette
 - [ ] 12-02-PLAN.md — Chart component with tooltip, legend, lazy-loaded integration into partner view
@@ -108,7 +108,7 @@ Phases 10 first (foundation), then 11-14 can proceed. Phases 11, 12, 13 depend o
 |-------|----------------|--------|-----------|
 | 10. Computation Layer & Charting Foundation | 2/2 | Complete    | 2026-04-12 |
 | 11. KPI Summary Cards | 0/TBD | Not started | - |
-| 12. Collection Curve Charts | 0/2 | Planned | - |
+| 12. Collection Curve Charts | 1/2 | In Progress|  |
 | 13. Conditional Formatting | 1/2 | In Progress|  |
 | 14. Batch-over-Batch Trending | 0/TBD | Not started | - |
 
