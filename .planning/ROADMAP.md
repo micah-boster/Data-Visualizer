@@ -26,7 +26,7 @@ Five phases that add within-partner batch comparison capabilities on top of the 
 
 </details>
 
-- [ ] **Phase 10: Computation Layer & Charting Foundation** — Install Recharts, update chart colors, build usePartnerStats hook with curve reshape, norms, and KPI aggregation
+- [x] **Phase 10: Computation Layer & Charting Foundation** — Install Recharts, update chart colors, build usePartnerStats hook with curve reshape, norms, and KPI aggregation (completed 2026-04-12)
 - [ ] **Phase 11: KPI Summary Cards** — Display 4-6 metric cards above the batch table at partner drill-down level
 - [ ] **Phase 12: Collection Curve Charts** — Multi-line Recharts overlay of batch collection curves at partner level
 - [ ] **Phase 13: Conditional Formatting** — Cell color-coding by deviation from partner historical norms
@@ -44,7 +44,7 @@ Five phases that add within-partner batch comparison capabilities on top of the 
   3. Recovery rate % is the default curve metric (not absolute dollars)
   4. Recharts renders a basic line chart without errors on React 19
   5. Chart CSS variables produce distinguishable colors for 5+ overlaid lines
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 10-01-PLAN.md — usePartnerStats hook with type definitions, curve reshape, norms, KPIs, and trending computation
 - [ ] 10-02-PLAN.md — Install Recharts via shadcn, update chart CSS colors, add ACCOUNT_PUBLIC_ID column
@@ -103,7 +103,7 @@ Phases 10 first (foundation), then 11-14 can proceed. Phases 11, 12, 13 depend o
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 10. Computation Layer & Charting Foundation | 0/2 | Planned | - |
+| 10. Computation Layer & Charting Foundation | 2/2 | Complete   | 2026-04-12 |
 | 11. KPI Summary Cards | 0/TBD | Not started | - |
 | 12. Collection Curve Charts | 0/TBD | Not started | - |
 | 13. Conditional Formatting | 0/TBD | Not started | - |
