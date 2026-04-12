@@ -1,7 +1,7 @@
 'use client';
 
-import { useSearchParams, usePathname, useRouter } from 'next/navigation';
-import { useCallback, useMemo } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useCallback, useMemo, useSyncExternalStore } from 'react';
 
 export type DrillLevel = 'root' | 'partner' | 'batch';
 
@@ -12,36 +12,66 @@ export interface DrillState {
 }
 
 /**
- * Drill-down state management hook. State lives in URL search params
- * (`drillPartner`, `drillBatch`). Uses router.push (NOT router.replace)
- * so the browser back button navigates up the drill hierarchy.
+ * Subscribe to URL search param changes via popstate + custom event.
+ * This avoids Next.js useSearchParams which can go stale after router.push.
+ */
+function subscribeToSearch(callback: () => void) {
+  window.addEventListener('popstate', callback);
+  window.addEventListener('pushstate', callback);
+  return () => {
+    window.removeEventListener('popstate', callback);
+    window.removeEventListener('pushstate', callback);
+  };
+}
+
+function getSearchSnapshot() {
+  return window.location.search;
+}
+
+function getServerSnapshot() {
+  return '';
+}
+
+/**
+ * Drill-down state management hook.
  *
- * Before drilling, the current non-drill search params are captured and
- * encoded as base64 JSON in a `drillFrom` param. Navigating back to root
- * via breadcrumb decodes and restores those params.
+ * Uses window.location.search directly (via useSyncExternalStore) instead
+ * of Next.js useSearchParams to avoid stale closure issues with router.push.
  */
 export function useDrillDown() {
-  const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
 
-  // Use searchParams.toString() as dependency to avoid reference-change re-renders
-  const paramsString = searchParams.toString();
+  const searchString = useSyncExternalStore(
+    subscribeToSearch,
+    getSearchSnapshot,
+    getServerSnapshot,
+  );
 
   const state: DrillState = useMemo(() => {
-    const partner = searchParams.get('drillPartner');
-    const batch = searchParams.get('drillBatch');
+    const params = new URLSearchParams(searchString);
+    const partner = params.get('drillPartner');
+    const batch = params.get('drillBatch');
     if (batch && partner) return { level: 'batch', partner, batch };
     if (partner) return { level: 'partner', partner, batch: null };
     return { level: 'root', partner: null, batch: null };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paramsString]);
+  }, [searchString]);
+
+  /** Push URL and fire custom event so useSyncExternalStore picks it up */
+  const push = useCallback(
+    (url: string) => {
+      router.push(url, { scroll: false });
+      // Notify subscribers since router.push doesn't fire popstate
+      window.dispatchEvent(new Event('pushstate'));
+    },
+    [router],
+  );
 
   const drillToPartner = useCallback(
     (partnerName: string) => {
-      // Save current filter state for restoration when returning to root
+      const freshParams = new URLSearchParams(window.location.search);
       const currentFilters: Record<string, string> = {};
-      searchParams.forEach((value, key) => {
+      freshParams.forEach((value, key) => {
         if (!key.startsWith('drill')) {
           currentFilters[key] = value;
         }
@@ -55,53 +85,47 @@ export function useDrillDown() {
       params.set('drillPartner', partnerName);
       if (drillFrom) params.set('drillFrom', drillFrom);
 
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      push(`${pathname}?${params.toString()}`);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [paramsString, pathname, router],
+    [pathname, push],
   );
 
   const drillToBatch = useCallback(
     (batchName: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('drillBatch', batchName);
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+      const freshParams = new URLSearchParams(window.location.search);
+      freshParams.set('drillBatch', batchName);
+      push(`${pathname}?${freshParams.toString()}`);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [paramsString, pathname, router],
+    [pathname, push],
   );
 
   const navigateToLevel = useCallback(
     (level: DrillLevel) => {
+      const freshParams = new URLSearchParams(window.location.search);
+
       if (level === 'root') {
-        // Restore pre-drill filters if available
-        const drillFrom = searchParams.get('drillFrom');
+        const drillFrom = freshParams.get('drillFrom');
         if (drillFrom) {
           try {
-            const restored = JSON.parse(atob(drillFrom)) as Record<
-              string,
-              string
-            >;
+            const restored = JSON.parse(atob(drillFrom)) as Record<string, string>;
             const params = new URLSearchParams(restored);
-            router.push(`${pathname}?${params.toString()}`, { scroll: false });
+            push(`${pathname}?${params.toString()}`);
             return;
           } catch {
-            // Malformed drillFrom -- fall through to bare pathname
+            // Malformed drillFrom -- fall through
           }
         }
-        router.push(pathname, { scroll: false });
+        push(pathname);
       } else if (level === 'partner') {
-        // Remove batch but keep partner and drillFrom
         const params = new URLSearchParams();
-        params.set('drillPartner', state.partner!);
-        const drillFrom = searchParams.get('drillFrom');
+        const partner = freshParams.get('drillPartner');
+        if (partner) params.set('drillPartner', partner);
+        const drillFrom = freshParams.get('drillFrom');
         if (drillFrom) params.set('drillFrom', drillFrom);
-        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+        push(`${pathname}?${params.toString()}`);
       }
-      // 'batch' level: no-op (already at deepest level)
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [paramsString, pathname, router, state.partner],
+    [pathname, push],
   );
 
   return { state, drillToPartner, drillToBatch, navigateToLevel };
