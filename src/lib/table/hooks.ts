@@ -20,7 +20,7 @@ import { columnDefs } from '@/lib/columns/definitions';
 import type { TableDrillMeta } from '@/lib/columns/definitions';
 import { PRESETS, DEFAULT_PRESET } from '@/lib/columns/presets';
 import type { DrillLevel } from '@/hooks/use-drill-down';
-import type { TrendingData, MetricNorm } from '@/types/partner-stats';
+import type { TrendingData, MetricNorm, PartnerAnomaly } from '@/types/partner-stats';
 
 export interface UseDataTableOptions {
   /** Optional drill-down callbacks passed to column cell renderers via table meta */
@@ -43,6 +43,8 @@ export interface UseDataTableOptions {
   norms?: Record<string, MetricNorm> | null;
   /** Whether heatmap is enabled */
   heatmapEnabled?: boolean;
+  /** Root-level anomaly map for Status column badges */
+  anomalyMap?: Map<string, PartnerAnomaly>;
 }
 
 export function useDataTable(
@@ -69,7 +71,7 @@ export function useDataTable(
   const setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
 
   const columnPinning = useMemo<ColumnPinningState>(() => ({
-    left: ['PARTNER_NAME', 'BATCH'],
+    left: ['__anomaly_status', 'PARTNER_NAME', 'BATCH'],
     right: [],
   }), []);
 
@@ -87,9 +89,9 @@ export function useDataTable(
     }
   }, [columns]);
 
-  // Build meta object for drill-down callbacks, trending data, and norms
+  // Build meta object for drill-down callbacks, trending data, norms, and anomalies
   const meta: TableDrillMeta | undefined = useMemo(() => {
-    if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData && !options?.norms) return undefined;
+    if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData && !options?.norms && !options?.anomalyMap) return undefined;
     return {
       onDrillToPartner: options?.onDrillToPartner,
       onDrillToBatch: options?.onDrillToBatch,
@@ -97,8 +99,9 @@ export function useDataTable(
       trending: options?.trendingData ?? undefined,
       norms: options?.norms ?? undefined,
       heatmapEnabled: options?.heatmapEnabled ?? false,
+      anomalyMap: options?.anomalyMap,
     };
-  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled]);
+  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled, options?.anomalyMap]);
 
   const table = useReactTable({
     data,

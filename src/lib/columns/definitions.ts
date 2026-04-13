@@ -20,7 +20,8 @@ import { TrendIndicator, InsufficientTrendIndicator } from '@/components/table/t
 import { TRENDING_METRICS } from '@/lib/computation/compute-trending';
 import { getFormatter, isNumericType, computeDeviation, HEATMAP_COLUMNS } from '@/lib/formatting';
 import type { DrillLevel } from '@/hooks/use-drill-down';
-import type { TrendingData, MetricNorm } from '@/types/partner-stats';
+import type { TrendingData, MetricNorm, PartnerAnomaly } from '@/types/partner-stats';
+import { anomalyStatusColumn } from './anomaly-column';
 
 /** Drill-down callbacks and trending data passed through TanStack Table meta */
 export interface TableDrillMeta {
@@ -32,6 +33,8 @@ export interface TableDrillMeta {
   norms?: Record<string, MetricNorm> | null;
   /** Whether heatmap is enabled (user toggle) */
   heatmapEnabled?: boolean;
+  /** Root-level anomaly map keyed by PARTNER_NAME */
+  anomalyMap?: Map<string, PartnerAnomaly>;
 }
 
 function renderDrillableCell(
@@ -73,7 +76,7 @@ function renderDrillableCell(
 }
 
 export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
-  return COLUMN_CONFIGS.map((config) => {
+  const dataColumns: ColumnDef<Record<string, unknown>>[] = COLUMN_CONFIGS.map((config) => {
     // Determine filter function based on column type
     let filterFn: FilterFn<Record<string, unknown>> | undefined;
     if (config.type === 'text') {
@@ -143,6 +146,9 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
     },
   };
   });
+
+  // Prepend anomaly status column as leftmost column
+  return [anomalyStatusColumn, ...dataColumns];
 }
 
 /** Pre-built column definitions ready for table consumption */

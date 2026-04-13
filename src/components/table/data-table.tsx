@@ -39,6 +39,7 @@ import { ColumnPickerSidebar } from '@/components/columns/column-picker-sidebar'
 import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { TrendingData } from '@/types/partner-stats';
+import { useAnomalyContext } from '@/contexts/anomaly-provider';
 
 interface DataTableProps {
   data: Record<string, unknown>[];
@@ -115,6 +116,9 @@ export function DataTable({
   // Partner norms for heatmap deviation formatting
   const { norms, heatmapEnabled } = usePartnerNorms();
 
+  // Anomaly data for Status column badges
+  const { partnerAnomalies } = useAnomalyContext();
+
   // Hoist setActivePreset reference for the column management hook
   // We need to create a stable reference that can be passed before table init
   const setActivePresetRef = useRef<((preset: string) => void) | undefined>(undefined);
@@ -134,6 +138,7 @@ export function DataTable({
     trendingData,
     norms,
     heatmapEnabled,
+    anomalyMap: partnerAnomalies,
   };
 
   const { table, sorting, setSorting, activePreset, setActivePreset } =
