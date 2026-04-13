@@ -10,6 +10,7 @@ import { accountColumnDefs } from '@/lib/columns/account-definitions';
 import dynamic from 'next/dynamic';
 import { usePartnerStats } from '@/hooks/use-partner-stats';
 import { PartnerNormsProvider } from '@/contexts/partner-norms';
+import { AnomalyProvider } from '@/contexts/anomaly-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
@@ -98,6 +99,7 @@ export function DataDisplay() {
     (data.schemaWarnings.missing.length > 0 || data.schemaWarnings.unexpected.length > 0);
 
   return (
+    <AnomalyProvider allRows={data.data}>
     <div className="flex h-[calc(100vh-4rem)] flex-col gap-2">
       {/* Schema warnings */}
       {hasSchemaWarnings && (
@@ -188,5 +190,6 @@ export function DataDisplay() {
         </div>
       </PartnerNormsProvider>
     </div>
+    </AnomalyProvider>
   );
 }
