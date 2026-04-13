@@ -45,9 +45,51 @@ export interface TrendingData {
   batchCount: number;
 }
 
+/** Single metric flag on a batch */
+export interface MetricAnomaly {
+  metric: string;
+  value: number;
+  zScore: number;
+  direction: 'above' | 'below';
+}
+
+/** Correlated anomaly group on a batch */
+export interface AnomalyGroup {
+  groupKey: string;
+  label: string;
+  flags: MetricAnomaly[];
+  avgDeviation: number;
+}
+
+/** Batch-level anomaly assessment */
+export interface BatchAnomaly {
+  batchName: string;
+  isFlagged: boolean;
+  flags: MetricAnomaly[];
+  groups: AnomalyGroup[];
+  severityScore: number;
+}
+
+/** Partner-level anomaly roll-up */
+export interface PartnerAnomaly {
+  isFlagged: boolean;
+  severityScore: number;
+  flaggedBatchCount: number;
+  totalBatchCount: number;
+  latestBatch: BatchAnomaly | null;
+  batches: BatchAnomaly[];
+  usedPortfolioFallback: boolean;
+}
+
+/** Full anomaly report for a single partner */
+export interface AnomalyReport {
+  partner: PartnerAnomaly;
+}
+
 export interface PartnerStats {
   kpis: KpiAggregates;
   norms: Record<string, MetricNorm>;
   curves: BatchCurve[];
   trending: TrendingData;
+  anomalies?: AnomalyReport;
 }
