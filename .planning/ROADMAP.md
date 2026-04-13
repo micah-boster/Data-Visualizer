@@ -144,7 +144,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 15. Anomaly Detection Engine | 2/2 | Complete    | 2026-04-13 | - |
-| 16. Anomaly Detection UI | v3.0 | 0/2 | Not started | - |
+| 16. Anomaly Detection UI | 1/2 | In Progress|  | - |
 | 17. Claude Query Infrastructure | v3.0 | 0/1 | Not started | - |
 | 18. Claude Query UI | v3.0 | 0/1 | Not started | - |
 | 19. Cross-Partner Computation | v3.0 | 0/1 | Not started | - |
