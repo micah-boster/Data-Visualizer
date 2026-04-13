@@ -8,10 +8,14 @@ import {
   DndContext,
   closestCenter,
   DragOverlay,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { useDataTable } from '@/lib/table/hooks';
 import type { UseDataTableOptions } from '@/lib/table/hooks';
 import { useFilterState } from '@/hooks/use-filter-state';
@@ -261,6 +265,16 @@ export function DataTable({
 
   const totalColumns = COLUMN_CONFIGS.length;
 
+  // Drag-to-reorder sensors — require 5px movement before activating to prevent
+  // accidental drags and the freeze bug caused by immediate pointer capture
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: { distance: 5 },
+  });
+  const keyboardSensor = useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates,
+  });
+  const sensors = useSensors(pointerSensor, keyboardSensor);
+
   // Drag-to-reorder state
   const [activeHeaderId, setActiveHeaderId] = useState<string | null>(null);
 
@@ -283,6 +297,10 @@ export function DataTable({
     },
     [columnManagement],
   );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveHeaderId(null);
+  }, []);
 
   // Get the label for the currently dragged column (for DragOverlay)
   const activeColumnLabel = activeHeaderId
@@ -399,9 +417,11 @@ export function DataTable({
         <FilterEmptyState onClearFilters={clearAll} />
       ) : (
         <DndContext
+          sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
         <div
           ref={tableContainerRef}

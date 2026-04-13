@@ -6,12 +6,17 @@ import {
   DndContext,
   closestCenter,
   DragOverlay,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
   arrayMove,
 } from '@dnd-kit/sortable';
 import {
@@ -59,6 +64,14 @@ export function ColumnPickerSidebar({
   const [search, setSearch] = useState('');
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: { distance: 5 },
+  });
+  const keyboardSensor = useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates,
+  });
+  const sensors = useSensors(pointerSensor, keyboardSensor);
+
   const totalColumns = COLUMN_CONFIGS.length;
   const visibleCount = Object.values(columnVisibility).filter(Boolean).length;
 
@@ -86,6 +99,10 @@ export function ColumnPickerSidebar({
     },
     [columnOrder, setColumnOrder],
   );
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDragId(null);
+  }, []);
 
   const activeLabel = activeDragId ? (labelMap.get(activeDragId) ?? activeDragId) : null;
 
@@ -116,9 +133,11 @@ export function ColumnPickerSidebar({
 
         {/* Column groups with sidebar drag reorder */}
         <DndContext
+          sensors={sensors}
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           <SortableContext
             items={sortableItems}

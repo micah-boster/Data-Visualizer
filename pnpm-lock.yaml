@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@dnd-kit/utilities@3.2.2':
+    hash: a9e073d6b6f6de25575e4e95a32ed40383bf85642f5e6931f130a2b91b2b2f6a
+    path: patches/@dnd-kit__utilities@3.2.2.patch
+
 importers:
 
   .:
@@ -25,7 +30,7 @@ importers:
         version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       '@dnd-kit/utilities':
         specifier: ^3.2.2
-        version: 3.2.2(react@19.2.4)
+        version: 3.2.2(patch_hash=a9e073d6b6f6de25575e4e95a32ed40383bf85642f5e6931f130a2b91b2b2f6a)(react@19.2.4)
       '@tanstack/react-query':
         specifier: ^5.97.0
         version: 5.97.0(react@19.2.4)
@@ -4943,7 +4948,7 @@ snapshots:
   '@dnd-kit/core@6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@dnd-kit/accessibility': 3.1.1(react@19.2.4)
-      '@dnd-kit/utilities': 3.2.2(react@19.2.4)
+      '@dnd-kit/utilities': 3.2.2(patch_hash=a9e073d6b6f6de25575e4e95a32ed40383bf85642f5e6931f130a2b91b2b2f6a)(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       tslib: 2.8.1
@@ -4951,11 +4956,11 @@ snapshots:
   '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@dnd-kit/utilities': 3.2.2(react@19.2.4)
+      '@dnd-kit/utilities': 3.2.2(patch_hash=a9e073d6b6f6de25575e4e95a32ed40383bf85642f5e6931f130a2b91b2b2f6a)(react@19.2.4)
       react: 19.2.4
       tslib: 2.8.1
 
-  '@dnd-kit/utilities@3.2.2(react@19.2.4)':
+  '@dnd-kit/utilities@3.2.2(patch_hash=a9e073d6b6f6de25575e4e95a32ed40383bf85642f5e6931f130a2b91b2b2f6a)(react@19.2.4)':
     dependencies:
       react: 19.2.4
       tslib: 2.8.1
