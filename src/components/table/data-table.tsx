@@ -71,16 +71,22 @@ export function DataTable({
   partnerRowCount,
   trendingData,
 }: DataTableProps) {
-  // DEBUG: detect infinite re-render loop
+  // DEBUG: detect what's causing infinite re-render loop
   const renderCountRef = useRef(0);
+  const prevPropsRef = useRef<Record<string, unknown>>({});
   renderCountRef.current++;
   if (renderCountRef.current > 50) {
     throw new Error(`DataTable infinite render loop detected (${renderCountRef.current} renders)`);
   }
-  // Reset counter after 2 seconds of stability
-  useRef<ReturnType<typeof setTimeout> | null>(null);
   setTimeout(() => { renderCountRef.current = 0; }, 2000);
-  console.log('[DataTable] render #' + renderCountRef.current);
+  // Log which props changed
+  const currentProps: Record<string, unknown> = { data, isFetching, drillState, onDrillToPartner, onDrillToBatch, onNavigateToLevel, totalRowCount, columnDefsOverride, partnerRowCount, trendingData };
+  const changed: string[] = [];
+  for (const [k, v] of Object.entries(currentProps)) {
+    if (prevPropsRef.current[k] !== v) changed.push(k);
+  }
+  prevPropsRef.current = currentProps;
+  console.log(`[DataTable] render #${renderCountRef.current}${changed.length ? ' changed: ' + changed.join(', ') : ' (no prop changes)'}`);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);

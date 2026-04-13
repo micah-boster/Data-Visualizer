@@ -52,9 +52,10 @@ export function useDataTable(
   columnFilters?: ColumnFiltersState,
   options?: UseDataTableOptions,
 ) {
-  const [sorting, setSorting] = useState<SortingState>([
+  const [sorting, _setSorting] = useState<SortingState>([
     { id: 'PARTNER_NAME', desc: false },
   ]);
+  const setSorting: typeof _setSorting = (v) => { console.log('[useDataTable] setSorting called'); _setSorting(v); };
 
   const [activePreset, setActivePresetState] = useState(DEFAULT_PRESET);
 
@@ -63,12 +64,14 @@ export function useDataTable(
     () => PRESETS[DEFAULT_PRESET]
   );
   const columnVisibility = options?.columnVisibility ?? internalVisibility;
-  const setColumnVisibility = options?.onColumnVisibilityChange ?? setInternalVisibility;
+  const _setColumnVisibility = options?.onColumnVisibilityChange ?? setInternalVisibility;
+  const setColumnVisibility: typeof _setColumnVisibility = (v) => { console.log('[useDataTable] setColumnVisibility called'); _setColumnVisibility(v); };
 
   // Column order: external or undefined (TanStack default)
   const [internalColumnOrder, setInternalColumnOrder] = useState<string[]>([]);
   const columnOrder = options?.columnOrder ?? internalColumnOrder;
-  const setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
+  const _setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
+  const setColumnOrder: typeof _setColumnOrder = (v) => { console.log('[useDataTable] setColumnOrder called'); _setColumnOrder(v); };
 
   const columnPinning = useMemo<ColumnPinningState>(() => ({
     left: ['__anomaly_status', 'PARTNER_NAME', 'BATCH'],
