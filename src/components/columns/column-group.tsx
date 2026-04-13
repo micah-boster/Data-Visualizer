@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, useEffect, type CSSProperties } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronRight, GripVertical } from 'lucide-react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Checkbox } from '@/components/ui/checkbox';
 import { COLUMN_CONFIGS, IDENTITY_COLUMNS } from '@/lib/columns/config';
 import type { ColumnGroup as ColumnGroupType } from '@/lib/columns/groups';
@@ -14,55 +12,61 @@ const identitySet = new Set(IDENTITY_COLUMNS);
 /** Map column key to label for display */
 const labelMap = new Map(COLUMN_CONFIGS.map((c) => [c.key, c.label]));
 
-/** Sortable column row within a group */
-function SortableColumnRow({
+/** Draggable column row within a group — uses native HTML drag */
+function DraggableColumnRow({
   columnKey,
   isVisible,
   isIdentity,
   onToggle,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isDragging,
+  isDragOver,
 }: {
   columnKey: string;
   isVisible: boolean;
   isIdentity: boolean;
   onToggle: () => void;
+  onDragStart?: (key: string) => void;
+  onDragOver?: (key: string) => void;
+  onDrop?: (key: string) => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
+  isDragOver?: boolean;
 }) {
   const label = labelMap.get(columnKey) ?? columnKey;
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: columnKey,
-    disabled: isIdentity,
-  });
-
-  const style: CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   return (
     <div
-      ref={setNodeRef}
-      style={style}
+      draggable={!isIdentity}
+      onDragStart={(e) => {
+        if (isIdentity) return;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', columnKey);
+        onDragStart?.(columnKey);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        onDragOver?.(columnKey);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop?.(columnKey);
+      }}
+      onDragEnd={() => onDragEnd?.()}
       className={`group/row flex items-center gap-2 px-3 py-1 pl-6 text-sm hover:bg-muted/30 ${
         isIdentity ? 'opacity-60' : ''
-      }`}
+      }${isDragging ? ' opacity-40' : ''}${isDragOver ? ' border-t-2 border-primary' : ''}`}
     >
       {!isIdentity && (
-        <button
-          {...attributes}
-          {...listeners}
+        <span
           className="shrink-0 cursor-grab opacity-0 group-hover/row:opacity-100 transition-opacity text-muted-foreground hover:text-foreground active:cursor-grabbing"
-          onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="h-3.5 w-3.5" />
-        </button>
+        </span>
       )}
       {isIdentity && <div className="w-3.5 shrink-0" />}
       <label className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
@@ -86,6 +90,12 @@ interface ColumnGroupProps {
   onToggleColumn: (key: string) => void;
   onToggleGroup: (groupKey: string, visible: boolean) => void;
   searchFilter?: string;
+  dragId?: string | null;
+  dragOverId?: string | null;
+  onDragStart?: (key: string) => void;
+  onDragOver?: (key: string) => void;
+  onDrop?: (key: string) => void;
+  onDragEnd?: () => void;
 }
 
 export function ColumnGroup({
@@ -94,6 +104,12 @@ export function ColumnGroup({
   onToggleColumn,
   onToggleGroup,
   searchFilter,
+  dragId,
+  dragOverId,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: ColumnGroupProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -160,12 +176,18 @@ export function ColumnGroup({
       {expanded && (
         <div className="pb-1">
           {filteredColumns.map((key) => (
-            <SortableColumnRow
+            <DraggableColumnRow
               key={key}
               columnKey={key}
               isVisible={columnVisibility[key] ?? false}
               isIdentity={identitySet.has(key)}
               onToggle={() => onToggleColumn(key)}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              onDragEnd={onDragEnd}
+              isDragging={dragId === key}
+              isDragOver={dragOverId === key}
             />
           ))}
         </div>

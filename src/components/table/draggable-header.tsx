@@ -1,8 +1,6 @@
 'use client';
 
-import { type CSSProperties } from 'react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { type CSSProperties, type DragEvent } from 'react';
 import { GripVertical } from 'lucide-react';
 import { flexRender, type Header } from '@tanstack/react-table';
 import { SortIndicator } from './sort-indicator';
@@ -15,6 +13,12 @@ interface DraggableHeaderProps {
   filterState?: Record<string, unknown>;
   setColumnFilter?: (columnId: string, value: unknown) => void;
   clearColumnFilter?: (columnId: string) => void;
+  onDragStart?: (columnId: string) => void;
+  onDragOver?: (e: DragEvent, columnId: string) => void;
+  onDrop?: (columnId: string) => void;
+  onDragEnd?: () => void;
+  isDragging?: boolean;
+  isDragOver?: boolean;
 }
 
 export function DraggableHeader({
@@ -22,39 +26,47 @@ export function DraggableHeader({
   filterState,
   setColumnFilter,
   clearColumnFilter,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isDragging,
+  isDragOver,
 }: DraggableHeaderProps) {
   const isPinned = header.column.getIsPinned();
   const meta = header.column.columnDef.meta as { type?: string } | undefined;
   const isNumeric = meta?.type ? isNumericType(meta.type) : false;
   const pinningStyles = getCommonPinningStyles(header.column, { isHeader: true });
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: header.id,
-    disabled: !!isPinned,
-  });
-
-  const dragStyle: CSSProperties = {
+  const style: CSSProperties = {
     ...pinningStyles,
     width: header.getSize(),
     minWidth: header.getSize(),
-    transform: CSS.Translate.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    ...(isDragging ? { zIndex: 30 } : {}),
+    opacity: isDragging ? 0.4 : 1,
+    ...(isDragOver ? { borderLeft: '2px solid hsl(var(--primary))' } : {}),
   };
 
   return (
     <th
-      ref={setNodeRef}
       colSpan={header.colSpan}
-      style={dragStyle}
+      style={style}
+      draggable={!isPinned}
+      onDragStart={(e) => {
+        if (isPinned) return;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', header.id);
+        onDragStart?.(header.id);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        onDragOver?.(e, header.id);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop?.(header.id);
+      }}
+      onDragEnd={() => onDragEnd?.()}
       className={`group/header relative select-none overflow-hidden bg-muted px-3 py-2 text-xs font-bold text-foreground${isNumeric ? ' text-right' : ' text-left'}`}
     >
       {header.isPlaceholder ? null : (
@@ -68,14 +80,13 @@ export function DraggableHeader({
         >
           {/* Drag grip (only for non-pinned columns) */}
           {!isPinned && (
-            <button
-              {...attributes}
-              {...listeners}
+            <span
               className="mr-1 shrink-0 cursor-grab opacity-0 group-hover/header:opacity-100 transition-opacity text-muted-foreground hover:text-foreground active:cursor-grabbing"
+              onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             >
               <GripVertical className="h-3.5 w-3.5" />
-            </button>
+            </span>
           )}
           <span className="line-clamp-2 break-words leading-tight">
             {flexRender(header.column.columnDef.header, header.getContext())}

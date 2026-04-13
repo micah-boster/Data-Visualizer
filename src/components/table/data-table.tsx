@@ -1,21 +1,16 @@
 'use client';
 
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, type DragEvent } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Columns3, BookmarkCheck, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  DndContext,
-  closestCenter,
-  DragOverlay,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+/** Move item from oldIndex to newIndex in array (immutable) */
+function arrayMove<T>(arr: T[], from: number, to: number): T[] {
+  const result = arr.slice();
+  const [item] = result.splice(from, 1);
+  result.splice(to, 0, item);
+  return result;
+}
 import { useDataTable } from '@/lib/table/hooks';
 import type { UseDataTableOptions } from '@/lib/table/hooks';
 import { useFilterState } from '@/hooks/use-filter-state';
@@ -265,47 +260,36 @@ export function DataTable({
 
   const totalColumns = COLUMN_CONFIGS.length;
 
-  // Drag-to-reorder sensors — require 5px movement before activating to prevent
-  // accidental drags and the freeze bug caused by immediate pointer capture
-  const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: { distance: 5 },
-  });
-  const keyboardSensor = useSensor(KeyboardSensor, {
-    coordinateGetter: sortableKeyboardCoordinates,
-  });
-  const sensors = useSensors(pointerSensor, keyboardSensor);
+  // Native drag-to-reorder state (no @dnd-kit — incompatible with React 19)
+  const [dragColumnId, setDragColumnId] = useState<string | null>(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
 
-  // Drag-to-reorder state
-  const [activeHeaderId, setActiveHeaderId] = useState<string | null>(null);
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveHeaderId(event.active.id as string);
+  const handleHeaderDragStart = useCallback((columnId: string) => {
+    setDragColumnId(columnId);
   }, []);
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setActiveHeaderId(null);
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
+  const handleHeaderDragOver = useCallback((_e: DragEvent, columnId: string) => {
+    setDragOverColumnId(columnId);
+  }, []);
 
+  const handleHeaderDrop = useCallback(
+    (targetColumnId: string) => {
+      if (!dragColumnId || dragColumnId === targetColumnId) return;
       const currentOrder = columnManagement.columnOrder;
-      const oldIndex = currentOrder.indexOf(active.id as string);
-      const newIndex = currentOrder.indexOf(over.id as string);
+      const oldIndex = currentOrder.indexOf(dragColumnId);
+      const newIndex = currentOrder.indexOf(targetColumnId);
       if (oldIndex === -1 || newIndex === -1) return;
-
       columnManagement.setColumnOrder(arrayMove(currentOrder, oldIndex, newIndex));
+      setDragColumnId(null);
+      setDragOverColumnId(null);
     },
-    [columnManagement],
+    [dragColumnId, columnManagement],
   );
 
-  const handleDragCancel = useCallback(() => {
-    setActiveHeaderId(null);
+  const handleHeaderDragEnd = useCallback(() => {
+    setDragColumnId(null);
+    setDragOverColumnId(null);
   }, []);
-
-  // Get the label for the currently dragged column (for DragOverlay)
-  const activeColumnLabel = activeHeaderId
-    ? COLUMN_CONFIGS.find((c) => c.key === activeHeaderId)?.label ?? activeHeaderId
-    : null;
 
   const hasFilteredRows = table.getRowModel().rows.length > 0;
   const hasActiveFilters = columnFilters.length > 0;
@@ -416,13 +400,6 @@ export function DataTable({
       {!hasFilteredRows && hasActiveFilters && isRoot ? (
         <FilterEmptyState onClearFilters={clearAll} />
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
-        >
         <div
           ref={tableContainerRef}
           className="relative z-0 flex-1 overflow-auto"
@@ -440,19 +417,17 @@ export function DataTable({
               filterState={columnFilterState}
               setColumnFilter={setColumnFilter}
               clearColumnFilter={clearColumnFilter}
+              dragColumnId={dragColumnId}
+              dragOverColumnId={dragOverColumnId}
+              onDragStart={handleHeaderDragStart}
+              onDragOver={handleHeaderDragOver}
+              onDrop={handleHeaderDrop}
+              onDragEnd={handleHeaderDragEnd}
             />
             <TableBody table={table} tableContainerRef={tableContainerRef} />
             <TableFooter table={table} />
           </table>
         </div>
-        <DragOverlay>
-          {activeColumnLabel ? (
-            <div className="rounded bg-primary/10 border border-primary/30 px-3 py-1.5 text-xs font-bold shadow-md">
-              {activeColumnLabel}
-            </div>
-          ) : null}
-        </DragOverlay>
-        </DndContext>
       )}
       {/* Column picker sidebar */}
       <ColumnPickerSidebar

@@ -1,24 +1,14 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import type { VisibilityState } from '@tanstack/react-table';
-import {
-  DndContext,
-  closestCenter,
-  DragOverlay,
-  PointerSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  sortableKeyboardCoordinates,
-  arrayMove,
-} from '@dnd-kit/sortable';
+/** Move item from oldIndex to newIndex in array (immutable) */
+function arrayMove<T>(arr: T[], from: number, to: number): T[] {
+  const result = arr.slice();
+  const [item] = result.splice(from, 1);
+  result.splice(to, 0, item);
+  return result;
+}
 import {
   Sheet,
   SheetContent,
@@ -32,9 +22,6 @@ import { COLUMN_GROUPS } from '@/lib/columns/groups';
 import { COLUMN_CONFIGS, IDENTITY_COLUMNS } from '@/lib/columns/config';
 import { ColumnSearch } from './column-search';
 import { ColumnGroup } from './column-group';
-
-const identitySet = new Set(IDENTITY_COLUMNS);
-const labelMap = new Map(COLUMN_CONFIGS.map((c) => [c.key, c.label]));
 
 interface ColumnPickerSidebarProps {
   open: boolean;
@@ -62,49 +49,37 @@ export function ColumnPickerSidebar({
   resetToDefaults,
 }: ColumnPickerSidebarProps) {
   const [search, setSearch] = useState('');
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
-
-  const pointerSensor = useSensor(PointerSensor, {
-    activationConstraint: { distance: 5 },
-  });
-  const keyboardSensor = useSensor(KeyboardSensor, {
-    coordinateGetter: sortableKeyboardCoordinates,
-  });
-  const sensors = useSensors(pointerSensor, keyboardSensor);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const totalColumns = COLUMN_CONFIGS.length;
   const visibleCount = Object.values(columnVisibility).filter(Boolean).length;
 
-  // Non-identity column keys for the sortable context
-  const sortableItems = useMemo(
-    () => columnOrder.filter((key) => !identitySet.has(key)),
-    [columnOrder],
-  );
-
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveDragId(event.active.id as string);
+  const handleDragStart = useCallback((key: string) => {
+    setDragId(key);
   }, []);
 
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      setActiveDragId(null);
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
+  const handleDragOver = useCallback((key: string) => {
+    setDragOverId(key);
+  }, []);
 
-      const oldIndex = columnOrder.indexOf(active.id as string);
-      const newIndex = columnOrder.indexOf(over.id as string);
+  const handleDrop = useCallback(
+    (targetKey: string) => {
+      if (!dragId || dragId === targetKey) return;
+      const oldIndex = columnOrder.indexOf(dragId);
+      const newIndex = columnOrder.indexOf(targetKey);
       if (oldIndex === -1 || newIndex === -1) return;
-
       setColumnOrder(arrayMove(columnOrder, oldIndex, newIndex));
+      setDragId(null);
+      setDragOverId(null);
     },
-    [columnOrder, setColumnOrder],
+    [dragId, columnOrder, setColumnOrder],
   );
 
-  const handleDragCancel = useCallback(() => {
-    setActiveDragId(null);
+  const handleDragEnd = useCallback(() => {
+    setDragId(null);
+    setDragOverId(null);
   }, []);
-
-  const activeLabel = activeDragId ? (labelMap.get(activeDragId) ?? activeDragId) : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -131,41 +106,27 @@ export function ColumnPickerSidebar({
           </Button>
         </div>
 
-        {/* Column groups with sidebar drag reorder */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-          onDragCancel={handleDragCancel}
-        >
-          <SortableContext
-            items={sortableItems}
-            strategy={verticalListSortingStrategy}
-          >
-            <ScrollArea className="flex-1 min-h-0">
-              <div className="px-1">
-                {COLUMN_GROUPS.map((group) => (
-                  <ColumnGroup
-                    key={group.key}
-                    group={group}
-                    columnVisibility={columnVisibility}
-                    onToggleColumn={toggleColumn}
-                    onToggleGroup={toggleGroup}
-                    searchFilter={search}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
-          </SortableContext>
-          <DragOverlay>
-            {activeLabel ? (
-              <div className="rounded bg-primary/10 border border-primary/30 px-3 py-1.5 text-xs font-medium shadow-md">
-                {activeLabel}
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+        {/* Column groups with native drag reorder */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="px-1">
+            {COLUMN_GROUPS.map((group) => (
+              <ColumnGroup
+                key={group.key}
+                group={group}
+                columnVisibility={columnVisibility}
+                onToggleColumn={toggleColumn}
+                onToggleGroup={toggleGroup}
+                searchFilter={search}
+                dragId={dragId}
+                dragOverId={dragOverId}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+              />
+            ))}
+          </div>
+        </ScrollArea>
 
         {/* Reset to defaults */}
         <div className="px-4 pb-4">

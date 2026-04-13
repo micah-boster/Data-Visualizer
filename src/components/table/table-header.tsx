@@ -1,10 +1,7 @@
 'use client';
 
+import { type DragEvent } from 'react';
 import { type Table } from '@tanstack/react-table';
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-} from '@dnd-kit/sortable';
 import { DraggableHeader } from './draggable-header';
 
 interface TableHeaderProps {
@@ -12,6 +9,12 @@ interface TableHeaderProps {
   filterState?: Record<string, unknown>;
   setColumnFilter?: (columnId: string, value: unknown) => void;
   clearColumnFilter?: (columnId: string) => void;
+  dragColumnId?: string | null;
+  dragOverColumnId?: string | null;
+  onDragStart?: (columnId: string) => void;
+  onDragOver?: (e: DragEvent, columnId: string) => void;
+  onDrop?: (columnId: string) => void;
+  onDragEnd?: () => void;
 }
 
 export function TableHeader({
@@ -19,33 +22,34 @@ export function TableHeader({
   filterState,
   setColumnFilter,
   clearColumnFilter,
+  dragColumnId,
+  dragOverColumnId,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: TableHeaderProps) {
   return (
     <thead className="sticky top-0 z-20">
-      {table.getHeaderGroups().map((headerGroup) => {
-        const sortableIds = headerGroup.headers
-          .filter((h) => !h.column.getIsPinned())
-          .map((h) => h.id);
-
-        return (
-          <tr key={headerGroup.id}>
-            <SortableContext
-              items={sortableIds}
-              strategy={horizontalListSortingStrategy}
-            >
-              {headerGroup.headers.map((header) => (
-                <DraggableHeader
-                  key={header.id}
-                  header={header}
-                  filterState={filterState}
-                  setColumnFilter={setColumnFilter}
-                  clearColumnFilter={clearColumnFilter}
-                />
-              ))}
-            </SortableContext>
-          </tr>
-        );
-      })}
+      {table.getHeaderGroups().map((headerGroup) => (
+        <tr key={headerGroup.id}>
+          {headerGroup.headers.map((header) => (
+            <DraggableHeader
+              key={header.id}
+              header={header}
+              filterState={filterState}
+              setColumnFilter={setColumnFilter}
+              clearColumnFilter={clearColumnFilter}
+              onDragStart={onDragStart}
+              onDragOver={onDragOver}
+              onDrop={onDrop}
+              onDragEnd={onDragEnd}
+              isDragging={dragColumnId === header.id}
+              isDragOver={dragOverColumnId === header.id}
+            />
+          ))}
+        </tr>
+      ))}
     </thead>
   );
 }
