@@ -50,13 +50,6 @@ export function DraggableHeader({
     <th
       colSpan={header.colSpan}
       style={style}
-      draggable={!isPinned}
-      onDragStart={(e) => {
-        if (isPinned) return;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', header.id);
-        onDragStart?.(header.id);
-      }}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
@@ -66,7 +59,6 @@ export function DraggableHeader({
         e.preventDefault();
         onDrop?.(header.id);
       }}
-      onDragEnd={() => onDragEnd?.()}
       className={`group/header relative select-none overflow-hidden bg-muted px-3 py-2 text-xs font-bold text-foreground${isNumeric ? ' text-right' : ' text-left'}`}
     >
       {header.isPlaceholder ? null : (
@@ -78,11 +70,18 @@ export function DraggableHeader({
           }
           onClick={header.column.getToggleSortingHandler()}
         >
-          {/* Drag grip (only for non-pinned columns) */}
+          {/* Drag grip — only this element is draggable, not the whole th */}
           {!isPinned && (
             <span
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', header.id);
+                onDragStart?.(header.id);
+                e.stopPropagation();
+              }}
+              onDragEnd={() => onDragEnd?.()}
               className="mr-1 shrink-0 cursor-grab opacity-0 group-hover/header:opacity-100 transition-opacity text-muted-foreground hover:text-foreground active:cursor-grabbing"
-              onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             >
               <GripVertical className="h-3.5 w-3.5" />
