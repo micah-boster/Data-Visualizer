@@ -79,6 +79,10 @@ export interface PartnerAnomaly {
   latestBatch: BatchAnomaly | null;
   batches: BatchAnomaly[];
   usedPortfolioFallback: boolean;
+  /** Percentile-based outlier flag from cross-partner computation (XPC-04) */
+  isPercentileOutlier?: boolean;
+  /** Metrics below 10th percentile */
+  percentileOutlierMetrics?: string[];
 }
 
 /** Full anomaly report for a single partner */
@@ -92,4 +96,51 @@ export interface PartnerStats {
   curves: BatchCurve[];
   trending: TrendingData;
   anomalies?: AnomalyReport;
+}
+
+/** Activity status for cross-partner ranking eligibility */
+export type PartnerActivityStatus = 'active' | 'semi-inactive' | 'inactive';
+
+/** Per-partner percentile ranks on key metrics (0-1 scale) */
+export interface PercentileRanks {
+  penetrationRate: number;
+  collectionRate6mo: number;
+  collectionRate12mo: number;
+  totalCollected: number;
+  perDollarPlacedRate: number;
+}
+
+/** Average collection curve for a partner (mean of all batch curves) */
+export interface AverageCurve {
+  /** Average curve using equal-weight averaging */
+  equalWeight: CurvePoint[];
+  /** Average curve using dollar-weighted averaging */
+  dollarWeighted: CurvePoint[];
+}
+
+/** Cross-partner stats for a single partner */
+export interface CrossPartnerEntry {
+  partnerName: string;
+  kpis: KpiAggregates;
+  perDollarPlacedRate: number;
+  percentileRanks: PercentileRanks | null;
+  averageCurve: AverageCurve;
+  activityStatus: PartnerActivityStatus;
+  batchCount: number;
+  /** Whether this partner is eligible for ranking (3+ batches, not inactive) */
+  isRankEligible: boolean;
+  /** Whether this partner is a percentile outlier (<10th on any metric) */
+  isPercentileOutlier: boolean;
+  /** Which metrics are below 10th percentile */
+  outlierMetrics: (keyof PercentileRanks)[];
+}
+
+/** Full cross-partner computation result */
+export interface CrossPartnerData {
+  /** Map of partner name to cross-partner stats */
+  partners: Map<string, CrossPartnerEntry>;
+  /** Only partners eligible for ranking (3+ batches, not 12+ months inactive) */
+  rankedPartners: CrossPartnerEntry[];
+  /** Portfolio-wide average curve (all eligible partners combined) */
+  portfolioAverageCurve: AverageCurve;
 }

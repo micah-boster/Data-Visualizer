@@ -65,6 +65,9 @@ importers:
       shadcn:
         specifier: ^4.2.0
         version: 4.2.0(@types/node@20.19.39)(typescript@5.9.3)
+      simple-statistics:
+        specifier: ^7.8.9
+        version: 7.8.9
       snowflake-sdk:
         specifier: ^2.4.0
         version: 2.4.0(asn1.js@5.4.1)
@@ -3627,6 +3630,9 @@ packages:
 
   simple-lru-cache@0.0.2:
     resolution: {integrity: sha512-uEv/AFO0ADI7d99OHDmh1QfYzQk/izT1vCmu/riQfh7qjBVUUgRT87E5s5h7CxWCA/+YoZerykpEthzVrW3LIw==}
+
+  simple-statistics@7.8.9:
+    resolution: {integrity: sha512-YT6MLqYsz7y1rQZOLFlOCCgSRpCi6bqY417yhoOLI7aVoBi29dD39EPrOE03W9DY25H0J0jizVsHZnkLzyGJFg==}
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
@@ -8271,6 +8277,8 @@ snapshots:
   signal-exit@4.1.0: {}
 
   simple-lru-cache@0.0.2: {}
+
+  simple-statistics@7.8.9: {}
 
   sisteransi@1.0.5: {}
 
