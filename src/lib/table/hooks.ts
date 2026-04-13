@@ -65,10 +65,7 @@ const isMultiSortEvent = (e: unknown) => (e as MouseEvent).shiftKey;
 function useStableReactTable(
   options: Parameters<typeof import('@tanstack/react-table').useReactTable<Record<string, unknown>>>[0],
 ): Table<Record<string, unknown>> {
-  // Force-update mechanism
-  const rerender = useReducerCompat();
-
-  // Create table once, update options via ref
+  // Create table once
   const [tableRef] = useState(() => ({
     current: createTable<Record<string, unknown>>({
       state: {},
@@ -78,7 +75,10 @@ function useStableReactTable(
     } as TableOptionsResolved<Record<string, unknown>>),
   }));
 
-  // Update table options without triggering React state loop
+  // Update table options — do NOT call setState/rerender from onStateChange.
+  // The individual onSortingChange/onColumnVisibilityChange/etc handlers
+  // already call React setState, which triggers re-renders. Adding rerender()
+  // here causes a feedback loop in React 19.
   tableRef.current.setOptions((prev) => ({
     ...prev,
     ...options,
@@ -86,20 +86,12 @@ function useStableReactTable(
       ...tableRef.current.initialState,
       ...options.state,
     },
-    onStateChange: (updater: Updater<TableState>) => {
-      // Just notify — our controlled state handles the actual updates
-      options.onStateChange?.(updater);
-      rerender();
+    onStateChange: () => {
+      // No-op: controlled state handlers (setSorting etc.) handle re-renders
     },
   }));
 
   return tableRef.current;
-}
-
-/** Simple force-update hook */
-function useReducerCompat() {
-  const [, setState] = useState(0);
-  return useCallback(() => setState((n) => n + 1), []);
 }
 
 export function useDataTable(
