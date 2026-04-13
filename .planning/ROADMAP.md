@@ -72,11 +72,11 @@ Plans:
   2. Clicking/hovering an anomaly badge shows a popover with the specific metrics, actual values, expected ranges, and deviation magnitudes
   3. A collapsible anomaly summary panel at the top of root view lists the top flagged partners/batches by severity, and clicking an entry drills into that entity
   4. Anomalous batches are visually distinguished on collection curve charts (bold line, different color, or annotation)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 16-01: Anomaly badge component, popover detail, and Status column integration
-- [ ] 16-02: Anomaly summary panel and chart highlighting for flagged batches
+- [ ] 16-01-PLAN.md — Anomaly badge component, popover detail, and Status column integration (Wave 1)
+- [ ] 16-02-PLAN.md — Anomaly summary panel and chart highlighting for flagged batches (Wave 2)
 
 ### Phase 17: Claude Query Infrastructure
 **Goal**: A working server-side Claude integration that accepts questions with context and streams safe, data-grounded responses
