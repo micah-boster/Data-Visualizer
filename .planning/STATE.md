@@ -41,7 +41,8 @@ Progress: [░░░░░░░░░░] 0%
 - 3 new packages only: ai, @ai-sdk/anthropic, simple-statistics
 - Anomaly threshold: 2+ metrics at 2 SD from partner mean to flag a batch
 - Cross-partner comparison uses percentile rank via simple-statistics quantileRank
-- NLQ uses search bar pattern (not chat), AI SDK useChat + streamText
+- NLQ uses search bar pattern (not chat) for v3.0, but infrastructure uses `useChat` with full `messages[]` array from day one — v3.1 upgrades to threaded conversation view as a UI-only change
+- AI SDK `useChat` (client) + `streamText` (server) handle all streaming plumbing
 
 ### Pending Todos
 
