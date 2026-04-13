@@ -42,7 +42,7 @@
 - [x] **Phase 16: Anomaly Detection UI** — Badges, popovers, summary panel, and chart highlighting for flagged anomalies (completed 2026-04-13)
 - [x] **Phase 17: Claude Query Infrastructure** — API route, AI SDK streaming, system prompt with data context, SQL safety layer (completed 2026-04-13)
 - [x] **Phase 18: Claude Query UI** — Search bar, suggested prompts, streaming narrative responses, context-aware scoping (completed 2026-04-13)
-- [ ] **Phase 19: Cross-Partner Computation** — Percentile rankings, normalized trajectories, and portfolio-level anomaly flags
+- [x] **Phase 19: Cross-Partner Computation** — Percentile rankings, normalized trajectories, and portfolio-level anomaly flags (completed 2026-04-13)
 - [ ] **Phase 20: Cross-Partner UI** — Percentile columns, trajectory overlay chart, benchmark lines, and partner comparison matrix
 
 ## Phase Details
@@ -147,7 +147,7 @@ Plans:
 | 16. Anomaly Detection UI | 2/2 | Complete    | 2026-04-13 | - |
 | 17. Claude Query Infrastructure | 1/1 | Complete    | 2026-04-13 | - |
 | 18. Claude Query UI | 1/1 | Complete    | 2026-04-13 | - |
-| 19. Cross-Partner Computation | v3.0 | 0/1 | Not started | - |
+| 19. Cross-Partner Computation | 1/1 | Complete    | 2026-04-13 | - |
 | 20. Cross-Partner UI | v3.0 | 0/2 | Not started | - |
 
 ---
