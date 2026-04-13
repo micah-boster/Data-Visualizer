@@ -57,5 +57,5 @@ Progress: [░░░░░░░░░░] 0%
 ## Session Continuity
 
 Last session: 2026-04-12
-Stopped at: v3.0 roadmap created, ready to plan Phase 15
-Resume file: None
+Stopped at: Phase 15 context gathered
+Resume file: .planning/phases/15-anomaly-detection-engine/15-CONTEXT.md
