@@ -38,7 +38,7 @@
 
 **Milestone Goal:** The tool tells you what to look at, lets you ask why, and benchmarks partners against each other.
 
-- [ ] **Phase 15: Anomaly Detection Engine** — Deterministic z-score anomaly computation with polarity awareness and severity ranking
+- [x] **Phase 15: Anomaly Detection Engine** — Deterministic z-score anomaly computation with polarity awareness and severity ranking (completed 2026-04-13)
 - [ ] **Phase 16: Anomaly Detection UI** — Badges, popovers, summary panel, and chart highlighting for flagged anomalies
 - [ ] **Phase 17: Claude Query Infrastructure** — API route, AI SDK streaming, system prompt with data context, SQL safety layer
 - [ ] **Phase 18: Claude Query UI** — Search bar, suggested prompts, streaming narrative responses, context-aware scoping
@@ -143,7 +143,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 15. Anomaly Detection Engine | v3.0 | 0/2 | Not started | - |
+| 15. Anomaly Detection Engine | 2/2 | Complete    | 2026-04-13 | - |
 | 16. Anomaly Detection UI | v3.0 | 0/2 | Not started | - |
 | 17. Claude Query Infrastructure | v3.0 | 0/1 | Not started | - |
 | 18. Claude Query UI | v3.0 | 0/1 | Not started | - |
