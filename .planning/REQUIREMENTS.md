@@ -84,40 +84,40 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AD-01 | TBD | Pending |
-| AD-02 | TBD | Pending |
-| AD-03 | TBD | Pending |
-| AD-04 | TBD | Pending |
-| AD-05 | TBD | Pending |
-| AD-06 | TBD | Pending |
-| AD-07 | TBD | Pending |
-| AD-08 | TBD | Pending |
-| AD-09 | TBD | Pending |
-| AD-10 | TBD | Pending |
-| NLQ-01 | TBD | Pending |
-| NLQ-02 | TBD | Pending |
-| NLQ-03 | TBD | Pending |
-| NLQ-04 | TBD | Pending |
-| NLQ-05 | TBD | Pending |
-| NLQ-06 | TBD | Pending |
-| NLQ-07 | TBD | Pending |
-| NLQ-08 | TBD | Pending |
-| NLQ-09 | TBD | Pending |
-| NLQ-10 | TBD | Pending |
-| XPC-01 | TBD | Pending |
-| XPC-02 | TBD | Pending |
-| XPC-03 | TBD | Pending |
-| XPC-04 | TBD | Pending |
-| XPC-05 | TBD | Pending |
-| XPC-06 | TBD | Pending |
-| XPC-07 | TBD | Pending |
-| XPC-08 | TBD | Pending |
+| AD-01 | Phase 15 | Pending |
+| AD-02 | Phase 15 | Pending |
+| AD-03 | Phase 15 | Pending |
+| AD-04 | Phase 15 | Pending |
+| AD-05 | Phase 15 | Pending |
+| AD-06 | Phase 15 | Pending |
+| AD-07 | Phase 16 | Pending |
+| AD-08 | Phase 16 | Pending |
+| AD-09 | Phase 16 | Pending |
+| AD-10 | Phase 16 | Pending |
+| NLQ-01 | Phase 17 | Pending |
+| NLQ-02 | Phase 17 | Pending |
+| NLQ-03 | Phase 17 | Pending |
+| NLQ-04 | Phase 17 | Pending |
+| NLQ-05 | Phase 17 | Pending |
+| NLQ-06 | Phase 18 | Pending |
+| NLQ-07 | Phase 18 | Pending |
+| NLQ-08 | Phase 18 | Pending |
+| NLQ-09 | Phase 18 | Pending |
+| NLQ-10 | Phase 18 | Pending |
+| XPC-01 | Phase 19 | Pending |
+| XPC-02 | Phase 19 | Pending |
+| XPC-03 | Phase 19 | Pending |
+| XPC-04 | Phase 19 | Pending |
+| XPC-05 | Phase 20 | Pending |
+| XPC-06 | Phase 20 | Pending |
+| XPC-07 | Phase 20 | Pending |
+| XPC-08 | Phase 20 | Pending |
 
 **Coverage:**
 - v3 requirements: 28 total
-- Mapped to phases: 0 (awaiting roadmap)
-- Unmapped: 28 ⚠️
+- Mapped to phases: 28/28
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-12*
-*Last updated: 2026-04-12 after initial definition*
+*Last updated: 2026-04-12 after roadmap creation*
