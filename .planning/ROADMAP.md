@@ -57,11 +57,11 @@
   3. A batch is only flagged when 2+ metrics exceed 2 SD from the partner mean, preventing single-metric false positives
   4. Partners are flagged at root level based on their latest batch's anomaly status
   5. ANOMALY-ALGORITHM.md exists in docs/ and fully describes the detection logic, thresholds, and severity scoring
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: Anomaly computation module, types, hook, context provider, and algorithm documentation
-- [ ] 15-02: Integration into DataDisplay with AnomalyProvider wrapping existing layout
+- [ ] 15-01-PLAN.md — Anomaly types, polarity expansion, core computation module, and algorithm documentation
+- [ ] 15-02-PLAN.md — Hook, context provider, and DataDisplay integration for passive anomaly computation
 
 ### Phase 16: Anomaly Detection UI
 **Goal**: Users see at a glance which partners and batches need attention, with full explanation available on demand
@@ -151,4 +151,4 @@ Plans:
 | 20. Cross-Partner UI | v3.0 | 0/2 | Not started | - |
 
 ---
-*Last updated: 2026-04-12 after v3.0 roadmap creation*
+*Last updated: 2026-04-12 after Phase 15 planning*
