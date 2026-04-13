@@ -103,10 +103,10 @@ Plans:
   3. AI responses render as a short narrative paragraph with specific data points, streamed token-by-token as they arrive
   4. Questions automatically scope to the current drill context — asking "latest batch" while viewing Affirm resolves to Affirm's latest batch
   5. A loading indicator displays during streaming, errors show graceful messages with retry option, and queries timeout at 30 seconds
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 18-01: Search bar component, suggested prompts, streaming response display, loading/error states
+- [ ] 18-01-PLAN.md — Search bar with useChat streaming, suggested prompts, scope pills, response display, loading/error states
 
 ### Phase 19: Cross-Partner Computation
 **Goal**: The system computes per-partner rankings and normalized trajectories so users can benchmark partners against each other
