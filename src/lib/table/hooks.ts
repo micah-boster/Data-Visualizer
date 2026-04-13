@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -47,15 +47,25 @@ export interface UseDataTableOptions {
   anomalyMap?: Map<string, PartnerAnomaly>;
 }
 
+// Memoize row model factories at module level — they never change
+const coreRowModel = getCoreRowModel<Record<string, unknown>>();
+const filteredRowModel = getFilteredRowModel<Record<string, unknown>>();
+const sortedRowModel = getSortedRowModel<Record<string, unknown>>();
+const facetedRowModel = getFacetedRowModel<Record<string, unknown>>();
+const facetedUniqueValues = getFacetedUniqueValues<Record<string, unknown>>();
+const facetedMinMaxValues = getFacetedMinMaxValues<Record<string, unknown>>();
+
+const EMPTY_FILTERS: ColumnFiltersState = [];
+const isMultiSortEvent = (e: unknown) => (e as MouseEvent).shiftKey;
+
 export function useDataTable(
   data: Record<string, unknown>[],
   columnFilters?: ColumnFiltersState,
   options?: UseDataTableOptions,
 ) {
-  const [sorting, _setSorting] = useState<SortingState>([
+  const [sorting, setSorting] = useState<SortingState>([
     { id: 'PARTNER_NAME', desc: false },
   ]);
-  const setSorting: typeof _setSorting = (v) => { console.log('[useDataTable] setSorting called'); _setSorting(v); };
 
   const [activePreset, setActivePresetState] = useState(DEFAULT_PRESET);
 
@@ -64,14 +74,12 @@ export function useDataTable(
     () => PRESETS[DEFAULT_PRESET]
   );
   const columnVisibility = options?.columnVisibility ?? internalVisibility;
-  const _setColumnVisibility = options?.onColumnVisibilityChange ?? setInternalVisibility;
-  const setColumnVisibility: typeof _setColumnVisibility = (v) => { console.log('[useDataTable] setColumnVisibility called'); _setColumnVisibility(v); };
+  const setColumnVisibility = options?.onColumnVisibilityChange ?? setInternalVisibility;
 
   // Column order: external or undefined (TanStack default)
   const [internalColumnOrder, setInternalColumnOrder] = useState<string[]>([]);
   const columnOrder = options?.columnOrder ?? internalColumnOrder;
-  const _setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
-  const setColumnOrder: typeof _setColumnOrder = (v) => { console.log('[useDataTable] setColumnOrder called'); _setColumnOrder(v); };
+  const setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
 
   const columnPinning = useMemo<ColumnPinningState>(() => ({
     left: ['__anomaly_status', 'PARTNER_NAME', 'BATCH'],
@@ -106,38 +114,44 @@ export function useDataTable(
     };
   }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled, options?.anomalyMap]);
 
+  // Stable column filters ref — avoid creating new [] on every render
+  const stableFilters = columnFilters ?? EMPTY_FILTERS;
+
+  // Memoize the state object to prevent unnecessary TanStack reconciliation
+  const state = useMemo(() => ({
+    sorting,
+    columnVisibility,
+    columnPinning,
+    columnFilters: stableFilters,
+    columnOrder,
+  }), [sorting, columnVisibility, columnPinning, stableFilters, columnOrder]);
+
   const table = useReactTable({
     data,
     columns,
-    state: {
-      sorting,
-      columnVisibility,
-      columnPinning,
-      columnFilters: columnFilters ?? [],
-      columnOrder,
-    },
+    state,
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-    getFacetedMinMaxValues: getFacetedMinMaxValues(),
+    getCoreRowModel: coreRowModel,
+    getFilteredRowModel: filteredRowModel,
+    getSortedRowModel: sortedRowModel,
+    getFacetedRowModel: facetedRowModel,
+    getFacetedUniqueValues: facetedUniqueValues,
+    getFacetedMinMaxValues: facetedMinMaxValues,
     enableMultiSort: true,
-    isMultiSortEvent: (e: unknown) => (e as MouseEvent).shiftKey,
+    isMultiSortEvent,
     enableSortingRemoval: false,
     columnResizeMode: 'onChange' as const,
     meta,
   });
 
-  function setActivePreset(preset: string) {
+  const setActivePreset = useCallback((preset: string) => {
     setActivePresetState(preset);
     if (PRESETS[preset]) {
       setColumnVisibility(PRESETS[preset]);
     }
-  }
+  }, [setColumnVisibility]);
 
   return {
     table,

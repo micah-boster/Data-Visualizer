@@ -71,23 +71,6 @@ export function DataTable({
   partnerRowCount,
   trendingData,
 }: DataTableProps) {
-  // DEBUG: detect what's causing infinite re-render loop
-  const renderCountRef = useRef(0);
-  const prevPropsRef = useRef<Record<string, unknown>>({});
-  renderCountRef.current++;
-  if (renderCountRef.current > 50) {
-    throw new Error(`DataTable infinite render loop detected (${renderCountRef.current} renders)`);
-  }
-  setTimeout(() => { renderCountRef.current = 0; }, 2000);
-  // Log which props changed
-  const currentProps: Record<string, unknown> = { data, isFetching, drillState, onDrillToPartner, onDrillToBatch, onNavigateToLevel, totalRowCount, columnDefsOverride, partnerRowCount, trendingData };
-  const changed: string[] = [];
-  for (const [k, v] of Object.entries(currentProps)) {
-    if (prevPropsRef.current[k] !== v) changed.push(k);
-  }
-  prevPropsRef.current = currentProps;
-  console.log(`[DataTable] render #${renderCountRef.current}${changed.length ? ' changed: ' + changed.join(', ') : ' (no prop changes)'}`);
-
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [viewsSidebarOpen, setViewsSidebarOpen] = useState(false);
@@ -95,12 +78,8 @@ export function DataTable({
   const router = useRouter();
   const pathname = usePathname();
 
-  const filterState = useFilterState(data);
-  const { columnFilters: dimensionFilters, setFilter, clearAll: clearAllDimension, activeFilters, searchParams } = filterState;
-
-  // DEBUG: track filter state changes
-  const prevFilterStateRef = useRef(dimensionFilters);
-  if (prevFilterStateRef.current !== dimensionFilters) { console.log('[DataTable] HOOK CHANGED: dimensionFilters'); prevFilterStateRef.current = dimensionFilters; }
+  const { columnFilters: dimensionFilters, setFilter, clearAll: clearAllDimension, activeFilters, searchParams } =
+    useFilterState(data);
 
   const {
     views,
@@ -139,26 +118,12 @@ export function DataTable({
   // Anomaly data for Status column badges
   const { partnerAnomalies } = useAnomalyContext();
 
-  // DEBUG: track context value changes
-  const prevNormsRef = useRef(norms);
-  const prevHeatmapRef = useRef(heatmapEnabled);
-  const prevAnomalyRef = useRef(partnerAnomalies);
-  if (prevNormsRef.current !== norms) { console.log('[DataTable] CONTEXT CHANGED: norms'); prevNormsRef.current = norms; }
-  if (prevHeatmapRef.current !== heatmapEnabled) { console.log('[DataTable] CONTEXT CHANGED: heatmapEnabled'); prevHeatmapRef.current = heatmapEnabled; }
-  if (prevAnomalyRef.current !== partnerAnomalies) { console.log('[DataTable] CONTEXT CHANGED: partnerAnomalies'); prevAnomalyRef.current = partnerAnomalies; }
-
   // Hoist setActivePreset reference for the column management hook
   // We need to create a stable reference that can be passed before table init
   const setActivePresetRef = useRef<((preset: string) => void) | undefined>(undefined);
   const columnManagement = useColumnManagement(
     (preset: string) => setActivePresetRef.current?.(preset),
   );
-
-  // DEBUG: track column management changes
-  const prevVisRef = useRef(columnManagement.columnVisibility);
-  const prevOrderRef = useRef(columnManagement.columnOrder);
-  if (prevVisRef.current !== columnManagement.columnVisibility) { console.log('[DataTable] HOOK CHANGED: columnVisibility'); prevVisRef.current = columnManagement.columnVisibility; }
-  if (prevOrderRef.current !== columnManagement.columnOrder) { console.log('[DataTable] HOOK CHANGED: columnOrder'); prevOrderRef.current = columnManagement.columnOrder; }
 
   const tableOptions: UseDataTableOptions = {
     onDrillToPartner,
