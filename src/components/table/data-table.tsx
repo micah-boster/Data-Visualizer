@@ -95,8 +95,12 @@ export function DataTable({
   const router = useRouter();
   const pathname = usePathname();
 
-  const { columnFilters: dimensionFilters, setFilter, clearAll: clearAllDimension, activeFilters, searchParams } =
-    useFilterState(data);
+  const filterState = useFilterState(data);
+  const { columnFilters: dimensionFilters, setFilter, clearAll: clearAllDimension, activeFilters, searchParams } = filterState;
+
+  // DEBUG: track filter state changes
+  const prevFilterStateRef = useRef(dimensionFilters);
+  if (prevFilterStateRef.current !== dimensionFilters) { console.log('[DataTable] HOOK CHANGED: dimensionFilters'); prevFilterStateRef.current = dimensionFilters; }
 
   const {
     views,
@@ -135,12 +139,26 @@ export function DataTable({
   // Anomaly data for Status column badges
   const { partnerAnomalies } = useAnomalyContext();
 
+  // DEBUG: track context value changes
+  const prevNormsRef = useRef(norms);
+  const prevHeatmapRef = useRef(heatmapEnabled);
+  const prevAnomalyRef = useRef(partnerAnomalies);
+  if (prevNormsRef.current !== norms) { console.log('[DataTable] CONTEXT CHANGED: norms'); prevNormsRef.current = norms; }
+  if (prevHeatmapRef.current !== heatmapEnabled) { console.log('[DataTable] CONTEXT CHANGED: heatmapEnabled'); prevHeatmapRef.current = heatmapEnabled; }
+  if (prevAnomalyRef.current !== partnerAnomalies) { console.log('[DataTable] CONTEXT CHANGED: partnerAnomalies'); prevAnomalyRef.current = partnerAnomalies; }
+
   // Hoist setActivePreset reference for the column management hook
   // We need to create a stable reference that can be passed before table init
   const setActivePresetRef = useRef<((preset: string) => void) | undefined>(undefined);
   const columnManagement = useColumnManagement(
     (preset: string) => setActivePresetRef.current?.(preset),
   );
+
+  // DEBUG: track column management changes
+  const prevVisRef = useRef(columnManagement.columnVisibility);
+  const prevOrderRef = useRef(columnManagement.columnOrder);
+  if (prevVisRef.current !== columnManagement.columnVisibility) { console.log('[DataTable] HOOK CHANGED: columnVisibility'); prevVisRef.current = columnManagement.columnVisibility; }
+  if (prevOrderRef.current !== columnManagement.columnOrder) { console.log('[DataTable] HOOK CHANGED: columnOrder'); prevOrderRef.current = columnManagement.columnOrder; }
 
   const tableOptions: UseDataTableOptions = {
     onDrillToPartner,
