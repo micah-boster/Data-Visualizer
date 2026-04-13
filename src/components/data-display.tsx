@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/table/data-table';
 import { KpiSummaryCards } from '@/components/kpi/kpi-summary-cards';
+import { AnomalySummaryPanel } from '@/components/anomaly/anomaly-summary-panel';
 
 const CollectionCurveChart = dynamic(
   () =>
@@ -101,6 +102,11 @@ export function DataDisplay() {
   return (
     <AnomalyProvider allRows={data.data}>
     <div className="flex h-[calc(100vh-4rem)] flex-col gap-2">
+      {/* Anomaly summary panel at root level */}
+      {drillState.level === 'root' && (
+        <AnomalySummaryPanel onDrillToPartner={drillToPartner} />
+      )}
+
       {/* Schema warnings */}
       {hasSchemaWarnings && (
         <Alert className="relative shrink-0">
