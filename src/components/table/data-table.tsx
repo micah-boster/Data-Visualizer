@@ -71,6 +71,17 @@ export function DataTable({
   partnerRowCount,
   trendingData,
 }: DataTableProps) {
+  // DEBUG: detect infinite re-render loop
+  const renderCountRef = useRef(0);
+  renderCountRef.current++;
+  if (renderCountRef.current > 50) {
+    throw new Error(`DataTable infinite render loop detected (${renderCountRef.current} renders)`);
+  }
+  // Reset counter after 2 seconds of stability
+  useRef<ReturnType<typeof setTimeout> | null>(null);
+  setTimeout(() => { renderCountRef.current = 0; }, 2000);
+  console.log('[DataTable] render #' + renderCountRef.current);
+
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
   const [viewsSidebarOpen, setViewsSidebarOpen] = useState(false);
