@@ -39,7 +39,7 @@
 **Milestone Goal:** The tool tells you what to look at, lets you ask why, and benchmarks partners against each other.
 
 - [x] **Phase 15: Anomaly Detection Engine** — Deterministic z-score anomaly computation with polarity awareness and severity ranking (completed 2026-04-13)
-- [ ] **Phase 16: Anomaly Detection UI** — Badges, popovers, summary panel, and chart highlighting for flagged anomalies
+- [x] **Phase 16: Anomaly Detection UI** — Badges, popovers, summary panel, and chart highlighting for flagged anomalies (completed 2026-04-13)
 - [ ] **Phase 17: Claude Query Infrastructure** — API route, AI SDK streaming, system prompt with data context, SQL safety layer
 - [ ] **Phase 18: Claude Query UI** — Search bar, suggested prompts, streaming narrative responses, context-aware scoping
 - [ ] **Phase 19: Cross-Partner Computation** — Percentile rankings, normalized trajectories, and portfolio-level anomaly flags
@@ -88,10 +88,10 @@ Plans:
   3. Claude only references data present in its context — asking about data that does not exist returns an explicit "I don't have that data" message
   4. ANTHROPIC_API_KEY is configured as a Vercel server-side env var and never exposed to the client bundle
   5. AI SDK streamText (server) and useChat (client) handle all streaming plumbing with no custom SSE/WebSocket code
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 17-01: npm install, API route with streamText, system prompt builder, SQL validator, env var setup
+- [ ] 17-01-PLAN.md — AI SDK install, POST /api/query route with streamText, system prompt builder, data context summarizer
 
 ### Phase 18: Claude Query UI
 **Goal**: Users can ask natural language questions about their data and receive useful, context-aware narrative answers
@@ -144,7 +144,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 15. Anomaly Detection Engine | 2/2 | Complete    | 2026-04-13 | - |
-| 16. Anomaly Detection UI | 1/2 | In Progress|  | - |
+| 16. Anomaly Detection UI | 2/2 | Complete    | 2026-04-13 | - |
 | 17. Claude Query Infrastructure | v3.0 | 0/1 | Not started | - |
 | 18. Claude Query UI | v3.0 | 0/1 | Not started | - |
 | 19. Cross-Partner Computation | v3.0 | 0/1 | Not started | - |
