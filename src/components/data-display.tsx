@@ -20,6 +20,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/table/data-table';
 import { KpiSummaryCards } from '@/components/kpi/kpi-summary-cards';
 import { AnomalySummaryPanel } from '@/components/anomaly/anomaly-summary-panel';
+import { QuerySearchBar } from '@/components/query/query-search-bar';
+import { useAnomalyContext } from '@/contexts/anomaly-provider';
+import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
+import type { DrillState } from '@/hooks/use-drill-down';
 
 const CollectionCurveChart = dynamic(
   () =>
@@ -102,6 +106,13 @@ export function DataDisplay() {
   return (
     <AnomalyProvider allRows={data.data}>
     <div className="flex h-[calc(100vh-4rem)] flex-col gap-2">
+      {/* AI Query search bar — always visible across drill levels */}
+      <QuerySearchBarWithContext
+        drillState={drillState}
+        allData={data.data}
+        onRemoveScope={() => navigateToLevel('root')}
+      />
+
       {/* Anomaly summary panel at root level */}
       {drillState.level === 'root' && (
         <AnomalySummaryPanel onDrillToPartner={drillToPartner} />
@@ -197,5 +208,88 @@ export function DataDisplay() {
       </PartnerNormsProvider>
     </div>
     </AnomalyProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// QuerySearchBarWithContext — lives inside AnomalyProvider to access anomaly data
+// ---------------------------------------------------------------------------
+
+function QuerySearchBarWithContext({
+  drillState,
+  allData,
+  onRemoveScope,
+}: {
+  drillState: DrillState;
+  allData: Record<string, unknown>[];
+  onRemoveScope: () => void;
+}) {
+  const { partnerAnomalies } = useAnomalyContext();
+
+  const dataContext = useMemo(() => {
+    if (!allData || allData.length === 0) return '';
+
+    // Build partner summaries from batch-level data rows
+    const partnerGroups = new Map<string, Record<string, unknown>[]>();
+    for (const row of allData) {
+      const name = String(row.PARTNER_NAME ?? '');
+      if (!name) continue;
+      if (!partnerGroups.has(name)) partnerGroups.set(name, []);
+      partnerGroups.get(name)!.push(row);
+    }
+
+    const partners: PartnerSummary[] = Array.from(partnerGroups.entries()).map(
+      ([name, rows]) => ({
+        name,
+        batchCount: rows.length,
+        stats: {
+          totalBatches: rows.length,
+          totalAccounts: rows.reduce(
+            (sum, r) => sum + (Number(r.TOTAL_ACCOUNTS) || 0),
+            0,
+          ),
+          weightedPenetrationRate:
+            rows.reduce(
+              (sum, r) => sum + (Number(r.PENETRATION_RATE) || 0),
+              0,
+            ) / (rows.length || 1),
+          collectionRate6mo:
+            rows.reduce(
+              (sum, r) => sum + (Number(r.COLLECTION_RATE_6MO) || 0),
+              0,
+            ) / (rows.length || 1),
+          collectionRate12mo:
+            rows.reduce(
+              (sum, r) => sum + (Number(r.COLLECTION_RATE_12MO) || 0),
+              0,
+            ) / (rows.length || 1),
+          totalCollected: rows.reduce(
+            (sum, r) => sum + (Number(r.TOTAL_COLLECTED) || 0),
+            0,
+          ),
+          totalPlaced: rows.reduce(
+            (sum, r) => sum + (Number(r.TOTAL_PLACED) || 0),
+            0,
+          ),
+        },
+      }),
+    );
+
+    return buildDataContext(
+      {
+        level: drillState.level,
+        partnerId: drillState.partner,
+        batchId: drillState.batch,
+      },
+      { partners, anomalies: partnerAnomalies },
+    );
+  }, [allData, drillState, partnerAnomalies]);
+
+  return (
+    <QuerySearchBar
+      drillState={drillState}
+      dataContext={dataContext}
+      onRemoveScope={onRemoveScope}
+    />
   );
 }

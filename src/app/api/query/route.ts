@@ -13,13 +13,24 @@ export const dynamic = 'force-dynamic';
 // Request validation
 // ---------------------------------------------------------------------------
 
+// Accept both UIMessage format (from useChat's DefaultChatTransport) and
+// simple {role, content} format (for manual API calls).
+const uiMessageSchema = z.object({
+  id: z.string().optional(),
+  role: z.enum(['user', 'assistant', 'system']),
+  parts: z
+    .array(
+      z.object({
+        type: z.string(),
+        text: z.string().optional(),
+      }),
+    )
+    .optional(),
+  content: z.string().optional(),
+});
+
 const queryRequestSchema = z.object({
-  messages: z.array(
-    z.object({
-      role: z.enum(['user', 'assistant']),
-      content: z.string(),
-    }),
-  ),
+  messages: z.array(uiMessageSchema),
   drillState: z.object({
     level: z.enum(['root', 'partner', 'batch']),
     partnerId: z.string().nullable(),
@@ -78,12 +89,27 @@ export async function POST(req: Request) {
     filters,
   );
 
-  // 4. Convert simple {role, content} messages to AI SDK UIMessage format
-  const uiMessages: UIMessage[] = messages.map((m) => ({
-    id: crypto.randomUUID(),
-    role: m.role,
-    parts: [{ type: 'text' as const, text: m.content }],
-  }));
+  // 4. Normalize messages to UIMessage format
+  // Handles both UIMessage (from useChat with parts[]) and simple {role, content}
+  const uiMessages: UIMessage[] = messages.map((m) => {
+    if (m.parts && m.parts.length > 0) {
+      // Already in UIMessage parts format (from useChat)
+      return {
+        id: m.id ?? crypto.randomUUID(),
+        role: m.role as 'user' | 'assistant',
+        parts: m.parts.map((p) => ({
+          type: p.type as 'text',
+          text: p.text ?? '',
+        })),
+      };
+    }
+    // Simple {role, content} format — convert to UIMessage
+    return {
+      id: m.id ?? crypto.randomUUID(),
+      role: m.role as 'user' | 'assistant',
+      parts: [{ type: 'text' as const, text: m.content ?? '' }],
+    };
+  });
 
   // 5. Stream response
   try {
