@@ -11,13 +11,13 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import type { BatchCurve } from "@/types/partner-stats";
+import type { BatchCurve, BatchAnomaly } from "@/types/partner-stats";
 import { BATCH_KEY_PREFIX } from "@/components/charts/pivot-curve-data";
 
 /** Maximum number of batches shown by default (before "Show all" toggle). */
 const DEFAULT_VISIBLE_LIMIT = 8;
 
-export function useCurveChartState(curves: BatchCurve[]) {
+export function useCurveChartState(curves: BatchCurve[], batchAnomalies?: BatchAnomaly[]) {
   // --- State ---
   const [metric, setMetric] = useState<"recoveryRate" | "amount">(
     "recoveryRate",
@@ -89,29 +89,79 @@ export function useCurveChartState(curves: BatchCurve[]) {
 
   // --- Visual helpers ---
 
+  // --- Anomaly awareness ---
+
+  /** Build a map from batch key to anomaly status for O(1) lookups. */
+  const anomalyByKey = useMemo(() => {
+    if (!batchAnomalies || batchAnomalies.length === 0) return null;
+    const map = new Map<string, BatchAnomaly>();
+    sortedCurves.forEach((curve, i) => {
+      const anomaly = batchAnomalies.find((b) => b.batchName === curve.batchName);
+      if (anomaly?.isFlagged) {
+        map.set(`${BATCH_KEY_PREFIX}${i}`, anomaly);
+      }
+    });
+    return map.size > 0 ? map : null;
+  }, [sortedCurves, batchAnomalies]);
+
+  /** Whether any anomalous batch exists (drives dimming of others). */
+  const hasAnyAnomalies = anomalyByKey !== null;
+
+  /** Check if a specific batch key is anomalous. */
+  const isBatchAnomalous = useCallback(
+    (batchKey: string): boolean => anomalyByKey?.has(batchKey) ?? false,
+    [anomalyByKey],
+  );
+
+  /** Get the BatchAnomaly for a key, if flagged. */
+  const getBatchAnomaly = useCallback(
+    (batchKey: string): BatchAnomaly | undefined => anomalyByKey?.get(batchKey),
+    [anomalyByKey],
+  );
+
   /**
-   * Line opacity based on solo and recency state.
-   * - Solo mode: soloed = 1, others = 0.08
-   * - Normal: newest = 1, others = 0.5
+   * Line opacity based on solo, recency, AND anomaly state.
+   * When anomalies present: anomalous = 1, non-anomalous = 0.3.
+   * Solo mode takes precedence over anomaly dimming.
    */
   const getLineOpacity = useCallback(
     (batchKey: string): number => {
       if (soloedBatch !== null) {
         return batchKey === soloedBatch ? 1 : 0.08;
       }
+      if (hasAnyAnomalies) {
+        return isBatchAnomalous(batchKey) ? 1 : 0.3;
+      }
       return batchKey === newestBatchKey ? 1 : 0.5;
     },
-    [soloedBatch, newestBatchKey],
+    [soloedBatch, newestBatchKey, hasAnyAnomalies, isBatchAnomalous],
   );
 
   /**
-   * Line stroke width: newest = 3px, others = 1.5px.
+   * Line stroke width: anomalous = 3px, newest = 3px, others = 1.5px.
    */
   const getLineStrokeWidth = useCallback(
     (batchKey: string): number => {
+      if (isBatchAnomalous(batchKey)) return 3;
       return batchKey === newestBatchKey ? 3 : 1.5;
     },
-    [newestBatchKey],
+    [newestBatchKey, isBatchAnomalous],
+  );
+
+  /**
+   * Get anomaly-override line color. Returns null for non-anomalous batches
+   * (caller should use default chart color). Returns red/amber for flagged.
+   */
+  const getAnomalyLineColor = useCallback(
+    (batchKey: string): string | null => {
+      const anomaly = anomalyByKey?.get(batchKey);
+      if (!anomaly) return null;
+      // critical (4+ flags) = red, warning (2-3 flags) = amber
+      return anomaly.flags.length >= 4
+        ? "hsl(0, 72%, 51%)"   // red-500
+        : "hsl(38, 92%, 50%)"; // amber-500
+    },
+    [anomalyByKey],
   );
 
   return {
@@ -135,5 +185,10 @@ export function useCurveChartState(curves: BatchCurve[]) {
     // Visual helpers
     getLineOpacity,
     getLineStrokeWidth,
+    // Anomaly helpers
+    hasAnyAnomalies,
+    isBatchAnomalous,
+    getBatchAnomaly,
+    getAnomalyLineColor,
   };
 }

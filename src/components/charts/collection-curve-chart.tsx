@@ -11,7 +11,8 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
-import type { BatchCurve } from "@/types/partner-stats";
+import type { BatchCurve, BatchAnomaly } from "@/types/partner-stats";
+import { useAnomalyContext } from "@/contexts/anomaly-provider";
 import { COLLECTION_MONTHS } from "@/lib/computation/reshape-curves";
 import {
   pivotCurveData,
@@ -28,6 +29,19 @@ interface CollectionCurveChartProps {
 }
 
 export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
+  // Find batch anomalies for the partner whose curves we're displaying.
+  // Match by batchName overlap between curves and anomaly data.
+  const { partnerAnomalies } = useAnomalyContext();
+  const batchAnomalies = useMemo(() => {
+    if (curves.length === 0) return undefined;
+    const curveNames = new Set(curves.map((c) => c.batchName));
+    for (const [, partner] of partnerAnomalies) {
+      const match = partner.batches.some((b) => curveNames.has(b.batchName));
+      if (match) return partner.batches;
+    }
+    return undefined;
+  }, [curves, partnerAnomalies]);
+
   const {
     metric,
     showAverage,
@@ -44,7 +58,8 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
     toggleShowAll,
     getLineOpacity,
     getLineStrokeWidth,
-  } = useCurveChartState(curves);
+    getAnomalyLineColor,
+  } = useCurveChartState(curves, batchAnomalies);
 
   // Pivot data for Recharts flat format
   const { data: pivotedRaw, keyMap } = useMemo(
@@ -151,18 +166,19 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
               />
               <Tooltip
                 content={
-                  <CurveTooltip keyMap={keyMap} metric={metric} />
+                  <CurveTooltip keyMap={keyMap} metric={metric} batchAnomalies={batchAnomalies} />
                 }
               />
               {/* One Line per batch -- use hide prop, not conditional rendering */}
               {sortedCurves.map((_, i) => {
                 const key = `batch_${i}`;
+                const anomalyColor = getAnomalyLineColor(key);
                 return (
                   <Line
                     key={key}
                     dataKey={key}
                     type="monotone"
-                    stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                    stroke={anomalyColor ?? CHART_COLORS[i % CHART_COLORS.length]}
                     strokeWidth={getLineStrokeWidth(key)}
                     strokeOpacity={getLineOpacity(key)}
                     dot={false}

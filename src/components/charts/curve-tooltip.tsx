@@ -1,6 +1,8 @@
 "use client";
 
 import type { BatchKeyMap } from "@/components/charts/pivot-curve-data";
+import type { BatchAnomaly } from "@/types/partner-stats";
+import { getMetricLabel, formatDeviation } from "@/lib/formatting/anomaly-labels";
 
 /** Chart color array matching the 8 CSS chart variables. */
 const CHART_COLORS = [
@@ -24,6 +26,7 @@ interface CurveTooltipProps {
   label?: number;
   keyMap: BatchKeyMap;
   metric: "recoveryRate" | "amount";
+  batchAnomalies?: BatchAnomaly[];
 }
 
 function formatValue(value: number, metric: "recoveryRate" | "amount"): string {
@@ -42,6 +45,7 @@ export function CurveTooltip({
   label,
   keyMap,
   metric,
+  batchAnomalies,
 }: CurveTooltipProps) {
   if (!active || !payload || payload.length === 0 || label === undefined) {
     return null;
@@ -54,9 +58,18 @@ export function CurveTooltip({
   if (!entry || entry.value === undefined) return null;
 
   const isAvg = entry.dataKey === "__avg__";
+  const batchInfo = keyMap.get(entry.dataKey ?? "");
   const displayName = isAvg
     ? "Partner Average"
-    : keyMap.get(entry.dataKey ?? "") ?? entry.dataKey ?? "Unknown";
+    : batchInfo ?? entry.dataKey ?? "Unknown";
+
+  // Look up anomaly info for this batch
+  const batchName = typeof batchInfo === "object" && batchInfo !== null && "batchName" in batchInfo
+    ? (batchInfo as { batchName: string }).batchName
+    : typeof batchInfo === "string" ? batchInfo : null;
+  const anomaly = batchName && batchAnomalies
+    ? batchAnomalies.find((b) => b.batchName === batchName && b.isFlagged)
+    : null;
 
   return (
     <div className="rounded-lg border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md">
@@ -64,6 +77,13 @@ export function CurveTooltip({
       <p className="text-muted-foreground">
         {formatValue(entry.value, metric)} at Month {label}
       </p>
+      {anomaly && anomaly.flags.length > 0 && (
+        <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
+          {getMetricLabel(anomaly.flags[0].metric)}{" "}
+          {formatDeviation(anomaly.flags[0].zScore, anomaly.flags[0].direction)}
+        </p>
+      )}
     </div>
   );
 }
