@@ -11,6 +11,7 @@ import dynamic from 'next/dynamic';
 import { usePartnerStats } from '@/hooks/use-partner-stats';
 import { PartnerNormsProvider } from '@/contexts/partner-norms';
 import { AnomalyProvider } from '@/contexts/anomaly-provider';
+import { CrossPartnerProvider, useCrossPartnerContext } from '@/contexts/cross-partner-provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
@@ -104,7 +105,8 @@ export function DataDisplay() {
     (data.schemaWarnings.missing.length > 0 || data.schemaWarnings.unexpected.length > 0);
 
   return (
-    <AnomalyProvider allRows={data.data}>
+    <CrossPartnerProvider allRows={data.data}>
+    <EnrichedAnomalyProvider allRows={data.data}>
     <div className="flex h-[calc(100vh-4rem)] flex-col gap-2">
       {/* AI Query search bar — always visible across drill levels */}
       <QuerySearchBarWithContext
@@ -207,6 +209,26 @@ export function DataDisplay() {
         </div>
       </PartnerNormsProvider>
     </div>
+    </EnrichedAnomalyProvider>
+    </CrossPartnerProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// EnrichedAnomalyProvider — feeds cross-partner outlier data into AnomalyProvider
+// ---------------------------------------------------------------------------
+
+function EnrichedAnomalyProvider({
+  allRows,
+  children,
+}: {
+  allRows: Record<string, unknown>[];
+  children: React.ReactNode;
+}) {
+  const { crossPartnerData } = useCrossPartnerContext();
+  return (
+    <AnomalyProvider allRows={allRows} crossPartnerData={crossPartnerData}>
+      {children}
     </AnomalyProvider>
   );
 }
