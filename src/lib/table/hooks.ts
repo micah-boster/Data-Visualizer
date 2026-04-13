@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
-  useReactTable,
+  createTable,
+  type Table,
+  type TableOptionsResolved,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
@@ -15,6 +17,8 @@ import {
   type VisibilityState,
   type ColumnDef,
   type OnChangeFn,
+  type Updater,
+  type TableState,
 } from '@tanstack/react-table';
 import { columnDefs } from '@/lib/columns/definitions';
 import type { TableDrillMeta } from '@/lib/columns/definitions';
@@ -23,31 +27,21 @@ import type { DrillLevel } from '@/hooks/use-drill-down';
 import type { TrendingData, MetricNorm, PartnerAnomaly } from '@/types/partner-stats';
 
 export interface UseDataTableOptions {
-  /** Optional drill-down callbacks passed to column cell renderers via table meta */
   onDrillToPartner?: (name: string) => void;
   onDrillToBatch?: (name: string, partnerName?: string) => void;
   drillLevel?: DrillLevel;
-  /** Optional override column definitions (used for account-level view) */
   columns?: ColumnDef<Record<string, unknown>>[];
-  /** External column visibility state (from useColumnManagement) */
   columnVisibility?: VisibilityState;
-  /** External column visibility setter (from useColumnManagement) */
   onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
-  /** External column order (from useColumnManagement) */
   columnOrder?: string[];
-  /** External column order setter (from useColumnManagement) */
   onColumnOrderChange?: OnChangeFn<string[]>;
-  /** Trending data for partner-level batch table */
   trendingData?: TrendingData | null;
-  /** Partner norms for heatmap deviation formatting */
   norms?: Record<string, MetricNorm> | null;
-  /** Whether heatmap is enabled */
   heatmapEnabled?: boolean;
-  /** Root-level anomaly map for Status column badges */
   anomalyMap?: Map<string, PartnerAnomaly>;
 }
 
-// Memoize row model factories at module level — they never change
+// Memoize row model factories at module level
 const coreRowModel = getCoreRowModel<Record<string, unknown>>();
 const filteredRowModel = getFilteredRowModel<Record<string, unknown>>();
 const sortedRowModel = getSortedRowModel<Record<string, unknown>>();
@@ -57,6 +51,56 @@ const facetedMinMaxValues = getFacetedMinMaxValues<Record<string, unknown>>();
 
 const EMPTY_FILTERS: ColumnFiltersState = [];
 const isMultiSortEvent = (e: unknown) => (e as MouseEvent).shiftKey;
+
+/**
+ * React 19-safe wrapper around useReactTable.
+ *
+ * TanStack Table v8's useReactTable calls setOptions() during render, which
+ * merges internal + external state into a new object. In React 19, this
+ * triggers setState during render → infinite loop.
+ *
+ * This wrapper uses createTable() directly with ref-based state management
+ * to avoid the loop.
+ */
+function useStableReactTable(
+  options: Parameters<typeof import('@tanstack/react-table').useReactTable<Record<string, unknown>>>[0],
+): Table<Record<string, unknown>> {
+  // Force-update mechanism
+  const rerender = useReducerCompat();
+
+  // Create table once, update options via ref
+  const [tableRef] = useState(() => ({
+    current: createTable<Record<string, unknown>>({
+      state: {},
+      onStateChange: () => {},
+      renderFallbackValue: null,
+      ...options,
+    } as TableOptionsResolved<Record<string, unknown>>),
+  }));
+
+  // Update table options without triggering React state loop
+  tableRef.current.setOptions((prev) => ({
+    ...prev,
+    ...options,
+    state: {
+      ...tableRef.current.initialState,
+      ...options.state,
+    },
+    onStateChange: (updater: Updater<TableState>) => {
+      // Just notify — our controlled state handles the actual updates
+      options.onStateChange?.(updater);
+      rerender();
+    },
+  }));
+
+  return tableRef.current;
+}
+
+/** Simple force-update hook */
+function useReducerCompat() {
+  const [, setState] = useState(0);
+  return useCallback(() => setState((n) => n + 1), []);
+}
 
 export function useDataTable(
   data: Record<string, unknown>[],
@@ -69,14 +113,12 @@ export function useDataTable(
 
   const [activePreset, setActivePresetState] = useState(DEFAULT_PRESET);
 
-  // Use external visibility state if provided, otherwise fall back to internal preset-based state
   const [internalVisibility, setInternalVisibility] = useState<VisibilityState>(
     () => PRESETS[DEFAULT_PRESET]
   );
   const columnVisibility = options?.columnVisibility ?? internalVisibility;
   const setColumnVisibility = options?.onColumnVisibilityChange ?? setInternalVisibility;
 
-  // Column order: external or undefined (TanStack default)
   const [internalColumnOrder, setInternalColumnOrder] = useState<string[]>([]);
   const columnOrder = options?.columnOrder ?? internalColumnOrder;
   const setColumnOrder = options?.onColumnOrderChange ?? setInternalColumnOrder;
@@ -91,7 +133,7 @@ export function useDataTable(
     [options?.columns],
   );
 
-  // Reset sorting when column definitions change (e.g., switching to account columns)
+  // Reset sorting when column definitions change
   const prevColumnsRef = useRef(columns);
   useEffect(() => {
     if (prevColumnsRef.current !== columns) {
@@ -100,7 +142,6 @@ export function useDataTable(
     }
   }, [columns]);
 
-  // Build meta object for drill-down callbacks, trending data, norms, and anomalies
   const meta: TableDrillMeta | undefined = useMemo(() => {
     if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData && !options?.norms && !options?.anomalyMap) return undefined;
     return {
@@ -114,22 +155,18 @@ export function useDataTable(
     };
   }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled, options?.anomalyMap]);
 
-  // Stable column filters ref — avoid creating new [] on every render
   const stableFilters = columnFilters ?? EMPTY_FILTERS;
 
-  // Memoize the state object to prevent unnecessary TanStack reconciliation
-  const state = useMemo(() => ({
-    sorting,
-    columnVisibility,
-    columnPinning,
-    columnFilters: stableFilters,
-    columnOrder,
-  }), [sorting, columnVisibility, columnPinning, stableFilters, columnOrder]);
-
-  const table = useReactTable({
+  const table = useStableReactTable({
     data,
     columns,
-    state,
+    state: {
+      sorting,
+      columnVisibility,
+      columnPinning,
+      columnFilters: stableFilters,
+      columnOrder,
+    },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     onColumnOrderChange: setColumnOrder,
