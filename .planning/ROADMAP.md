@@ -4,7 +4,8 @@
 
 - ✅ **v1.0 MVP** — Phases 1-9 (shipped 2026-04-12) — [Archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v2.0 Within-Partner Comparison** — Phases 10-14 (shipped 2026-04-12) — [Archive](milestones/v2.0-ROADMAP.md)
-- 🚧 **v3.0 Intelligence & Cross-Partner Comparison** — Phases 15-24 (in progress)
+- 🚧 **v3.0 Intelligence & Cross-Partner Comparison** — Phases 15-20 (in progress)
+- 📋 **v3.1 Stabilization & Code Quality** — Phases 21-24 (planned)
 
 ## Phases
 
@@ -44,6 +45,11 @@
 - [x] **Phase 18: Claude Query UI** — Search bar, suggested prompts, streaming narrative responses, context-aware scoping (completed 2026-04-13)
 - [x] **Phase 19: Cross-Partner Computation** — Percentile rankings, normalized trajectories, and portfolio-level anomaly flags (completed 2026-04-13)
 - [ ] **Phase 20: Cross-Partner UI** — Percentile columns, trajectory overlay chart, benchmark lines, and partner comparison matrix
+
+### 📋 v3.1 Stabilization & Code Quality
+
+**Milestone Goal:** v3.0 features are bug-free, polished, verified, and the codebase is production-grade with a comprehensive known-issues list.
+
 - [ ] **Phase 21: Critical Bug Fixes** — Fix all-zero Claude context (wrong Snowflake column names) and root-level anomaly badge gap
 - [ ] **Phase 22: UI Polish & Data Reliability** — User-reported chart/UI issues and cached data loading fixes
 - [ ] **Phase 23: Verification & Housekeeping** — Phase 17/18 VERIFICATION.md, REQUIREMENTS.md traceability update, Phase 19 SUMMARY fix
@@ -145,7 +151,7 @@ Plans:
 **Goal**: Claude queries return real data and anomaly badges appear at every drill level — no broken integrations remain
 **Depends on**: Phases 17, 18 (query infrastructure), Phase 16 (anomaly UI)
 **Requirements**: NLQ-03, NLQ-04, NLQ-09, AD-07
-**Gap Closure**: Closes integration bugs from v3.0 milestone audit
+**Gap Closure**: Closes integration bugs from v3.0 audit
 **Success Criteria** (what must be TRUE):
   1. `QuerySearchBarWithContext` sends Claude accurate KPI values matching what the table displays (not zeros)
   2. Anomaly badge Status column appears at root-level partner table (not just partner/batch drill levels)
@@ -177,7 +183,7 @@ Plans:
 **Goal**: All completed phases have formal verification, REQUIREMENTS.md accurately reflects project state
 **Depends on**: Phases 21, 22 (all code changes done before final verification pass)
 **Requirements**: NLQ-01, NLQ-02, NLQ-05, NLQ-06, NLQ-07, NLQ-08, NLQ-10 (verification only)
-**Gap Closure**: Closes verification gaps and tech debt from v3.0 milestone audit
+**Gap Closure**: Closes verification gaps and tech debt from v3.0 audit
 **Success Criteria** (what must be TRUE):
   1. Phase 17 has a VERIFICATION.md confirming NLQ-01/02/03/04/05 with evidence
   2. Phase 18 has a VERIFICATION.md confirming NLQ-06/07/08/09/10 with evidence
@@ -189,7 +195,7 @@ Plans:
 - [ ] 23-01-PLAN.md — Generate Phase 17/18 VERIFICATION.md files, update REQUIREMENTS.md traceability, fix Phase 19 SUMMARY frontmatter
 
 ### Phase 24: Code Review & Refactoring
-**Goal**: The v3.0 codebase reads like production software — clean architecture, strict types, no dead code, documented known issues
+**Goal**: The codebase reads like production software — clean architecture, strict types, no dead code, documented known issues
 **Depends on**: Phases 20-23 (all features and fixes complete before refactoring)
 **Requirements**: None (quality gate, not feature work)
 **Success Criteria** (what must be TRUE):
@@ -218,10 +224,10 @@ Plans:
 | 18. Claude Query UI | 1/1 | Complete    | 2026-04-13 | - |
 | 19. Cross-Partner Computation | 1/1 | Complete    | 2026-04-13 | - |
 | 20. Cross-Partner UI | v3.0 | 0/2 | Not started | - |
-| 21. Critical Bug Fixes | v3.0 | 0/1 | Not started | - |
-| 22. UI Polish & Data Reliability | v3.0 | 0/2 | Not started | - |
-| 23. Verification & Housekeeping | v3.0 | 0/1 | Not started | - |
-| 24. Code Review & Refactoring | v3.0 | 0/3 | Not started | - |
+| 21. Critical Bug Fixes | v3.1 | 0/1 | Not started | - |
+| 22. UI Polish & Data Reliability | v3.1 | 0/2 | Not started | - |
+| 23. Verification & Housekeeping | v3.1 | 0/1 | Not started | - |
+| 24. Code Review & Refactoring | v3.1 | 0/3 | Not started | - |
 
 ---
 *Last updated: 2026-04-12 after Phase 15 planning*

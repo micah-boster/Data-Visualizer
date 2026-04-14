@@ -52,7 +52,7 @@
 - [ ] **XPC-07**: "Best-in-class" reference line on the cross-partner trajectory chart representing the top-performing partner's average curve, plus a "portfolio average" line
 - [ ] **XPC-08**: Partner comparison matrix/summary view showing key metrics for all partners side-by-side (rows = metrics, columns = partners, or horizontal bar chart ranking partners on selected metric)
 
-## Deferred to v3.1
+## Deferred to v3.5
 
 | Feature | Reason |
 |---------|--------|
