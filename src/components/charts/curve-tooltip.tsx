@@ -27,6 +27,7 @@ interface CurveTooltipProps {
   keyMap: BatchKeyMap;
   metric: "recoveryRate" | "amount";
   batchAnomalies?: BatchAnomaly[];
+  soloedBatch?: string | null;
 }
 
 function formatValue(value: number, metric: "recoveryRate" | "amount"): string {
@@ -46,15 +47,21 @@ export function CurveTooltip({
   keyMap,
   metric,
   batchAnomalies,
+  soloedBatch,
 }: CurveTooltipProps) {
   if (!active || !payload || payload.length === 0 || label === undefined) {
     return null;
   }
 
-  // Find the first entry with a defined value
-  const entry = payload.find(
-    (p) => p.value !== undefined && p.value !== null,
-  );
+  // When a batch is soloed, show only that batch's data in the tooltip.
+  // Otherwise, fall back to the first entry with a defined value (existing behavior).
+  const entry = soloedBatch
+    ? payload.filter((p) => p.dataKey === soloedBatch).find(
+        (p) => p.value !== undefined && p.value !== null,
+      )
+    : payload.find(
+        (p) => p.value !== undefined && p.value !== null,
+      );
   if (!entry || entry.value === undefined) return null;
 
   const isAvg = entry.dataKey === "__avg__";

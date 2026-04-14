@@ -44,6 +44,7 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
 
   const {
     metric,
+    soloedBatch,
     showAverage,
     showAllBatches,
     sortedCurves,
@@ -166,7 +167,7 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
               />
               <Tooltip
                 content={
-                  <CurveTooltip keyMap={keyMap} metric={metric} batchAnomalies={batchAnomalies} />
+                  <CurveTooltip keyMap={keyMap} metric={metric} batchAnomalies={batchAnomalies} soloedBatch={soloedBatch} />
                 }
               />
               {/* One Line per batch -- use hide prop, not conditional rendering */}
