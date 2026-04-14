@@ -1,6 +1,8 @@
 /**
  * Assembles the full system prompt from persona instructions + data context +
  * safety constraints. The data context is built by context-builder.ts.
+ *
+ * Architecture: docs/QUERY-ARCHITECTURE.md
  */
 
 import type { DrillLevel } from '@/hooks/use-drill-down';

@@ -7,6 +7,7 @@ import {
   CLAUDE_MODEL,
 } from '@/lib/ai/system-prompt';
 
+// Architecture: docs/QUERY-ARCHITECTURE.md
 export const dynamic = 'force-dynamic';
 
 // ---------------------------------------------------------------------------

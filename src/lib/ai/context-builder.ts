@@ -3,6 +3,8 @@
  * current drill level. Receives pre-computed data (partner stats, anomalies)
  * and formats it — does NOT query Snowflake or read files.
  *
+ * Architecture: docs/QUERY-ARCHITECTURE.md
+ *
  * Three context levels (from CONTEXT.md locked decisions):
  * - Root: partner summaries + anomaly flags
  * - Partner: full detail + portfolio rank comparisons
