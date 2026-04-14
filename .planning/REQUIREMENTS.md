@@ -52,7 +52,14 @@
 - [ ] **XPC-07**: "Best-in-class" reference line on the cross-partner trajectory chart representing the top-performing partner's average curve, plus a "portfolio average" line
 - [ ] **XPC-08**: Partner comparison matrix/summary view showing key metrics for all partners side-by-side (rows = metrics, columns = partners, or horizontal bar chart ranking partners on selected metric)
 
-## Deferred to v3.1 / v4
+## Deferred to v3.1
+
+| Feature | Reason |
+|---------|--------|
+| Multi-select partners at root level (Ctrl+click) | Deferred from v3.0 UX polish — requires drill-down state machine changes |
+| Metabase query import | Accept/translate Metabase queries (MBQL or SQL) into the app's query system |
+
+## Deferred to v4
 
 | Feature | Reason |
 |---------|--------|
@@ -61,14 +68,16 @@
 | Partner cohort segmentation (by account type) | Requires richer metadata than currently available |
 | Time-period scoped comparison | Useful but not essential for initial cross-partner view |
 | NLQ query history persistence | 2-3 users, discuss findings in Slack not in the tool |
-| Multi-select partners at root level (Ctrl+click) | Deferred from v3.0 UX polish — requires drill-down state machine changes |
+| Active anomaly notifications (Slack/email) | Prove passive value first |
+| Dynamic curve re-projection | Requires forecasting model |
+| Dashboard drag-and-drop layout | Configurable widget arrangement |
+| Exportable partner summary reports | PDF/Excel per-partner reports |
 
-## Out of Scope (v3)
+## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
 | ML-based anomaly detection (isolation forest, DBSCAN) | Overkill for 477 rows, violates explainability constraint |
-| Active anomaly notifications (Slack/email) | v4 — prove passive value first |
 | User-configurable anomaly thresholds | 2-3 users, hardcode 2 SD, revisit if requested |
 | Text-to-SQL generation | Dataset fits in context, text-to-SQL adds SQL injection risk and hallucinated column names |
 | Full chat/conversation interface | Point queries, not conversations — search bar is the right pattern |
@@ -77,9 +86,6 @@
 | Weighted composite "partner health score" | Buries information, creates weight debates |
 | Automated partner tiering (A/B/C) | False precision with 5-10 partners, relationship damage risk |
 | External benchmarking data | Portfolio IS the benchmark universe |
-| Dynamic curve re-projection | Requires forecasting model — v4+ |
-| Dashboard drag-and-drop layout | v4 feature |
-| Exportable partner summary reports | v4 feature |
 
 ## Traceability
 
