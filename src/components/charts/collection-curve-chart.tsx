@@ -110,7 +110,10 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
 
   return (
     <div className="w-full space-y-2">
-      {/* Header with metric toggle */}
+      {/* Header with metric toggle — this IS the metric view switch (UI-04).
+          Toggling between Recovery Rate % and Dollars Collected updates the
+          chart data, Y-axis formatting, and tooltip values reactively via
+          the `metric` state in useCurveChartState. */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-muted-foreground">
           Collection Curves
