@@ -1,3 +1,13 @@
+---
+phase: 19-cross-partner-computation
+plan: 01
+requirements-completed:
+  - XPC-01
+  - XPC-02
+  - XPC-03
+  - XPC-04
+---
+
 # Plan 19-01 Summary: Cross-Partner Computation
 
 ## Result: COMPLETE
