@@ -220,7 +220,7 @@ export function DataDisplay() {
         <Alert className="relative shrink-0">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="pr-8">
-            <span className="font-medium">Schema mismatch detected. </span>
+            <span className="font-medium">Data may be incomplete. </span>
             {data.schemaWarnings!.missing.length > 0 && (
               <span>
                 Missing columns: {data.schemaWarnings!.missing.join(', ')}.{' '}
