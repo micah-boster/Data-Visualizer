@@ -12,6 +12,7 @@ import { createElement } from 'react';
 import { DrillableCell } from '@/components/navigation/drillable-cell';
 import { getCellRenderer } from '@/components/table/formatted-cell';
 import type { TableDrillMeta } from './definitions';
+import { anomalyStatusColumn } from './anomaly-column';
 
 interface RootColumnConfig {
   key: string;
@@ -32,7 +33,7 @@ const ROOT_COLUMNS: RootColumnConfig[] = [
 ];
 
 export function buildRootColumnDefs(): ColumnDef<Record<string, unknown>>[] {
-  return ROOT_COLUMNS.map((col) => ({
+  const dataColumns = ROOT_COLUMNS.map((col) => ({
     id: col.key,
     accessorKey: col.key,
     header: col.label,
@@ -59,6 +60,7 @@ export function buildRootColumnDefs(): ColumnDef<Record<string, unknown>>[] {
       return getCellRenderer(col.type, col.key, value);
     },
   }));
+  return [anomalyStatusColumn, ...dataColumns];
 }
 
 /**
