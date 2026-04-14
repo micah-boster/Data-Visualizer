@@ -1,9 +1,15 @@
 'use client';
 
 import { useMemo, useState, useCallback } from 'react';
-import { ArrowLeftRight, Grid3X3, BarChart3, Table } from 'lucide-react';
+import { ArrowLeftRight, Grid3X3, BarChart3, Table, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useCrossPartnerContext } from '@/contexts/cross-partner-provider';
 import type { PercentileRanks } from '@/types/partner-stats';
 import { MATRIX_METRICS } from './matrix-types';
@@ -64,9 +70,24 @@ export function PartnerComparisonMatrix() {
   return (
     <Card className="shrink-0">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          Partner Comparison
-        </CardTitle>
+        <div className="flex items-center gap-1.5">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Partner Comparison
+          </CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger className="cursor-help">
+                <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-[240px]">
+                <p className="text-xs">Compare key metrics across all partners — view as heatmap, bar ranking, or plain table.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <span className="text-xs text-muted-foreground/60">
+            {sortedPartners.length} partners
+          </span>
+        </div>
         <div className="flex items-center gap-1">
           {/* View mode toggle */}
           {VIEW_MODES.map(({ key, label, Icon }) => (
@@ -74,11 +95,12 @@ export function PartnerComparisonMatrix() {
               key={key}
               variant={viewMode === key ? 'default' : 'ghost'}
               size="sm"
-              className="h-7 w-7 p-0"
+              className="h-7 px-2"
               onClick={() => setViewMode(key)}
               title={label}
             >
               <Icon className="h-3.5 w-3.5" />
+              <span className="ml-1 text-xs">{label}</span>
             </Button>
           ))}
 
