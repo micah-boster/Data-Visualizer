@@ -304,7 +304,20 @@ export function DataDisplay() {
       {/* Single-batch curve at batch drill-down level */}
       {batchCurve && (
         <div className="shrink-0">
-          <CollectionCurveChart curves={batchCurve} />
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+            onClick={toggleCharts}
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            <span>Charts</span>
+            {chartsExpanded ? <ChevronUp className="ml-auto h-3.5 w-3.5" /> : <ChevronDown className="ml-auto h-3.5 w-3.5" />}
+          </button>
+          {chartsExpanded && (
+            <div className="mt-2">
+              <CollectionCurveChart curves={batchCurve} />
+            </div>
+          )}
         </div>
       )}
 

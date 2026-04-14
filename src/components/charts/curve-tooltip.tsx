@@ -16,19 +16,18 @@ const CHART_COLORS = [
   "var(--chart-8)",
 ];
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 interface CurveTooltipProps {
   active?: boolean;
-  payload?: Array<{
-    dataKey?: string;
-    value?: number;
-    color?: string;
-  }>;
-  label?: number;
+  payload?: ReadonlyArray<Record<string, any>>;
+  label?: string | number;
   keyMap: BatchKeyMap;
   metric: "recoveryRate" | "amount";
   batchAnomalies?: BatchAnomaly[];
   soloedBatch?: string | null;
+  [key: string]: unknown;
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 function formatValue(value: number, metric: "recoveryRate" | "amount"): string {
   if (metric === "recoveryRate") {
@@ -56,7 +55,7 @@ export function CurveTooltip({
   // When a batch is soloed, show only that batch's data in the tooltip.
   // Otherwise, fall back to the first entry with a defined value (existing behavior).
   const entry = soloedBatch
-    ? payload.filter((p) => p.dataKey === soloedBatch).find(
+    ? payload.filter((p) => String(p.dataKey) === soloedBatch).find(
         (p) => p.value !== undefined && p.value !== null,
       )
     : payload.find(
@@ -64,8 +63,9 @@ export function CurveTooltip({
       );
   if (!entry || entry.value === undefined) return null;
 
-  const isAvg = entry.dataKey === "__avg__";
-  const batchInfo = keyMap.get(entry.dataKey ?? "");
+  const entryKey = String(entry.dataKey ?? "");
+  const isAvg = entryKey === "__avg__";
+  const batchInfo = keyMap.get(entryKey);
   const displayName = isAvg
     ? "Partner Average"
     : batchInfo ?? entry.dataKey ?? "Unknown";

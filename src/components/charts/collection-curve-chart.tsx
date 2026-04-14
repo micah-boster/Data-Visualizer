@@ -169,9 +169,15 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
                 label={{ value: metric === "recoveryRate" ? "Recovery Rate %" : "Dollars Collected", angle: -90, position: "insideLeft", offset: 5, className: "fill-muted-foreground text-[11px]" }}
               />
               <Tooltip
-                content={
-                  <CurveTooltip keyMap={keyMap} metric={metric} batchAnomalies={batchAnomalies} soloedBatch={soloedBatch} />
-                }
+                content={(props) => (
+                  <CurveTooltip
+                    {...props}
+                    keyMap={keyMap}
+                    metric={metric}
+                    batchAnomalies={batchAnomalies}
+                    soloedBatch={soloedBatch}
+                  />
+                )}
               />
               {/* One Line per batch -- use hide prop, not conditional rendering */}
               {sortedCurves.map((_, i) => {
