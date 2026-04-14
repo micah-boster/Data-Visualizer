@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, X, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
+import { AlertTriangle, X, ChevronDown, ChevronUp, BarChart3, GitCompareArrows } from 'lucide-react';
 import { useData } from '@/hooks/use-data';
 import { useAccountData } from '@/hooks/use-account-data';
 import { useDrillDown } from '@/hooks/use-drill-down';
@@ -73,6 +73,22 @@ const PartnerComparisonMatrix = dynamic(
   },
 );
 
+const RootSparkline = dynamic(
+  () =>
+    import('@/components/charts/root-sparkline').then(
+      (mod) => mod.RootSparkline,
+    ),
+  { ssr: false },
+);
+
+const PartnerSparkline = dynamic(
+  () =>
+    import('@/components/charts/partner-sparkline').then(
+      (mod) => mod.PartnerSparkline,
+    ),
+  { ssr: false },
+);
+
 export function DataDisplay() {
   const { data, isLoading, isError, error, refetch, isFetching, dataUpdatedAt } = useData();
   const { state: drillState, drillToPartner, drillToBatch, navigateToLevel } =
@@ -90,6 +106,7 @@ export function DataDisplay() {
     if (typeof window === 'undefined') return true;
     return localStorage.getItem('charts-expanded') !== 'false';
   });
+  const [comparisonVisible, setComparisonVisible] = useState(false);
   const toggleCharts = () => {
     setChartsExpanded((prev) => {
       const next = !prev;
@@ -166,21 +183,35 @@ export function DataDisplay() {
       {/* Collapsible visualization section at root level */}
       {drillState.level === 'root' && (
         <div className="shrink-0">
-          <button
-            type="button"
-            className="flex w-full items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
-            onClick={toggleCharts}
-          >
-            <BarChart3 className="h-3.5 w-3.5" />
-            <span>Charts</span>
-            {chartsExpanded ? <ChevronUp className="ml-auto h-3.5 w-3.5" /> : <ChevronDown className="ml-auto h-3.5 w-3.5" />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="flex flex-1 items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+              onClick={toggleCharts}
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              <span>Charts</span>
+              {chartsExpanded ? <ChevronUp className="ml-auto h-3.5 w-3.5" /> : <ChevronDown className="ml-auto h-3.5 w-3.5" />}
+            </button>
+            {chartsExpanded && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs shrink-0"
+                onClick={() => setComparisonVisible((v) => !v)}
+              >
+                <GitCompareArrows className="mr-1 h-3.5 w-3.5" />
+                {comparisonVisible ? 'Hide Comparison' : 'Compare Partners'}
+              </Button>
+            )}
+          </div>
           {chartsExpanded && (
             <div className="mt-2 space-y-2">
               <CrossPartnerTrajectoryChart />
-              <PartnerComparisonMatrix />
+              {comparisonVisible && <PartnerComparisonMatrix />}
             </div>
           )}
+          {!chartsExpanded && <RootSparkline />}
         </div>
       )}
 
@@ -235,6 +266,9 @@ export function DataDisplay() {
                 <CollectionCurveChart curves={partnerStats.curves} />
               )}
             </div>
+          )}
+          {!chartsExpanded && partnerStats?.curves && partnerStats.curves.length >= 2 && (
+            <PartnerSparkline curves={partnerStats.curves} />
           )}
         </div>
       )}
