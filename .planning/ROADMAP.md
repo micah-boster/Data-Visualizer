@@ -206,7 +206,7 @@ Plans:
   4. **Maintainability & modularity**: Clean separation of concerns (data/computation/UI), shared utilities extracted where 3+ patterns repeat, component APIs documented where non-obvious, hook dependencies explicit
   5. **Architecture review**: Component tree structure validated, data flow patterns consistent, provider/context hierarchy justified, file/folder structure reflects domain boundaries
   6. **Known issues document**: `docs/KNOWN-ISSUES.md` comprehensively lists every known limitation, edge case, future improvement, and tech debt item with severity and suggested approach
-**Plans**: TBD (will be determined during planning — likely 2-3 plans covering different subsystems)
+**Plans**: 3 plans
 
 Plans:
 - [ ] 24-01-PLAN.md — Architecture review, type safety audit, dead code removal
