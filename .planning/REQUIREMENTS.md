@@ -8,19 +8,19 @@
 
 ### Anomaly Detection — Foundation
 
-- [ ] **AD-01**: `compute-anomalies.ts` module computes z-scores for key metrics per batch against partner norms, using existing `computeNorms()` mean/stddev as baseline
-- [ ] **AD-02**: Anomaly detection respects metric polarity (existing `metric-polarity.ts`) — only flags deviations in the "bad" direction (low penetration = bad, high delinquency = bad)
-- [ ] **AD-03**: A batch is flagged as anomalous when 2+ key metrics deviate beyond 2 SD from the partner mean
-- [ ] **AD-04**: At root level, a partner is flagged when their latest batch is anomalous
-- [ ] **AD-05**: Anomaly detection algorithm documented in `docs/ANOMALY-ALGORITHM.md` per explainability constraint
-- [ ] **AD-06**: Anomalies ranked by composite severity score (count of flagged metrics × average deviation magnitude)
+- [x] **AD-01**: `compute-anomalies.ts` module computes z-scores for key metrics per batch against partner norms, using existing `computeNorms()` mean/stddev as baseline
+- [x] **AD-02**: Anomaly detection respects metric polarity (existing `metric-polarity.ts`) — only flags deviations in the "bad" direction (low penetration = bad, high delinquency = bad)
+- [x] **AD-03**: A batch is flagged as anomalous when 2+ key metrics deviate beyond 2 SD from the partner mean
+- [x] **AD-04**: At root level, a partner is flagged when their latest batch is anomalous
+- [x] **AD-05**: Anomaly detection algorithm documented in `docs/ANOMALY-ALGORITHM.md` per explainability constraint
+- [x] **AD-06**: Anomalies ranked by composite severity score (count of flagged metrics × average deviation magnitude)
 
 ### Anomaly Detection — UI
 
 - [ ] **AD-07**: Anomaly badge (colored dot / warning icon) displayed in a dedicated Status column on partner rows (root level) and batch rows (partner drill-down)
-- [ ] **AD-08**: Hovering/clicking an anomaly badge shows a popover explaining: which metrics are anomalous, actual value vs expected range, deviation magnitude (e.g., "Penetration Rate: 3.2% (expected 8.1% - 14.3%). 2.4 SD below mean.")
-- [ ] **AD-09**: Collapsible anomaly summary panel at the top of root-level view showing top 5-10 flagged partners/batches sorted by severity, with one-line descriptions and click-to-drill navigation
-- [ ] **AD-10**: Anomalous batches visually distinguished on collection curve charts (bold line, different color, or annotation marker)
+- [x] **AD-08**: Hovering/clicking an anomaly badge shows a popover explaining: which metrics are anomalous, actual value vs expected range, deviation magnitude (e.g., "Penetration Rate: 3.2% (expected 8.1% - 14.3%). 2.4 SD below mean.")
+- [x] **AD-09**: Collapsible anomaly summary panel at the top of root-level view showing top 5-10 flagged partners/batches sorted by severity, with one-line descriptions and click-to-drill navigation
+- [x] **AD-10**: Anomalous batches visually distinguished on collection curve charts (bold line, different color, or annotation marker)
 
 ### Claude Natural Language Query — Infrastructure
 
@@ -40,10 +40,10 @@
 
 ### Cross-Partner Comparison — Foundation
 
-- [ ] **XPC-01**: `useAllPartnerStats` hook (or equivalent) computes per-partner aggregate metrics for ALL partners (extends `usePartnerStats` pattern but runs across full dataset, not just selected partner)
-- [ ] **XPC-02**: Percentile rank computed for each partner on key metrics (penetration rate, 6-month collection rate, 12-month collection rate, total collected) using `simple-statistics` `quantileRank`
-- [ ] **XPC-03**: Average collection curve computed per partner (mean of all their batch curves at each month point) for cross-partner trajectory overlay
-- [ ] **XPC-04**: Cross-partner anomaly flags: partners whose aggregate performance falls below the 10th percentile on any key metric are flagged as portfolio outliers
+- [x] **XPC-01**: `useAllPartnerStats` hook (or equivalent) computes per-partner aggregate metrics for ALL partners (extends `usePartnerStats` pattern but runs across full dataset, not just selected partner)
+- [x] **XPC-02**: Percentile rank computed for each partner on key metrics (penetration rate, 6-month collection rate, 12-month collection rate, total collected) using `simple-statistics` `quantileRank`
+- [x] **XPC-03**: Average collection curve computed per partner (mean of all their batch curves at each month point) for cross-partner trajectory overlay
+- [x] **XPC-04**: Cross-partner anomaly flags: partners whose aggregate performance falls below the 10th percentile on any key metric are flagged as portfolio outliers
 
 ### Cross-Partner Comparison — UI
 
@@ -91,30 +91,30 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AD-01 | Phase 15 | Pending |
-| AD-02 | Phase 15 | Pending |
-| AD-03 | Phase 15 | Pending |
-| AD-04 | Phase 15 | Pending |
-| AD-05 | Phase 15 | Pending |
-| AD-06 | Phase 15 | Pending |
-| AD-07 | Phase 16 | Pending |
-| AD-08 | Phase 16 | Pending |
-| AD-09 | Phase 16 | Pending |
-| AD-10 | Phase 16 | Pending |
-| NLQ-01 | Phase 17 | Pending |
-| NLQ-02 | Phase 17 | Pending |
-| NLQ-03 | Phase 17 | Pending |
-| NLQ-04 | Phase 17 | Pending |
-| NLQ-05 | Phase 17 | Pending |
-| NLQ-06 | Phase 18 | Pending |
-| NLQ-07 | Phase 18 | Pending |
-| NLQ-08 | Phase 18 | Pending |
-| NLQ-09 | Phase 18 | Pending |
-| NLQ-10 | Phase 18 | Pending |
-| XPC-01 | Phase 19 | Pending |
-| XPC-02 | Phase 19 | Pending |
-| XPC-03 | Phase 19 | Pending |
-| XPC-04 | Phase 19 | Pending |
+| AD-01 | Phase 15 | Satisfied |
+| AD-02 | Phase 15 | Satisfied |
+| AD-03 | Phase 15 | Satisfied |
+| AD-04 | Phase 15 | Satisfied |
+| AD-05 | Phase 15 | Satisfied |
+| AD-06 | Phase 15 | Satisfied |
+| AD-07 | Phase 16 → 21 | Pending |
+| AD-08 | Phase 16 | Satisfied |
+| AD-09 | Phase 16 | Satisfied |
+| AD-10 | Phase 16 | Satisfied |
+| NLQ-01 | Phase 17 → 23 | Pending |
+| NLQ-02 | Phase 17 → 23 | Pending |
+| NLQ-03 | Phase 17 → 21 | Pending |
+| NLQ-04 | Phase 17 → 21 | Pending |
+| NLQ-05 | Phase 17 → 23 | Pending |
+| NLQ-06 | Phase 18 → 23 | Pending |
+| NLQ-07 | Phase 18 → 23 | Pending |
+| NLQ-08 | Phase 18 → 23 | Pending |
+| NLQ-09 | Phase 18 → 21 | Pending |
+| NLQ-10 | Phase 18 → 23 | Pending |
+| XPC-01 | Phase 19 | Satisfied |
+| XPC-02 | Phase 19 | Satisfied |
+| XPC-03 | Phase 19 | Satisfied |
+| XPC-04 | Phase 19 | Satisfied |
 | XPC-05 | Phase 20 | Pending |
 | XPC-06 | Phase 20 | Pending |
 | XPC-07 | Phase 20 | Pending |
@@ -122,6 +122,10 @@
 
 **Coverage:**
 - v3 requirements: 28 total
+- Satisfied: 14/28 (AD-01-06, AD-08-10, XPC-01-04)
+- Pending (bug fix): 4/28 (NLQ-03/04/09, AD-07 → Phase 21)
+- Pending (not started): 4/28 (XPC-05-08 → Phase 20)
+- Pending (verification only): 6/28 (NLQ-01/02/05/06/07/08/10 → Phase 23)
 - Mapped to phases: 28/28
 - Unmapped: 0
 

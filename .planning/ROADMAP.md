@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-9 (shipped 2026-04-12) — [Archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v2.0 Within-Partner Comparison** — Phases 10-14 (shipped 2026-04-12) — [Archive](milestones/v2.0-ROADMAP.md)
-- 🚧 **v3.0 Intelligence & Cross-Partner Comparison** — Phases 15-20 (in progress)
+- 🚧 **v3.0 Intelligence & Cross-Partner Comparison** — Phases 15-23 (in progress)
 
 ## Phases
 
@@ -44,6 +44,9 @@
 - [x] **Phase 18: Claude Query UI** — Search bar, suggested prompts, streaming narrative responses, context-aware scoping (completed 2026-04-13)
 - [x] **Phase 19: Cross-Partner Computation** — Percentile rankings, normalized trajectories, and portfolio-level anomaly flags (completed 2026-04-13)
 - [ ] **Phase 20: Cross-Partner UI** — Percentile columns, trajectory overlay chart, benchmark lines, and partner comparison matrix
+- [ ] **Phase 21: Critical Bug Fixes** — Fix all-zero Claude context (wrong Snowflake column names) and root-level anomaly badge gap
+- [ ] **Phase 22: UI Polish & Data Reliability** — User-reported chart/UI issues and cached data loading fixes
+- [ ] **Phase 23: Verification & Housekeeping** — Phase 17/18 VERIFICATION.md, REQUIREMENTS.md traceability update, Phase 19 SUMMARY fix
 
 ## Phase Details
 
@@ -137,9 +140,56 @@ Plans:
 - [ ] 20-01-PLAN.md — Percentile rank columns in root table, cross-partner trajectory overlay chart with reference lines
 - [ ] 20-02-PLAN.md — Partner comparison matrix with heatmap, bar ranking, and plain table view modes
 
+### Phase 21: Critical Bug Fixes
+**Goal**: Claude queries return real data and anomaly badges appear at every drill level — no broken integrations remain
+**Depends on**: Phases 17, 18 (query infrastructure), Phase 16 (anomaly UI)
+**Requirements**: NLQ-03, NLQ-04, NLQ-09, AD-07
+**Gap Closure**: Closes integration bugs from v3.0 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. `QuerySearchBarWithContext` sends Claude accurate KPI values matching what the table displays (not zeros)
+  2. Anomaly badge Status column appears at root-level partner table (not just partner/batch drill levels)
+  3. Claude responses reference real data points that match the actual dataset
+**Plans**: 1 plan
+
+Plans:
+- [ ] 21-01-PLAN.md — Fix Snowflake column name mapping in QuerySearchBarWithContext, add anomalyStatusColumn to buildRootColumnDefs()
+
+### Phase 22: UI Polish & Data Reliability
+**Goal**: User-reported chart/interaction issues resolved and cached data loads reliably with validation
+**Depends on**: Phase 21 (bugs fixed first), Phase 12 (curve charts), Phase 20 (comparison button)
+**Requirements**: None (UI issues and data reliability — not tied to v3.0 requirements)
+**Gap Closure**: Closes user-reported issues UI-01 through UI-04 and data issues DATA-01 through DATA-03
+**Success Criteria** (what must be TRUE):
+  1. Clicking different batch lines on curve chart updates the tooltip to that batch's data
+  2. A visible collapse/minimize control exists for the chart area, making table rows accessible on laptop screens
+  3. Partner comparison button has clear labeling or visual transition explaining what the mode shows
+  4. Switching metric views updates the chart to reflect the selected metric
+  5. New account JSON files load without errors (missing column handled, empty strings normalized)
+  6. Cached data files are schema-validated before serving in static mode
+**Plans**: 2 plans
+
+Plans:
+- [ ] 22-01-PLAN.md — Fix chart tooltip, add chart collapse control, clarify comparison button, wire view switch to chart
+- [ ] 22-02-PLAN.md — Handle missing ACCOUNT_PUBLIC_ID, normalize empty strings, add cached data schema validation
+
+### Phase 23: Verification & Housekeeping
+**Goal**: All completed phases have formal verification, REQUIREMENTS.md accurately reflects project state
+**Depends on**: Phases 21, 22 (all code changes done before final verification pass)
+**Requirements**: NLQ-01, NLQ-02, NLQ-05, NLQ-06, NLQ-07, NLQ-08, NLQ-10 (verification only)
+**Gap Closure**: Closes verification gaps and tech debt from v3.0 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. Phase 17 has a VERIFICATION.md confirming NLQ-01/02/03/04/05 with evidence
+  2. Phase 18 has a VERIFICATION.md confirming NLQ-06/07/08/09/10 with evidence
+  3. REQUIREMENTS.md traceability table shows correct phase assignments and completion status for all 28 requirements
+  4. Phase 19 SUMMARY.md has YAML frontmatter with requirements-completed field
+**Plans**: 1 plan
+
+Plans:
+- [ ] 23-01-PLAN.md — Generate Phase 17/18 VERIFICATION.md files, update REQUIREMENTS.md traceability, fix Phase 19 SUMMARY frontmatter
+
 ## Progress
 
-**Execution Order:** Phases execute in numeric order: 15 → 16 → 17 → 18 → 19 → 20
+**Execution Order:** Phases execute in numeric order: 15 → 16 → 17 → 18 → 19 → 20 → 21 → 22 → 23
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -149,6 +199,9 @@ Plans:
 | 18. Claude Query UI | 1/1 | Complete    | 2026-04-13 | - |
 | 19. Cross-Partner Computation | 1/1 | Complete    | 2026-04-13 | - |
 | 20. Cross-Partner UI | v3.0 | 0/2 | Not started | - |
+| 21. Critical Bug Fixes | v3.0 | 0/1 | Not started | - |
+| 22. UI Polish & Data Reliability | v3.0 | 0/2 | Not started | - |
+| 23. Verification & Housekeeping | v3.0 | 0/1 | Not started | - |
 
 ---
 *Last updated: 2026-04-12 after Phase 15 planning*
