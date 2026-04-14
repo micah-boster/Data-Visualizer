@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import React, { useMemo, useState, useCallback, useRef } from "react";
 import {
   LineChart,
   Line,
@@ -96,6 +96,66 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
     return cfg;
   }, [sortedCurves, showAverage]);
 
+  // Track which line the mouse is closest to (by Y position).
+  // Two mechanisms: (1) activeDot onMouseEnter for direct hits,
+  // (2) chart onMouseMove with clientY for proximity detection.
+  const [hoveredLineKey, setHoveredLineKey] = useState<string | null>(null);
+  const chartWrapperRef = useRef<HTMLDivElement>(null);
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const handleChartMouseMove = useCallback(
+    (_state: any, event: React.MouseEvent) => {
+      const wrapper = chartWrapperRef.current;
+      if (!wrapper || !event) return;
+
+      // Use activeTooltipIndex to find the data point at the hovered X
+      const idx = _state?.activeTooltipIndex;
+      if (idx == null || idx < 0 || idx >= pivotedData.length) return;
+
+      const dataPoint = pivotedData[idx];
+      if (!dataPoint) return;
+
+      // Get mouse Y relative to chart wrapper
+      const rect = wrapper.getBoundingClientRect();
+      const mouseY = event.clientY - rect.top;
+      const chartHeight = rect.height;
+
+      // Collect all visible line values at this data point
+      const entries = visibleBatchKeys
+        .map((key) => ({ key, value: dataPoint[key] as number | undefined }))
+        .filter((e): e is { key: string; value: number } => e.value != null);
+
+      if (entries.length === 0) return;
+
+      // Y axis: top of wrapper ≈ max value, bottom ≈ 0 (inverted)
+      const values = entries.map((e) => e.value);
+      const maxVal = Math.max(...values);
+      const minVal = Math.min(0, ...values);
+      const range = maxVal - minVal || 1;
+
+      // Convert mouse Y ratio to approximate data value
+      const mouseValue = maxVal - (mouseY / chartHeight) * range;
+
+      // Find the entry whose value is closest to the mouse position
+      let closest = entries[0];
+      let closestDist = Math.abs(entries[0].value - mouseValue);
+      for (const e of entries) {
+        const dist = Math.abs(e.value - mouseValue);
+        if (dist < closestDist) {
+          closest = e;
+          closestDist = dist;
+        }
+      }
+      setHoveredLineKey(closest.key);
+    },
+    [visibleBatchKeys, pivotedData],
+  );
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  const handleChartMouseLeave = useCallback(() => {
+    setHoveredLineKey(null);
+  }, []);
+
   // Empty state: no curves at all
   if (curves.length === 0) {
     return (
@@ -141,9 +201,9 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
       {/* Chart + Legend layout */}
       <div className="flex gap-4">
         {/* Chart area */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col" ref={chartWrapperRef}>
           <ChartContainer config={chartConfig} className="h-[40vh] w-full">
-            <LineChart data={pivotedData} margin={{ top: 5, right: 10, bottom: 5, left: 10 }}>
+            <LineChart data={pivotedData} margin={{ top: 5, right: 10, bottom: 5, left: 10 }} onMouseMove={handleChartMouseMove} onMouseLeave={handleChartMouseLeave}>
               <CartesianGrid
                 strokeDasharray="3 3"
                 className="stroke-muted"
@@ -176,6 +236,7 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
                     metric={metric}
                     batchAnomalies={batchAnomalies}
                     soloedBatch={soloedBatch}
+                    hoveredLineKey={hoveredLineKey}
                   />
                 )}
               />
@@ -193,7 +254,8 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
                     strokeOpacity={getLineOpacity(key)}
                     dot={false}
                     activeDot={{
-                      r: 4,
+                      r: 5,
+                      onMouseEnter: () => setHoveredLineKey(key),
                       onClick: () => handleLineClick(key),
                       cursor: "pointer",
                     }}

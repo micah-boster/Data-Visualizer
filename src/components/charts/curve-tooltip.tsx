@@ -25,6 +25,7 @@ interface CurveTooltipProps {
   metric: "recoveryRate" | "amount";
   batchAnomalies?: BatchAnomaly[];
   soloedBatch?: string | null;
+  hoveredLineKey?: string | null;
   [key: string]: unknown;
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
@@ -47,15 +48,16 @@ export function CurveTooltip({
   metric,
   batchAnomalies,
   soloedBatch,
+  hoveredLineKey,
 }: CurveTooltipProps) {
   if (!active || !payload || payload.length === 0 || label === undefined) {
     return null;
   }
 
-  // When a batch is soloed, show only that batch's data in the tooltip.
-  // Otherwise, fall back to the first entry with a defined value (existing behavior).
-  const entry = soloedBatch
-    ? payload.filter((p) => String(p.dataKey) === soloedBatch).find(
+  // Priority: soloedBatch (clicked) > hoveredLineKey (nearest to cursor) > first entry
+  const targetKey = soloedBatch ?? hoveredLineKey;
+  const entry = targetKey
+    ? payload.filter((p) => String(p.dataKey) === targetKey).find(
         (p) => p.value !== undefined && p.value !== null,
       )
     : payload.find(
