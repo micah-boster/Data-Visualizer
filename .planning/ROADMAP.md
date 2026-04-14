@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-9 (shipped 2026-04-12) — [Archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v2.0 Within-Partner Comparison** — Phases 10-14 (shipped 2026-04-12) — [Archive](milestones/v2.0-ROADMAP.md)
-- 🚧 **v3.0 Intelligence & Cross-Partner Comparison** — Phases 15-23 (in progress)
+- 🚧 **v3.0 Intelligence & Cross-Partner Comparison** — Phases 15-24 (in progress)
 
 ## Phases
 
@@ -47,6 +47,7 @@
 - [ ] **Phase 21: Critical Bug Fixes** — Fix all-zero Claude context (wrong Snowflake column names) and root-level anomaly badge gap
 - [ ] **Phase 22: UI Polish & Data Reliability** — User-reported chart/UI issues and cached data loading fixes
 - [ ] **Phase 23: Verification & Housekeeping** — Phase 17/18 VERIFICATION.md, REQUIREMENTS.md traceability update, Phase 19 SUMMARY fix
+- [ ] **Phase 24: Code Review & Refactoring** — Full architecture review, type safety audit, performance pass, comprehensive known-issues list
 
 ## Phase Details
 
@@ -187,9 +188,27 @@ Plans:
 Plans:
 - [ ] 23-01-PLAN.md — Generate Phase 17/18 VERIFICATION.md files, update REQUIREMENTS.md traceability, fix Phase 19 SUMMARY frontmatter
 
+### Phase 24: Code Review & Refactoring
+**Goal**: The v3.0 codebase reads like production software — clean architecture, strict types, no dead code, documented known issues
+**Depends on**: Phases 20-23 (all features and fixes complete before refactoring)
+**Requirements**: None (quality gate, not feature work)
+**Success Criteria** (what must be TRUE):
+  1. **Readability & consistency**: Consistent naming conventions across all files, no dead code or unused imports, consistent patterns for hooks/components/utilities, logical file organization
+  2. **Type safety & correctness**: No `any` types except at genuine system boundaries, proper null/undefined handling, exhaustive switch/discriminated union coverage, strict TypeScript config
+  3. **Performance & efficiency**: No unnecessary re-renders in hot paths, computation hooks properly memoized, bundle size reviewed (no oversized imports), lazy loading where appropriate
+  4. **Maintainability & modularity**: Clean separation of concerns (data/computation/UI), shared utilities extracted where 3+ patterns repeat, component APIs documented where non-obvious, hook dependencies explicit
+  5. **Architecture review**: Component tree structure validated, data flow patterns consistent, provider/context hierarchy justified, file/folder structure reflects domain boundaries
+  6. **Known issues document**: `docs/KNOWN-ISSUES.md` comprehensively lists every known limitation, edge case, future improvement, and tech debt item with severity and suggested approach
+**Plans**: TBD (will be determined during planning — likely 2-3 plans covering different subsystems)
+
+Plans:
+- [ ] 24-01-PLAN.md — Architecture review, type safety audit, dead code removal
+- [ ] 24-02-PLAN.md — Performance optimization, computation memoization, bundle review
+- [ ] 24-03-PLAN.md — Known issues documentation and final cleanup pass
+
 ## Progress
 
-**Execution Order:** Phases execute in numeric order: 15 → 16 → 17 → 18 → 19 → 20 → 21 → 22 → 23
+**Execution Order:** Phases execute in numeric order: 15 → 16 → 17 → 18 → 19 → 20 → 21 → 22 → 23 → 24
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -202,6 +221,7 @@ Plans:
 | 21. Critical Bug Fixes | v3.0 | 0/1 | Not started | - |
 | 22. UI Polish & Data Reliability | v3.0 | 0/2 | Not started | - |
 | 23. Verification & Housekeeping | v3.0 | 0/1 | Not started | - |
+| 24. Code Review & Refactoring | v3.0 | 0/3 | Not started | - |
 
 ---
 *Last updated: 2026-04-12 after Phase 15 planning*
