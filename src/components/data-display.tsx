@@ -157,6 +157,13 @@ export function DataDisplay() {
     return data.data;
   }, [data?.data, accountData?.data, drillState.level, drillState.partner]);
 
+  // Memoize batch-level curve for single-batch drill-down
+  const batchCurve = useMemo(() => {
+    if (drillState.level !== 'batch' || !drillState.batch || !partnerStats?.curves) return null;
+    const curves = partnerStats.curves.filter((c) => c.batchName === drillState.batch);
+    return curves.length > 0 ? curves : null;
+  }, [drillState.level, drillState.batch, partnerStats?.curves]);
+
   // Memoize unique partner count to avoid re-creating Set on every render
   const uniquePartnerCount = useMemo(
     () => new Set(data?.data?.map((r) => getPartnerName(r))).size,
@@ -295,18 +302,11 @@ export function DataDisplay() {
       )}
 
       {/* Single-batch curve at batch drill-down level */}
-      {drillState.level === 'batch' &&
-        drillState.batch &&
-        partnerStats?.curves && (() => {
-          const batchCurve = partnerStats.curves.filter(
-            (c) => c.batchName === drillState.batch,
-          );
-          return batchCurve.length > 0 ? (
-            <div className="shrink-0">
-              <CollectionCurveChart curves={batchCurve} />
-            </div>
-          ) : null;
-        })()}
+      {batchCurve && (
+        <div className="shrink-0">
+          <CollectionCurveChart curves={batchCurve} />
+        </div>
+      )}
 
       {/* Interactive data table with drill-down */}
       <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
@@ -321,7 +321,7 @@ export function DataDisplay() {
               drillToPartner={drillToPartner}
               drillToBatch={drillToBatch}
               navigateToLevel={navigateToLevel}
-              totalRowCount={new Set(data.data.map((r) => getPartnerName(r))).size}
+              totalRowCount={uniquePartnerCount}
               partnerStats={partnerStats}
               allData={data.data}
             />
