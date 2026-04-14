@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, X, ChevronDown, ChevronUp, BarChart3 } from 'lucide-react';
 import { useData } from '@/hooks/use-data';
 import { useAccountData } from '@/hooks/use-account-data';
 import { useDrillDown } from '@/hooks/use-drill-down';
 import { useDataFreshness } from '@/contexts/data-freshness';
 import { accountColumnDefs } from '@/lib/columns/account-definitions';
+import { buildRootColumnDefs, buildPartnerSummaryRows } from '@/lib/columns/root-columns';
 import dynamic from 'next/dynamic';
 import { usePartnerStats } from '@/hooks/use-partner-stats';
 import { PartnerNormsProvider } from '@/contexts/partner-norms';
@@ -84,6 +85,17 @@ export function DataDisplay() {
   const { setFetchedAt, setIsFetching } = useDataFreshness();
   const [schemaWarningDismissed, setSchemaWarningDismissed] = useState(false);
   const partnerStats = usePartnerStats(drillState.partner, data?.data ?? []);
+  const [chartsExpanded, setChartsExpanded] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('charts-expanded') !== 'false';
+  });
+  const toggleCharts = () => {
+    setChartsExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem('charts-expanded', String(next));
+      return next;
+    });
+  };
 
   // Sync freshness state to context so header can display it
   useEffect(() => {
@@ -150,17 +162,24 @@ export function DataDisplay() {
         <AnomalySummaryPanel onDrillToPartner={drillToPartner} />
       )}
 
-      {/* Cross-partner trajectory chart at root level */}
+      {/* Collapsible visualization section at root level */}
       {drillState.level === 'root' && (
         <div className="shrink-0">
-          <CrossPartnerTrajectoryChart />
-        </div>
-      )}
-
-      {/* Partner comparison matrix at root level */}
-      {drillState.level === 'root' && (
-        <div className="shrink-0">
-          <PartnerComparisonMatrix />
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+            onClick={toggleCharts}
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            <span>Charts</span>
+            {chartsExpanded ? <ChevronUp className="ml-auto h-3.5 w-3.5" /> : <ChevronDown className="ml-auto h-3.5 w-3.5" />}
+          </button>
+          {chartsExpanded && (
+            <div className="mt-2 space-y-2">
+              <CrossPartnerTrajectoryChart />
+              <PartnerComparisonMatrix />
+            </div>
+          )}
         </div>
       )}
 
@@ -193,24 +212,31 @@ export function DataDisplay() {
         </Alert>
       )}
 
-      {/* KPI summary cards at partner drill-down level */}
+      {/* Collapsible KPI + chart at partner level */}
       {drillState.level === 'partner' && (
         <div className="shrink-0">
-          <KpiSummaryCards
-            kpis={partnerStats?.kpis ?? null}
-            trending={partnerStats?.trending ?? null}
-          />
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/50 transition-colors"
+            onClick={toggleCharts}
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            <span>Charts</span>
+            {chartsExpanded ? <ChevronUp className="ml-auto h-3.5 w-3.5" /> : <ChevronDown className="ml-auto h-3.5 w-3.5" />}
+          </button>
+          {chartsExpanded && (
+            <div className="mt-2 space-y-2">
+              <KpiSummaryCards
+                kpis={partnerStats?.kpis ?? null}
+                trending={partnerStats?.trending ?? null}
+              />
+              {partnerStats?.curves && partnerStats.curves.length >= 2 && (
+                <CollectionCurveChart curves={partnerStats.curves} />
+              )}
+            </div>
+          )}
         </div>
       )}
-
-      {/* Collection curve chart at partner drill-down level */}
-      {drillState.level === 'partner' &&
-        partnerStats?.curves &&
-        partnerStats.curves.length >= 2 && (
-          <div className="shrink-0">
-            <CollectionCurveChart curves={partnerStats.curves} />
-          </div>
-        )}
 
       {/* Single-batch curve at batch drill-down level */}
       {drillState.level === 'batch' &&
@@ -239,7 +265,7 @@ export function DataDisplay() {
               drillToPartner={drillToPartner}
               drillToBatch={drillToBatch}
               navigateToLevel={navigateToLevel}
-              totalRowCount={data.data.length}
+              totalRowCount={new Set(data.data.map((r) => String(r.PARTNER_NAME ?? ''))).size}
               partnerStats={partnerStats}
               allData={data.data}
             />
@@ -298,17 +324,36 @@ function CrossPartnerDataTable({
 }) {
   const { crossPartnerData } = useCrossPartnerContext();
 
+  // At root level, show one row per partner (deduplicated summary)
+  const rootSummaryRows = useMemo(
+    () => (drillState.level === 'root' ? buildPartnerSummaryRows(allData) : []),
+    [drillState.level, allData],
+  );
+
+  const rootColumnDefs = useMemo(
+    () => (drillState.level === 'root' ? buildRootColumnDefs() : undefined),
+    [drillState.level],
+  );
+
+  const effectiveData = drillState.level === 'root' ? rootSummaryRows : tableData;
+  const effectiveColumns =
+    drillState.level === 'batch'
+      ? accountColumnDefs
+      : drillState.level === 'root'
+        ? rootColumnDefs
+        : undefined;
+
   return (
     <DataTable
       key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
-      data={tableData}
+      data={effectiveData}
       isFetching={drillState.level === 'batch' ? false : isFetching}
       drillState={drillState}
       onDrillToPartner={drillToPartner}
       onDrillToBatch={drillToBatch}
       onNavigateToLevel={navigateToLevel}
-      totalRowCount={totalRowCount}
-      columnDefs={drillState.level === 'batch' ? accountColumnDefs : undefined}
+      totalRowCount={drillState.level === 'root' ? undefined : totalRowCount}
+      columnDefs={effectiveColumns}
       partnerRowCount={
         drillState.level === 'batch' && drillState.partner
           ? allData.filter((r) => String(r.PARTNER_NAME ?? '') === drillState.partner).length

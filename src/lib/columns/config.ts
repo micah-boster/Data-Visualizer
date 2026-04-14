@@ -20,7 +20,7 @@ export const COLUMN_CONFIGS: ColumnConfig[] = [
   { key: 'PARTNER_NAME', label: 'Partner', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'LENDER_ID', label: 'Lender ID', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'BATCH', label: 'Batch', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
-  { key: 'ACCOUNT_TYPE', label: 'Account Type', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
+  { key: 'ACCOUNT_TYPE', label: 'Account Type', type: 'text', defaultVisible: false, nullDisplay: '\u2014', identity: false },
   { key: 'BATCH_AGE_IN_MONTHS', label: 'Batch Age (Mo)', type: 'number', defaultVisible: true, nullDisplay: '\u2014', identity: true },
 
   // --- Account counts ---

@@ -10,6 +10,9 @@ import type { DataResponse } from '@/types/data';
 import batchSummary from './batch-summary.json';
 import accountsPri from './accounts-affirm-afrm_mar_26_pri.json';
 import accountsSec from './accounts-affirm-afrm_mar_26_sec.json';
+import accountsNov from './accounts-affirm-afrm_nov_25_pri.json';
+import accountsDec from './accounts-affirm-afrm_dec_25_pri.json';
+import accountsAff from './accounts-aff-aff_feb_26_lto_tertiary.json';
 
 const REQUIRED_ENV = ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USERNAME', 'SNOWFLAKE_PASSWORD'] as const;
 
@@ -17,6 +20,9 @@ const REQUIRED_ENV = ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USERNAME', 'SNOWFLAKE_PASS
 const ACCOUNT_CACHE: Record<string, DataResponse> = {
   'Affirm||AFRM_MAR_26_PRI': accountsPri as unknown as DataResponse,
   'Affirm||AFRM_MAR_26_SEC': accountsSec as unknown as DataResponse,
+  'Affirm||AFRM_NOV_25_PRI': accountsNov as unknown as DataResponse,
+  'Affirm||AFRM_DEC_25_PRI': accountsDec as unknown as DataResponse,
+  'American First Finance||AFF_FEB_26_LTO_TERTIARY': accountsAff as unknown as DataResponse,
 };
 
 /** True when Snowflake credentials are NOT configured */

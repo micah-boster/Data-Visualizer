@@ -28,7 +28,7 @@ export function BreadcrumbTrail({
     active: boolean;
   }[] = [
     {
-      label: 'All Batches',
+      label: 'All Partners',
       level: 'root',
       count: rowCounts.root,
       active: state.level === 'root',
