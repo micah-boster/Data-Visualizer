@@ -64,6 +64,7 @@ Progress: [█████████░] 93%
 - Comparison matrix shared types extracted to matrix-types.ts (MATRIX_METRICS, MatrixViewProps, formatValue, getTierClass)
 - Bar ranking uses pure CSS/Tailwind instead of Recharts for simplicity
 - Orientation toggle hidden in bar mode (not applicable)
+- [Phase 24-01]: getStringField/getPartnerName/getBatchName extracted to utils.ts — use instead of String(row.X ?? '')
 - [Phase 24-02]: All depcheck-flagged deps are false positives (build tools, types, CLI) -- no removals needed
 - [Phase 24-02]: Memoized uniquePartnerCount and batchCurve to eliminate render-path allocations
 
@@ -80,5 +81,5 @@ Progress: [█████████░] 93%
 ## Session Continuity
 
 Last session: 2026-04-14
-Stopped at: Completed 24-02-PLAN.md — loading skeletons, memoization, dep audit
-Resume file: .planning/phases/24-code-review-refactoring/24-02-SUMMARY.md
+Stopped at: Completed 24-01-PLAN.md — string-coercion DRY extraction + data-display cleanup
+Resume file: .planning/phases/24-code-review-refactoring/24-01-SUMMARY.md
