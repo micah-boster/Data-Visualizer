@@ -61,6 +61,7 @@
 | Partner cohort segmentation (by account type) | Requires richer metadata than currently available |
 | Time-period scoped comparison | Useful but not essential for initial cross-partner view |
 | NLQ query history persistence | 2-3 users, discuss findings in Slack not in the tool |
+| Multi-select partners at root level (Ctrl+click) | Deferred from v3.0 UX polish — requires drill-down state machine changes |
 
 ## Out of Scope (v3)
 
