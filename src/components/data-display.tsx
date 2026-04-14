@@ -25,6 +25,7 @@ import { AnomalySummaryPanel } from '@/components/anomaly/anomaly-summary-panel'
 import { QuerySearchBar } from '@/components/query/query-search-bar';
 import { useAnomalyContext } from '@/contexts/anomaly-provider';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
+import { computeKpis } from '@/lib/computation/compute-kpis';
 import type { DrillState } from '@/hooks/use-drill-down';
 
 const CollectionCurveChart = dynamic(
@@ -396,36 +397,7 @@ function QuerySearchBarWithContext({
       ([name, rows]) => ({
         name,
         batchCount: rows.length,
-        stats: {
-          totalBatches: rows.length,
-          totalAccounts: rows.reduce(
-            (sum, r) => sum + (Number(r.TOTAL_ACCOUNTS) || 0),
-            0,
-          ),
-          weightedPenetrationRate:
-            rows.reduce(
-              (sum, r) => sum + (Number(r.PENETRATION_RATE) || 0),
-              0,
-            ) / (rows.length || 1),
-          collectionRate6mo:
-            rows.reduce(
-              (sum, r) => sum + (Number(r.COLLECTION_RATE_6MO) || 0),
-              0,
-            ) / (rows.length || 1),
-          collectionRate12mo:
-            rows.reduce(
-              (sum, r) => sum + (Number(r.COLLECTION_RATE_12MO) || 0),
-              0,
-            ) / (rows.length || 1),
-          totalCollected: rows.reduce(
-            (sum, r) => sum + (Number(r.TOTAL_COLLECTED) || 0),
-            0,
-          ),
-          totalPlaced: rows.reduce(
-            (sum, r) => sum + (Number(r.TOTAL_PLACED) || 0),
-            0,
-          ),
-        },
+        stats: computeKpis(rows),
       }),
     );
 
