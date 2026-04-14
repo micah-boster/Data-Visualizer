@@ -189,10 +189,11 @@ Plans:
   2. Phase 18 has a VERIFICATION.md confirming NLQ-06/07/08/09/10 with evidence
   3. REQUIREMENTS.md traceability table shows correct phase assignments and completion status for all 28 requirements
   4. Phase 19 SUMMARY.md has YAML frontmatter with requirements-completed field
-**Plans**: 1 plan
+**Plans**: 2 plans
 
 Plans:
-- [ ] 23-01-PLAN.md — Generate Phase 17/18 VERIFICATION.md files, update REQUIREMENTS.md traceability, fix Phase 19 SUMMARY frontmatter
+- [ ] 23-01-PLAN.md — Generate Phase 17 and Phase 18 VERIFICATION.md files with deep requirement evidence
+- [ ] 23-02-PLAN.md — Fix Phase 19 SUMMARY frontmatter, update REQUIREMENTS.md to 6-column traceability format
 
 ### Phase 24: Code Review & Refactoring
 **Goal**: The codebase reads like production software — clean architecture, strict types, no dead code, documented known issues
@@ -226,8 +227,8 @@ Plans:
 | 20. Cross-Partner UI | 2/2 | Complete    | 2026-04-14 | - |
 | 21. Critical Bug Fixes | 1/1 | Complete    | 2026-04-14 | - |
 | 22. UI Polish & Data Reliability | 2/2 | Complete    | 2026-04-14 | - |
-| 23. Verification & Housekeeping | v3.1 | 0/1 | Not started | - |
+| 23. Verification & Housekeeping | v3.1 | 0/2 | Not started | - |
 | 24. Code Review & Refactoring | v3.1 | 0/3 | Not started | - |
 
 ---
-*Last updated: 2026-04-12 after Phase 15 planning*
+*Last updated: 2026-04-14 after Phase 23 planning*
