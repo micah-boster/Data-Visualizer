@@ -223,7 +223,7 @@ Plans:
 | 17. Claude Query Infrastructure | 1/1 | Complete    | 2026-04-13 | - |
 | 18. Claude Query UI | 1/1 | Complete    | 2026-04-13 | - |
 | 19. Cross-Partner Computation | 1/1 | Complete    | 2026-04-13 | - |
-| 20. Cross-Partner UI | v3.0 | 0/2 | Not started | - |
+| 20. Cross-Partner UI | 1/2 | In Progress|  | - |
 | 21. Critical Bug Fixes | v3.1 | 0/1 | Not started | - |
 | 22. UI Polish & Data Reliability | v3.1 | 0/2 | Not started | - |
 | 23. Verification & Housekeeping | v3.1 | 0/1 | Not started | - |

@@ -22,25 +22,25 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 
 ## Current Position
 
-Phase: 15 of 20 (Anomaly Detection Engine)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-04-12 — v3.0 roadmap created (6 phases, 28 requirements mapped)
+Phase: 20 of 20 (Cross-Partner UI)
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-04-14 — Completed 20-01-PLAN.md (percentile columns + trajectory chart)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████████░] 97%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (v3.0)
-- Average duration: —
-- Total execution time: —
+- Total plans completed: 1 (v3.0 phase 20)
+- Average duration: 2 min
+- Total execution time: 2 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 20-cross-partner-ui | 1/2 | 2 min | 2 min |
 
 *Updated after each plan completion*
 
@@ -56,6 +56,9 @@ Progress: [░░░░░░░░░░] 0%
 - Cross-partner comparison uses percentile rank via simple-statistics quantileRank
 - NLQ uses search bar pattern (not chat) for v3.0, but infrastructure uses `useChat` with full `messages[]` array from day one — v3.5+ upgrades to threaded conversation view as a UI-only change
 - AI SDK `useChat` (client) + `streamText` (server) handle all streaming plumbing
+- Percentile columns are virtual/computed (extraColumns pattern), not added to COLUMN_CONFIGS
+- Best-in-class partner determined by highest perDollarPlacedRate
+- Default trajectory curve mode is dollarWeighted with toggle to equalWeight
 
 ### Pending Todos
 
@@ -69,6 +72,6 @@ Progress: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-12
-Stopped at: Phase 15 context gathered
-Resume file: .planning/phases/15-anomaly-detection-engine/15-CONTEXT.md
+Last session: 2026-04-14
+Stopped at: Completed 20-01-PLAN.md
+Resume file: .planning/phases/20-cross-partner-ui/20-01-SUMMARY.md

@@ -47,9 +47,9 @@
 
 ### Cross-Partner Comparison — UI
 
-- [ ] **XPC-05**: Percentile rank columns displayed at root-level partner table for key metrics, rendered as "P72" or "3 of 8" format
-- [ ] **XPC-06**: Cross-partner trajectory overlay chart at root level showing each partner's average collection curve as a single line, normalized by recovery rate %
-- [ ] **XPC-07**: "Best-in-class" reference line on the cross-partner trajectory chart representing the top-performing partner's average curve, plus a "portfolio average" line
+- [x] **XPC-05**: Percentile rank columns displayed at root-level partner table for key metrics, rendered as "P72" or "3 of 8" format
+- [x] **XPC-06**: Cross-partner trajectory overlay chart at root level showing each partner's average collection curve as a single line, normalized by recovery rate %
+- [x] **XPC-07**: "Best-in-class" reference line on the cross-partner trajectory chart representing the top-performing partner's average curve, plus a "portfolio average" line
 - [ ] **XPC-08**: Partner comparison matrix/summary view showing key metrics for all partners side-by-side (rows = metrics, columns = partners, or horizontal bar chart ranking partners on selected metric)
 
 ## Deferred to v3.5
@@ -115,9 +115,9 @@
 | XPC-02 | Phase 19 | Satisfied |
 | XPC-03 | Phase 19 | Satisfied |
 | XPC-04 | Phase 19 | Satisfied |
-| XPC-05 | Phase 20 | Pending |
-| XPC-06 | Phase 20 | Pending |
-| XPC-07 | Phase 20 | Pending |
+| XPC-05 | Phase 20 | Complete |
+| XPC-06 | Phase 20 | Complete |
+| XPC-07 | Phase 20 | Complete |
 | XPC-08 | Phase 20 | Pending |
 
 **Coverage:**
