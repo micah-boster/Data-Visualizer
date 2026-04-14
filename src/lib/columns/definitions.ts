@@ -22,6 +22,7 @@ import { getFormatter, isNumericType, computeDeviation, HEATMAP_COLUMNS } from '
 import type { DrillLevel } from '@/hooks/use-drill-down';
 import type { TrendingData, MetricNorm, PartnerAnomaly, CrossPartnerData } from '@/types/partner-stats';
 import { anomalyStatusColumn } from './anomaly-column';
+import { getPartnerName } from '@/lib/utils';
 
 /** Drill-down callbacks and trending data passed through TanStack Table meta */
 export interface TableDrillMeta {
@@ -67,7 +68,7 @@ function renderDrillableCell(
     meta.drillLevel !== 'batch'
   ) {
     const row = ctx.row.original;
-    const partner = row.PARTNER_NAME ? String(row.PARTNER_NAME) : undefined;
+    const partner = row.PARTNER_NAME ? getPartnerName(row) : undefined;
     return createElement(DrillableCell, {
       value: String(value),
       onDrill: () => meta.onDrillToBatch!(String(value), partner),

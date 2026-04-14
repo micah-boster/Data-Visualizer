@@ -12,6 +12,7 @@ import type {
 import { computeKpis } from './compute-kpis';
 import { reshapeCurves } from './reshape-curves';
 import { COLLECTION_MONTHS } from './reshape-curves';
+import { getPartnerName } from '@/lib/utils';
 
 /** Minimum batches required for a partner to appear in rankings. */
 const MIN_BATCHES_FOR_RANKING = 3;
@@ -34,7 +35,7 @@ function groupByPartner(
 ): Map<string, Record<string, unknown>[]> {
   const byPartner = new Map<string, Record<string, unknown>[]>();
   for (const row of allRows) {
-    const name = String(row.PARTNER_NAME ?? '');
+    const name = getPartnerName(row);
     if (!name) continue;
     const existing = byPartner.get(name);
     if (existing) {

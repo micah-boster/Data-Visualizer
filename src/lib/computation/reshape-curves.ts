@@ -1,4 +1,5 @@
 import type { BatchCurve, CurvePoint } from '@/types/partner-stats';
+import { getBatchName } from '@/lib/utils';
 
 /** The 20 collection month milestones tracked in Snowflake. */
 export const COLLECTION_MONTHS = [
@@ -16,7 +17,7 @@ export function reshapeCurves(
   rows: Record<string, unknown>[],
 ): BatchCurve[] {
   return rows.map((row) => {
-    const batchName = String(row.BATCH ?? '');
+    const batchName = getBatchName(row);
     const totalPlaced = Number(row.TOTAL_AMOUNT_PLACED) || 0;
 
     // BATCH_AGE_IN_MONTHS is actually days in Snowflake -- convert to months

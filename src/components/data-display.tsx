@@ -26,6 +26,7 @@ import { QuerySearchBar } from '@/components/query/query-search-bar';
 import { useAnomalyContext } from '@/contexts/anomaly-provider';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
 import { computeKpis } from '@/lib/computation/compute-kpis';
+import { getPartnerName } from '@/lib/utils';
 import type { DrillState } from '@/hooks/use-drill-down';
 
 const CollectionCurveChart = dynamic(
@@ -78,7 +79,14 @@ const RootSparkline = dynamic(
     import('@/components/charts/root-sparkline').then(
       (mod) => mod.RootSparkline,
     ),
-  { ssr: false },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-48 w-full">
+        <Skeleton className="h-full w-full rounded-lg" />
+      </div>
+    ),
+  },
 );
 
 const PartnerSparkline = dynamic(
@@ -86,7 +94,14 @@ const PartnerSparkline = dynamic(
     import('@/components/charts/partner-sparkline').then(
       (mod) => mod.PartnerSparkline,
     ),
-  { ssr: false },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-48 w-full">
+        <Skeleton className="h-full w-full rounded-lg" />
+      </div>
+    ),
+  },
 );
 
 export function DataDisplay() {
@@ -136,11 +151,17 @@ export function DataDisplay() {
     if (!data?.data) return [];
     if (drillState.level === 'partner' && drillState.partner) {
       return data.data.filter(
-        (row) => String(row.PARTNER_NAME ?? '') === drillState.partner,
+        (row) => getPartnerName(row) === drillState.partner,
       );
     }
     return data.data;
   }, [data?.data, accountData?.data, drillState.level, drillState.partner]);
+
+  // Memoize unique partner count to avoid re-creating Set on every render
+  const uniquePartnerCount = useMemo(
+    () => new Set(data?.data?.map((r) => getPartnerName(r))).size,
+    [data?.data],
+  );
 
   if (isLoading) {
     return <LoadingState />;
@@ -300,7 +321,7 @@ export function DataDisplay() {
               drillToPartner={drillToPartner}
               drillToBatch={drillToBatch}
               navigateToLevel={navigateToLevel}
-              totalRowCount={new Set(data.data.map((r) => String(r.PARTNER_NAME ?? ''))).size}
+              totalRowCount={new Set(data.data.map((r) => getPartnerName(r))).size}
               partnerStats={partnerStats}
               allData={data.data}
             />
@@ -391,7 +412,7 @@ function CrossPartnerDataTable({
       columnDefs={effectiveColumns}
       partnerRowCount={
         drillState.level === 'batch' && drillState.partner
-          ? allData.filter((r) => String(r.PARTNER_NAME ?? '') === drillState.partner).length
+          ? allData.filter((r) => getPartnerName(r) === drillState.partner).length
           : undefined
       }
       trendingData={drillState.level === 'partner' ? partnerStats?.trending ?? null : null}
@@ -421,7 +442,7 @@ function QuerySearchBarWithContext({
     // Build partner summaries from batch-level data rows
     const partnerGroups = new Map<string, Record<string, unknown>[]>();
     for (const row of allData) {
-      const name = String(row.PARTNER_NAME ?? '');
+      const name = getPartnerName(row);
       if (!name) continue;
       if (!partnerGroups.has(name)) partnerGroups.set(name, []);
       partnerGroups.get(name)!.push(row);

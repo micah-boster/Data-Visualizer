@@ -13,6 +13,7 @@ import { DrillableCell } from '@/components/navigation/drillable-cell';
 import { getCellRenderer } from '@/components/table/formatted-cell';
 import type { TableDrillMeta } from './definitions';
 import { anomalyStatusColumn } from './anomaly-column';
+import { getPartnerName } from '@/lib/utils';
 
 interface RootColumnConfig {
   key: string;
@@ -72,7 +73,7 @@ export function buildPartnerSummaryRows(
 ): Record<string, unknown>[] {
   const groups = new Map<string, Record<string, unknown>[]>();
   for (const row of batchRows) {
-    const name = String(row.PARTNER_NAME ?? '');
+    const name = getPartnerName(row);
     if (!name) continue;
     if (!groups.has(name)) groups.set(name, []);
     groups.get(name)!.push(row);

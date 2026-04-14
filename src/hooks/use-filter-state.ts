@@ -3,6 +3,7 @@
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 import type { ColumnFiltersState } from '@tanstack/react-table';
+import { getPartnerName, getBatchName } from '@/lib/utils';
 
 /**
  * Mapping from URL query param names to TanStack Table column IDs.
@@ -92,8 +93,8 @@ export function useFilterState(data?: Record<string, unknown>[]) {
             // Check if any row with the new partner has the current batch
             const batchValid = data.some(
               (row) =>
-                String(row.PARTNER_NAME ?? '') === value &&
-                String(row.BATCH ?? '') === currentBatch
+                getPartnerName(row) === value &&
+                getBatchName(row) === currentBatch
             );
             if (!batchValid) {
               params.delete('batch');

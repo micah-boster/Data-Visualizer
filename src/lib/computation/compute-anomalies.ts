@@ -8,6 +8,7 @@ import type {
 } from '@/types/partner-stats';
 import { computeNorms } from './compute-norms';
 import { getPolarity } from './metric-polarity';
+import { getPartnerName, getBatchName } from '@/lib/utils';
 
 /**
  * Curated metrics for anomaly detection.
@@ -164,11 +165,11 @@ export function computeAnomalies(
 ): AnomalyReport {
   // Sort batches by BATCH string (chronological, same as compute-trending.ts)
   const sorted = [...rows].sort((a, b) =>
-    String(a.BATCH ?? '').localeCompare(String(b.BATCH ?? '')),
+    getBatchName(a).localeCompare(getBatchName(b)),
   );
 
   const batches: BatchAnomaly[] = sorted.map((row) => {
-    const batchName = String(row.BATCH ?? '');
+    const batchName = getBatchName(row);
 
     // Evaluate each curated metric
     const flags: MetricAnomaly[] = [];
@@ -227,7 +228,7 @@ export function computeAllPartnerAnomalies(
   // Group rows by partner
   const byPartner = new Map<string, Record<string, unknown>[]>();
   for (const row of allRows) {
-    const name = String(row.PARTNER_NAME ?? '');
+    const name = getPartnerName(row);
     if (!name) continue;
     const existing = byPartner.get(name);
     if (existing) {
