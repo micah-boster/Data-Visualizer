@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useCallback, type DragEvent } from 'react';
+import { useRef, useState, useCallback, useMemo, type DragEvent } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Columns3, BookmarkCheck, Save } from 'lucide-react';
 import { toast } from 'sonner';
@@ -37,8 +37,9 @@ import { BreadcrumbTrail } from '@/components/navigation/breadcrumb-trail';
 import { ColumnPickerSidebar } from '@/components/columns/column-picker-sidebar';
 import { Button } from '@/components/ui/button';
 import type { ColumnDef } from '@tanstack/react-table';
-import type { TrendingData } from '@/types/partner-stats';
+import type { TrendingData, CrossPartnerData } from '@/types/partner-stats';
 import { useAnomalyContext } from '@/contexts/anomaly-provider';
+import { buildPercentileColumns } from '@/lib/columns/percentile-columns';
 
 interface DataTableProps {
   data: Record<string, unknown>[];
@@ -57,6 +58,8 @@ interface DataTableProps {
   partnerRowCount?: number;
   /** Trending data for partner-level batch table */
   trendingData?: TrendingData | null;
+  /** Cross-partner data for percentile rank columns (root level only) */
+  crossPartnerData?: CrossPartnerData | null;
 }
 
 export function DataTable({
@@ -70,6 +73,7 @@ export function DataTable({
   columnDefs: columnDefsOverride,
   partnerRowCount,
   trendingData,
+  crossPartnerData,
 }: DataTableProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
@@ -125,11 +129,19 @@ export function DataTable({
     (preset: string) => setActivePresetRef.current?.(preset),
   );
 
+  // Build percentile columns for root-level table
+  const percentileColumns = useMemo(
+    () => (isRoot && crossPartnerData ? buildPercentileColumns() : []),
+    [isRoot, crossPartnerData],
+  );
+
   const tableOptions: UseDataTableOptions = {
     onDrillToPartner,
     onDrillToBatch,
     drillLevel,
     columns: columnDefsOverride,
+    extraColumns: percentileColumns.length > 0 ? percentileColumns : undefined,
+    crossPartnerData: isRoot ? crossPartnerData : undefined,
     columnVisibility: columnManagement.columnVisibility,
     onColumnVisibilityChange: columnManagement.setColumnVisibility,
     columnOrder: columnManagement.columnOrder,

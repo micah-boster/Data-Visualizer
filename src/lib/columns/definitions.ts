@@ -20,7 +20,7 @@ import { TrendIndicator, InsufficientTrendIndicator } from '@/components/table/t
 import { TRENDING_METRICS } from '@/lib/computation/compute-trending';
 import { getFormatter, isNumericType, computeDeviation, HEATMAP_COLUMNS } from '@/lib/formatting';
 import type { DrillLevel } from '@/hooks/use-drill-down';
-import type { TrendingData, MetricNorm, PartnerAnomaly } from '@/types/partner-stats';
+import type { TrendingData, MetricNorm, PartnerAnomaly, CrossPartnerData } from '@/types/partner-stats';
 import { anomalyStatusColumn } from './anomaly-column';
 
 /** Drill-down callbacks and trending data passed through TanStack Table meta */
@@ -35,6 +35,8 @@ export interface TableDrillMeta {
   heatmapEnabled?: boolean;
   /** Root-level anomaly map keyed by PARTNER_NAME */
   anomalyMap?: Map<string, PartnerAnomaly>;
+  /** Cross-partner data for percentile rank columns */
+  crossPartnerData?: CrossPartnerData | null;
 }
 
 function renderDrillableCell(

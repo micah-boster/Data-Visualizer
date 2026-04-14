@@ -24,13 +24,15 @@ import { columnDefs } from '@/lib/columns/definitions';
 import type { TableDrillMeta } from '@/lib/columns/definitions';
 import { PRESETS, DEFAULT_PRESET } from '@/lib/columns/presets';
 import type { DrillLevel } from '@/hooks/use-drill-down';
-import type { TrendingData, MetricNorm, PartnerAnomaly } from '@/types/partner-stats';
+import type { TrendingData, MetricNorm, PartnerAnomaly, CrossPartnerData } from '@/types/partner-stats';
 
 export interface UseDataTableOptions {
   onDrillToPartner?: (name: string) => void;
   onDrillToBatch?: (name: string, partnerName?: string) => void;
   drillLevel?: DrillLevel;
   columns?: ColumnDef<Record<string, unknown>>[];
+  /** Extra columns to append after the standard column definitions (e.g. percentile rank columns) */
+  extraColumns?: ColumnDef<Record<string, unknown>>[];
   columnVisibility?: VisibilityState;
   onColumnVisibilityChange?: OnChangeFn<VisibilityState>;
   columnOrder?: string[];
@@ -39,6 +41,8 @@ export interface UseDataTableOptions {
   norms?: Record<string, MetricNorm> | null;
   heatmapEnabled?: boolean;
   anomalyMap?: Map<string, PartnerAnomaly>;
+  /** Cross-partner data for percentile rank column cell renderers */
+  crossPartnerData?: CrossPartnerData | null;
 }
 
 // Memoize row model factories at module level
@@ -120,10 +124,13 @@ export function useDataTable(
     right: [],
   }), []);
 
-  const columns = useMemo(
-    () => options?.columns ?? columnDefs,
-    [options?.columns],
-  );
+  const columns = useMemo(() => {
+    const base = options?.columns ?? columnDefs;
+    if (options?.extraColumns && options.extraColumns.length > 0) {
+      return [...base, ...options.extraColumns];
+    }
+    return base;
+  }, [options?.columns, options?.extraColumns]);
 
   // Reset sorting when column definitions change
   const prevColumnsRef = useRef(columns);
@@ -135,7 +142,7 @@ export function useDataTable(
   }, [columns]);
 
   const meta: TableDrillMeta | undefined = useMemo(() => {
-    if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData && !options?.norms && !options?.anomalyMap) return undefined;
+    if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData && !options?.norms && !options?.anomalyMap && !options?.crossPartnerData) return undefined;
     return {
       onDrillToPartner: options?.onDrillToPartner,
       onDrillToBatch: options?.onDrillToBatch,
@@ -144,8 +151,9 @@ export function useDataTable(
       norms: options?.norms ?? undefined,
       heatmapEnabled: options?.heatmapEnabled ?? false,
       anomalyMap: options?.anomalyMap,
+      crossPartnerData: options?.crossPartnerData ?? undefined,
     };
-  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled, options?.anomalyMap]);
+  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled, options?.anomalyMap, options?.crossPartnerData]);
 
   const stableFilters = columnFilters ?? EMPTY_FILTERS;
 
