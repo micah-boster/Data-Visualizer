@@ -44,7 +44,7 @@
 - [x] **Phase 17: Claude Query Infrastructure** — API route, AI SDK streaming, system prompt with data context, SQL safety layer (completed 2026-04-13)
 - [x] **Phase 18: Claude Query UI** — Search bar, suggested prompts, streaming narrative responses, context-aware scoping (completed 2026-04-13)
 - [x] **Phase 19: Cross-Partner Computation** — Percentile rankings, normalized trajectories, and portfolio-level anomaly flags (completed 2026-04-13)
-- [ ] **Phase 20: Cross-Partner UI** — Percentile columns, trajectory overlay chart, benchmark lines, and partner comparison matrix
+- [x] **Phase 20: Cross-Partner UI** — Percentile columns, trajectory overlay chart, benchmark lines, and partner comparison matrix (completed 2026-04-14)
 
 ### 📋 v3.1 Stabilization & Code Quality
 
@@ -223,7 +223,7 @@ Plans:
 | 17. Claude Query Infrastructure | 1/1 | Complete    | 2026-04-13 | - |
 | 18. Claude Query UI | 1/1 | Complete    | 2026-04-13 | - |
 | 19. Cross-Partner Computation | 1/1 | Complete    | 2026-04-13 | - |
-| 20. Cross-Partner UI | 1/2 | In Progress|  | - |
+| 20. Cross-Partner UI | 2/2 | Complete   | 2026-04-14 | - |
 | 21. Critical Bug Fixes | v3.1 | 0/1 | Not started | - |
 | 22. UI Polish & Data Reliability | v3.1 | 0/2 | Not started | - |
 | 23. Verification & Housekeeping | v3.1 | 0/1 | Not started | - |
