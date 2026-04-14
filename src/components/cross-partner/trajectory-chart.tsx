@@ -12,6 +12,7 @@ import {
 import { ChartContainer } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { CHART_COLORS } from '@/components/charts/curve-tooltip';
 import { COLLECTION_MONTHS } from '@/lib/computation/reshape-curves';
 import { useCrossPartnerContext } from '@/contexts/cross-partner-provider';
@@ -19,17 +20,20 @@ import type { CrossPartnerEntry, CurvePoint } from '@/types/partner-stats';
 import { TrajectoryTooltip } from './trajectory-tooltip';
 import { TrajectoryLegend } from './trajectory-legend';
 
+type CurveMode = 'dollarWeighted' | 'equalWeight';
+
 /** Pivot cross-partner curves into Recharts flat format */
 function pivotTrajectoryData(
   partners: CrossPartnerEntry[],
   portfolioAvg: CurvePoint[],
   bestInClass: { name: string; curve: CurvePoint[] } | null,
+  curveMode: CurveMode,
 ): Record<string, number | undefined>[] {
   const months = [...COLLECTION_MONTHS];
   return months.map((month) => {
     const point: Record<string, number | undefined> = { month };
     for (const p of partners) {
-      const cp = p.averageCurve.equalWeight.find((c) => c.month === month);
+      const cp = p.averageCurve[curveMode].find((c) => c.month === month);
       if (cp) point[p.partnerName] = cp.recoveryRate;
     }
     // Portfolio average reference line
@@ -48,6 +52,7 @@ export function CrossPartnerTrajectoryChart() {
   const { crossPartnerData } = useCrossPartnerContext();
   const [hiddenPartners, setHiddenPartners] = useState<Set<string>>(new Set());
   const [hoveredPartner, setHoveredPartner] = useState<string | null>(null);
+  const [curveMode, setCurveMode] = useState<CurveMode>('dollarWeighted');
 
   // Sorted partner list and color assignment (deterministic by name)
   const { sortedPartners, colorMap } = useMemo(() => {
@@ -68,18 +73,19 @@ export function CrossPartnerTrajectoryChart() {
     const best = [...crossPartnerData.rankedPartners].sort(
       (a, b) => b.perDollarPlacedRate - a.perDollarPlacedRate,
     )[0];
-    return { name: best.partnerName, curve: best.averageCurve.equalWeight };
-  }, [crossPartnerData]);
+    return { name: best.partnerName, curve: best.averageCurve[curveMode] };
+  }, [crossPartnerData, curveMode]);
 
   // Pivot data for Recharts
   const pivotedData = useMemo(() => {
     if (!crossPartnerData) return [];
     return pivotTrajectoryData(
       sortedPartners,
-      crossPartnerData.portfolioAverageCurve.equalWeight,
+      crossPartnerData.portfolioAverageCurve[curveMode],
       bestInClass,
+      curveMode,
     );
-  }, [crossPartnerData, sortedPartners, bestInClass]);
+  }, [crossPartnerData, sortedPartners, bestInClass, curveMode]);
 
   // Chart config for shadcn ChartContainer
   const chartConfig = useMemo(() => {
@@ -118,9 +124,27 @@ export function CrossPartnerTrajectoryChart() {
         <CardTitle className="text-sm font-medium text-muted-foreground">
           Collection Trajectories
         </CardTitle>
+        <div className="flex gap-1">
+          <Button
+            variant={curveMode === 'dollarWeighted' ? 'default' : 'outline'}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={curveMode === 'dollarWeighted' ? undefined : () => setCurveMode('dollarWeighted')}
+          >
+            $ Weighted
+          </Button>
+          <Button
+            variant={curveMode === 'equalWeight' ? 'default' : 'outline'}
+            size="sm"
+            className="h-7 text-xs"
+            onClick={curveMode === 'equalWeight' ? undefined : () => setCurveMode('equalWeight')}
+          >
+            Equal Weight
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-2 pt-0">
-        <ChartContainer config={chartConfig} className="h-[40vh] w-full">
+        <ChartContainer config={chartConfig} className="h-[45vh] w-full">
           <LineChart
             data={pivotedData}
             margin={{ top: 5, right: 10, bottom: 5, left: 10 }}
