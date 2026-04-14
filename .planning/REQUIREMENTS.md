@@ -17,26 +17,26 @@
 
 ### Anomaly Detection — UI
 
-- [ ] **AD-07**: Anomaly badge (colored dot / warning icon) displayed in a dedicated Status column on partner rows (root level) and batch rows (partner drill-down)
+- [x] **AD-07**: Anomaly badge (colored dot / warning icon) displayed in a dedicated Status column on partner rows (root level) and batch rows (partner drill-down)
 - [x] **AD-08**: Hovering/clicking an anomaly badge shows a popover explaining: which metrics are anomalous, actual value vs expected range, deviation magnitude (e.g., "Penetration Rate: 3.2% (expected 8.1% - 14.3%). 2.4 SD below mean.")
 - [x] **AD-09**: Collapsible anomaly summary panel at the top of root-level view showing top 5-10 flagged partners/batches sorted by severity, with one-line descriptions and click-to-drill navigation
 - [x] **AD-10**: Anomalous batches visually distinguished on collection curve charts (bold line, different color, or annotation marker)
 
 ### Claude Natural Language Query — Infrastructure
 
-- [ ] **NLQ-01**: `POST /api/query` route handler accepts a natural language question + context (current drill state, applied filters) and returns a streaming Claude response
-- [ ] **NLQ-02**: Vercel AI SDK (`ai` + `@ai-sdk/anthropic`) used for `streamText` server-side and `useChat` client-side — no custom streaming plumbing
-- [ ] **NLQ-03**: System prompt injects relevant data as JSON context (aggregated/summarized, not raw 477×61 matrix) to keep within token budget
-- [ ] **NLQ-04**: Claude constrained to only reference data present in context — if a question cannot be answered from available data, responds with an explicit "I don't have that data" message
-- [ ] **NLQ-05**: ANTHROPIC_API_KEY stored as Vercel environment variable, never exposed to client
+- [x] **NLQ-01**: `POST /api/query` route handler accepts a natural language question + context (current drill state, applied filters) and returns a streaming Claude response
+- [x] **NLQ-02**: Vercel AI SDK (`ai` + `@ai-sdk/anthropic`) used for `streamText` server-side and `useChat` client-side — no custom streaming plumbing
+- [x] **NLQ-03**: System prompt injects relevant data as JSON context (aggregated/summarized, not raw 477×61 matrix) to keep within token budget
+- [x] **NLQ-04**: Claude constrained to only reference data present in context — if a question cannot be answered from available data, responds with an explicit "I don't have that data" message
+- [x] **NLQ-05**: ANTHROPIC_API_KEY stored as Vercel environment variable, never exposed to client
 
 ### Claude Natural Language Query — UI
 
-- [ ] **NLQ-06**: Search bar input (not chat interface) where users type natural language questions about their data
-- [ ] **NLQ-07**: 3-5 suggested starter prompts displayed below the search bar, contextualized to the current drill level (root = cross-partner questions, partner = within-partner questions, batch = account-level questions)
-- [ ] **NLQ-08**: AI responses rendered as a short narrative paragraph (2-4 sentences) accompanied by specific data points referenced, with streaming display
-- [ ] **NLQ-09**: Query automatically scoped to current view context — if drilled into Affirm, questions about "the latest batch" resolve to Affirm's latest batch without user needing to specify
-- [ ] **NLQ-10**: Clear loading indicator during streaming, graceful error handling for API failures/rate limits, 30-second timeout with retry option
+- [x] **NLQ-06**: Search bar input (not chat interface) where users type natural language questions about their data
+- [x] **NLQ-07**: 3-5 suggested starter prompts displayed below the search bar, contextualized to the current drill level (root = cross-partner questions, partner = within-partner questions, batch = account-level questions)
+- [x] **NLQ-08**: AI responses rendered as a short narrative paragraph (2-4 sentences) accompanied by specific data points referenced, with streaming display
+- [x] **NLQ-09**: Query automatically scoped to current view context — if drilled into Affirm, questions about "the latest batch" resolve to Affirm's latest batch without user needing to specify
+- [x] **NLQ-10**: Clear loading indicator during streaming, graceful error handling for API failures/rate limits, 30-second timeout with retry option
 
 ### Cross-Partner Comparison — Foundation
 
@@ -89,46 +89,47 @@
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| AD-01 | Phase 15 | Satisfied |
-| AD-02 | Phase 15 | Satisfied |
-| AD-03 | Phase 15 | Satisfied |
-| AD-04 | Phase 15 | Satisfied |
-| AD-05 | Phase 15 | Satisfied |
-| AD-06 | Phase 15 | Satisfied |
-| AD-07 | Phase 16 → 21 | Pending |
-| AD-08 | Phase 16 | Satisfied |
-| AD-09 | Phase 16 | Satisfied |
-| AD-10 | Phase 16 | Satisfied |
-| NLQ-01 | Phase 17 → 23 | Pending |
-| NLQ-02 | Phase 17 → 23 | Pending |
-| NLQ-03 | Phase 17 → 21 | Pending |
-| NLQ-04 | Phase 17 → 21 | Pending |
-| NLQ-05 | Phase 17 → 23 | Pending |
-| NLQ-06 | Phase 18 → 23 | Pending |
-| NLQ-07 | Phase 18 → 23 | Pending |
-| NLQ-08 | Phase 18 → 23 | Pending |
-| NLQ-09 | Phase 18 → 21 | Pending |
-| NLQ-10 | Phase 18 → 23 | Pending |
-| XPC-01 | Phase 19 | Satisfied |
-| XPC-02 | Phase 19 | Satisfied |
-| XPC-03 | Phase 19 | Satisfied |
-| XPC-04 | Phase 19 | Satisfied |
-| XPC-05 | Phase 20 | Complete |
-| XPC-06 | Phase 20 | Complete |
-| XPC-07 | Phase 20 | Complete |
-| XPC-08 | Phase 20 | Complete |
+| Requirement | Description | Phase(s) | Status | Last Verified | Notes |
+|-------------|-------------|----------|--------|---------------|-------|
+| AD-01 | Z-score anomaly computation per batch against partner norms | Phase 15 | Verified | 2026-04-12 | 15-VERIFICATION.md: z-scores via computeNorms() baseline |
+| AD-02 | Anomaly detection respects metric polarity | Phase 15 | Verified | 2026-04-12 | 15-VERIFICATION.md: getPolarity() in evaluateMetric() |
+| AD-03 | Batch flagged when 2+ metrics exceed 2 SD | Phase 15 | Verified | 2026-04-12 | 15-VERIFICATION.md: MIN_FLAGS=2, Z_THRESHOLD=2 |
+| AD-04 | Partner flagged at root based on latest batch | Phase 15 | Verified | 2026-04-12 | 15-VERIFICATION.md: PartnerAnomaly.isFlagged derives from latestBatch |
+| AD-05 | Algorithm documented in ANOMALY-ALGORITHM.md | Phase 15 | Verified | 2026-04-12 | 15-VERIFICATION.md: docs/ANOMALY-ALGORITHM.md, 134 lines |
+| AD-06 | Severity score: count x avg deviation x log(totalPlaced) | Phase 15 | Verified | 2026-04-12 | 15-VERIFICATION.md: severity formula in batch evaluation |
+| AD-07 | Anomaly badge in Status column at all drill levels | Phase 16, 21 | Verified | 2026-04-14 | 16-VERIFICATION.md: anomaly-column.tsx + anomaly-badge.tsx; 21-VERIFICATION.md: root-level column added |
+| AD-08 | Popover with metrics, values, ranges, deviations | Phase 16 | Verified | 2026-04-12 | 16-VERIFICATION.md: anomaly-detail.tsx popover content |
+| AD-09 | Collapsible summary panel with top flagged, click-to-drill | Phase 16 | Verified | 2026-04-12 | 16-VERIFICATION.md: anomaly-summary-panel.tsx, top 5 by severity |
+| AD-10 | Anomalous batches visually distinct on curve charts | Phase 16 | Verified | 2026-04-12 | 16-VERIFICATION.md: red/amber stroke, 3px width, dimmed non-flagged |
+| NLQ-01 | POST /api/query route with streaming response | Phase 17 | Verified | 2026-04-14 | 17-VERIFICATION.md: route.ts Zod validation + streamText + toUIMessageStreamResponse |
+| NLQ-02 | AI SDK streamText (server) + useChat (client) | Phase 17 | Verified | 2026-04-14 | 17-VERIFICATION.md: ai@6.0.158, @ai-sdk/anthropic@3.0.69, @ai-sdk/react@3.0.160 |
+| NLQ-03 | System prompt injects summarized data context | Phase 17, 21 | Verified | 2026-04-14 | 17-VERIFICATION.md: context-builder.ts drill-level summaries; 21-VERIFICATION.md: column mapping fix |
+| NLQ-04 | Claude constrained to available data context | Phase 17, 21 | Verified | 2026-04-14 | 17-VERIFICATION.md: Critical Rule #1 in system prompt; 21-VERIFICATION.md: real data in context |
+| NLQ-05 | ANTHROPIC_API_KEY server-only | Phase 17 | Verified | 2026-04-14 | 17-VERIFICATION.md: only in system-prompt.ts, zero client references |
+| NLQ-06 | Search bar input (not chat interface) | Phase 18 | Verified | 2026-04-14 | 18-VERIFICATION.md: input element, setMessages([]) per query |
+| NLQ-07 | 3-5 suggested prompts, drill-level-contextualized | Phase 18 | Verified | 2026-04-14 | 18-VERIFICATION.md: use-suggested-prompts.ts, 4 prompts per level |
+| NLQ-08 | Streaming narrative paragraph with data points | Phase 18 | Verified | 2026-04-14 | 18-VERIFICATION.md: query-response.tsx, status-driven rendering |
+| NLQ-09 | Query scoped to current drill context | Phase 18, 21 | Verified | 2026-04-14 | 18-VERIFICATION.md: drillState in transport body; 21-VERIFICATION.md: computeKpis fix |
+| NLQ-10 | Loading indicator, error handling, 30s timeout + retry | Phase 18 | Verified | 2026-04-14 | 18-VERIFICATION.md: skeleton, AlertCircle, setTimeout 30s, RefreshCw retry |
+| XPC-01 | Per-partner aggregate metrics for ALL partners | Phase 19 | Verified | 2026-04-13 | 19-VERIFICATION.md: computeCrossPartnerData, useAllPartnerStats hook |
+| XPC-02 | Percentile rank via simple-statistics quantileRank | Phase 19 | Verified | 2026-04-13 | 19-VERIFICATION.md: computePercentileRanks on 5 metrics |
+| XPC-03 | Average collection curve per partner | Phase 19 | Verified | 2026-04-13 | 19-VERIFICATION.md: buildAverageCurve, equal-weight + dollar-weighted |
+| XPC-04 | Portfolio outlier flags below 10th percentile | Phase 19 | Verified | 2026-04-13 | 19-VERIFICATION.md: detectPercentileOutliers, OUTLIER_PERCENTILE=0.10 |
+| XPC-05 | Percentile rank columns at root-level table | Phase 20 | Verified | 2026-04-14 | 20-VERIFICATION.md: PercentileCell "P{N} ({rank}/{total})", 4 columns |
+| XPC-06 | Cross-partner trajectory overlay chart | Phase 20 | Verified | 2026-04-14 | 20-VERIFICATION.md: CrossPartnerTrajectoryChart, one line per partner |
+| XPC-07 | Best-in-class + portfolio average reference lines | Phase 20 | Verified | 2026-04-14 | 20-VERIFICATION.md: __bestInClass__ black dashed, __portfolioAvg__ gray dashed |
+| XPC-08 | Partner comparison matrix (heatmap, bar, table) | Phase 20 | Verified | 2026-04-14 | 20-VERIFICATION.md: PartnerComparisonMatrix, 3 view modes + orientation toggle |
 
 **Coverage:**
 - v3 requirements: 28 total
-- Satisfied: 14/28 (AD-01-06, AD-08-10, XPC-01-04)
-- Pending (bug fix): 4/28 (NLQ-03/04/09, AD-07 → Phase 21)
-- Pending (not started): 4/28 (XPC-05-08 → Phase 20)
-- Pending (verification only): 6/28 (NLQ-01/02/05/06/07/08/10 → Phase 23)
+- Verified: 28/28
+- Partial: 0/28
+- Pending: 0/28
 - Mapped to phases: 28/28
 - Unmapped: 0
 
+**Note:** All requirements verified against actual source code with evidence in VERIFICATION.md files. Requirements NLQ-01 through NLQ-10 depend on ANTHROPIC_API_KEY for live AI responses — the infrastructure is verified, but live end-to-end testing requires the API key configured in the deployment environment. Snowflake-dependent data loading (static cache mode) is the current operational mode; live Snowflake connection pending credential provisioning on Vercel.
+
 ---
 *Requirements defined: 2026-04-12*
-*Last updated: 2026-04-12 after roadmap creation*
+*Last updated: 2026-04-14 after Phase 23 verification housekeeping*
