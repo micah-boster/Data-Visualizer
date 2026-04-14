@@ -131,11 +131,11 @@ Plans:
   2. A cross-partner trajectory overlay chart at root level shows each partner's average collection curve normalized by recovery rate %
   3. Best-in-class and portfolio average reference lines appear on the trajectory chart for benchmarking
   4. A partner comparison matrix/summary view shows key metrics for all partners side-by-side with visual ranking
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 20-01: Percentile rank columns in root table and cross-partner trajectory overlay chart
-- [ ] 20-02: Best-in-class/portfolio-average reference lines and partner comparison matrix view
+- [ ] 20-01-PLAN.md — Percentile rank columns in root table, cross-partner trajectory overlay chart with reference lines
+- [ ] 20-02-PLAN.md — Partner comparison matrix with heatmap, bar ranking, and plain table view modes
 
 ## Progress
 
