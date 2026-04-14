@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-12)
 
 ## Current Position
 
-Phase: 20 of 20 (Cross-Partner UI)
-Plan: 2 of 2 in current phase
+Phase: 21 of 24 (Critical Bug Fixes)
+Plan: 1 of 1 in current phase
 Status: Phase Complete
-Last activity: 2026-04-14 — Completed 20-02-PLAN.md (partner comparison matrix)
+Last activity: 2026-04-14 — Completed 21-01-PLAN.md (KPI context fix + anomaly column)
 
-Progress: [██████████] 100%
+Progress: [████████░░] 87%
 
 ## Performance Metrics
 
@@ -76,5 +76,5 @@ Progress: [██████████] 100%
 ## Session Continuity
 
 Last session: 2026-04-14
-Stopped at: Completed 20-02-PLAN.md — Phase 20 complete, v3.0 milestone complete
-Resume file: .planning/phases/20-cross-partner-ui/20-02-SUMMARY.md
+Stopped at: Completed 21-01-PLAN.md — Phase 21 complete (critical bug fixes)
+Resume file: .planning/phases/21-critical-bug-fixes/21-01-SUMMARY.md

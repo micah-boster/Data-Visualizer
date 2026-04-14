@@ -50,7 +50,7 @@
 
 **Milestone Goal:** v3.0 features are bug-free, polished, verified, and the codebase is production-grade with a comprehensive known-issues list.
 
-- [ ] **Phase 21: Critical Bug Fixes** — Fix all-zero Claude context (wrong Snowflake column names) and root-level anomaly badge gap
+- [x] **Phase 21: Critical Bug Fixes** — Fix all-zero Claude context (wrong Snowflake column names) and root-level anomaly badge gap (completed 2026-04-14)
 - [ ] **Phase 22: UI Polish & Data Reliability** — User-reported chart/UI issues and cached data loading fixes
 - [ ] **Phase 23: Verification & Housekeeping** — Phase 17/18 VERIFICATION.md, REQUIREMENTS.md traceability update, Phase 19 SUMMARY fix
 - [ ] **Phase 24: Code Review & Refactoring** — Full architecture review, type safety audit, performance pass, comprehensive known-issues list
@@ -224,7 +224,7 @@ Plans:
 | 18. Claude Query UI | 1/1 | Complete    | 2026-04-13 | - |
 | 19. Cross-Partner Computation | 1/1 | Complete    | 2026-04-13 | - |
 | 20. Cross-Partner UI | 2/2 | Complete    | 2026-04-14 | - |
-| 21. Critical Bug Fixes | v3.1 | 0/1 | Not started | - |
+| 21. Critical Bug Fixes | 1/1 | Complete   | 2026-04-14 | - |
 | 22. UI Polish & Data Reliability | v3.1 | 0/2 | Not started | - |
 | 23. Verification & Housekeeping | v3.1 | 0/1 | Not started | - |
 | 24. Code Review & Refactoring | v3.1 | 0/3 | Not started | - |
