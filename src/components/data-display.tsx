@@ -41,6 +41,36 @@ const CollectionCurveChart = dynamic(
   },
 );
 
+const CrossPartnerTrajectoryChart = dynamic(
+  () =>
+    import('@/components/cross-partner/trajectory-chart').then(
+      (mod) => mod.CrossPartnerTrajectoryChart,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[40vh] w-full">
+        <Skeleton className="h-full w-full rounded-lg" />
+      </div>
+    ),
+  },
+);
+
+const PartnerComparisonMatrix = dynamic(
+  () =>
+    import('@/components/cross-partner/comparison-matrix').then(
+      (mod) => mod.PartnerComparisonMatrix,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-48 w-full">
+        <Skeleton className="h-full w-full rounded-lg" />
+      </div>
+    ),
+  },
+);
+
 export function DataDisplay() {
   const { data, isLoading, isError, error, refetch, isFetching, dataUpdatedAt } = useData();
   const { state: drillState, drillToPartner, drillToBatch, navigateToLevel } =
@@ -120,6 +150,20 @@ export function DataDisplay() {
         <AnomalySummaryPanel onDrillToPartner={drillToPartner} />
       )}
 
+      {/* Cross-partner trajectory chart at root level */}
+      {drillState.level === 'root' && (
+        <div className="shrink-0">
+          <CrossPartnerTrajectoryChart />
+        </div>
+      )}
+
+      {/* Partner comparison matrix at root level */}
+      {drillState.level === 'root' && (
+        <div className="shrink-0">
+          <PartnerComparisonMatrix />
+        </div>
+      )}
+
       {/* Schema warnings */}
       {hasSchemaWarnings && (
         <Alert className="relative shrink-0">
@@ -188,22 +232,16 @@ export function DataDisplay() {
           {drillState.level === 'batch' && isAccountLoading ? (
             <LoadingState />
           ) : (
-            <DataTable
-              key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
-              data={tableData}
-              isFetching={drillState.level === 'batch' ? false : isFetching}
+            <CrossPartnerDataTable
               drillState={drillState}
-              onDrillToPartner={drillToPartner}
-              onDrillToBatch={drillToBatch}
-              onNavigateToLevel={navigateToLevel}
+              tableData={tableData}
+              isFetching={isFetching}
+              drillToPartner={drillToPartner}
+              drillToBatch={drillToBatch}
+              navigateToLevel={navigateToLevel}
               totalRowCount={data.data.length}
-              columnDefs={drillState.level === 'batch' ? accountColumnDefs : undefined}
-              partnerRowCount={
-                drillState.level === 'batch' && drillState.partner
-                  ? data.data.filter((r) => String(r.PARTNER_NAME ?? '') === drillState.partner).length
-                  : undefined
-              }
-              trendingData={drillState.level === 'partner' ? partnerStats?.trending ?? null : null}
+              partnerStats={partnerStats}
+              allData={data.data}
             />
           )}
         </div>
@@ -230,6 +268,55 @@ function EnrichedAnomalyProvider({
     <AnomalyProvider allRows={allRows} crossPartnerData={crossPartnerData}>
       {children}
     </AnomalyProvider>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CrossPartnerDataTable — reads cross-partner context and passes to DataTable
+// ---------------------------------------------------------------------------
+
+function CrossPartnerDataTable({
+  drillState,
+  tableData,
+  isFetching,
+  drillToPartner,
+  drillToBatch,
+  navigateToLevel,
+  totalRowCount,
+  partnerStats,
+  allData,
+}: {
+  drillState: DrillState;
+  tableData: Record<string, unknown>[];
+  isFetching: boolean;
+  drillToPartner: (name: string) => void;
+  drillToBatch: (name: string, partnerName?: string) => void;
+  navigateToLevel: (level: import('@/hooks/use-drill-down').DrillLevel) => void;
+  totalRowCount: number;
+  partnerStats: ReturnType<typeof usePartnerStats>;
+  allData: Record<string, unknown>[];
+}) {
+  const { crossPartnerData } = useCrossPartnerContext();
+
+  return (
+    <DataTable
+      key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
+      data={tableData}
+      isFetching={drillState.level === 'batch' ? false : isFetching}
+      drillState={drillState}
+      onDrillToPartner={drillToPartner}
+      onDrillToBatch={drillToBatch}
+      onNavigateToLevel={navigateToLevel}
+      totalRowCount={totalRowCount}
+      columnDefs={drillState.level === 'batch' ? accountColumnDefs : undefined}
+      partnerRowCount={
+        drillState.level === 'batch' && drillState.partner
+          ? allData.filter((r) => String(r.PARTNER_NAME ?? '') === drillState.partner).length
+          : undefined
+      }
+      trendingData={drillState.level === 'partner' ? partnerStats?.trending ?? null : null}
+      crossPartnerData={drillState.level === 'root' ? crossPartnerData : undefined}
+    />
   );
 }
 

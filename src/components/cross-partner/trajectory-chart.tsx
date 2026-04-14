@@ -1,0 +1,220 @@
+'use client';
+
+import { useMemo, useState, useCallback } from 'react';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
+import type { ChartConfig } from '@/components/ui/chart';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CHART_COLORS } from '@/components/charts/curve-tooltip';
+import { COLLECTION_MONTHS } from '@/lib/computation/reshape-curves';
+import { useCrossPartnerContext } from '@/contexts/cross-partner-provider';
+import type { CrossPartnerEntry, CurvePoint } from '@/types/partner-stats';
+import { TrajectoryTooltip } from './trajectory-tooltip';
+import { TrajectoryLegend } from './trajectory-legend';
+
+/** Pivot cross-partner curves into Recharts flat format */
+function pivotTrajectoryData(
+  partners: CrossPartnerEntry[],
+  portfolioAvg: CurvePoint[],
+  bestInClass: { name: string; curve: CurvePoint[] } | null,
+): Record<string, number | undefined>[] {
+  const months = [...COLLECTION_MONTHS];
+  return months.map((month) => {
+    const point: Record<string, number | undefined> = { month };
+    for (const p of partners) {
+      const cp = p.averageCurve.equalWeight.find((c) => c.month === month);
+      if (cp) point[p.partnerName] = cp.recoveryRate;
+    }
+    // Portfolio average reference line
+    const avgPt = portfolioAvg.find((c) => c.month === month);
+    if (avgPt) point.__portfolioAvg__ = avgPt.recoveryRate;
+    // Best-in-class reference line
+    if (bestInClass) {
+      const bestPt = bestInClass.curve.find((c) => c.month === month);
+      if (bestPt) point.__bestInClass__ = bestPt.recoveryRate;
+    }
+    return point;
+  });
+}
+
+export function CrossPartnerTrajectoryChart() {
+  const { crossPartnerData } = useCrossPartnerContext();
+  const [hiddenPartners, setHiddenPartners] = useState<Set<string>>(new Set());
+  const [hoveredPartner, setHoveredPartner] = useState<string | null>(null);
+
+  // Sorted partner list and color assignment (deterministic by name)
+  const { sortedPartners, colorMap } = useMemo(() => {
+    if (!crossPartnerData) return { sortedPartners: [], colorMap: new Map<string, string>() };
+    const sorted = [...crossPartnerData.rankedPartners].sort((a, b) =>
+      a.partnerName.localeCompare(b.partnerName),
+    );
+    const cMap = new Map<string, string>();
+    sorted.forEach((p, i) => {
+      cMap.set(p.partnerName, CHART_COLORS[i % CHART_COLORS.length]);
+    });
+    return { sortedPartners: sorted, colorMap: cMap };
+  }, [crossPartnerData]);
+
+  // Determine best-in-class partner (highest perDollarPlacedRate)
+  const bestInClass = useMemo(() => {
+    if (!crossPartnerData || crossPartnerData.rankedPartners.length === 0) return null;
+    const best = [...crossPartnerData.rankedPartners].sort(
+      (a, b) => b.perDollarPlacedRate - a.perDollarPlacedRate,
+    )[0];
+    return { name: best.partnerName, curve: best.averageCurve.equalWeight };
+  }, [crossPartnerData]);
+
+  // Pivot data for Recharts
+  const pivotedData = useMemo(() => {
+    if (!crossPartnerData) return [];
+    return pivotTrajectoryData(
+      sortedPartners,
+      crossPartnerData.portfolioAverageCurve.equalWeight,
+      bestInClass,
+    );
+  }, [crossPartnerData, sortedPartners, bestInClass]);
+
+  // Chart config for shadcn ChartContainer
+  const chartConfig = useMemo(() => {
+    const cfg: ChartConfig = {};
+    sortedPartners.forEach((p) => {
+      cfg[p.partnerName] = {
+        label: p.partnerName,
+        color: colorMap.get(p.partnerName) ?? 'var(--muted-foreground)',
+      };
+    });
+    cfg.__portfolioAvg__ = { label: 'Portfolio Avg', color: 'var(--muted-foreground)' };
+    if (bestInClass) {
+      cfg.__bestInClass__ = { label: `Best-in-class (${bestInClass.name})`, color: 'var(--foreground)' };
+    }
+    return cfg;
+  }, [sortedPartners, colorMap, bestInClass]);
+
+  const togglePartner = useCallback((name: string) => {
+    setHiddenPartners((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }, []);
+
+  if (!crossPartnerData || crossPartnerData.rankedPartners.length < 2) {
+    return null;
+  }
+
+  const partnerNames = sortedPartners.map((p) => p.partnerName);
+
+  return (
+    <Card className="shrink-0">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          Collection Trajectories
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2 pt-0">
+        <ChartContainer config={chartConfig} className="h-[40vh] w-full">
+          <LineChart
+            data={pivotedData}
+            margin={{ top: 5, right: 10, bottom: 5, left: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <XAxis
+              type="number"
+              dataKey="month"
+              ticks={[...COLLECTION_MONTHS]}
+              domain={[1, 'dataMax']}
+              tickFormatter={(m: number) => `${m}`}
+              className="text-[10px]"
+            />
+            <YAxis
+              tickFormatter={(v: number) => `${v}%`}
+              width={45}
+              label={{
+                value: 'Recovery Rate %',
+                angle: -90,
+                position: 'insideLeft',
+                offset: 5,
+                className: 'fill-muted-foreground text-[11px]',
+              }}
+            />
+            <Tooltip
+              content={
+                <TrajectoryTooltip
+                  colorMap={colorMap}
+                  hoveredPartner={hoveredPartner}
+                />
+              }
+            />
+
+            {/* Partner lines */}
+            {sortedPartners.map((p) => {
+              const isHidden = hiddenPartners.has(p.partnerName);
+              const isHovered = hoveredPartner === p.partnerName;
+              const isDimmed = hoveredPartner !== null && !isHovered;
+              return (
+                <Line
+                  key={p.partnerName}
+                  dataKey={p.partnerName}
+                  type="monotone"
+                  stroke={colorMap.get(p.partnerName)}
+                  strokeWidth={isHovered ? 3 : 2}
+                  strokeOpacity={isDimmed ? 0.15 : 1}
+                  dot={false}
+                  activeDot={{ r: 4, cursor: 'pointer' }}
+                  hide={isHidden}
+                  connectNulls={false}
+                  isAnimationActive={true}
+                  animationDuration={800}
+                  onMouseEnter={() => setHoveredPartner(p.partnerName)}
+                  onMouseLeave={() => setHoveredPartner(null)}
+                />
+              );
+            })}
+
+            {/* Portfolio average reference line */}
+            <Line
+              dataKey="__portfolioAvg__"
+              stroke="var(--muted-foreground)"
+              strokeDasharray="8 4"
+              strokeWidth={2}
+              dot={false}
+              connectNulls={false}
+              isAnimationActive={true}
+            />
+
+            {/* Best-in-class reference line */}
+            {bestInClass && (
+              <Line
+                dataKey="__bestInClass__"
+                stroke="var(--foreground)"
+                strokeDasharray="5 5"
+                strokeWidth={2}
+                dot={false}
+                connectNulls={false}
+                isAnimationActive={true}
+              />
+            )}
+          </LineChart>
+        </ChartContainer>
+        <p className="text-center text-[11px] text-muted-foreground -mt-1">
+          Months Since Placement
+        </p>
+        <TrajectoryLegend
+          partners={partnerNames}
+          colorMap={colorMap}
+          hiddenPartners={hiddenPartners}
+          bestPartnerName={bestInClass?.name ?? null}
+          onTogglePartner={togglePartner}
+        />
+      </CardContent>
+    </Card>
+  );
+}
