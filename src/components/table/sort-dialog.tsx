@@ -18,10 +18,18 @@ import {
 interface SortDialogProps {
   sorting: SortingState;
   onSortingChange: (sorting: SortingState) => void;
+  /** Controlled open state (optional — defaults to internal state) */
+  open?: boolean;
+  /** Controlled open change handler */
+  onOpenChange?: (open: boolean) => void;
+  /** Hide the built-in trigger button when used from toolbar */
+  hideTrigger?: boolean;
 }
 
-export function SortDialog({ sorting, onSortingChange }: SortDialogProps) {
-  const [open, setOpen] = useState(false);
+export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onOpenChange: controlledOnOpenChange, hideTrigger }: SortDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const [draft, setDraft] = useState<SortingState>([]);
 
   const handleOpen = useCallback((isOpen: boolean) => {
@@ -82,19 +90,21 @@ export function SortDialog({ sorting, onSortingChange }: SortDialogProps) {
 
   return (
     <Sheet open={open} onOpenChange={handleOpen}>
-      <SheetTrigger
-        render={
-          <Button variant="outline" size="sm">
-            <ArrowUpDown className="mr-1.5 h-3.5 w-3.5" />
-            Sort
-            {sorting.length > 1 && (
-              <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-                {sorting.length}
-              </span>
-            )}
-          </Button>
-        }
-      />
+      {!hideTrigger && (
+        <SheetTrigger
+          render={
+            <Button variant="outline" size="sm">
+              <ArrowUpDown className="mr-1.5 h-3.5 w-3.5" />
+              Sort
+              {sorting.length > 1 && (
+                <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                  {sorting.length}
+                </span>
+              )}
+            </Button>
+          }
+        />
+      )}
       <SheetContent side="right">
         <SheetHeader>
           <SheetTitle>Sort Rules</SheetTitle>

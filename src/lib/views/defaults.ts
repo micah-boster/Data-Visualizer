@@ -71,6 +71,9 @@ export function getDefaultViews(): SavedView[] {
         columnFilters: {},
         dimensionFilters: {},
         columnSizing: {},
+        chartsExpanded: true,
+        comparisonVisible: false,
+        activePreset: 'finance',
       },
     },
     {
@@ -117,6 +120,9 @@ export function getDefaultViews(): SavedView[] {
         columnFilters: {},
         dimensionFilters: {},
         columnSizing: {},
+        chartsExpanded: false,
+        comparisonVisible: false,
+        activePreset: 'outreach',
       },
     },
     {
@@ -151,6 +157,9 @@ export function getDefaultViews(): SavedView[] {
         columnFilters: {},
         dimensionFilters: {},
         columnSizing: {},
+        chartsExpanded: false,
+        comparisonVisible: false,
+        activePreset: 'finance',
       },
     },
   ];

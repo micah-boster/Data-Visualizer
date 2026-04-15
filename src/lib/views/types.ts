@@ -27,6 +27,12 @@ export interface ViewSnapshot {
   dimensionFilters: Record<string, string>;
   /** Column width overrides from manual resizing */
   columnSizing: ColumnSizingState;
+  /** Whether charts section is expanded (undefined = use default) */
+  chartsExpanded?: boolean;
+  /** Whether partner comparison matrix is visible (root level) */
+  comparisonVisible?: boolean;
+  /** Active column preset key (e.g. 'finance', 'outreach', 'all') */
+  activePreset?: string;
 }
 
 /** A named, persisted view configuration. */

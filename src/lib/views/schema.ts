@@ -21,6 +21,9 @@ export const viewSnapshotSchema = z.object({
   columnFilters: z.record(z.string(), z.unknown()),
   dimensionFilters: z.record(z.string(), z.string()),
   columnSizing: z.record(z.string(), z.number()).optional().default({}),
+  chartsExpanded: z.boolean().optional(),
+  comparisonVisible: z.boolean().optional(),
+  activePreset: z.string().optional(),
 });
 
 /** Validates a single SavedView entry. */

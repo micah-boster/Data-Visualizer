@@ -1,8 +1,7 @@
 'use client';
 
-import { useRef, useState, useCallback, useMemo, type DragEvent } from 'react';
+import { useRef, useState, useCallback, useMemo, useEffect, type DragEvent } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Columns3, BookmarkCheck, Save } from 'lucide-react';
 import { toast } from 'sonner';
 /** Move item from oldIndex to newIndex in array (immutable) */
 function arrayMove<T>(arr: T[], from: number, to: number): T[] {
@@ -13,53 +12,61 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
 }
 import { useDataTable } from '@/lib/table/hooks';
 import type { UseDataTableOptions } from '@/lib/table/hooks';
-import { useFilterState } from '@/hooks/use-filter-state';
 import { useColumnManagement } from '@/hooks/use-column-management';
 import { useColumnFilters } from '@/hooks/use-column-filters';
-import { useSavedViews } from '@/hooks/use-saved-views';
 import type { SavedView, ViewSnapshot } from '@/lib/views/types';
-import { ViewsSidebar } from '@/components/views/views-sidebar';
-import { SaveViewInput } from '@/components/views/save-view-input';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import { usePartnerNorms } from '@/contexts/partner-norms';
-import { ColumnPresetTabs } from './column-preset-tabs';
-import { HeatmapToggle } from './heatmap-toggle';
+import { UnifiedToolbar } from '@/components/toolbar/unified-toolbar';
 import { TableHeader } from './table-header';
 import { TableBody } from './table-body';
 import { TableFooter } from './table-footer';
-import { SortDialog } from './sort-dialog';
-import { ExportButton } from './export-button';
-import { FilterBar } from '@/components/filters/filter-bar';
-import { FilterChips } from '@/components/filters/filter-chips';
 import { FilterEmptyState } from '@/components/filters/filter-empty-state';
-import { BreadcrumbTrail } from '@/components/navigation/breadcrumb-trail';
 import { ColumnPickerSidebar } from '@/components/columns/column-picker-sidebar';
-import { Button } from '@/components/ui/button';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
 import type { TrendingData, CrossPartnerData } from '@/types/partner-stats';
 import { useAnomalyContext } from '@/contexts/anomaly-provider';
 import { buildPercentileColumns } from '@/lib/columns/percentile-columns';
+import type { ActiveFilter } from '@/hooks/use-filter-state';
 
 interface DataTableProps {
   data: Record<string, unknown>[];
   isFetching?: boolean;
-  /** Drill-down state from useDrillDown */
   drillState?: DrillState;
-  /** Drill-down callbacks */
   onDrillToPartner?: (name: string) => void;
   onDrillToBatch?: (name: string, partnerName?: string) => void;
   onNavigateToLevel?: (level: DrillLevel) => void;
-  /** Total row count at root level (for breadcrumb when drilled in) */
   totalRowCount?: number;
-  /** Override column definitions (for account-level view) */
   columnDefs?: ColumnDef<Record<string, unknown>>[];
-  /** Row count for the partner level when at batch level (for breadcrumb) */
   partnerRowCount?: number;
-  /** Trending data for partner-level batch table */
   trendingData?: TrendingData | null;
-  /** Cross-partner data for percentile rank columns (root level only) */
   crossPartnerData?: CrossPartnerData | null;
+  // Lifted state from parent
+  dimensionFilters: ColumnFiltersState;
+  setFilter: (param: string, value: string | null) => void;
+  clearAllDimension: () => void;
+  activeFilters: ActiveFilter[];
+  searchParams: URLSearchParams;
+  views: SavedView[];
+  onLoadView: (view: SavedView) => void;
+  onDeleteView: (id: string) => void;
+  onSaveView: (name: string) => void;
+  onReplaceView: (name: string) => void;
+  hasViewWithName: (name: string) => boolean;
+  restoreDefaults: () => void;
+  chartsExpanded: boolean;
+  onToggleCharts: () => void;
+  comparisonVisible: boolean;
+  onOpenQuery: () => void;
+  partnerOptions: string[];
+  typeOptions: string[];
+  batchOptions: string[];
+  selectedPartner: string | null;
+  selectedType: string | null;
+  selectedBatch: string | null;
+  snapshotRef: React.MutableRefObject<(() => ViewSnapshot) | null>;
+  loadViewRef: React.MutableRefObject<((view: SavedView) => void) | null>;
 }
 
 export function DataTable({
@@ -74,26 +81,36 @@ export function DataTable({
   partnerRowCount,
   trendingData,
   crossPartnerData,
+  // Lifted state
+  dimensionFilters,
+  setFilter,
+  clearAllDimension,
+  activeFilters,
+  searchParams,
+  views,
+  onLoadView,
+  onDeleteView,
+  onSaveView,
+  onReplaceView,
+  hasViewWithName,
+  restoreDefaults,
+  chartsExpanded,
+  onToggleCharts,
+  comparisonVisible,
+  onOpenQuery,
+  partnerOptions,
+  typeOptions,
+  batchOptions,
+  selectedPartner,
+  selectedType,
+  selectedBatch,
+  snapshotRef,
+  loadViewRef,
 }: DataTableProps) {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [columnPickerOpen, setColumnPickerOpen] = useState(false);
-  const [viewsSidebarOpen, setViewsSidebarOpen] = useState(false);
-  const [saveInputOpen, setSaveInputOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-
-  const { columnFilters: dimensionFilters, setFilter, clearAll: clearAllDimension, activeFilters, searchParams } =
-    useFilterState(data);
-
-  const {
-    views,
-    saveView,
-    deleteView,
-    restoreView,
-    hasViewWithName,
-    replaceView,
-    restoreDefaults,
-  } = useSavedViews();
 
   const {
     filterState: columnFilterState,
@@ -123,7 +140,6 @@ export function DataTable({
   const { partnerAnomalies } = useAnomalyContext();
 
   // Hoist setActivePreset reference for the column management hook
-  // We need to create a stable reference that can be passed before table init
   const setActivePresetRef = useRef<((preset: string) => void) | undefined>(undefined);
   const columnManagement = useColumnManagement(
     (preset: string) => setActivePresetRef.current?.(preset),
@@ -158,82 +174,11 @@ export function DataTable({
   // Wire up the ref so columnManagement can call setActivePreset
   setActivePresetRef.current = setActivePreset;
 
-  // When a preset tab is clicked, also update the column management visibility
   const handlePresetChange = (preset: string) => {
     setActivePreset(preset);
-    // setActivePreset internally calls setColumnVisibility with PRESETS[preset]
-    // which is wired to columnManagement.setColumnVisibility via options
   };
 
-  // --- Saved views callbacks ---
-
-  const handleLoadView = useCallback((view: SavedView) => {
-    const { snapshot } = view;
-    // Guard: only apply state for columns that exist in the current table
-    const validIds = new Set(table.getAllColumns().map((c) => c.id));
-    // 1. Restore sorting — filter to valid columns
-    setSorting((snapshot.sorting ?? []).filter((s) => validIds.has(s.id)));
-    // 2. Restore column visibility — filter to valid columns
-    columnManagement.setColumnVisibility(
-      Object.fromEntries(
-        Object.entries(snapshot.columnVisibility).filter(([k]) => validIds.has(k)),
-      ),
-    );
-    // 3. Restore column order — filter to valid columns
-    columnManagement.setColumnOrder(
-      snapshot.columnOrder.filter((k) => validIds.has(k)),
-    );
-    // 4. Restore in-column filters — clear all first, then set only valid
-    clearAllColumnFilters();
-    for (const [colId, value] of Object.entries(snapshot.columnFilters ?? {})) {
-      if (validIds.has(colId)) {
-        setColumnFilter(colId, value);
-      }
-    }
-    // 5. Restore dimension filters via URL (single router.replace)
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(snapshot.dimensionFilters)) {
-      if (value) params.set(key, value);
-    }
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname);
-    // 6. Restore column sizing — filter to valid columns
-    const validSizing = Object.fromEntries(
-      Object.entries(snapshot.columnSizing ?? {}).filter(([k]) => validIds.has(k)),
-    );
-    if (Object.keys(validSizing).length > 0) {
-      table.setColumnSizing(validSizing);
-    }
-    // Close sidebar after loading
-    setViewsSidebarOpen(false);
-  }, [setSorting, columnManagement, clearAllColumnFilters, setColumnFilter, router, pathname, table]);
-
-  const handleDeleteView = useCallback((id: string) => {
-    const { deleted } = deleteView(id);
-    if (deleted) {
-      toast('View deleted', {
-        description: `"${deleted.name}" was removed`,
-        action: {
-          label: 'Undo',
-          onClick: () => restoreView(deleted),
-        },
-        duration: 5000,
-      });
-    }
-  }, [deleteView, restoreView]);
-
-  const handleResetView = useCallback(() => {
-    // Clear sorting to default
-    setSorting([{ id: 'PARTNER_NAME', desc: false }]);
-    // Reset column visibility and order to defaults
-    columnManagement.resetToDefaults();
-    // Clear all filters
-    clearAll();
-    clearAllColumnFilters();
-    // Clear column sizing
-    table.setColumnSizing({});
-    setViewsSidebarOpen(false);
-  }, [setSorting, columnManagement, clearAll, clearAllColumnFilters, table]);
+  // --- Expose snapshot capture and view loading via refs ---
 
   const captureSnapshot = useCallback((): ViewSnapshot => {
     return {
@@ -247,32 +192,55 @@ export function DataTable({
         batch: searchParams.get('batch') ?? '',
       },
       columnSizing: table.getState().columnSizing,
+      activePreset,
     };
-  }, [sorting, columnManagement.columnVisibility, columnManagement.columnOrder, columnFilterState, searchParams, table]);
+  }, [sorting, columnManagement.columnVisibility, columnManagement.columnOrder, columnFilterState, searchParams, table, activePreset]);
 
-  const handleSaveView = useCallback((name: string) => {
-    const snapshot = captureSnapshot();
-    saveView(name, snapshot);
-    setSaveInputOpen(false);
-    toast('View saved', {
-      description: `"${name}" has been saved`,
-      duration: 3000,
-    });
-  }, [captureSnapshot, saveView]);
+  const handleLoadViewInternal = useCallback((view: SavedView) => {
+    const { snapshot } = view;
+    const validIds = new Set(table.getAllColumns().map((c) => c.id));
 
-  const handleReplaceView = useCallback((name: string) => {
-    const snapshot = captureSnapshot();
-    replaceView(name, snapshot);
-    setSaveInputOpen(false);
-    toast('View updated', {
-      description: `"${name}" has been updated`,
-      duration: 3000,
-    });
-  }, [captureSnapshot, replaceView]);
+    // Restore sorting
+    setSorting((snapshot.sorting ?? []).filter((s) => validIds.has(s.id)));
+    // Restore column visibility
+    columnManagement.setColumnVisibility(
+      Object.fromEntries(
+        Object.entries(snapshot.columnVisibility).filter(([k]) => validIds.has(k)),
+      ),
+    );
+    // Restore column order
+    columnManagement.setColumnOrder(
+      snapshot.columnOrder.filter((k) => validIds.has(k)),
+    );
+    // Restore in-column filters
+    clearAllColumnFilters();
+    for (const [colId, value] of Object.entries(snapshot.columnFilters ?? {})) {
+      if (validIds.has(colId)) {
+        setColumnFilter(colId, value);
+      }
+    }
+    // Restore column sizing
+    const validSizing = Object.fromEntries(
+      Object.entries(snapshot.columnSizing ?? {}).filter(([k]) => validIds.has(k)),
+    );
+    if (Object.keys(validSizing).length > 0) {
+      table.setColumnSizing(validSizing);
+    }
+    // Restore preset
+    if (snapshot.activePreset) {
+      setActivePreset(snapshot.activePreset);
+    }
+  }, [setSorting, columnManagement, clearAllColumnFilters, setColumnFilter, table, setActivePreset]);
+
+  // Wire refs so parent can call these
+  useEffect(() => {
+    snapshotRef.current = captureSnapshot;
+    loadViewRef.current = handleLoadViewInternal;
+  }, [captureSnapshot, handleLoadViewInternal, snapshotRef, loadViewRef]);
 
   const totalColumns = COLUMN_CONFIGS.length;
 
-  // Native drag-to-reorder state (no @dnd-kit — incompatible with React 19)
+  // Native drag-to-reorder state
   const [dragColumnId, setDragColumnId] = useState<string | null>(null);
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
 
@@ -306,7 +274,7 @@ export function DataTable({
   const hasFilteredRows = table.getRowModel().rows.length > 0;
   const hasActiveFilters = columnFilters.length > 0;
 
-  // Compute breadcrumb row counts
+  // Breadcrumb row counts
   const breadcrumbRowCounts = {
     root: totalRowCount ?? data.length,
     partner: drillLevel === 'partner'
@@ -321,92 +289,38 @@ export function DataTable({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Toolbar: preset tabs + sort dialog */}
-      <div className="flex items-center justify-between gap-4">
-        {isRoot && (
-          <ColumnPresetTabs
-            activePreset={activePreset}
-            onPresetChange={handlePresetChange}
-          />
-        )}
-        {!isRoot && <div />}
-        <div className="flex items-center gap-2 shrink-0 pr-2">
-          <HeatmapToggle />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setColumnPickerOpen(true)}
-            className="h-8 gap-1.5 text-xs"
-          >
-            <Columns3 className="h-3.5 w-3.5" />
-            Columns ({columnManagement.visibleCount}/{totalColumns})
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setViewsSidebarOpen(true)}
-            className="h-8 gap-1.5 text-xs"
-          >
-            <BookmarkCheck className="h-3.5 w-3.5" />
-            Views ({views.length})
-          </Button>
-          {saveInputOpen ? (
-            <SaveViewInput
-              isOpen={saveInputOpen}
-              onSave={handleSaveView}
-              onReplace={handleReplaceView}
-              onCancel={() => setSaveInputOpen(false)}
-              hasViewWithName={hasViewWithName}
-            />
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSaveInputOpen(true)}
-              className="h-8 gap-1.5 text-xs"
-            >
-              <Save className="h-3.5 w-3.5" />
-              Save View
-            </Button>
-          )}
-          <SortDialog sorting={sorting} onSortingChange={setSorting} />
-          <ExportButton
-            table={table}
-            activeFilters={activeFilters}
-            isFetching={isFetching}
-            disabled={isFetching || table.getRowModel().rows.length === 0}
-          />
-        </div>
-      </div>
-
-      {/* Filter bar: only shown at root level */}
-      {isRoot && (
-        <FilterBar
-          data={data}
-          columnFilters={columnFilters}
-          onFilterChange={(param, value) => setFilter(param, value)}
-        />
-      )}
-
-      {/* Active filter chips: only shown at root level */}
-      {isRoot && (
-        <FilterChips
-          activeFilters={activeFilters}
-          onRemove={(param) => setFilter(param, null)}
-          onClearAll={clearAll}
-          columnFilterChips={activeColumnFilters}
-          onRemoveColumnFilter={clearColumnFilter}
-        />
-      )}
-
-      {/* Breadcrumb trail */}
-      {drillState && onNavigateToLevel && (
-        <BreadcrumbTrail
-          state={drillState}
-          rowCounts={breadcrumbRowCounts}
-          onNavigate={onNavigateToLevel}
-        />
-      )}
+      {/* Unified toolbar — single row replacing old toolbar + filters + breadcrumb */}
+      <UnifiedToolbar
+        drillState={drillState ?? { level: 'root', partner: null, batch: null }}
+        onNavigateToLevel={onNavigateToLevel ?? (() => {})}
+        onDrillToPartner={onDrillToPartner ?? (() => {})}
+        breadcrumbRowCounts={breadcrumbRowCounts}
+        chartsExpanded={chartsExpanded}
+        onToggleCharts={onToggleCharts}
+        onOpenQuery={onOpenQuery}
+        activePreset={activePreset}
+        onPresetChange={handlePresetChange}
+        filterData={data}
+        partnerOptions={partnerOptions}
+        typeOptions={typeOptions}
+        batchOptions={batchOptions}
+        selectedPartner={selectedPartner}
+        selectedType={selectedType}
+        selectedBatch={selectedBatch}
+        onFilterChange={(param, value) => setFilter(param, value)}
+        activeFilters={activeFilters}
+        onClearAllFilters={clearAll}
+        onOpenColumnPicker={() => setColumnPickerOpen(true)}
+        visibleColumnCount={columnManagement.visibleCount}
+        totalColumnCount={totalColumns}
+        sorting={sorting}
+        onSortingChange={setSorting}
+        table={table}
+        isFetching={isFetching}
+        onSaveView={onSaveView}
+        onReplaceView={onReplaceView}
+        hasViewWithName={hasViewWithName}
+      />
 
       {/* Scrollable table container or empty state */}
       {!hasFilteredRows && hasActiveFilters && isRoot ? (
@@ -441,6 +355,7 @@ export function DataTable({
           </table>
         </div>
       )}
+
       {/* Column picker sidebar */}
       <ColumnPickerSidebar
         open={columnPickerOpen}
@@ -453,16 +368,6 @@ export function DataTable({
         showAll={columnManagement.showAll}
         hideAll={columnManagement.hideAll}
         resetToDefaults={columnManagement.resetToDefaults}
-      />
-      {/* Views sidebar */}
-      <ViewsSidebar
-        open={viewsSidebarOpen}
-        onOpenChange={setViewsSidebarOpen}
-        views={views}
-        onLoad={handleLoadView}
-        onDelete={handleDeleteView}
-        onReset={handleResetView}
-        onRestoreDefaults={restoreDefaults}
       />
     </div>
   );

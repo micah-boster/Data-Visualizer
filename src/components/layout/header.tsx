@@ -29,15 +29,10 @@ export function Header() {
   }, [fetchedAt]);
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-background/80 backdrop-blur-sm px-4">
+    <header className="flex h-10 shrink-0 items-center gap-2 border-b border-border/50 bg-background/80 backdrop-blur-sm px-4">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 !h-4" />
-      <div className="flex flex-1 items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-sm font-semibold tracking-tight">
-            Bounce Data Visualizer
-          </h1>
-        </div>
+      <div className="flex flex-1 items-center justify-end">
         <div className="flex items-center gap-3">
           {/* Data freshness indicator */}
           {fetchedAt && (
@@ -57,7 +52,7 @@ export function Header() {
                     }`}
                   />
                   <span className={stale ? 'text-amber-600 dark:text-amber-400' : ''}>
-                    Data as of {formatTime(fetchedAt)}
+                    {formatTime(fetchedAt)}
                   </span>
                 </>
               )}
