@@ -131,6 +131,15 @@ export function useDataTable(
     right: [],
   }), []);
 
+  // KI-12 opt-out (see Phase 25 Plan D): deps are intentionally sub-property
+  // references (`options?.columns`, `options?.extraColumns`) rather than the
+  // full `options` object. `options` is recreated as a new literal on every
+  // render inside DataTable — depending on it would re-memoize `columns`
+  // every render and defeat the memo entirely. A function-level
+  // `'use no memo'` would disable Compiler optimization for the whole
+  // `useDataTable` hook (including `columnPinning`, `meta`, etc.), so we
+  // scope the opt-out to just this memo via an eslint-disable comment.
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const columns = useMemo(() => {
     const base = options?.columns ?? columnDefs;
     if (options?.extraColumns && options.extraColumns.length > 0) {

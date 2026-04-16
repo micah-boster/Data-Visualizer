@@ -172,7 +172,11 @@ export function DataDisplay() {
     setIsFetching(isFetching);
   }, [isFetching, setIsFetching]);
 
-  // Data source depends on drill level
+  // Data source depends on drill level.
+  // KI-12 fix: deps are object references (data, accountData, drillState)
+  // rather than sub-properties so the React Compiler can preserve this
+  // memoization. The downstream refs are stable via TanStack Query and
+  // useDrillDown so broadening the deps is safe.
   const tableData = useMemo(() => {
     if (drillState.level === 'batch') {
       return accountData?.data ?? [];
@@ -184,14 +188,15 @@ export function DataDisplay() {
       );
     }
     return data.data;
-  }, [data?.data, accountData?.data, drillState.level, drillState.partner]);
+  }, [data, accountData, drillState]);
 
-  // Memoize batch-level curve for single-batch drill-down
+  // Memoize batch-level curve for single-batch drill-down.
+  // KI-12 fix: same object-ref pattern.
   const batchCurve = useMemo(() => {
     if (drillState.level !== 'batch' || !drillState.batch || !partnerStats?.curves) return null;
     const curves = partnerStats.curves.filter((c) => c.batchName === drillState.batch);
     return curves.length > 0 ? curves : null;
-  }, [drillState.level, drillState.batch, partnerStats?.curves]);
+  }, [drillState, partnerStats]);
 
   // Memoize unique partner count
   const uniquePartnerCount = useMemo(
