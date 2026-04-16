@@ -6,7 +6,10 @@
 - ✅ **v2.0 Within-Partner Comparison** — Phases 10-14 (shipped 2026-04-12) — [Archive](milestones/v2.0-ROADMAP.md)
 - ✅ **v3.0 Intelligence & Cross-Partner Comparison** — Phases 15-20 (shipped 2026-04-14) — [Archive](milestones/v3.0-ROADMAP.md)
 - ✅ **v3.1 Stabilization & Code Quality** — Phases 21-24 (shipped 2026-04-14) — [Archive](milestones/v3.1-ROADMAP.md)
-- 🚧 **v3.5 Flexible Charts & Metabase Import** — Phases 25-29 (in progress)
+- ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
+- 🚧 **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (in progress) — [Roadmap](milestones/v4.0-ROADMAP.md)
+- 📋 **v5.0 External Intelligence** — Phases 38-42 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
+- 📋 **v6.0 Proactive Intelligence & Action** — Phases 43-48 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
 
 ## Phases
 
@@ -58,92 +61,30 @@
 
 </details>
 
-### 🚧 v3.5 Flexible Charts & Metabase Import (In Progress)
+### 🚧 v4.0 Design System & Daily-Driver UX (In Progress)
 
-**Milestone Goal:** Add partner lists as a filtering primitive, replace the hardcoded collection curve chart with a unified chart system where users pick axes and chart type, and add Metabase SQL import to lower migration friction from existing dashboards.
+**Milestone Goal:** Invest in design foundation, fix code health, then build deferred features on the polished base. The app should feel like a product, not a prototype.
 
-- [ ] **Phase 25: Partner Lists** — Named partner groupings that filter the table and charts
-- [ ] **Phase 26: Chart Schema & Migration** — ChartDefinition type system and backward-compatible view migration
-- [ ] **Phase 27: Generic Chart Renderer** — Unified rendering of line, scatter, bar charts with collection curves as a preset
-- [ ] **Phase 28: Chart Builder UI & View Integration** — User-facing axis/type pickers, preset management, and view persistence
-- [ ] **Phase 29: Metabase SQL Import** — Parse pasted SQL, map to app configuration, preview and apply as saved view
+**Design Foundation (Phases 25-31):**
+- [ ] **Phase 25: Code Health & Bug Fixes** — Fix root filter bug, add error boundaries, clean React anti-patterns
+- [ ] **Phase 26: Design Tokens** — Spacing, typography, elevation, motion, and surface token system
+- [ ] **Phase 27: Typography & Information Hierarchy** — Type scale applied across app, tabular figures, consistent labeling
+- [ ] **Phase 28: Surfaces & Elevation** — Every container uses a named surface — cards float, tables recede, popovers lift
+- [ ] **Phase 29: Component Patterns** — StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState
+- [ ] **Phase 30: Micro-Interactions & Motion** — Drill transitions, hover lifts, press feedback, loading reveals
+- [ ] **Phase 31: Visual Polish Pass** — Gradient dividers, dark mode highlights, focus glows, border consistency
 
-## Phase Details
+**Structural (Phase 32):**
+- [ ] **Phase 32: URL-Backed Navigation** — Drill state in URL params, browser back button, deep-linking
 
-### Phase 25: Partner Lists
-**Goal**: Users can create, manage, and apply named partner groupings to focus the table and charts on specific subsets of partners
-**Depends on**: Phase 24 (v3.1 complete)
-**Requirements**: LIST-01, LIST-02, LIST-03, LIST-04, LIST-05
-**Success Criteria** (what must be TRUE):
-  1. User can create a partner list by manually selecting partners from the full partner set and giving it a name
-  2. User can create a partner list by filtering on partner attributes (product type, revenue band, account type) and the matching partners are captured
-  3. User can load a saved partner list and the table and charts immediately filter to show only those partners
-  4. Partner lists survive page reloads (persisted in localStorage alongside saved views)
-  5. User can rename or delete an existing partner list from the sidebar
-**Plans**: TBD
+**Quality (Phase 33):**
+- [ ] **Phase 33: Accessibility Audit** — axe-core, ARIA, keyboard nav, contrast, reduced motion
 
-Plans:
-- [ ] 25-01: TBD
-- [ ] 25-02: TBD
-
-### Phase 26: Chart Schema & Migration
-**Goal**: Existing saved views survive the transition to a flexible chart type system without data loss
-**Depends on**: Phase 25
-**Requirements**: CHRT-01, CHRT-02
-**Success Criteria** (what must be TRUE):
-  1. All existing saved views (3 defaults + any user-created) load without errors after the schema change
-  2. ChartDefinition type accepts line, scatter, and bar configurations with validated axis and type fields
-  3. Old ChartViewState objects in localStorage are automatically migrated to ChartDefinition on first load
-**Plans**: TBD
-
-Plans:
-- [ ] 26-01: TBD
-
-### Phase 27: Generic Chart Renderer
-**Goal**: Users can see line, scatter, and bar charts rendered from any numeric columns, and collection curves look identical to before
-**Depends on**: Phase 26
-**Requirements**: CHRT-03, CHRT-04, CHRT-05, CHRT-06
-**Success Criteria** (what must be TRUE):
-  1. A line chart renders with any numeric column on Y and a time/numeric column on X, with correct axis formatting
-  2. A scatter plot renders with any two numeric columns as X and Y axes
-  3. A bar chart renders comparing a metric across batches or partners
-  4. Collection curves preset produces visually identical output to the current CollectionCurveChart (anomaly colors, solo mode, batch visibility toggles, average line all preserved)
-**Plans**: TBD
-
-Plans:
-- [ ] 27-01: TBD
-- [ ] 27-02: TBD
-
-### Phase 28: Chart Builder UI & View Integration
-**Goal**: Users can configure their own charts through dropdowns, save configurations as presets, and have chart state persist with saved views
-**Depends on**: Phase 27
-**Requirements**: CHRT-07, CHRT-08, CHRT-09, CHRT-10, CHRT-11, CHRT-12, CHRT-13
-**Success Criteria** (what must be TRUE):
-  1. User can select X-axis and Y-axis columns from filtered dropdowns (numeric/date for X, numeric-only for Y) and see the chart update
-  2. User can switch between line, scatter, and bar chart types and the chart re-renders immediately
-  3. User can save a custom chart configuration as a named preset and reload it with one click
-  4. Collection curves are available as a built-in preset that restores full collection curve behavior
-  5. Chart configuration round-trips through the saved views system (save view, reload page, chart config restored)
-**Plans**: TBD
-
-Plans:
-- [ ] 28-01: TBD
-- [ ] 28-02: TBD
-
-### Phase 29: Metabase SQL Import
-**Goal**: Users can paste a Metabase SQL query and have it translated into an app view configuration, lowering migration friction from existing Metabase dashboards
-**Depends on**: Phase 26 (uses ChartDefinition type; independent of Phases 27-28 chart rendering)
-**Requirements**: META-01, META-02, META-03, META-04, META-05
-**Success Criteria** (what must be TRUE):
-  1. User can paste Metabase-exported SQL into an import dialog accessible from the sidebar
-  2. User can see a preview of matched columns (recognized), skipped columns (unrecognized), extracted filters and sort order before applying
-  3. Clicking "Apply" creates a ViewSnapshot with correct table columns, filters, and chart config derived from the SQL
-  4. Imported configuration only references columns in the existing allow-list (no arbitrary SQL execution, no injection)
-**Plans**: TBD
-
-Plans:
-- [ ] 29-01: TBD
-- [ ] 29-02: TBD
+**Features (Phases 34-37, carried from v3.5):**
+- [ ] **Phase 34: Partner Lists** — Named partner groupings for filtering
+- [ ] **Phase 35: Chart Schema & Migration** — ChartDefinition type, backward-compatible view migration
+- [ ] **Phase 36: Chart Builder** — Generic renderer + builder UI, collection curves as preset
+- [ ] **Phase 37: Metabase SQL Import** — Parse SQL, map to app config, preview and apply
 
 ## Progress
 
@@ -153,11 +94,32 @@ Plans:
 | 10-14 | v2.0 | 9/9 | Complete | 2026-04-12 |
 | 15-20 | v3.0 | 9/9 | Complete | 2026-04-14 |
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
-| 25. Partner Lists | v3.5 | 0/TBD | Not started | - |
-| 26. Chart Schema & Migration | v3.5 | 0/TBD | Not started | - |
-| 27. Generic Chart Renderer | v3.5 | 0/TBD | Not started | - |
-| 28. Chart Builder UI & View Integration | v3.5 | 0/TBD | Not started | - |
-| 29. Metabase SQL Import | v3.5 | 0/TBD | Not started | - |
+| 25. Code Health & Bug Fixes | 1/4 | In Progress|  | - |
+| 26. Design Tokens | v4.0 | 0/TBD | Not started | - |
+| 27. Typography & Hierarchy | v4.0 | 0/TBD | Not started | - |
+| 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
+| 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
+| 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
+| 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
+| 32. URL-Backed Navigation | v4.0 | 0/TBD | Not started | - |
+| 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
+| 34. Partner Lists | v4.0 | 0/TBD | Not started | - |
+| 35. Chart Schema & Migration | v4.0 | 0/TBD | Not started | - |
+| 36. Chart Builder | v4.0 | 0/TBD | Not started | - |
+| 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |
+| 38. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
+| 39. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
+| 40. Triangulation Views | v5.0 | 0/TBD | Planned | - |
+| 41. Scorecard Reconciliation | v5.0 | 0/TBD | Planned | - |
+| 42. Dynamic Curve Re-Projection | v5.0 | 0/TBD | Planned | - |
+| 43. Weekly Partner Highlights | v6.0 | 0/TBD | Planned* | - |
+| 44. Pattern Alerts | v6.0 | 0/TBD | Planned | - |
+| 45. MBR Pipeline Integration | v6.0 | 0/TBD | Planned | - |
+| 46. Action Connections | v6.0 | 0/TBD | Planned | - |
+| 47. Temporal Intelligence | v6.0 | 0/TBD | Planned | - |
+| 48. NLQ Enhancements | v6.0 | 0/TBD | Planned | - |
+
+\* Phase 43 flagged for review — may be deprioritized in favor of deeper MBR integration (Phase 45)
 
 ---
-*Last updated: 2026-04-15 after v3.5 roadmap revision*
+*Last updated: 2026-04-16 — v5.0 and v6.0 milestones added*

@@ -1,63 +1,58 @@
 # Requirements: Bounce Data Visualizer
 
-**Defined:** 2026-04-15
+**Defined:** 2026-04-16
 **Core Value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
 
-## v3.5 Requirements
+## v4.0 Requirements
 
-Requirements for partner lists, flexible charts, and Metabase SQL import. Each maps to roadmap phases.
+Requirements for design system, code health, URL navigation, accessibility, and carried-forward features (Partner Lists, Chart Builder, Metabase Import). Full detail in [v4.0 Requirements](milestones/v4.0-REQUIREMENTS.md).
 
-### Partner Lists
-
-- [ ] **LIST-01**: User can create a named partner list by selecting partners manually
-- [ ] **LIST-02**: User can create a partner list by filtering on attributes (product type, revenue band, account type, etc.)
-- [ ] **LIST-03**: User can load a partner list to filter the table and charts to only those partners
-- [ ] **LIST-04**: Partner lists persist in localStorage alongside saved views
-- [ ] **LIST-05**: User can edit or delete existing partner lists
-
-### Chart Schema
-
-- [ ] **CHRT-01**: Chart state migration preserves all existing saved views without data loss
-- [ ] **CHRT-02**: ChartDefinition type supports line, scatter, and bar chart configurations
-
-### Chart Renderer
-
-- [ ] **CHRT-03**: User can view a line chart with any numeric column on the Y-axis and a time/numeric column on the X-axis
-- [ ] **CHRT-04**: User can view a scatter plot with any two numeric columns as X and Y axes
-- [ ] **CHRT-05**: User can view a bar chart comparing a metric across batches or partners
-- [ ] **CHRT-06**: Collection curves render identically to current behavior (anomaly colors, solo mode, batch visibility, average line)
-
-### Chart Builder UI
-
-- [ ] **CHRT-07**: User can select X-axis column from a filtered dropdown (numeric/date columns only)
-- [ ] **CHRT-08**: User can select Y-axis column from a filtered dropdown (numeric columns only)
-- [ ] **CHRT-09**: User can switch chart type (line, scatter, bar) and the chart re-renders
-- [ ] **CHRT-10**: User can save the current chart configuration as a named preset
-- [ ] **CHRT-11**: User can load a previously saved chart preset with one click
-- [ ] **CHRT-12**: Collection curves are available as a built-in preset
-- [ ] **CHRT-13**: Chart configuration persists with saved views (extends existing ChartViewState)
-
-### Metabase SQL Import
-
-- [ ] **META-01**: User can paste Metabase-exported SQL into an import dialog
-- [ ] **META-02**: App parses the SQL and extracts referenced columns, filters, and sort order
-- [ ] **META-03**: User can preview the mapped configuration before applying
-- [ ] **META-04**: Imported SQL maps to a ViewSnapshot (table columns, filters, chart config)
-- [ ] **META-05**: Imported configuration respects existing column allow-list (no SQL injection)
+**67 requirements across 13 phases:**
+- Code Health: HEALTH-01 through HEALTH-06 (Phase 25)
+- Design Tokens: DS-01 through DS-06 (Phase 26)
+- Typography: DS-07 through DS-10 (Phase 27)
+- Surfaces: DS-11 through DS-17 (Phase 28)
+- Component Patterns: DS-18 through DS-22 (Phase 29)
+- Micro-Interactions: DS-23 through DS-28 (Phase 30)
+- Visual Polish: DS-29 through DS-34 (Phase 31)
+- URL Navigation: NAV-01 through NAV-04 (Phase 32)
+- Accessibility: A11Y-01 through A11Y-05 (Phase 33)
+- Partner Lists: LIST-01 through LIST-05 (Phase 34)
+- Chart Schema: CHRT-01, CHRT-02 (Phase 35)
+- Chart Builder: CHRT-03 through CHRT-13 (Phase 36)
+- Metabase Import: META-01 through META-05 (Phase 37)
 
 ## Future Requirements
 
-Deferred to v3.6+. Tracked but not in current roadmap.
+Deferred to v4.5+. Tracked but not in current roadmap.
 
-### Metabase MBQL Import
+### NLQ Improvements
+- **NLQ-01**: Follow-up query suggestions after Claude responses
+- **NLQ-02**: Clickable data references in Claude responses
+- **NLQ-03**: Query history persistence
 
-- **META-06**: User can paste MBQL JSON and have it translated to app configuration
-- **META-07**: Interactive field-ID mapper resolves Metabase numeric IDs to column names
+### Dashboards
+- **DASH-01**: Dashboard drag-and-drop widget layout
+- **DASH-02**: Per-user saved dashboards
+
+### Export & Notifications
+- **EXPORT-01**: Exportable partner summary reports (PDF/Excel)
+- **NOTIFY-01**: Active anomaly notifications (Slack/email)
+
+### Advanced Analytics
+- **ANOM-01**: Adaptive anomaly thresholds (learn from user feedback)
+- **ANOM-02**: Seasonal decomposition for time-aware detection
+- **COHORT-01**: Partner cohort segmentation by account type
+- **COHORT-02**: Time-period scoped comparison
+- **CURVE-01**: Dynamic curve re-projection based on actuals
 
 ### Advanced Charts
-
 - **CHRT-14**: Group-by dimension for multi-series line/bar charts
 - **CHRT-15**: Dual Y-axis support for overlaying metrics with different scales
+
+### Metabase MBQL Import
+- **META-06**: User can paste MBQL JSON and have it translated to app configuration
+- **META-07**: Interactive field-ID mapper resolves Metabase numeric IDs to column names
 
 ## Out of Scope
 
@@ -65,48 +60,22 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| MBQL import | Underdocumented format, deferred to v3.6 after SQL import proves value |
 | New API routes for chart data | All charting operates on already-fetched client-side dataset |
 | Chart data export (PNG/SVG) | Nice-to-have, not core workflow |
 | Real-time chart updates | Batch refresh is sufficient for 2-3 users |
-| Key pair auth / Vercel deploy | Punted — code written, needs admin setup |
 | ML-based chart recommendations | Overkill for small dataset and user count |
+| Framer Motion or heavy animation lib | CSS transitions + Web Animations API sufficient for scope |
+| Mobile-optimized UI | Desktop-first for 2-3 internal users |
+| User authentication | Small team, defer to v5 |
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| LIST-01 | Phase 25 | Pending |
-| LIST-02 | Phase 25 | Pending |
-| LIST-03 | Phase 25 | Pending |
-| LIST-04 | Phase 25 | Pending |
-| LIST-05 | Phase 25 | Pending |
-| CHRT-01 | Phase 26 | Pending |
-| CHRT-02 | Phase 26 | Pending |
-| CHRT-03 | Phase 27 | Pending |
-| CHRT-04 | Phase 27 | Pending |
-| CHRT-05 | Phase 27 | Pending |
-| CHRT-06 | Phase 27 | Pending |
-| CHRT-07 | Phase 28 | Pending |
-| CHRT-08 | Phase 28 | Pending |
-| CHRT-09 | Phase 28 | Pending |
-| CHRT-10 | Phase 28 | Pending |
-| CHRT-11 | Phase 28 | Pending |
-| CHRT-12 | Phase 28 | Pending |
-| CHRT-13 | Phase 28 | Pending |
-| META-01 | Phase 29 | Pending |
-| META-02 | Phase 29 | Pending |
-| META-03 | Phase 29 | Pending |
-| META-04 | Phase 29 | Pending |
-| META-05 | Phase 29 | Pending |
+See [v4.0 Requirements](milestones/v4.0-REQUIREMENTS.md) for full traceability table.
 
 **Coverage:**
-- v3.5 requirements: 23 total
-- Mapped to phases: 23
+- v4.0 requirements: 67 total
+- Mapped to phases: 67
 - Unmapped: 0
 
 ---
-*Requirements defined: 2026-04-15*
-*Last updated: 2026-04-15 after roadmap revision*
+*Requirements defined: 2026-04-16 — v3.5 absorbed into v4.0*
