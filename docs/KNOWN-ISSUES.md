@@ -101,17 +101,36 @@ Five instances across API routes and schema validation (3 console.error, 2 conso
 Three `useMemo` calls have dependency arrays that differ from what the React Compiler infers. The Compiler skips optimizing these components, falling back to manual memoization which still works correctly.
 **Suggested fix:** Align dependency arrays with Compiler expectations (use broader object references instead of sub-property drilling) or annotate with `'use no memo'` to explicitly opt out.
 
+**Resolved:** 2026-04-16 in Phase 25 Plan D. Per-site decisions:
+- `src/components/data-display.tsx:147` (`tableData`): FIXED — deps changed from sub-properties (`data?.data`, `accountData?.data`, `drillState.level`, `drillState.partner`) to object refs (`data`, `accountData`, `drillState`). Downstream refs are stable via TanStack Query / `useDrillDown`, so broadening the deps does not introduce extra recomputes.
+- `src/components/data-display.tsx:161` (`batchCurve`): FIXED — deps changed from sub-properties to object refs (`drillState`, `partnerStats`). Same rationale as `tableData`.
+- `src/lib/table/hooks.ts:127` (`columns`): OPTED-OUT with scoped `eslint-disable-next-line react-hooks/preserve-manual-memoization` + inline justification comment. `options` is recreated as a fresh object literal on every render inside `DataTable`, so depending on the object ref would re-memoize on every render and defeat the memo. A function-level `'use no memo'` directive would disable Compiler optimization for the entire `useDataTable` hook (including `columnPinning`, `meta`, etc.), so the opt-out is deliberately scoped to this single memo. Sub-property deps (`options?.columns`, `options?.extraColumns`) preserved.
+Verified `pnpm build` emits no new React Compiler warnings for the three lines. Commit: `9320c03`.
+
 ### KI-13: setState called synchronously within effects
 **Severity:** Medium
 **File(s):** `src/components/columns/column-group.tsx` (line 127), `src/hooks/use-column-management.ts` (line 40), `src/hooks/use-saved-views.ts` (line 68), `src/components/views/save-view-input.tsx` (line 37), `src/lib/table/hooks.ts` (line 140)
 Five instances of `setState` called directly in `useEffect` bodies, which can cause cascading renders.
 **Suggested fix:** Refactor to derive state from props/context where possible, or use event-driven patterns instead of synchronization effects.
 
+**Resolved:** 2026-04-16 in Phase 25 Plan D. Per-site decisions:
+- `src/components/columns/column-group.tsx:127`: FIXED — `isExpanded` is now derived state (`const expanded = manualExpanded ?? searchAutoExpanded`). `manualExpanded` is `undefined` by default; the toggle button sets it to an explicit boolean. Auto-expand-on-search is pure derivation, no effect, no extra render.
+- `src/hooks/use-column-management.ts:40`: OPTED-OUT with inline SSR hydration-guard comment. The effect bridges `localStorage` → React state; reading `localStorage` during render would break Next.js hydration (server has no access). Kept as deliberate pattern.
+- `src/hooks/use-saved-views.ts:68`: OPTED-OUT with the same SSR hydration-guard comment. Same pattern as `use-column-management.ts`.
+- `src/components/views/save-view-input.tsx:37`: FIXED — `showReplace` reset moved into a new `handleNameChange` callback wired to the input's `onChange`. Other setters of `name` (`handleSave`, `handleCancel`) already reset `showReplace` inline. No external callers of `setName` exist; the belt-and-suspenders question raised during Task 4 was resolved "skip" by the user.
+- `src/lib/table/hooks.ts:140`: OPTED-OUT with inline comment. The effect resets `sorting` to `[]` when the columns ref changes (e.g. drill level switch). Fire timing is sensitive — the reset must land after the new columns commit so TanStack's `sortedRowModel` sees a consistent `(columns, sorting=[])` pair. A `useMemo`-based guard would shift timing and risk a render with stale sort state. Kept as intentional.
+Commit: `1973191`.
+
 ### KI-14: Ref access during render in table hooks
 **Severity:** Medium
 **File(s):** `src/lib/table/hooks.ts` (lines 86, 98), `src/components/table/data-table.tsx` (line 159)
 Three instances of reading or writing ref `.current` during the render phase, which can cause stale values or missed updates.
 **Suggested fix:** Move ref reads/writes into effects or event handlers. For `setActivePresetRef`, use a callback pattern instead.
+
+**Resolved:** 2026-04-16 in Phase 25 Plan D. Per-site decisions:
+- `src/lib/table/hooks.ts:86` (`tableRef.current.setOptions(...)` during render) & `src/lib/table/hooks.ts:98` (`return tableRef.current;` during render): OPTED-OUT with TanStack v8 workaround comments. Both sites live inside `useStableReactTable`; the write at :86 merges incoming options synchronously so TanStack's row-model accessors see a consistent options snapshot, and the return at :98 hands the caller the table instance for immediate header/row rendering. Rewriting requires migrating to TanStack Table v9 — out of scope for this phase. Block comment + per-line inline comments point to the upstream issue.
+- `src/components/table/data-table.tsx:159` (`setActivePresetRef.current = setActivePreset` during render): FIXED — assignment moved into a dependency-less `useEffect` that runs after every commit. Safe because `markCustomPreset` only fires from user-initiated handlers (`toggleColumn`, `toggleGroup`, etc.) which always run after the initial commit, so there is no synchronous render→ref read path that would see a stale value. Click-verified in the browser during Task 4 checkpoint: preset indicator activates immediately on click with no one-render lag.
+Commit: `222dd33`.
 
 ---
 
