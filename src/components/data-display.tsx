@@ -30,9 +30,10 @@ import { useFilterState } from '@/hooks/use-filter-state';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
 import { computeKpis } from '@/lib/computation/compute-kpis';
 import { getPartnerName } from '@/lib/utils';
+import { SectionErrorBoundary } from '@/components/section-error-boundary';
 import { toast } from 'sonner';
 import type { DrillState } from '@/hooks/use-drill-down';
-import type { SavedView } from '@/lib/views/types';
+import type { SavedView, ChartViewState } from '@/lib/views/types';
 
 const CollectionCurveChart = dynamic(
   () =>
@@ -110,7 +111,7 @@ const PartnerSparkline = dynamic(
 );
 
 export function DataDisplay() {
-  const { data, isLoading, isError, error, refetch, isFetching, dataUpdatedAt } = useData();
+  const { data, isLoading, isError, error, refetch, isFetching } = useData();
   const { state: drillState, drillToPartner, drillToBatch, navigateToLevel } =
     useDrillDown();
   const {
@@ -257,6 +258,11 @@ export function DataDisplay() {
       // Use window.history to avoid full re-render
       window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
 
+      // Restore chart configuration if saved
+      if (snapshot.chartState && chartLoadRef.current) {
+        chartLoadRef.current(snapshot.chartState);
+      }
+
       // The rest (sorting, visibility, order, column filters, sizing, preset)
       // is handled by DataTable via the onLoadView callback
       if (tableLoadViewRef.current) {
@@ -287,9 +293,12 @@ export function DataDisplay() {
     (name: string) => {
       if (tableSnapshotRef.current) {
         const snapshot = tableSnapshotRef.current();
-        // Enrich with chart state
+        // Enrich with chart + layout state
         snapshot.chartsExpanded = chartsExpanded;
         snapshot.comparisonVisible = comparisonVisible;
+        if (chartSnapshotRef.current) {
+          snapshot.chartState = chartSnapshotRef.current();
+        }
         saveView(name, snapshot);
         toast('View saved', {
           description: `"${name}" has been saved`,
@@ -306,6 +315,9 @@ export function DataDisplay() {
         const snapshot = tableSnapshotRef.current();
         snapshot.chartsExpanded = chartsExpanded;
         snapshot.comparisonVisible = comparisonVisible;
+        if (chartSnapshotRef.current) {
+          snapshot.chartState = chartSnapshotRef.current();
+        }
         replaceView(name, snapshot);
         toast('View updated', {
           description: `"${name}" has been updated`,
@@ -319,6 +331,10 @@ export function DataDisplay() {
   // Refs for DataTable to expose snapshot capture and view loading
   const tableSnapshotRef = useRef<(() => import('@/lib/views/types').ViewSnapshot) | null>(null);
   const tableLoadViewRef = useRef<((view: SavedView) => void) | null>(null);
+
+  // Refs for chart state snapshot/restore (wired by CollectionCurveChart)
+  const chartSnapshotRef = useRef<(() => ChartViewState) | null>(null);
+  const chartLoadRef = useRef<((state: ChartViewState) => void) | null>(null);
 
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState error={error} onRetry={() => refetch()} />;
@@ -377,45 +393,48 @@ export function DataDisplay() {
           )}
 
           {/* Collapsible charts section */}
-          {chartsExpanded && (
-            <div className="shrink-0 px-2 pt-2 space-y-2">
-              {drillState.level === 'root' && (
-                <>
-                  <CrossPartnerTrajectoryChart />
-                  {comparisonVisible && <PartnerComparisonMatrix />}
-                </>
-              )}
-              {drillState.level === 'partner' && (
-                <>
-                  <KpiSummaryCards
-                    kpis={partnerStats?.kpis ?? null}
-                    trending={partnerStats?.trending ?? null}
-                  />
-                  {partnerStats?.curves && partnerStats.curves.length >= 2 && (
-                    <CollectionCurveChart curves={partnerStats.curves} />
-                  )}
-                </>
-              )}
-              {batchCurve && (
-                <CollectionCurveChart curves={batchCurve} />
-              )}
-            </div>
-          )}
+          <SectionErrorBoundary resetKeys={[data]}>
+            {chartsExpanded && (
+              <div className="shrink-0 px-2 pt-2 space-y-2">
+                {drillState.level === 'root' && (
+                  <>
+                    <CrossPartnerTrajectoryChart />
+                    {comparisonVisible && <PartnerComparisonMatrix />}
+                  </>
+                )}
+                {drillState.level === 'partner' && (
+                  <>
+                    <KpiSummaryCards
+                      kpis={partnerStats?.kpis ?? null}
+                      trending={partnerStats?.trending ?? null}
+                    />
+                    {partnerStats?.curves && partnerStats.curves.length >= 2 && (
+                      <CollectionCurveChart curves={partnerStats.curves} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                    )}
+                  </>
+                )}
+                {batchCurve && (
+                  <CollectionCurveChart curves={batchCurve} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                )}
+              </div>
+            )}
 
-          {/* Sparkline when charts collapsed */}
-          {!chartsExpanded && drillState.level === 'root' && (
-            <div className="shrink-0 px-2 pt-2">
-              <RootSparkline />
-            </div>
-          )}
-          {!chartsExpanded && drillState.level === 'partner' && partnerStats?.curves && partnerStats.curves.length >= 2 && (
-            <div className="shrink-0 px-2 pt-2">
-              <PartnerSparkline curves={partnerStats.curves} />
-            </div>
-          )}
+            {/* Sparkline when charts collapsed */}
+            {!chartsExpanded && drillState.level === 'root' && (
+              <div className="shrink-0 px-2 pt-2">
+                <RootSparkline />
+              </div>
+            )}
+            {!chartsExpanded && drillState.level === 'partner' && partnerStats?.curves && partnerStats.curves.length >= 2 && (
+              <div className="shrink-0 px-2 pt-2">
+                <PartnerSparkline curves={partnerStats.curves} />
+              </div>
+            )}
+          </SectionErrorBoundary>
 
           {/* Interactive data table with toolbar */}
           <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
+            <SectionErrorBoundary resetKeys={[data]}>
             <div className="min-h-0 flex-1 flex flex-col">
               {drillState.level === 'batch' && isAccountLoading ? (
                 <LoadingState />
@@ -462,6 +481,7 @@ export function DataDisplay() {
                 />
               )}
             </div>
+            </SectionErrorBoundary>
           </PartnerNormsProvider>
 
           {/* Query command dialog */}
