@@ -39,8 +39,19 @@ Surface abnormal account and batch performance data so the partnerships team can
 - ✓ Partner comparison matrix (heatmap, bar ranking, plain table) — v3.0
 - ✓ All v3.0 integration bugs resolved, codebase production-grade — v3.1
 
+### Current Milestone: v3.5 Flexible Charts & Metabase Import
+
+**Goal:** Replace the hardcoded collection curve chart with a unified chart system where users pick axes and chart type, and add Metabase query import to lower migration friction.
+
+**Target features:**
+- Custom chart builder: user-selectable X/Y axes, line/scatter/bar types, collection curves as a preset
+- Metabase query import: accept MBQL (JSON) or Metabase-generated SQL and translate to app queries
+- Live account drill-down with corrected master_accounts schema (already wired)
+
 ### Active
 
+- [ ] Custom chart builder replacing hardcoded CollectionCurveChart
+- [ ] Metabase query import (MBQL and SQL)
 - [ ] Snowflake credentials in Vercel env vars (live data instead of static cache)
 - [ ] ANTHROPIC_API_KEY in Vercel env vars (enable Claude query in production)
 
@@ -58,7 +69,7 @@ Surface abnormal account and batch performance data so the partnerships team can
 - Text-to-SQL generation — dataset fits in context, SQL injection risk
 - Full chat/conversation interface — point queries, not conversations
 - AI-generated charts — existing Recharts charts are excellent
-- Metabase query import — deferred to v3.5
+- Metabase query import — moved to v3.5 Active
 
 ## Context
 
@@ -105,4 +116,4 @@ Surface abnormal account and batch performance data so the partnerships team can
 | Known issues documented comprehensively | Production-grade codebase snapshot | ✓ Good — 22 issues catalogued |
 
 ---
-*Last updated: 2026-04-14 after v3.1 milestone completion*
+*Last updated: 2026-04-15 after v3.5 milestone start*
