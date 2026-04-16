@@ -5,7 +5,15 @@
 
 ## v3.5 Requirements
 
-Requirements for flexible charts and Metabase SQL import. Each maps to roadmap phases.
+Requirements for partner lists, flexible charts, and Metabase SQL import. Each maps to roadmap phases.
+
+### Partner Lists
+
+- [ ] **LIST-01**: User can create a named partner list by selecting partners manually
+- [ ] **LIST-02**: User can create a partner list by filtering on attributes (product type, revenue band, account type, etc.)
+- [ ] **LIST-03**: User can load a partner list to filter the table and charts to only those partners
+- [ ] **LIST-04**: Partner lists persist in localStorage alongside saved views
+- [ ] **LIST-05**: User can edit or delete existing partner lists
 
 ### Chart Schema
 
@@ -70,30 +78,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CHRT-01 | — | Pending |
-| CHRT-02 | — | Pending |
-| CHRT-03 | — | Pending |
-| CHRT-04 | — | Pending |
-| CHRT-05 | — | Pending |
-| CHRT-06 | — | Pending |
-| CHRT-07 | — | Pending |
-| CHRT-08 | — | Pending |
-| CHRT-09 | — | Pending |
-| CHRT-10 | — | Pending |
-| CHRT-11 | — | Pending |
-| CHRT-12 | — | Pending |
-| CHRT-13 | — | Pending |
-| META-01 | — | Pending |
-| META-02 | — | Pending |
-| META-03 | — | Pending |
-| META-04 | — | Pending |
-| META-05 | — | Pending |
+| LIST-01 | Phase 25 | Pending |
+| LIST-02 | Phase 25 | Pending |
+| LIST-03 | Phase 25 | Pending |
+| LIST-04 | Phase 25 | Pending |
+| LIST-05 | Phase 25 | Pending |
+| CHRT-01 | Phase 26 | Pending |
+| CHRT-02 | Phase 26 | Pending |
+| CHRT-03 | Phase 27 | Pending |
+| CHRT-04 | Phase 27 | Pending |
+| CHRT-05 | Phase 27 | Pending |
+| CHRT-06 | Phase 27 | Pending |
+| CHRT-07 | Phase 28 | Pending |
+| CHRT-08 | Phase 28 | Pending |
+| CHRT-09 | Phase 28 | Pending |
+| CHRT-10 | Phase 28 | Pending |
+| CHRT-11 | Phase 28 | Pending |
+| CHRT-12 | Phase 28 | Pending |
+| CHRT-13 | Phase 28 | Pending |
+| META-01 | Phase 29 | Pending |
+| META-02 | Phase 29 | Pending |
+| META-03 | Phase 29 | Pending |
+| META-04 | Phase 29 | Pending |
+| META-05 | Phase 29 | Pending |
 
 **Coverage:**
-- v3.5 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- v3.5 requirements: 23 total
+- Mapped to phases: 23
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-04-15*
-*Last updated: 2026-04-15 after initial definition*
+*Last updated: 2026-04-15 after roadmap revision*
