@@ -12,10 +12,10 @@ This document catalogs every known limitation, edge case, tech debt item, and fu
 |----------|-------|------|--------|-----|
 | Data Layer | 4 | 0 | 2 | 2 |
 | UI/UX | 3 | 0 | 1 | 2 |
-| Architecture | 7 | 0 | 3 | 4 |
-| Performance | 2 | 0 | 1 | 1 |
+| Architecture | 4 | 0 | 0 | 4 |
+| Performance | 1 | 0 | 0 | 1 |
 | Missing Features | 5 | 0 | 2 | 3 |
-| **Total** | **21** | **0** | **9** | **12** |
+| **Total** | **17** | **0** | **5** | **12** |
 
 ---
 
@@ -128,6 +128,8 @@ Called in `QuerySearchBarWithContext` useMemo. The memo prevents unnecessary rec
 **File(s):** `src/components/data-display.tsx`
 A chart render error takes down the entire DataDisplay component tree.
 **Suggested fix:** Wrap chart sections and table in individual `<ErrorBoundary>` components.
+
+**Resolved:** 2026-04-16 in Phase 25 Plan B. Added `SectionErrorBoundary` (using `react-error-boundary` v6) around the chart section and the table section in `data-display.tsx`. Fallback is a compact Alert card with "Try again" reset and expandable `<details>` for the error message. Reset semantics: `resetKeys={[data]}` auto-resets when the top-level query result reference changes; "Try again" re-renders with same props. Event-handler and async errors are NOT caught (React error boundary contract).
 
 ---
 
