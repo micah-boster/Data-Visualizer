@@ -1,384 +1,300 @@
-# Feature Landscape: v3.0 Intelligence & Cross-Partner Comparison
+# Feature Landscape: v3.5 Flexible Charts & Metabase Import
 
-**Domain:** Debt collection batch analytics -- AI query, anomaly detection, cross-partner benchmarking
-**Researched:** 2026-04-12
-**Overall confidence:** MEDIUM-HIGH (patterns well-established in analytics tooling; implementation specifics validated against codebase)
+**Domain:** Flexible chart builder + Metabase query migration for debt collection batch analytics
+**Researched:** 2026-04-15
+**Overall confidence:** MEDIUM-HIGH (chart builder patterns well-established; Metabase MBQL import is niche but feasible given known schema)
 
 ---
 
-## Pillar 1: Anomaly Detection (Passive, In-App)
+## Pillar 1: Flexible Chart Builder
 
 ### Table Stakes
 
-Features users expect from any anomaly detection surface. Without these, the feature feels like a gimmick.
+Features users expect from any chart builder in an analytics tool. Without these, the chart builder feels more restrictive than the hardcoded chart it replaces.
 
-#### AD-TS-1: Anomaly Badges on Table Rows
+#### CB-TS-1: X-Axis Column Selector
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | Visual badge/icon on partner rows (root level) and batch rows (partner drill-down) flagging statistically anomalous performance. A colored dot or icon (warning triangle, red circle) in a dedicated "Status" column. |
-| **Why expected** | Every monitoring dashboard uses inline status indicators. If the system detects anomalies but the user has to navigate to a separate screen to see them, it defeats the purpose. Anomalies must surface where the user already looks: the table. |
+| **What** | Dropdown to pick which column drives the X-axis. Options filtered to sensible types: categorical (PARTNER_NAME, BATCH, ACCOUNT_TYPE) for bar charts, numeric/date (BATCH_AGE_IN_MONTHS, any numeric metric) for line/scatter. |
+| **Why expected** | The whole point of a chart builder is user-controlled axes. Without X-axis selection, it is just another hardcoded chart. |
 | **Complexity** | Low |
-| **Depends on** | Existing `computeNorms()` (mean/stddev already computed per partner), existing `FormattedCell` component |
-| **Notes** | Use the existing norm computation as baseline. A batch is anomalous when 2+ key metrics deviate beyond 2 SD from the partner mean. At root level, a partner is anomalous when their latest batch is flagged. |
+| **Depends on** | Existing `COLUMN_CONFIGS` with type metadata (text, currency, percentage, count, number, date) |
+| **Notes** | Pre-filter the column list by chart type: line/scatter need numeric X, bar charts accept categorical X. Default to BATCH_AGE_IN_MONTHS (matches existing collection curve). |
 
-#### AD-TS-2: Anomaly Summary Panel
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | A collapsible summary section at the top of the root-level view showing count of flagged partners/batches with one-line descriptions: "Affirm MAR_26: penetration rate 42% below partner average." Clickable to drill into the flagged entity. |
-| **Why expected** | Badges tell you something is wrong; the summary tells you what and where. Without it, users must scan every row looking for badges. The summary is the "inbox" of anomalies -- it answers "what should I look at today?" |
-| **Complexity** | Medium |
-| **Depends on** | AD-TS-1 (anomaly computation), existing `drillToPartner`/`drillToBatch` navigation |
-| **Notes** | Sort anomalies by severity (largest deviation first). Limit to top 5-10 to avoid alarm fatigue. Collapsible so it doesn't dominate when not needed. |
-
-#### AD-TS-3: Anomaly Detail in Tooltip/Popover
+#### CB-TS-2: Y-Axis Column Selector (Single + Multi)
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | Hovering or clicking an anomaly badge shows a popover explaining: which metrics are anomalous, the actual value vs expected range, and the deviation magnitude. |
-| **Why expected** | A badge without explanation is worse than no badge. Users need to trust the detection before acting on it. Explainability is table stakes per the project constraint ("every data transformation must have an explicit, documented algorithm"). |
-| **Complexity** | Low |
-| **Depends on** | AD-TS-1, existing tooltip infrastructure (shadcn Tooltip/Popover) |
-| **Notes** | Format: "Penetration Rate: 3.2% (expected 8.1% - 14.3%). 2.4 SD below mean." Keep language non-technical for the partnerships team. |
+| **What** | Dropdown (or multi-select) for Y-axis columns. Must support at least 1 metric, ideally multiple for overlay comparison. Only numeric types eligible (currency, percentage, count, number). |
+| **Why expected** | Y-axis selection is the other half of chart flexibility. Multi-Y enables "Total Placed vs Penetration Rate" comparisons that the hardcoded chart cannot do. |
+| **Complexity** | Medium -- multi-Y requires dual Y-axis handling when mixing units (currency vs percentage). |
+| **Depends on** | `COLUMN_CONFIGS` type metadata, Recharts `<YAxis yAxisId>` for dual-axis support |
+| **Notes** | When Y columns have different units (e.g., currency + percentage), render two Y-axes (left/right). Recharts supports this natively with `yAxisId`. Limit to 2 distinct unit types to avoid visual chaos. |
 
-#### AD-TS-4: Deterministic, Explainable Detection Algorithm
+#### CB-TS-3: Chart Type Selector (Line, Bar, Scatter)
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | Statistical anomaly detection using z-scores against partner norms. No black-box ML. The algorithm must be documentable in a markdown file (like TRENDING-ALGORITHM.md). |
-| **Why expected** | Per project constraints, all transformations must be explainable. The partnerships team needs to trust the flags before acting. "The model said so" is not acceptable for 2-3 internal users who know their data. |
-| **Complexity** | Medium |
-| **Depends on** | Existing `computeNorms()` which already computes mean/stddev per metric |
-| **Notes** | Z-score is the right method here. The existing norm computation gives us mean and population stddev. A z-score > 2 flags as anomalous. IQR is more robust to outliers but z-score is simpler and the team already understands standard deviation from the conditional formatting. Consistency matters more than statistical perfection for 2-3 users. |
+| **What** | Toggle or dropdown to switch between line chart, bar chart, and scatter plot. The chart re-renders with the same data but different Recharts component (`<LineChart>`, `<BarChart>`, `<ScatterChart>`). |
+| **Why expected** | Different data relationships call for different visual encodings. Trends need lines, distributions need bars, correlations need scatter. These three cover 95% of analytics use cases. |
+| **Complexity** | Medium -- each chart type has different Recharts component APIs. Need a unified data adapter. |
+| **Depends on** | Recharts (already in stack), shadcn `<ChartContainer>` (already in use) |
+| **Notes** | Area charts are a visual variant of line charts and can be offered as a toggle on the line chart type rather than a separate type. Pie charts are intentionally excluded (see Anti-Features). |
+
+#### CB-TS-4: Group-By / Color-By Dimension
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Optional selector to split data into series by a categorical column (e.g., color by PARTNER_NAME to see each partner as a separate line, or by ACCOUNT_TYPE to compare account types). |
+| **Why expected** | Without grouping, every chart is a single series. Grouping is what makes charts insightful -- it answers "how does this metric differ across partners/batches?" |
+| **Complexity** | Medium -- requires pivoting raw data by group key, generating one series per unique group value. |
+| **Depends on** | Existing `pivotCurveData` pattern (already pivots by batch name), `CHART_COLORS` palette |
+| **Notes** | Limit to one group dimension. Cap visible series at ~15 with a "show more" toggle (matches existing `showAllBatches` pattern). |
+
+#### CB-TS-5: Collection Curves as a Preset
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Pre-configured chart preset that replicates the current `CollectionCurveChart` behavior: X = month since placement, Y = recovery rate or dollars, grouped by batch. One-click to load, fully editable after loading. |
+| **Why expected** | The existing collection curve chart is the primary chart users know. Replacing it with a generic builder that requires manual setup every time would be a regression. Presets bridge familiarity with flexibility. |
+| **Complexity** | Low -- it is just a saved configuration of the chart builder selections. |
+| **Depends on** | CB-TS-1 through CB-TS-4 |
+| **Notes** | Store presets as named `ChartBuilderState` objects. The collection curve preset should be the default when entering partner drill-down. Additional presets can be user-created (see Differentiators). |
+
+#### CB-TS-6: Proper Axis Formatting
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Y-axis and tooltips auto-format based on column type: currency gets `$X,XXX` or `$Xk`, percentages get `X.X%`, counts get comma separation. X-axis formats categoricals as-is, numbers/dates appropriately. |
+| **Why expected** | Raw numbers without formatting are unreadable. The existing chart already does this for recovery rate and dollars -- the flexible builder must match or exceed that quality for all 61 columns. |
+| **Complexity** | Low -- existing `getFormatter()` in `src/lib/formatting/` already handles all column types. Reuse it. |
+| **Depends on** | Existing formatting infrastructure (`getFormatter`, `isNumericType`) |
+| **Notes** | The formatter lookup uses column `type` from `COLUMN_CONFIGS`. Tooltip should show the human-readable `label`, not the raw Snowflake column name. |
+
+#### CB-TS-7: Chart State Persistence in Views
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | The chart builder configuration (X, Y, chart type, group-by, filters) persists when the user saves a view, and restores when they load that view. |
+| **Why expected** | The existing `ChartViewState` already persists metric, hidden batches, showAverage, showAllBatches. Users will expect the new builder's state to persist the same way. Losing chart config on view switch would be confusing. |
+| **Complexity** | Low-Medium -- requires extending `ChartViewState` type and `viewSnapshotSchema` Zod schema. |
+| **Depends on** | Existing view persistence system (`ViewSnapshot`, `savedViewSchema`, `viewSnapshotSchema`), existing `chartSnapshotRef` / `chartLoadRef` pattern |
+| **Notes** | Extend `ChartViewState` to include `xAxis`, `yAxes`, `chartType`, `groupBy`, and retain backward compatibility with existing saved views (old `metric`/`hiddenBatches` fields map to the collection curve preset). |
 
 ### Differentiators
 
-#### AD-D-1: Anomaly Severity Ranking
+Features that set the chart builder apart from basic implementations. Not expected, but significantly increase value.
+
+#### CB-D-1: User-Saveable Chart Presets
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | Rank anomalies by a composite severity score that weights multiple flagged metrics and their deviation magnitudes. "This partner has 4 flagged metrics with an average 3.1 SD deviation" outranks "1 flagged metric at 2.1 SD." |
-| **Value proposition** | Prioritization. The team has limited time -- they need to know not just what is anomalous but what is most anomalous. |
-| **Complexity** | Low (computation is straightforward once individual anomalies are detected) |
+| **What** | Users can name and save their own chart configurations as presets alongside the built-in Collection Curves preset. Accessible from a dropdown. |
+| **Value** | Eliminates repetitive setup for frequently used charts (e.g., "Penetration Rate by Partner", "SMS Engagement by Batch Age"). |
+| **Complexity** | Low -- reuses existing saved views localStorage pattern. |
+| **Notes** | Store alongside view snapshots or as a separate localStorage key. Small team (2-3 users) means localStorage is fine. |
 
-#### AD-D-2: Anomaly Highlighting in Charts
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | On the collection curve chart, visually distinguish anomalous batches (bold line, different color, or annotation marker) from normal batches. |
-| **Value proposition** | When a user drills into a partner, the anomalous batch immediately stands out on the curve chart without needing to cross-reference the table. |
-| **Complexity** | Low (Recharts supports conditional line styling) |
-
-#### AD-D-3: Metric Polarity Awareness
+#### CB-D-2: Smart Column Suggestions
 
 | Attribute | Detail |
 |-----------|--------|
-| **What** | Anomaly detection respects metric polarity: high penetration rate is good (flag when low), high delinquency is bad (flag when high). The existing `metric-polarity.ts` module already defines this. |
-| **Value proposition** | Without polarity, the system flags a partner for having unusually HIGH collection rates, which is not a problem. Polarity-aware detection only flags in the bad direction. |
-| **Complexity** | Low (existing `metric-polarity.ts` provides the mapping) |
+| **What** | When user selects an X-axis column, the Y-axis dropdown surfaces likely-useful columns first (e.g., selecting BATCH_AGE_IN_MONTHS suggests collection-related Y columns; selecting PARTNER_NAME suggests aggregate metrics). |
+| **Value** | Reduces cognitive load of scanning 61 columns. Makes the builder feel intelligent rather than mechanical. |
+| **Complexity** | Medium -- requires column affinity mapping (can be hardcoded based on `COLUMN_CONFIGS` groups). |
+| **Notes** | Use the existing column group definitions in `src/lib/columns/groups.ts` to cluster related columns. |
+
+#### CB-D-3: Inline Trend/Reference Lines
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Optional reference lines on charts: partner average, portfolio average, or custom threshold value. Toggleable like the existing "Show Average" on collection curves. |
+| **Value** | Context lines transform charts from "here is data" to "here is data and here is what normal looks like." |
+| **Complexity** | Low -- Recharts `<ReferenceLine>` component. Already implemented for the average line in collection curves. |
+| **Notes** | Reuse the existing `addAverageSeries` pattern. For portfolio-level references, compute from existing `crossPartnerData`. |
+
+#### CB-D-4: Chart Export (PNG/SVG)
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | One-click export of the current chart as PNG or SVG for pasting into emails/reports. |
+| **Value** | The partnerships team shares insights with stakeholders who do not have app access. Chart screenshots are manual and low-quality. |
+| **Complexity** | Low -- `html-to-image` or `dom-to-image-more` library captures the chart container. Recharts also supports `toSVGElement()` on some components. |
+| **Notes** | Add a small download icon button in the chart toolbar. |
+
+### Anti-Features
+
+Features to explicitly NOT build for v3.5.
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Pie/donut charts | Pie charts are universally criticized for analytics (hard to compare slices, misleading for >5 categories). The data here is batch-level with 20+ groups. | Bar chart handles the same use case better. Offer horizontal bar for categorical comparisons. |
+| Drag-and-drop chart builder (Tableau-style) | Massive UX complexity for 2-3 users. Overkill when dropdowns accomplish the same selection with less code. | Dropdown selectors for X, Y, group-by. Simple, direct, fast. |
+| Free-form SQL chart queries | Already explicitly out of scope (text-to-SQL risk). The chart builder operates on the existing loaded dataset, not arbitrary queries. | Chart builder works on data already in the table/view. Metabase import handles new queries. |
+| Real-time chart updates | Data refreshes on page load or manual refresh. No WebSocket streaming needed for batch data that changes daily. | Keep existing React Query cache + manual refresh. |
+| 3D charts | Visual noise, no analytical value. | Stick to 2D. |
+| Dashboard grid with multiple charts | v4 feature (documented in Out of Scope). v3.5 is one chart at a time, editable. | Single chart panel with flexible configuration. |
+
+---
+
+## Pillar 2: Metabase Query Import
+
+### Table Stakes
+
+Features needed for Metabase import to be usable rather than a novelty.
+
+#### MI-TS-1: Paste MBQL JSON Import
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | A modal or panel where users paste the JSON `dataset_query` from a Metabase question. The app parses the MBQL structure and extracts: source table, selected fields, filters, aggregations, breakouts, and sorting. Maps these to the app's known columns and filter system. |
+| **Why expected** | MBQL JSON is how Metabase stores every query-builder question. Users can copy it from Metabase's API response or browser devtools. It is the canonical format for structured Metabase queries. |
+| **Complexity** | High -- MBQL uses integer field IDs that must be mapped to column names. The app needs a field-ID-to-column-name mapping table, or must accept MBQL that has been annotated with field names. |
+| **Depends on** | Understanding of MBQL structure (source-table, breakout, aggregation, filter, fields, order-by) |
+| **Notes** | MBQL uses `[:field <id> {:base-type :type/Integer}]` references. Since we only have two tables (batch summary + master accounts), the mapping is finite and manageable. Recommend requiring users to include the field metadata (available from Metabase API `/api/table/:id/fields`) or building a static mapping from the known Snowflake schema. MBQL 4 (legacy) format should be the target since it is simpler and available via `?legacy-mbql=true` API parameter. |
+
+#### MI-TS-2: Paste SQL Import
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Accept raw SQL (from Metabase's "Native Query" mode or any SQL editor) and extract column references, WHERE clauses, GROUP BY, and ORDER BY to map to the app's filter/sort/group system. |
+| **Why expected** | Many Metabase questions are written as native SQL rather than using the query builder. SQL is also the lingua franca -- users may have queries from other tools. |
+| **Complexity** | High -- SQL parsing is notoriously difficult to do correctly. Full SQL parsing requires a parser library. |
+| **Depends on** | SQL parsing capability |
+| **Notes** | Do NOT build a full SQL parser. Instead, use regex-based extraction for the common patterns: `SELECT columns FROM table WHERE conditions ORDER BY columns`. Support the 80% case (simple SELECT with WHERE/ORDER BY) and show a clear error for queries too complex to parse. Alternatively, use a lightweight SQL parser like `node-sql-parser` (npm package with 1M+ weekly downloads, supports Snowflake dialect). |
+
+#### MI-TS-3: Translation Preview
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | After parsing MBQL or SQL, show the user what will be applied: "Columns: X, Y, Z. Filters: Partner = Affirm. Sort: Total Placed DESC." with a confirm/edit step before applying. |
+| **Why expected** | Blind import is scary. Users need to verify the translation before it changes their view. Every import tool shows a preview. |
+| **Complexity** | Low -- it is a summary display of the parsed result. |
+| **Depends on** | MI-TS-1 or MI-TS-2 parser output |
+| **Notes** | Show matched columns in green, unmatched/skipped columns in yellow with explanation. This builds trust in the import process. |
+
+#### MI-TS-4: Apply as View Configuration
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | The parsed query applies to the existing app state: sets column visibility, filters, sorting, and optionally chart configuration. Result is a standard ViewSnapshot that can be saved. |
+| **Why expected** | The import must do something useful. Parsing without applying is a dead end. Applying as a view integrates seamlessly with the existing saved views system. |
+| **Complexity** | Medium -- mapping parsed columns to `COLUMN_CONFIGS` keys, parsed filters to the app's filter format, parsed sorting to TanStack `SortingState`. |
+| **Depends on** | MI-TS-1/MI-TS-2 output, existing view system (`ViewSnapshot`, `SavedView`) |
+| **Notes** | Columns that exist in the query but not in `COLUMN_CONFIGS` are silently skipped with a warning in the preview (MI-TS-3). This handles queries referencing tables/columns outside the app's scope. |
+
+### Differentiators
+
+#### MI-D-1: Metabase Question URL Import
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | Instead of pasting JSON, user pastes a Metabase question URL (e.g., `https://metabase.bounce.com/question/42`). The app calls Metabase API to fetch the question's `dataset_query` automatically. |
+| **Value** | Much lower friction than copying JSON from devtools. Paste URL, see preview, confirm. |
+| **Complexity** | Medium -- requires Metabase API credentials (API key or session token) stored server-side. Network request to external Metabase instance. |
+| **Notes** | Requires `METABASE_URL` and `METABASE_API_KEY` env vars. API call: `GET /api/card/:id` returns `dataset_query`. This is a stretch goal -- paste JSON works without any Metabase connectivity. |
+
+#### MI-D-2: Saved Import Mappings
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | When a user imports a Metabase query, save the original query alongside the translated view so they can re-import or compare later. |
+| **Value** | Creates an audit trail of "this view came from Metabase question #42" and enables re-sync if the Metabase query changes. |
+| **Complexity** | Low -- extend `SavedView` with an optional `sourceQuery` field. |
+| **Notes** | Store the raw MBQL/SQL string and a timestamp. |
+
+#### MI-D-3: Column Auto-Mapping with Fuzzy Match
+
+| Attribute | Detail |
+|-----------|--------|
+| **What** | When SQL references columns by slightly different names (e.g., `total_amt_placed` vs `TOTAL_AMOUNT_PLACED`), use fuzzy string matching to suggest the correct app column. |
+| **Value** | Handles the common case where SQL column aliases differ from Snowflake column names. Reduces manual fixup. |
+| **Complexity** | Low-Medium -- Levenshtein distance or simple normalization (lowercase, strip underscores) on the 61 known column names. |
+| **Notes** | Show fuzzy matches as suggestions in the preview, not auto-applied. Let the user confirm. |
 
 ### Anti-Features
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| ML-based anomaly detection (isolation forest, DBSCAN) | Overkill for 477 rows across a handful of partners. Adds opaque model behavior that violates the explainability constraint. Z-scores cover 90% of the need. | Z-score against partner norms. Document the algorithm. |
-| Active notifications (Slack/email) | Explicitly out of scope per PROJECT.md (v4+). Passive anomaly detection must prove its value first before investing in notification infrastructure. | In-app summary panel. Users check the dashboard daily anyway. |
-| User-configurable thresholds | For 2-3 users, hardcoded 2 SD threshold is fine. Building a settings UI doubles the complexity for marginal benefit. | Hardcode 2 SD. Revisit if users request adjustment. |
-| Anomaly history/timeline | Tracking how anomalies change over time requires state persistence beyond the current session. Premature for v3. | Show current anomalies only. Historical trending via the existing batch-over-batch trending indicators. |
+| Execute imported SQL against Snowflake | Security risk (SQL injection), and the app already has a fixed schema. Imported queries should configure the view, not run arbitrary SQL. | Parse the SQL to extract intent (columns, filters, sorts), apply as view config on the existing dataset. |
+| Full Metabase dashboard import | Dashboards contain layout, multiple cards, parameters, custom styling. Way too complex for v3.5. | Import individual questions (cards) one at a time. |
+| Bi-directional sync with Metabase | Writing back to Metabase's API to update questions. The app is a migration destination, not a sync partner. | One-way import only. |
+| MBQL 5 support | MBQL 5 uses UUIDs and complex nested structures. Metabase API supports `?legacy-mbql=true` for MBQL 4, which is dramatically simpler. | Target MBQL 4 (legacy) format only. Document that users should export with `?legacy-mbql=true`. |
 
 ---
 
-## Pillar 2: Claude Natural Language Query Layer
-
-### Table Stakes
-
-Features users expect from an AI-powered data query interface integrated into an analytics tool.
-
-#### NLQ-TS-1: Query Input with Suggested Prompts
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | A text input (search bar style, not chat) where users type natural language questions about their data. Below it, 3-5 suggested starter prompts contextualized to the current view: "Which partner has the highest 6-month collection rate?" or "Compare Affirm's latest batch to their historical average." |
-| **Why expected** | Every NLQ tool provides suggested prompts. The blank input box is intimidating -- users don't know what they can ask. Suggestions teach the system's capabilities through examples. The search bar pattern (vs chat) is correct here because these are point queries, not conversations. |
-| **Complexity** | Low (UI), Medium (prompt engineering) |
-| **Depends on** | New API route for Claude integration |
-| **Notes** | Suggested prompts should update based on drill context: root level shows cross-partner questions, partner level shows within-partner questions, batch level shows account-level questions. |
-
-#### NLQ-TS-2: Narrative Response with Supporting Data
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | AI responses rendered as a short narrative paragraph (2-4 sentences) accompanied by the specific data points referenced. Not just "the answer is 42" -- explain the context. Example: "Affirm's March batch penetration rate is 3.2%, significantly below their 6-batch average of 11.4%. This is the lowest penetration rate across all their batches. The next lowest was January at 7.8%." |
-| **Why expected** | Narrative + data is the standard pattern in analytics NLQ tools (ThoughtSpot, Looker, Power BI Copilot all do this). Raw answers without context are not useful because the user doesn't know if the answer is good or bad without comparison. |
-| **Complexity** | Medium |
-| **Depends on** | NLQ-TS-1, Claude API, data context injection |
-| **Notes** | The narrative must reference actual data from the dataset, not hallucinate. Include the specific numbers cited. This means the API route must pass relevant data rows to Claude as context. |
-
-#### NLQ-TS-3: Data-Grounded Responses (No Hallucination)
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | Every claim in the AI response must be verifiable against the actual dataset. The system prompt constrains Claude to only reference data present in the context window. If the question cannot be answered from available data, say so explicitly. |
-| **Why expected** | Trust. The entire reason this tool exists (per PROJECT.md) is to replace "non-deterministic Claude + Snowflake queries." If the AI layer itself hallucinates, it defeats the tool's core value proposition. |
-| **Complexity** | Medium (prompt engineering, context management) |
-| **Depends on** | Data serialization strategy for context injection |
-| **Notes** | Two approaches: (1) pass relevant data rows as JSON in the system prompt, or (2) give Claude SQL-generation capability against Snowflake. Approach 1 is safer and simpler for v3 -- the dataset is small enough (477 rows x key columns) to fit in context. Approach 2 (text-to-SQL) is v4 if data grows. |
-
-#### NLQ-TS-4: Loading State and Error Handling
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | Clear loading indicator while waiting for AI response (streaming preferred). Graceful error handling when Claude API fails or rate-limits. Timeout after 30 seconds with a retry option. |
-| **Why expected** | AI responses take 2-10 seconds. Without a loading state, users think the UI is broken. Without error handling, a single API failure breaks trust in the entire feature. |
-| **Complexity** | Low |
-| **Depends on** | Existing loading/error state patterns in the codebase |
-
-### Differentiators
-
-#### NLQ-D-1: Context-Aware Queries Based on Current View
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | The AI automatically knows what the user is looking at. If drilled into Affirm's partner view, questions like "why is the latest batch underperforming?" automatically scope to Affirm without the user needing to specify. If filters are applied, the AI knows. |
-| **Value proposition** | Eliminates the most common NLQ failure mode: the user asks a scoped question but the AI answers about the entire dataset. Context awareness makes the AI feel like an assistant who is looking at the same screen. |
-| **Complexity** | Medium |
-
-#### NLQ-D-2: Response with Actionable Follow-Up Suggestions
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | After each response, show 2-3 follow-up question suggestions based on the answer: "You might also want to know: Which accounts are driving the low penetration rate? How does this compare to other partners?" |
-| **Value proposition** | Guides exploration. Most users ask one question and stop -- not because they're satisfied, but because they don't know what to ask next. Follow-ups keep the analysis going. |
-| **Complexity** | Low (Claude can generate these as part of the response) |
-
-#### NLQ-D-3: Response References Clickable Data Points
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | When the AI mentions a partner or batch by name, it is rendered as a clickable link that drills the user into that entity. "Affirm's March batch" links to `drillToPartner('Affirm')` then `drillToBatch('MAR_26')`. |
-| **Value proposition** | Bridges AI answers to the existing deterministic UI. The user reads the narrative, clicks a reference, and sees the full table/chart context. This is what differentiates an embedded AI from a standalone chatbot. |
-| **Complexity** | Medium (parsing entity references from AI response, linking to drill-down actions) |
-
-### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Full chat/conversation interface | This is an analytics tool, not a chatbot. Multi-turn conversations add state management complexity and rarely provide value for data queries. Users ask one question at a time. | Search bar with suggested prompts. Each query is independent. Follow-up suggestions provide continuity without conversation state. |
-| Text-to-SQL generation | The dataset is small enough to pass directly to Claude. Text-to-SQL introduces SQL injection risk, hallucinated table/column names, and requires a validation layer. Massively over-engineered for 477 rows. | Pass filtered data as JSON context to Claude. Simpler, safer, and more reliable. |
-| AI-generated charts/visualizations | The tool already has excellent charts (Recharts). Having the AI generate separate charts creates a dual visualization system that is confusing and hard to maintain. | AI responses reference existing charts and suggest the user "check the collection curve chart for visual confirmation." |
-| Autonomous data exploration agents | Agentic systems that run multiple queries iteratively are slow, expensive, and unpredictable. Not appropriate for a 2-3 person internal tool. | Single-turn query with data context. Fast, cheap, predictable. |
-| Query history persistence | Adds storage complexity for minimal value with 2-3 users. The team discusses findings in Slack, not in the tool. | Session-only query display. Previous response visible until new query submitted. |
-
----
-
-## Pillar 3: Cross-Partner Comparison
-
-### Table Stakes
-
-Features users expect from any cross-entity benchmarking surface.
-
-#### XPC-TS-1: Percentile Rankings at Root Level
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | At the root partner table, show each partner's percentile rank for key metrics (penetration rate, 6-month collection rate, 12-month collection rate) relative to all partners. Rendered as a percentile number (e.g., "P72") or a position indicator (e.g., "3 of 8"). |
-| **Why expected** | "How does this partner compare to others?" is the most natural cross-partner question. Raw numbers are meaningless without context -- a 12% penetration rate could be excellent or terrible depending on the portfolio. Percentile ranks immediately answer "better or worse than peers." |
-| **Complexity** | Low-Medium |
-| **Depends on** | Root-level aggregation (new: must compute per-partner aggregates across all batches, similar to how `usePartnerStats` works but for ALL partners) |
-| **Notes** | This requires a `useAllPartnerStats` or similar hook that computes aggregate metrics for every partner, not just the selected one. The existing `usePartnerStats` filters to one partner -- cross-partner needs all. |
-
-#### XPC-TS-2: Normalized Trajectory Overlay Chart
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | A chart showing collection curves from different partners normalized to enable comparison. Since partners have different balance sizes, absolute dollar amounts are not comparable. Normalize by showing recovery rate (% of placed amount collected) on the y-axis. Each line is a partner's average curve (mean across their batches). |
-| **Why expected** | The existing collection curve chart shows within-partner batch comparison. The cross-partner equivalent is the obvious next question: "How does Affirm's typical curve compare to Klarna's?" Normalization via recovery rate makes this meaningful. |
-| **Complexity** | Medium |
-| **Depends on** | Existing `reshapeCurves()` computation, existing Recharts infrastructure |
-| **Notes** | Recovery rate normalization already exists in `CurvePoint.recoveryRate`. The cross-partner chart averages each partner's batch curves into a single representative line per partner. Show at root level as a new chart section. |
-
-#### XPC-TS-3: Partner Comparison Table/Matrix
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | A summary comparison view showing key metrics for all partners side-by-side in a compact matrix. Rows = metrics, columns = partners. Or a horizontal bar chart ranking partners on a selected metric. |
-| **Why expected** | The existing root table shows batches, not partner aggregates. Users currently have to mentally aggregate across batches to compare partners. A dedicated comparison view does this aggregation for them. |
-| **Complexity** | Medium |
-| **Depends on** | XPC-TS-1 (per-partner aggregation) |
-| **Notes** | Could be a separate tab/view or a collapsible section at root level. Key metrics to compare: total placed volume, weighted penetration rate, 6-month and 12-month collection rates, total collected, batch count. |
-
-### Differentiators
-
-#### XPC-D-1: Partner Cohort Segmentation
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | Allow grouping partners by characteristics (account type, balance range, batch frequency) and compare cohort averages. "How do BNPL partners compare to traditional credit partners?" |
-| **Value proposition** | Raw cross-partner comparison can be misleading if partners have fundamentally different account mixes. Cohort segmentation makes comparisons fair. |
-| **Complexity** | Medium-High |
-| **Notes** | Depends on having enough metadata to segment meaningfully. May not be possible with current data if all partners are BNPL. Check data diversity before building. |
-
-#### XPC-D-2: Best-in-Class Benchmark Line
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | On the cross-partner trajectory overlay, add a "best-in-class" reference line representing the top-performing partner's curve, plus a "portfolio average" line. Each partner can see where they sit relative to the best and the average. |
-| **Value proposition** | Gives an aspirational target. "Affirm is tracking 15% below best-in-class at 6 months" is more actionable than just seeing all curves overlaid. |
-| **Complexity** | Low (if XPC-TS-2 is built) |
-
-#### XPC-D-3: Cross-Partner Anomaly Flags
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | Flag partners whose aggregate performance is anomalous relative to the portfolio -- not just within their own history but compared to peers. "This partner's 6-month collection rate is in the bottom 10th percentile." |
-| **Value proposition** | Combines anomaly detection with cross-partner comparison. A partner might be consistent with their own history but still be a portfolio outlier. |
-| **Complexity** | Low (if both AD and XPC pillar table stakes are built) |
-
-#### XPC-D-4: Time-Period Scoped Comparison
-
-| Attribute | Detail |
-|-----------|--------|
-| **What** | Compare partners only across batches from the same time period. "How did all partners' Q1 2026 batches perform relative to each other?" filters out historical noise. |
-| **Value proposition** | Macro conditions (economic environment, regulatory changes) affect all partners simultaneously. Comparing same-period batches isolates partner-specific performance from macro effects. |
-| **Complexity** | Medium |
-
-### Anti-Features
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Statistical significance testing | For 5-10 partners with varying batch counts, formal hypothesis testing (t-tests, ANOVA) is misleading. Small samples, unequal groups, non-normal distributions. The math would be "correct" but the conclusions unreliable. | Show ranks and percentiles. Let the team apply domain judgment about whether differences are meaningful. |
-| Weighted composite scoring | Creating a single "partner health score" by weighting metrics together buries information and creates debates about weights. | Show individual metric ranks. The team knows which metrics matter for each partner relationship. |
-| Automated partner tiering (A/B/C classification) | Artificial bucketing with 5-10 partners creates false precision and potential relationship damage if shared externally. | Percentile ranks and visual position on charts convey relative standing without hard labels. |
-| External benchmarking data | Comparing to industry averages requires external data sources the tool does not have. The portfolio IS the benchmark universe for now. | Compare within the portfolio. "Best in class" means best among Bounce's partners, which is the actionable comparison. |
-
----
-
-## Feature Dependencies (Cross-Pillar)
+## Feature Dependencies
 
 ```
-ANOMALY DETECTION
-  AD-TS-4 (Algorithm)
-    --> AD-TS-1 (Badges) -- algorithm powers badge display
-    --> AD-TS-3 (Tooltips) -- algorithm provides explanation data
-    --> AD-TS-2 (Summary Panel) -- aggregates badge results
-    --> AD-D-1 (Severity Ranking) -- weights anomaly scores
-    --> AD-D-2 (Chart Highlighting) -- feeds anomaly flags to charts
-  Existing dependency: computeNorms() already provides mean/stddev
+CB-TS-1 (X-Axis Selector) ─┐
+CB-TS-2 (Y-Axis Selector) ─┼─→ CB-TS-3 (Chart Type) ─→ CB-TS-5 (Presets) ─→ CB-D-1 (User Presets)
+CB-TS-4 (Group-By)        ─┘         │
+                                      ├─→ CB-TS-6 (Axis Formatting) [parallel, uses existing formatters]
+                                      ├─→ CB-TS-7 (View Persistence) [after state shape stabilizes]
+                                      └─→ CB-D-3 (Reference Lines) [after basic charts work]
 
-NATURAL LANGUAGE QUERY
-  NLQ-TS-1 (Input UI)
-    --> NLQ-TS-4 (Loading/Error) -- wraps the input interaction
-    --> NLQ-TS-2 (Narrative Response) -- renders the result
-    --> NLQ-TS-3 (Grounding) -- constrains the response
-    --> NLQ-D-1 (Context-Aware) -- injects drill state
-    --> NLQ-D-2 (Follow-Ups) -- extends response rendering
-  New dependency: Claude API route (server-side), API key management
+MI-TS-1 (MBQL Import) ─┐
+MI-TS-2 (SQL Import)   ─┼─→ MI-TS-3 (Preview) ─→ MI-TS-4 (Apply as View)
+                        │
+                        └─→ MI-D-1 (URL Import) [stretch, needs Metabase API creds]
 
-CROSS-PARTNER COMPARISON
-  XPC-TS-1 (Percentile Rankings)
-    --> XPC-TS-3 (Comparison Matrix) -- uses same aggregation
-    --> XPC-D-3 (Cross-Partner Anomaly) -- uses same aggregation
-  XPC-TS-2 (Trajectory Overlay)
-    --> XPC-D-2 (Benchmark Line) -- adds reference lines to chart
-  Existing dependency: reshapeCurves(), computeKpis(), Recharts
-
-CROSS-PILLAR DEPENDENCIES
-  XPC-TS-1 (Percentile Rankings) + AD-TS-4 (Algorithm)
-    --> XPC-D-3 (Cross-Partner Anomaly Flags)
-  XPC-TS-1 + NLQ (Context-Aware)
-    --> NLQ can answer "how does this partner rank?" when drilled in
-  AD-TS-2 (Summary Panel) + NLQ
-    --> NLQ can explain flagged anomalies when asked
+CB-TS-7 (View Persistence) ←── MI-TS-4 (Apply as View) [import produces a ViewSnapshot]
 ```
-
-**Build order implication:** Anomaly detection builds directly on existing `computeNorms()` -- lowest new-code effort. Cross-partner comparison requires a new aggregation layer across all partners but reuses existing computation patterns. NLQ requires a new API route and Claude integration but is UI-independent of the other two pillars. All three can be built in parallel with a shared "all-partner aggregation" module as the common foundation.
 
 ---
 
 ## MVP Recommendation
 
-**Phase 1 -- Foundation (shared infrastructure):**
-1. **All-partner aggregation module** -- Compute per-partner aggregates for all partners (extends `usePartnerStats` pattern). Powers both anomaly detection and cross-partner comparison.
-2. **Anomaly detection algorithm (AD-TS-4)** -- Z-score based, documented. Low complexity since norms already exist.
-3. **Anomaly badges (AD-TS-1)** -- Immediate visual value in the existing table.
+### Phase 1: Chart Builder Core (build first)
 
-**Phase 2 -- Core features (parallel tracks):**
-4. **Anomaly summary panel (AD-TS-2)** -- "What should I look at today?"
-5. **Anomaly tooltips (AD-TS-3)** -- Explainability for badges.
-6. **Percentile rankings (XPC-TS-1)** -- First cross-partner metric.
-7. **Cross-partner trajectory overlay (XPC-TS-2)** -- Visual comparison at root level.
+Prioritize:
+1. **CB-TS-1** X-Axis Selector -- the foundation
+2. **CB-TS-2** Y-Axis Selector -- completes the builder
+3. **CB-TS-3** Chart Type Selector -- visual variety
+4. **CB-TS-4** Group-By Dimension -- makes charts insightful
+5. **CB-TS-5** Collection Curves Preset -- backward compatibility, day-one utility
+6. **CB-TS-6** Axis Formatting -- polish (reuses existing code)
 
-**Phase 3 -- AI layer:**
-8. **NLQ input with suggested prompts (NLQ-TS-1)** -- UI entry point.
-9. **Claude API route with data context (NLQ-TS-2, NLQ-TS-3)** -- Server-side integration.
-10. **Context-aware scoping (NLQ-D-1)** -- Drill state injection.
-11. **Loading/error handling (NLQ-TS-4)** -- Polish.
+Defer to Phase 1b:
+- **CB-TS-7** View Persistence -- wait for chart state shape to stabilize
+- **CB-D-2** Smart Suggestions -- nice-to-have, not blocking
+- **CB-D-4** Chart Export -- small scope, can slot in anytime
 
-**Phase 4 -- Polish and differentiators:**
-12. **Partner comparison matrix (XPC-TS-3)** -- Summary view.
-13. **Anomaly severity ranking (AD-D-1)** -- Prioritization.
-14. **Best-in-class benchmark line (XPC-D-2)** -- Chart enhancement.
-15. **Follow-up suggestions (NLQ-D-2)** -- AI enhancement.
-16. **Clickable data references (NLQ-D-3)** -- Bridge AI to drill-down.
+### Phase 2: Metabase Import (build second)
 
-**Defer to v4:**
-- Partner cohort segmentation (XPC-D-1) -- Requires richer metadata than currently available.
-- Time-period scoped comparison (XPC-D-4) -- Useful but not essential for initial cross-partner view.
-- Cross-partner anomaly flags (XPC-D-3) -- Needs both AD and XPC mature before layering.
-- Anomaly chart highlighting (AD-D-2) -- Nice but badges handle 80% of the need.
+Prioritize:
+1. **MI-TS-2** SQL Import -- higher value, SQL is universal, most Metabase "native queries" are SQL
+2. **MI-TS-3** Translation Preview -- trust-building step
+3. **MI-TS-4** Apply as View -- makes import useful
+4. **MI-TS-1** MBQL Import -- after SQL works, MBQL is the structured variant
 
----
+Defer:
+- **MI-D-1** URL Import -- needs Metabase API creds, can add later
+- **MI-D-3** Fuzzy Column Matching -- only needed if column name mismatches prove common
 
-## Data Requirements
-
-### Existing Data (No New Snowflake Queries)
-
-| Feature | Data Source | Notes |
-|---------|------------|-------|
-| Anomaly detection | `agg_batch_performance_summary` (all 477 rows) | Already loaded at root level |
-| Cross-partner percentiles | `agg_batch_performance_summary` (all 477 rows) | Aggregation computed client-side |
-| Cross-partner curves | `agg_batch_performance_summary` (collection columns) | `reshapeCurves()` per partner, already exists |
-| NLQ context data | `agg_batch_performance_summary` + `master_accounts` | Both already fetched by existing API routes |
-
-### New API Requirements
-
-| Feature | Endpoint | Notes |
-|---------|----------|-------|
-| NLQ | `POST /api/query` | Server-side Claude API call. Accepts question + context (drill state, relevant data). Returns narrative + data points. Snowflake credentials stay server-side. Claude API key needed as new env var. |
-
-**No new Snowflake tables needed.** All v3 features derive from existing data. The NLQ feature needs a new Claude API key but no Snowflake schema changes.
+**Rationale:** Chart builder first because it has immediate daily value for the 2-3 users. Metabase import second because it is a migration tool (used occasionally when porting existing Metabase questions), not a daily-use feature. SQL import before MBQL because SQL is more universal and the team already writes SQL for Metabase native queries.
 
 ---
 
-## Existing Infrastructure to Extend
+## Complexity Summary
 
-| Existing System | v3 Extension |
-|----------------|--------------|
-| `computeNorms()` (mean/stddev per metric) | Anomaly detection: add z-score computation and threshold flagging on top of existing norms |
-| `computeKpis()` (partner-level KPI aggregation) | Cross-partner: run for ALL partners, not just selected one |
-| `reshapeCurves()` (batch curve reshaping) | Cross-partner: compute average curve per partner for overlay |
-| `metric-polarity.ts` (good/bad direction per metric) | Anomaly detection: only flag anomalies in the "bad" direction |
-| `computeTrending()` (batch-over-batch trends) | Anomaly detection: trending + anomaly detection complement each other |
-| `PartnerNormsProvider` (React context for norms) | Anomaly detection: extend to include anomaly flags, or create parallel `AnomalyProvider` |
-| `data-display.tsx` (layout orchestrator) | All three pillars add new UI sections to this component |
-| `use-drill-down.ts` (navigation state) | NLQ: inject current drill state as context for Claude |
-| Existing Snowflake `executeQuery()` | NLQ: no change needed (data already in client; Claude call is separate) |
-| shadcn/ui Tooltip, Popover, Card | Anomaly tooltips, NLQ response display, comparison cards |
+| Feature | Complexity | New Dependencies | Risk |
+|---------|-----------|-----------------|------|
+| Chart builder (all table stakes) | Medium | None (Recharts already in stack) | Low -- well-understood patterns |
+| Chart presets | Low | None | Low |
+| Chart view persistence | Low-Medium | Zod schema extension | Low -- extends existing pattern |
+| MBQL JSON parser | High | None, but requires field-ID mapping | Medium -- MBQL format is underdocumented |
+| SQL parser | High | `node-sql-parser` (new dependency) | Medium -- SQL edge cases |
+| Translation preview | Low | None | Low |
+| Apply as view config | Medium | None | Low -- maps to existing ViewSnapshot |
 
 ---
 
 ## Sources
 
-- [AI-Powered BI Tools Comparison 2026](https://www.holistics.io/bi-tools/ai-powered/) -- semantic layer importance, NLQ patterns across tools
-- [Natural Language Query Analytics Guide](https://supaboard.ai/blog/natural-language-query-analytics) -- search bar vs chat interface patterns
-- [NLQ Implementation Patterns](https://lansa.com/blog/business-intelligence/nlq-natural-language-query/) -- guided NLQ, suggested prompts
-- [AI Design Patterns for Enterprise Dashboards](https://www.aufaitux.com/blog/ai-design-patterns-enterprise-dashboards/) -- anomaly insight cards, passive detection UX
-- [Anomaly Detection in Time Series Using Statistics](https://medium.com/booking-com-development/anomaly-detection-in-time-series-using-statistical-analysis-cc587b21d008) -- z-score vs IQR for business metrics
-- [Z-Score for Anomaly Detection in Seasonal Data](https://dev.to/qvfagundes/anomaly-detection-in-seasonal-data-why-z-score-still-wins-but-you-need-to-use-it-right-4ec1) -- z-score practical guidance
-- [Simple Statistics for Anomaly Detection](https://www.tinybird.co/blog/anomaly-detection) -- when statistical methods beat ML
-- [Status Indicator Patterns (Carbon Design)](https://carbondesignsystem.com/patterns/status-indicator-pattern/) -- badge and inline status UX patterns
-- [NNGroup Indicators vs Notifications](https://www.nngroup.com/articles/indicators-validations-notifications/) -- passive vs active notification design
-- [Dashboard Design Patterns Research](https://dashboarddesignpatterns.github.io/) -- comparison matrix and metrics-repeated-across-dimensions pattern
-- [Text-to-SQL Best Practices (Google Cloud)](https://cloud.google.com/blog/products/databases/techniques-for-improving-text-to-sql) -- why to avoid text-to-SQL for small datasets
-- [LLM Text-to-SQL Architectures](https://github.com/arunpshankar/LLM-Text-to-SQL-Architectures) -- architectural patterns and when they apply
+- [Metabase MBQL Reference (GitHub Wiki)](https://github.com/metabase/metabase/wiki/(Incomplete)-MBQL-Reference) -- MBQL structure, field references, query clauses
+- [Metabase API Documentation](https://www.metabase.com/docs/latest/api) -- Card endpoints, export formats
+- [Metabase API Changelog](https://www.metabase.com/docs/latest/developers-guide/api-changelog) -- MBQL 5 vs MBQL 4, legacy-mbql parameter
+- [NN/g: Choosing Chart Types](https://www.nngroup.com/articles/choosing-chart-types/) -- Chart type selection UX guidance
+- [Pencil & Paper: Dashboard Design UX Patterns](https://www.pencilandpaper.io/articles/ux-pattern-analysis-data-dashboards) -- Analytics dashboard best practices
+- Existing codebase: `COLUMN_CONFIGS` (61 columns with type metadata), `CollectionCurveChart`, `pivotCurveData`, `ChartViewState`, `ViewSnapshot`

@@ -1,155 +1,238 @@
 # Technology Stack
 
-**Project:** Bounce Data Visualizer v3.0 -- Intelligence & Cross-Partner Comparison
-**Researched:** 2026-04-12
-**Scope:** NEW additions only. Existing stack (Next.js 16, React 19, TanStack Table, React Query, Recharts 3.8, Tailwind 4, shadcn/ui, Snowflake SDK, Zod 4) is validated and unchanged.
+**Project:** Bounce Data Visualizer v3.5 -- Flexible Charts & Metabase Import
+**Researched:** 2026-04-15
+**Scope:** NEW additions only for v3.5. Existing stack (Next.js 16, React 19, TanStack Table, React Query, Recharts 3.8, Tailwind 4, shadcn/ui, Snowflake SDK, Zod 4, AI SDK, simple-statistics) is validated and unchanged.
 
-> v2.0 stack research (Recharts, conditional formatting, KPI cards) remains valid and is not repeated here. This document covers only v3.0 additions.
+> Previous stack research (v2.0 Recharts/KPIs, v3.0 AI SDK/anomaly detection) remains valid and is not repeated here. This document covers only v3.5 additions.
+
+## Key Finding: One New Dependency
+
+The flexible chart builder requires zero new libraries -- Recharts 3.8.0 already ships LineChart, BarChart, ScatterChart, and ComposedChart. The Metabase import feature needs one new dependency: `node-sql-parser` for parsing Metabase-exported SQL. MBQL import is custom code (it is just JSON).
 
 ## Recommended Stack Additions
 
-### Claude AI Query Layer
+### Flexible Chart Builder: No New Dependencies
+
+Recharts 3.8.0 (already installed at exact version) includes every chart type the chart builder needs:
+
+| Recharts Component | Chart Builder Use | Already In Codebase |
+|--------------------|-------------------|:-------------------:|
+| `LineChart` | Line type selection, collection curve preset | Yes |
+| `BarChart` | Bar type selection for categorical comparisons | No (available) |
+| `ScatterChart` | Scatter type for correlation analysis | No (available) |
+| `ComposedChart` | Mixed chart overlay (line + bar on same axes) | No (available) |
+| `XAxis` / `YAxis` | User-selectable axes mapped to column keys | Yes |
+| `Tooltip` / `Legend` | Shared chrome across all chart types | Yes |
+
+**Verified:** `node_modules/recharts/lib/chart/` contains `BarChart.js`, `ScatterChart.js`, and `ComposedChart.js`. All export React components that accept the same data format as LineChart.
+
+The shadcn `ChartContainer` wrapper (`src/components/ui/chart.tsx`) wraps `ResponsiveContainer` and injects CSS variable theming. It works with any Recharts chart component -- no modification needed.
+
+**Confidence: HIGH** -- Verified by filesystem inspection. Already running Recharts 3.8.0 with React 19.2.4 in production.
+
+### Metabase MBQL Import: Custom Parser (No Library)
+
+MBQL (Metabase Query Language) is a JSON format with a known, stable schema. There are no npm libraries for parsing MBQL -- Metabase's own parser is Clojure-only. But none is needed because MBQL is structured JSON that `JSON.parse()` + Zod handles directly.
+
+The MBQL structure to support:
+
+```json
+{
+  "database": 1,
+  "type": "query",
+  "query": {
+    "source-table": 2,
+    "fields": [["field-id", 14], ["field-id", 7]],
+    "aggregation": [["avg", ["field-id", 14]]],
+    "breakout": [["field-id", 7]],
+    "filter": ["and", [">", ["field-id", 14], 100]],
+    "order-by": [["asc", ["field-id", 7]]],
+    "limit": 500
+  }
+}
+```
+
+Key MBQL concepts to translate:
+- **`source-table`**: Map Metabase table ID to known Snowflake tables (`agg_batch_performance_summary`, `master_accounts`)
+- **`aggregation`**: `avg`, `count`, `sum`, `min`, `max`, `distinct`, `stddev` -- map to Snowflake aggregate functions
+- **`breakout`**: GROUP BY columns -- map field IDs to `COLUMN_CONFIGS` keys
+- **`filter`**: `and`/`or`/`not` + comparison operators -- map to WHERE clauses
+- **`fields`**: SELECT columns -- map field IDs to column keys
+- **`order-by`**: ORDER BY with asc/desc
+
+**Why custom, not a library:**
+1. MBQL is just JSON -- no parsing step, just validation and translation
+2. No MBQL libraries exist on npm
+3. Translation target is narrow: 2 known Snowflake tables, 61+78 known columns
+4. Zod schema validation catches malformed input before translation begins
+5. Field ID-to-column mapping is a simple lookup table the user configures on import
+
+**Confidence: HIGH** -- MBQL schema documented on [Metabase GitHub Wiki](https://github.com/metabase/metabase/wiki/(Incomplete)-MBQL-Reference). The format is stable across MBQL 4 and MBQL 5.
+
+### Metabase SQL Import: node-sql-parser
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| `ai` (Vercel AI SDK) | ^6.0.158 | Streaming text generation, `useChat` hook, server/client bridge | First-class Next.js integration. Handles streaming, abort signals, message history, and UI state out of the box. Eliminates manual SSE/WebSocket plumbing. Already deployed on Vercel so zero config for edge runtime. |
-| `@ai-sdk/anthropic` | ^3.0.69 | Anthropic provider for AI SDK | Plugs Claude models into AI SDK's `streamText`/`generateText`. One-line model swap if needed later. |
+| `node-sql-parser` | ^5.4.0 | Parse Metabase-exported SQL into traversable AST | Snowflake dialect support, 1.2M+ weekly npm downloads, actively maintained, parses SELECT into AST with table/column/filter extraction |
 
-**Why AI SDK instead of raw `@anthropic-ai/sdk`:** The raw Anthropic SDK gives you a streaming API but you still need to build: message serialization, abort handling, client-side state management, token-by-token rendering, and error recovery. AI SDK wraps all of that with `useChat` (client) + `streamText` (server route handler). Since the app is already on Next.js + Vercel, this is the path of least resistance. The raw SDK makes sense for server-to-server pipelines; AI SDK makes sense for interactive chat UIs.
+Metabase users can also export their questions as raw SQL (type: "native" queries). These need parsing to extract:
+- Source tables (validate against known schema)
+- Selected columns (map to `COLUMN_CONFIGS` keys)
+- WHERE clauses (translate to app dimension/column filters)
+- GROUP BY (translate to chart axis grouping)
+- ORDER BY (translate to TanStack Table sorting state)
+- Aggregations (translate to computed Y-axis metrics)
 
-**Integration pattern:**
-- Route handler at `app/api/chat/route.ts` using `streamText` with `@ai-sdk/anthropic`
-- Client component using `useChat` hook from `ai/react`
-- System prompt injects serialized data context (partner stats, norms, anomalies) so Claude answers about *this* data
-- `ANTHROPIC_API_KEY` env var in Vercel, server-side only (same pattern as existing Snowflake creds)
+**Why `node-sql-parser`:**
 
-**Confidence:** HIGH -- AI SDK v6 + @ai-sdk/anthropic are actively maintained (published within last 24 hours), well-documented, and purpose-built for this exact pattern.
+| Parser | Snowflake | Bundle Size | Approach | Verdict |
+|--------|:---------:|-------------|----------|---------|
+| `node-sql-parser` | Yes | ~200KB | PEG-based AST | Use this |
+| `sql-parser-cst` | Yes | ~500KB+ | Full CST | Overkill -- CST preserves whitespace/comments we don't need |
+| `js-sql-parser` | No | ~80KB | MySQL-only | Wrong dialect |
+| `dt-sql-parser` | No | ~2MB | ANTLR4 | Designed for editor autocomplete, massive bundle |
+| Custom regex | N/A | 0 | Fragile | Breaks on CTEs, subqueries, aliases, CASE expressions |
 
-### Anomaly Detection & Statistical Computation
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `simple-statistics` | ^7.8.8 | z-scores, percentiles, standard deviation, IQR, quantile ranks | Zero dependencies. Tree-shakeable. Battle-tested (10+ years, millions of weekly downloads). Provides exactly the statistical primitives needed without pulling in an ML framework. |
-
-**Why simple-statistics instead of an ML library (isolation-forest, etc.):**
-1. The dataset is small -- hundreds of batch rows, not millions. ML-based anomaly detection (Isolation Forest, DBSCAN) is overkill and adds complexity without proportional value.
-2. The `isolation-forest` npm package was last published 4 years ago (v0.0.9) -- effectively abandoned.
-3. The existing codebase already computes mean/stddev/norms manually in `compute-norms.ts`. `simple-statistics` replaces that hand-rolled math with tested implementations and adds percentile/IQR/z-score functions needed for anomaly flagging.
-4. Financial batch data has clear expected distributions -- z-score thresholds (e.g., |z| > 2.0) are interpretable and explainable, which matters per the project's "explainable transformations" constraint.
-
-**Why NOT build anomaly detection into Claude:** Claude should narrate and explain anomalies, not detect them. Detection must be deterministic and reproducible -- if you ask Claude "is this anomalous?" twice, you may get different answers. Compute anomaly scores server-side, pass them to Claude as context for narrative generation.
-
-**Integration pattern:**
-- New computation module `compute-anomalies.ts` alongside existing `compute-norms.ts` and `compute-trending.ts`
-- Extends `usePartnerStats` to include anomaly scores in `PartnerStats` type
-- Uses z-scores against partner norms (already computed) and cross-partner percentiles
-- Anomaly thresholds are configurable constants, not magic numbers
-- Can also refactor `compute-norms.ts` to use `simple-statistics` for mean/stddev (reduces hand-rolled math)
-
-**Confidence:** HIGH -- simple-statistics is stable, well-maintained, zero-dependency, and the z-score/IQR approach is standard for this type of structured financial data.
-
-### Cross-Partner Comparison & Normalization
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| (No new dependency) | -- | Cross-partner percentile rankings and normalized trajectory overlays | `simple-statistics` provides `quantileRank` and `quantile` functions. Combined with existing `computeNorms` pattern, no additional library needed. |
-
-**Why no additional library:** Cross-partner comparison is a computation pattern, not a library problem. The work is:
-1. Compute per-metric percentile ranks across all partners (one `quantileRank` call per metric per partner)
-2. Normalize collection curves to recovery-rate basis (already done in `reshape-curves.ts` -- `recoveryRate` field exists on `CurvePoint`)
-3. Overlay normalized curves in Recharts (existing charting infrastructure)
-
-The existing `computeNorms` module computes within-partner norms. The new work adds cross-partner norms computed at the root level (all rows, not filtered to one partner). This is a new computation module, not a new dependency.
-
-**Confidence:** HIGH -- the existing computation architecture (`compute-*.ts` modules composed by `usePartnerStats`) is well-suited for this extension.
+**Confidence: MEDIUM** -- `node-sql-parser` lists Snowflake in supported dialects and has recent Snowflake-specific commits. However, depth of support for Snowflake-specific syntax (QUALIFY, LATERAL FLATTEN, MATCH_RECOGNIZE) is not fully verified. For Metabase-generated SQL, which uses standard SELECT/WHERE/GROUP BY/HAVING, this coverage is sufficient.
 
 ## What NOT to Add
 
 | Library | Why Skip |
 |---------|----------|
-| `@anthropic-ai/sdk` (raw) | AI SDK wraps it with streaming UI primitives. Adding both creates confusion about which to use. |
-| `langchain` / `@langchain/anthropic` | Massive dependency tree, abstraction overkill for a single-model chat with injected context. LangChain adds value for multi-model orchestration, RAG pipelines, and agent chains -- none of which apply here. |
-| `isolation-forest` | Abandoned (4 years stale, v0.0.9), overkill for structured batch data with hundreds of rows. |
-| `@azure/ai-anomaly-detector` | Cloud dependency for something computable in-process in milliseconds. |
-| `ml-regression` / `tensorflow.js` | No regression/forecasting in v3 scope. Dynamic curve re-projection is explicitly v4+. |
-| `d3` or additional charting lib | Recharts 3.8 already handles multi-line overlays for curve comparison. No need for a second charting library. |
-| `openai` / `@ai-sdk/openai` | Project uses Claude. Don't install providers you won't use. |
-| `lodash` / `ramda` | The codebase already uses native array methods. simple-statistics covers the math gap. |
-| `mathjs` | 700KB+ with matrix algebra, complex numbers, symbolic math. We need percentiles and z-scores. |
-| Database for chat history | 2-3 internal users, no persistence requirement stated. React state or localStorage is sufficient for v3. |
+| **Nivo / Victory / Visx / ECharts / Chart.js** | Recharts 3.8 already installed, integrated with shadcn theme, covers all needed chart types. A second charting library creates bundle bloat, inconsistent styling, and dual API patterns. |
+| **@tanstack/react-charts** | Pre-1.0, would require ripping out all existing Recharts code. |
+| **sql.js / alasql / duckdb-wasm** | Full SQL engines. We need to *parse*, not *execute*. Snowflake executes queries. |
+| **Any MBQL npm library** | None exist. MBQL is JSON; `JSON.parse()` + Zod is the parser. |
+| **D3 directly** | Recharts already wraps D3. Direct D3 adds complexity with no gain. |
+| **lodash / ramda** | Codebase uses native array methods throughout. No gap to fill. |
+| **Form library (react-hook-form, formik)** | Chart builder UI is a few selects and toggles, not a complex form. Controlled components with React state are simpler. |
+| **Drag-and-drop library** | Dashboard layout with drag/drop widgets is explicitly v4 scope. |
 
 ## Installation
 
 ```bash
-# AI query layer
-npm install ai @ai-sdk/anthropic
-
-# Statistical computation
-npm install simple-statistics
+# Single new dependency for v3.5
+npm install node-sql-parser
 ```
 
-**Total new dependencies: 3 packages** (ai, @ai-sdk/anthropic, simple-statistics)
+**Total new dependencies: 1 package** (`node-sql-parser`)
 
-## Environment Variables
+No environment variables needed. No infrastructure changes. No new services.
 
-```env
-# Add to Vercel environment variables (server-side only)
-ANTHROPIC_API_KEY=sk-ant-...
+## Architecture Integration Points
+
+### Chart Builder + Existing View System
+
+The existing `ChartViewState` type in `src/lib/views/types.ts` needs extending to support flexible charts:
+
+```typescript
+// Current (collection curves only)
+interface ChartViewState {
+  metric: 'recoveryRate' | 'amount';
+  hiddenBatches: string[];
+  showAverage: boolean;
+  showAllBatches: boolean;
+}
+
+// Extended for v3.5 flexible charts
+interface ChartViewState {
+  // Preset mode (backward-compatible with existing saved views)
+  preset: 'collection-curves' | 'custom';
+  // Collection curve fields (active when preset = 'collection-curves')
+  metric?: 'recoveryRate' | 'amount';
+  hiddenBatches?: string[];
+  showAverage?: boolean;
+  showAllBatches?: boolean;
+  // Flexible chart fields (active when preset = 'custom')
+  chartType?: 'line' | 'bar' | 'scatter';
+  xAxis?: string;           // COLUMN_CONFIGS key
+  yAxis?: string[];          // One or more COLUMN_CONFIGS keys
+  groupBy?: string;          // Optional series grouping column
+}
 ```
 
-No other infrastructure changes. No new databases. No new services. The AI query layer runs through Anthropic's API; anomaly detection and comparison run in-process on the server.
+The Zod schema in `src/lib/views/schema.ts` gets a matching update. Existing saved views without `preset` default to `'collection-curves'` for backward compatibility.
+
+### Chart Builder + COLUMN_CONFIGS
+
+The 61-column `COLUMN_CONFIGS` array in `src/lib/columns/config.ts` already provides metadata for axis pickers:
+- **X-axis candidates**: Any column (text for categories, number/date for continuous)
+- **Y-axis candidates**: Columns where `type` is `'currency'`, `'percentage'`, `'count'`, or `'number'`
+- **Group-by candidates**: Columns where `type` is `'text'` (PARTNER_NAME, ACCOUNT_TYPE, BATCH)
+- **Labels**: `config.label` provides human-readable axis/legend labels
+
+No new metadata needed. The existing `ColumnConfig.type` field drives axis picker filtering.
+
+### Metabase Import + Existing View System
+
+The import flow produces a `ViewSnapshot` (the same type used by saved views):
+
+```
+MBQL JSON or SQL text
+  --> Parse (Zod validation for MBQL, node-sql-parser for SQL)
+  --> Extract: table, columns, filters, aggregations, grouping
+  --> Validate columns against COLUMN_CONFIGS keys
+  --> Map to ViewSnapshot:
+        - columns --> columnVisibility + columnOrder
+        - filters --> columnFilters + dimensionFilters
+        - ordering --> sorting
+        - aggregation + grouping --> ChartViewState (yAxis, groupBy, chartType)
+  --> User reviews + adjusts in preview UI
+  --> Save as new SavedView (existing localStorage persistence)
+```
+
+This means Metabase import reuses the entire existing save/load infrastructure. No new persistence layer needed.
+
+### Metabase Field ID Resolution
+
+MBQL uses numeric `field-id` references (e.g., `["field-id", 14]`), not column names. The importer needs a mapping step:
+
+1. User pastes MBQL JSON
+2. App extracts all `field-id` values
+3. UI presents a mapping table: "Field 14 = ?" with a dropdown of `COLUMN_CONFIGS` options
+4. User maps each field ID to a known column
+5. Mapping is saved for reuse (subsequent imports from same Metabase instance auto-resolve)
+
+This interactive mapping avoids requiring Metabase API access or database connectivity to resolve field IDs -- important because Bounce's Metabase instance may not be API-accessible from the Vercel deployment.
 
 ## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| AI Integration | AI SDK + @ai-sdk/anthropic | Raw @anthropic-ai/sdk | AI SDK handles streaming UI, abort, message state. Raw SDK requires building all of that manually. |
-| AI Integration | AI SDK + @ai-sdk/anthropic | LangChain.js | Massive dependency tree, abstraction overkill for a single-model chat with injected data context. |
-| Statistics | simple-statistics | Hand-rolled (current approach in compute-norms.ts) | Adding z-scores, percentiles, IQR on top of hand-rolled code increases bug surface. simple-statistics is tested and tree-shakeable. |
-| Statistics | simple-statistics | mathjs | mathjs is 700KB+ with matrix algebra, complex numbers, symbolic math. We need percentiles and z-scores. |
-| Anomaly Detection | Z-score/IQR via simple-statistics | Isolation Forest npm | Dataset too small (hundreds of rows), library abandoned (v0.0.9, 4 years stale), results not easily explainable to partnerships team. |
-| Anomaly Detection | Z-score/IQR via simple-statistics | Claude-based detection | Non-deterministic. Same data may get different anomaly flags on different runs. Violates project's "explainable transformations" constraint. |
-| Chat UI | AI SDK `useChat` hook | Custom WebSocket/SSE implementation | useChat provides message state, loading state, abort, error handling, and streaming out of the box. Building custom gains nothing. |
-
-## Integration Points with Existing Stack
-
-### AI SDK + Existing API Route Pattern
-The app already has route handlers at `app/api/data/route.ts`, `app/api/accounts/route.ts`, and `app/api/health/route.ts`. The Claude chat endpoint follows the same pattern at `app/api/chat/route.ts`. Snowflake queries can be called within the route handler to fetch fresh data context before streaming to Claude.
-
-### AI SDK + React Query
-`useChat` manages its own message state (it does not use React Query). This is correct -- chat messages are ephemeral UI state, not cacheable server data. The two systems coexist without conflict.
-
-### simple-statistics + Existing Computation Modules
-The existing `src/lib/computation/` directory has a clean pattern: pure functions that take `Record<string, unknown>[]` and return typed results. `compute-anomalies.ts` and `compute-cross-partner.ts` follow the same pattern. `simple-statistics` functions are called inside these modules -- they are implementation details, not exposed to components.
-
-### Anomaly Data + Existing Norms/Trending
-Anomaly detection builds directly on existing infrastructure:
-- `compute-norms.ts` already produces `{ mean, stddev, count }` per metric -- z-score is `(value - mean) / stddev`
-- `compute-trending.ts` already flags direction changes -- anomalies extend this with severity scoring
-- `MetricNorm` type already exists in `types/partner-stats.ts` -- extend with anomaly fields
-
-### Cross-Partner Comparison + Existing Recharts
-Normalized curve overlays use the same Recharts `LineChart` + `Line` components already rendering per-partner curves. The `recoveryRate` field on `CurvePoint` (already computed in `reshape-curves.ts`) is the normalized basis for comparison -- no new chart type needed.
+| Chart types | Recharts 3.8 (existing) | Add Nivo for scatter/bar | Second charting library, different theming system, bundle cost. Recharts already has ScatterChart and BarChart. |
+| MBQL parsing | Custom Zod-validated JSON parser | N/A | No npm libraries exist for MBQL. It is just JSON with known structure. |
+| SQL parsing | `node-sql-parser` | `sql-parser-cst` | CST preserves whitespace/comments we don't need; larger bundle; AST is the right abstraction for translation. |
+| SQL parsing | `node-sql-parser` | Custom regex | Breaks on CTEs, subqueries, CASE expressions, string literals containing SQL keywords. |
+| Chart config state | Extend existing `ChartViewState` | Separate chart state system | Already have view save/restore plumbing in `src/lib/views/`. Extending it maintains one state model. |
+| Metabase field mapping | Interactive UI mapper | Auto-resolve via Metabase API | Metabase API may not be accessible from Vercel. Interactive mapping is self-contained and works offline. |
 
 ## Version Verification
 
-| Package | Verified Source | Version | Last Published |
-|---------|----------------|---------|----------------|
-| `ai` | [npm registry](https://www.npmjs.com/package/ai) | 6.0.158 | 2026-04-11 |
-| `@ai-sdk/anthropic` | [npm registry](https://www.npmjs.com/package/@ai-sdk/anthropic) | 3.0.69 | 2026-04-12 |
-| `simple-statistics` | [npm registry](https://www.npmjs.com/package/simple-statistics) | 7.8.8 | ~2025-06 |
+| Package | Status | Version | Notes |
+|---------|--------|---------|-------|
+| `recharts` | Installed | 3.8.0 | BarChart, ScatterChart, ComposedChart confirmed in `node_modules` |
+| `zod` | Installed | ^4.3.6 | MBQL schema validation, ChartViewState schema extension |
+| `node-sql-parser` | **NEW** | ^5.4.0 | Snowflake dialect, actively maintained, 1.2M+ weekly downloads |
 
 ## Sources
 
-- [AI SDK documentation](https://ai-sdk.dev/docs/introduction) -- HIGH confidence
-- [AI SDK Next.js App Router guide](https://ai-sdk.dev/docs/getting-started/nextjs-app-router) -- HIGH confidence
-- [AI SDK v6 announcement](https://vercel.com/blog/ai-sdk-6) -- HIGH confidence
-- [@ai-sdk/anthropic on npm](https://www.npmjs.com/package/@ai-sdk/anthropic) -- HIGH confidence
-- [simple-statistics on npm](https://www.npmjs.com/package/simple-statistics) -- HIGH confidence
-- [simple-statistics GitHub](https://github.com/simple-statistics/simple-statistics) -- HIGH confidence
-- [isolation-forest on npm](https://www.npmjs.com/package/isolation-forest) -- evaluated and rejected (last publish 4 years ago)
-- [Anthropic TypeScript SDK](https://github.com/anthropics/anthropic-sdk-typescript) -- evaluated, AI SDK preferred for interactive UI use case
+- Recharts chart components: **Verified via filesystem** -- `node_modules/recharts/lib/chart/{BarChart,ScatterChart,ComposedChart}.js` confirmed present (HIGH confidence)
+- [Recharts examples gallery](https://recharts.github.io/en-US/examples/) -- scatter, bar, composed chart examples (HIGH confidence)
+- [MBQL Reference -- Metabase GitHub Wiki](https://github.com/metabase/metabase/wiki/(Incomplete)-MBQL-Reference) -- aggregation types, filter clauses, field references, expression operators (HIGH confidence)
+- [Metabase API documentation](https://www.metabase.com/learn/metabase-basics/administration/administration-and-operation/metabase-api) -- dataset_query structure, native vs MBQL query types (HIGH confidence)
+- [Metabase API changelog](https://www.metabase.com/docs/latest/developers-guide/api-changelog) -- MBQL 5 serialization format (MEDIUM confidence)
+- [node-sql-parser GitHub](https://github.com/taozhi8833998/node-sql-parser) -- Snowflake dialect support, AST structure (MEDIUM confidence)
+- [Metabase native query format](https://discourse.metabase.com/t/native-sql-query-question-json-data-get/9329) -- native SQL query JSON structure (MEDIUM confidence)
+- Existing codebase files inspected:
+  - `src/components/ui/chart.tsx` -- shadcn ChartContainer wrapper
+  - `src/components/charts/collection-curve-chart.tsx` -- current chart implementation
+  - `src/lib/views/types.ts` -- ChartViewState and ViewSnapshot types
+  - `src/lib/views/schema.ts` -- Zod validation schemas
+  - `src/lib/columns/config.ts` -- 61-column metadata with types
+  - `src/lib/snowflake/types.ts` -- SchemaColumn type
+  - `package.json` -- current dependency versions
 
 ---
-*Stack research for: Bounce Data Visualizer v3.0 intelligence & cross-partner comparison features*
-*Researched: 2026-04-12*
+*Stack research for: Bounce Data Visualizer v3.5 flexible charts & Metabase import*
+*Researched: 2026-04-15*
