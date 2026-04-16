@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ChevronRight, GripVertical } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { COLUMN_CONFIGS, IDENTITY_COLUMNS } from '@/lib/columns/config';
@@ -111,7 +111,13 @@ export function ColumnGroup({
   onDrop,
   onDragEnd,
 }: ColumnGroupProps) {
-  const [expanded, setExpanded] = useState(false);
+  // `manualExpanded` is the user's explicit choice via the header toggle.
+  // When undefined, the group's expanded state is derived from whether a
+  // search filter has matches. This replaces a previous setState-in-effect
+  // pattern that auto-expanded on search — now it's pure derived state.
+  const [manualExpanded, setManualExpanded] = useState<boolean | undefined>(
+    undefined,
+  );
 
   // Filter columns by search term
   const filteredColumns = searchFilter
@@ -121,12 +127,13 @@ export function ColumnGroup({
       })
     : group.columns;
 
-  // Auto-expand when search matches columns in this group
-  useEffect(() => {
-    if (searchFilter && filteredColumns.length > 0) {
-      setExpanded(true);
-    }
-  }, [searchFilter, filteredColumns.length]);
+  // Auto-expand when search matches columns in this group (derived state).
+  // Manual override wins: once the user clicks the header toggle, their
+  // preference is respected until they clear it by toggling back twice.
+  const searchAutoExpanded = Boolean(
+    searchFilter && filteredColumns.length > 0,
+  );
+  const expanded = manualExpanded ?? searchAutoExpanded;
 
   // If search is active and no columns match, hide the group
   if (searchFilter && filteredColumns.length === 0) return null;
@@ -147,7 +154,7 @@ export function ColumnGroup({
       {/* Header row */}
       <div className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
         <button
-          onClick={() => setExpanded((e) => !e)}
+          onClick={() => setManualExpanded(!expanded)}
           className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
         >
           <ChevronRight

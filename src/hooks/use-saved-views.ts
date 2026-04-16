@@ -59,7 +59,10 @@ export function useSavedViews() {
   const [views, setViews] = useState<SavedView[]>([]);
   const hasHydrated = useRef(false);
 
-  // On mount: load from localStorage; seed with defaults if empty
+  // Hydration-safe: initializes with an empty array in useState, then applies
+  // localStorage values in useEffect to avoid Next.js hydration mismatch.
+  // Do NOT convert to derived state — reading localStorage during render
+  // breaks SSR. (KI-13 deferred: see Phase 25 Plan D.)
   useEffect(() => {
     let loaded = loadSavedViews();
     if (loaded.length === 0) {

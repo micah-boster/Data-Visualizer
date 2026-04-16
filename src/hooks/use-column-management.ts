@@ -33,7 +33,10 @@ export function useColumnManagement(
   // Track whether we've loaded from localStorage yet
   const hasHydrated = useRef(false);
 
-  // On mount: apply localStorage if available (client-side only)
+  // Hydration-safe: initializes with defaults in useState, then applies
+  // localStorage values in useEffect to avoid Next.js hydration mismatch.
+  // Do NOT convert to derived state — reading localStorage during render
+  // breaks SSR. (KI-13 deferred: see Phase 25 Plan D.)
   useEffect(() => {
     const saved = loadColumnState();
     if (saved) {

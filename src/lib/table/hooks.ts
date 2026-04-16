@@ -132,7 +132,13 @@ export function useDataTable(
     return base;
   }, [options?.columns, options?.extraColumns]);
 
-  // Reset sorting when column definitions change
+  // Reset sorting when column definitions change (e.g. drill level change).
+  // Intentional setState-in-effect: the sort reset must fire AFTER the new
+  // `columns` reference is committed, so TanStack's `sortedRowModel` sees
+  // a consistent (columns, sorting=[]) pair. Refactoring to a useMemo-based
+  // guard shifts when the reset fires relative to render and risks
+  // transient "sorting id not found in columns" states. (KI-13 deferred:
+  // see Phase 25 Plan D.)
   const prevColumnsRef = useRef(columns);
   useEffect(() => {
     if (prevColumnsRef.current !== columns) {

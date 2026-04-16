@@ -32,10 +32,14 @@ export function SaveViewInput({
     }
   }, [isOpen]);
 
-  // Reset replace state when name changes
-  useEffect(() => {
+  // `showReplace` is reset wherever `name` changes — in the onChange handler
+  // below and after successful save/replace/cancel. Replaces a prior
+  // setState-in-effect pattern (`useEffect([name]) => setShowReplace(false)`)
+  // that is equivalent but ran an extra render.
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
     setShowReplace(false);
-  }, [name]);
+  }, []);
 
   const trimmedName = name.trim();
   const isEmpty = trimmedName.length === 0;
@@ -86,7 +90,7 @@ export function SaveViewInput({
       <Input
         ref={inputRef}
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={handleNameChange}
         onKeyDown={handleKeyDown}
         placeholder="View name..."
         className="h-8 w-48 text-xs"
