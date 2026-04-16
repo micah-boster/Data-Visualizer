@@ -54,6 +54,9 @@ Progress: [███░░░░░░░] 23% (v4.0: 1 of ~13 phases touched; 2
 - [v3.5 carried]: CollectionCurveChart kept intact as preset — 300+ lines of domain logic preserved
 - [Phase 25]: Removed _metric parameter entirely; Next.js ESLint config does not honor underscore-prefix convention for unused params
 - [Phase 25]: Research doc had incorrect symbol locations for KpiAggregates/TableState/Updater; fixed at actual file locations per baseline lint
+- [Phase 25 Plan D]: Scoped KI-12 opt-out to a single eslint-disable-next-line rather than function-level 'use no memo' — preserves Compiler optimization of other memos in useDataTable (columnPinning, meta)
+- [Phase 25 Plan D]: KI-14 site 3 (setActivePresetRef) uses useEffect assignment over useEffectEvent — simpler, safe because consumers only fire from post-commit user handlers; click-verified in the browser
+- [Phase 25 Plan D]: KI-13 sites 2/3 (localStorage hydration) and KI-14 sites 1/2 (TanStack v8 workaround) are intentional patterns with inline justification comments; not fixed until upstream migration
 - [Phase 25-02]: Used react-error-boundary v6 (not hand-rolled) — ~1KB, ships resetKeys + FallbackComponent matching locked UX contract
 - [Phase 25-02]: Per-section granularity locked (chart + table each wrapped); NOT per-card, NOT app-wide
 - [Phase 25-02]: resetKeys={[data]} — stable TanStack Query reference, auto-resets on new query result without coupling to refetch
@@ -72,5 +75,5 @@ Progress: [███░░░░░░░] 23% (v4.0: 1 of ~13 phases touched; 2
 ## Session Continuity
 
 Last session: 2026-04-16
-Stopped at: Completed 25-02-PLAN.md (KI-16 closed, SectionErrorBoundary around chart + table sections)
-Resume with: `/gsd:execute-phase 25` (2 plans remaining: 25-03, 25-04; note 25-04 partially underway per commits 1973191, 222dd33, 9320c03)
+Stopped at: Completed 25-04-PLAN.md (KI-12, KI-13, KI-14 closed; 5 refactors + 6 intentional opt-outs across 7 source files)
+Resume with: `/gsd:execute-phase 25` (1 plan remaining: 25-03)
