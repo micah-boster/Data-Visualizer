@@ -1,6 +1,6 @@
 # Known Issues
 
-Last updated: 2026-04-16
+Last updated: 2026-04-16 (KI-07 resolved)
 Codebase: ~13,500 LOC across ~130 files (src/)
 Stack: Next.js 16, React 19, TanStack Table/Query, Recharts, Tailwind CSS
 
@@ -11,11 +11,11 @@ This document catalogs every known limitation, edge case, tech debt item, and fu
 | Category | Count | High | Medium | Low |
 |----------|-------|------|--------|-----|
 | Data Layer | 4 | 0 | 2 | 2 |
-| UI/UX | 3 | 0 | 1 | 2 |
+| UI/UX | 2 | 0 | 0 | 2 |
 | Architecture | 4 | 0 | 0 | 4 |
 | Performance | 1 | 0 | 0 | 1 |
 | Missing Features | 5 | 0 | 2 | 3 |
-| **Total** | **17** | **0** | **5** | **12** |
+| **Total** | **16** | **0** | **4** | **12** |
 
 ---
 
@@ -63,9 +63,11 @@ The `useState`-based dismissal resets on page refresh; users see the same warnin
 
 ### KI-07: Dimension filter at root level does not reduce table rows
 **Severity:** Medium
-**File(s):** `src/hooks/use-filter-state.ts`
+**File(s):** `src/components/data-display.tsx` (actual fix site; the v2 KNOWN-ISSUES entry mis-located this in `src/hooks/use-filter-state.ts`, which was correct and untouched)
 Known bug from v2. When a dimension filter is applied at the root level, table rows are not filtered accordingly.
 **Suggested fix:** Investigate filter predicate logic in `use-filter-state.ts` for root-level dimension handling.
+
+**Resolved:** 2026-04-16 in Phase 25 Plan C. Root cause was filter-before-aggregate: at root, `rootSummaryRows = buildPartnerSummaryRows(data.data)` operated on unfiltered raw rows while filter columns either had `enableColumnFilter: false` (PARTNER_NAME on summary rows) or didn't exist on summary rows (BATCH, ACCOUNT_TYPE). Fix: introduced `filteredRawData` memo in `src/components/data-display.tsx` that applies `dimensionFilters` to raw batch rows upstream of `buildPartnerSummaryRows`. Threaded through five downstream consumers: `CrossPartnerProvider` allRows, `EnrichedAnomalyProvider` allRows, `tableData` memo (cascades filter into partner drill-down while preserving Plan D's KI-12 object-ref dep array), `CrossPartnerDataTable` allData (feeds `rootSummaryRows`), `QueryCommandDialogWithContext` allData, and `usePartnerStats` input. Zero-match case renders `FilterEmptyState` with one-click "Clear filter" action; copy updated to "No rows match the filter". `src/hooks/use-filter-state.ts` and `src/lib/columns/root-columns.ts` were NOT modified (verified via `git diff`). Visual regression verification per Task 1 checkpoint decision (option-b — visual-only, honoring CONTEXT.md's locked "don't absorb test-infrastructure setup into this phase" boundary); no automated test added because the repo has no test runner. Commit: `b890329`.
 
 ---
 
