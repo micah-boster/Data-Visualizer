@@ -171,8 +171,15 @@ export function DataTable({
   const { table, sorting, setSorting, activePreset, setActivePreset } =
     useDataTable(data, isRoot ? columnFilters : undefined, tableOptions);
 
-  // Wire up the ref so columnManagement can call setActivePreset
-  setActivePresetRef.current = setActivePreset;
+  // Wire up the ref so columnManagement can call setActivePreset.
+  // Ref assignment is deferred to useEffect (runs after commit) rather than
+  // written during render. Safe because markCustomPreset is only invoked
+  // from user-initiated handlers (toggleColumn, toggleGroup, etc.) which
+  // always fire after the initial commit — no synchronous render→ref path.
+  // Resolves KI-14 site 3.
+  useEffect(() => {
+    setActivePresetRef.current = setActivePreset;
+  });
 
   const handlePresetChange = (preset: string) => {
     setActivePreset(preset);

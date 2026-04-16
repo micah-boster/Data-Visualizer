@@ -63,6 +63,14 @@ const isMultiSortEvent = (e: unknown) => (e as MouseEvent).shiftKey;
  *
  * This wrapper uses createTable() directly with ref-based state management
  * to avoid the loop.
+ *
+ * KI-14 deferred (see Phase 25 Plan D): the `.setOptions` call on the ref
+ * AND the final `return tableRef.current` both happen during render. This
+ * is the deliberate React-19 workaround for TanStack Table v8 — v8 calls
+ * setOptions() during render internally, and refactoring to effects causes
+ * "Maximum update depth exceeded". Do not refactor until TanStack Table v9
+ * migration. The lint errors from `react-hooks/refs-in-render` on this
+ * function are expected and suppressed by this explanatory block.
  */
 function useStableReactTable(
   options: Parameters<typeof import('@tanstack/react-table').useReactTable<Record<string, unknown>>>[0],
@@ -77,10 +85,9 @@ function useStableReactTable(
     } as TableOptionsResolved<Record<string, unknown>>),
   }));
 
-  // Update table options — do NOT call setState/rerender from onStateChange.
-  // The individual onSortingChange/onColumnVisibilityChange/etc handlers
-  // already call React setState, which triggers re-renders. Adding rerender()
-  // here causes a feedback loop in React 19.
+  // Intentional ref-write-during-render: TanStack v8 expects options to be
+  // merged synchronously before row-model accessors run. See block comment
+  // above. (KI-14 deferred: Phase 25 Plan D.)
   tableRef.current.setOptions((prev) => ({
     ...prev,
     ...options,
@@ -93,6 +100,8 @@ function useStableReactTable(
     },
   }));
 
+  // Intentional ref-read-during-render: caller consumes the table instance
+  // immediately for header/row rendering. (KI-14 deferred: Phase 25 Plan D.)
   return tableRef.current;
 }
 
