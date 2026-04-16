@@ -95,14 +95,11 @@ export function pivotCurveData(
  *
  * @param data - Pivoted data from pivotCurveData
  * @param curves - Original curves (used to determine batch count for key generation)
- * @param metric - Which metric is being displayed (unused in computation but
- *   kept in signature for consistency and future formatting needs)
  * @returns New pivoted data array with __avg__ key added to each point
  */
 export function addAverageSeries(
   data: PivotedPoint[],
   curves: BatchCurve[],
-  _metric: "recoveryRate" | "amount",
 ): PivotedPoint[] {
   const batchCount = curves.length;
 

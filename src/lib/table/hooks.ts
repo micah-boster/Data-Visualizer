@@ -17,8 +17,6 @@ import {
   type VisibilityState,
   type ColumnDef,
   type OnChangeFn,
-  type Updater,
-  type TableState,
 } from '@tanstack/react-table';
 import { columnDefs } from '@/lib/columns/definitions';
 import type { TableDrillMeta } from '@/lib/columns/definitions';

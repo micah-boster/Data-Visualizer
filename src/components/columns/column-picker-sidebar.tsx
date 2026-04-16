@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { COLUMN_GROUPS } from '@/lib/columns/groups';
-import { COLUMN_CONFIGS, IDENTITY_COLUMNS } from '@/lib/columns/config';
+import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import { ColumnSearch } from './column-search';
 import { ColumnGroup } from './column-group';
 

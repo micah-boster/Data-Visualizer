@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useState, useCallback, useRef } from "react";
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import type { ChartViewState } from "@/lib/views/types";
 import {
   LineChart,
   Line,
@@ -11,7 +12,7 @@ import {
 } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
-import type { BatchCurve, BatchAnomaly } from "@/types/partner-stats";
+import type { BatchCurve } from "@/types/partner-stats";
 import { useAnomalyContext } from "@/contexts/anomaly-provider";
 import { COLLECTION_MONTHS } from "@/lib/computation/reshape-curves";
 import {
@@ -26,9 +27,13 @@ import { BarChart3 } from "lucide-react";
 
 interface CollectionCurveChartProps {
   curves: BatchCurve[];
+  /** Ref for capturing current chart state (view save flow) */
+  chartSnapshotRef?: React.MutableRefObject<(() => ChartViewState) | null>;
+  /** Ref for restoring chart state (view load flow) */
+  chartLoadRef?: React.MutableRefObject<((state: ChartViewState) => void) | null>;
 }
 
-export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
+export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }: CollectionCurveChartProps) {
   // Find batch anomalies for the partner whose curves we're displaying.
   // Match by batchName overlap between curves and anomaly data.
   const { partnerAnomalies } = useAnomalyContext();
@@ -60,7 +65,15 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
     getLineOpacity,
     getLineStrokeWidth,
     getAnomalyLineColor,
+    getChartSnapshot,
+    restoreChartState,
   } = useCurveChartState(curves, batchAnomalies);
+
+  // Wire snapshot/restore refs for view save/load
+  useEffect(() => {
+    if (chartSnapshotRef) chartSnapshotRef.current = getChartSnapshot;
+    if (chartLoadRef) chartLoadRef.current = restoreChartState;
+  }, [chartSnapshotRef, chartLoadRef, getChartSnapshot, restoreChartState]);
 
   // Pivot data for Recharts flat format
   const { data: pivotedRaw, keyMap } = useMemo(
@@ -72,9 +85,9 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
   const pivotedData = useMemo(
     () =>
       showAverage
-        ? addAverageSeries(pivotedRaw, sortedCurves, metric)
+        ? addAverageSeries(pivotedRaw, sortedCurves)
         : pivotedRaw,
-    [pivotedRaw, showAverage, sortedCurves, metric],
+    [pivotedRaw, showAverage, sortedCurves],
   );
 
   // Build ChartConfig for shadcn ChartContainer
@@ -166,7 +179,10 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
     );
   }
 
-  const collectionMonthsTicks = [...COLLECTION_MONTHS];
+  // Limit x-axis ticks to the oldest batch's age so the chart doesn't
+  // stretch into empty space on the right.
+  const maxAge = Math.max(...sortedCurves.map((c) => c.ageInMonths), 1);
+  const collectionMonthsTicks = COLLECTION_MONTHS.filter((m) => m <= maxAge);
 
   return (
     <div className="w-full space-y-2">
@@ -212,7 +228,7 @@ export function CollectionCurveChart({ curves }: CollectionCurveChartProps) {
                 type="number"
                 dataKey="month"
                 ticks={collectionMonthsTicks}
-                domain={[1, "dataMax"]}
+                domain={[1, maxAge]}
                 tickFormatter={(m: number) => `${m}`}
                 className="text-[10px]"
               />

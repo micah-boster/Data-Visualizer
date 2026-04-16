@@ -1,6 +1,5 @@
 import { quantileRank } from 'simple-statistics';
 import type {
-  KpiAggregates,
   BatchCurve,
   CurvePoint,
   PercentileRanks,

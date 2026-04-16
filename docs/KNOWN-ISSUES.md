@@ -1,6 +1,6 @@
 # Known Issues
 
-Last updated: 2026-04-14
+Last updated: 2026-04-16
 Codebase: ~13,500 LOC across ~130 files (src/)
 Stack: Next.js 16, React 19, TanStack Table/Query, Recharts, Tailwind CSS
 
@@ -12,10 +12,10 @@ This document catalogs every known limitation, edge case, tech debt item, and fu
 |----------|-------|------|--------|-----|
 | Data Layer | 4 | 0 | 2 | 2 |
 | UI/UX | 3 | 0 | 1 | 2 |
-| Architecture | 8 | 0 | 3 | 5 |
+| Architecture | 7 | 0 | 3 | 4 |
 | Performance | 2 | 0 | 1 | 1 |
 | Missing Features | 5 | 0 | 2 | 3 |
-| **Total** | **22** | **0** | **9** | **13** |
+| **Total** | **21** | **0** | **9** | **12** |
 
 ---
 
@@ -168,3 +168,5 @@ App runs on static cache only. Live data requires `SNOWFLAKE_ACCOUNT`, `SNOWFLAK
 **File(s):** `src/components/charts/collection-curve-chart.tsx` (BatchAnomaly), `src/components/charts/pivot-curve-data.ts` (_metric), `src/components/columns/column-picker-sidebar.tsx` (IDENTITY_COLUMNS), `src/components/data-display.tsx` (dataUpdatedAt), `src/components/table/sort-dialog.tsx` (config), `src/components/table/table-body.tsx` (useRef), `src/hooks/use-suggested-prompts.ts` (KpiAggregates, TableState, Updater)
 Seven files have unused imports or variable assignments flagged by ESLint.
 **Suggested fix:** Remove unused imports/variables. These are safe, mechanical deletions.
+
+**Resolved:** 2026-04-16 in Phase 25 Plan A. Unused imports/symbols removed from the 7 flagged files. Verified via `pnpm lint` (zero `no-unused-vars` warnings for these specific symbols). Note: during execution, `KpiAggregates` was found in `src/lib/computation/compute-cross-partner.ts` (not `use-suggested-prompts.ts`) and `TableState`/`Updater` were found in `src/lib/table/hooks.ts` (not `use-suggested-prompts.ts`); the unused imports were removed from their actual locations. `_metric` in `pivot-curve-data.ts` was removed (parameter + call-site argument + docstring) because the project's ESLint config does not honor underscore-prefix for unused parameters.

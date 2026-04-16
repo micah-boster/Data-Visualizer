@@ -116,7 +116,6 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
         <div className="flex-1 overflow-y-auto px-4">
           <div className="space-y-2">
             {draft.map((sortRule, index) => {
-              const config = COLUMN_CONFIGS.find((c) => c.key === sortRule.id);
               return (
                 <div
                   key={`${sortRule.id}-${index}`}
