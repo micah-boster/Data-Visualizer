@@ -279,7 +279,12 @@ export function DataTable({
   }, []);
 
   const hasFilteredRows = table.getRowModel().rows.length > 0;
-  const hasActiveFilters = columnFilters.length > 0;
+  const hasActiveFilters = columnFilters.length > 0 || dimensionFilters.length > 0;
+  // HEALTH-01: with upstream filtering (filteredRawData), `data` can be
+  // empty directly when the root filter matches zero rows. Trigger the
+  // empty state in that case too, not only when TanStack's filtered row
+  // model is empty.
+  const rootFilterEmpty = isRoot && data.length === 0 && dimensionFilters.length > 0;
 
   // Breadcrumb row counts
   const breadcrumbRowCounts = {
@@ -330,7 +335,7 @@ export function DataTable({
       />
 
       {/* Scrollable table container or empty state */}
-      {!hasFilteredRows && hasActiveFilters && isRoot ? (
+      {(rootFilterEmpty || (!hasFilteredRows && hasActiveFilters && isRoot)) ? (
         <FilterEmptyState onClearFilters={clearAll} />
       ) : (
         <div

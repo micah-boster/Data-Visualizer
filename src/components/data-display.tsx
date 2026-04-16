@@ -122,7 +122,6 @@ export function DataDisplay() {
   } = useAccountData(drillState.partner, drillState.batch);
   const { setFetchedAt, setIsFetching } = useDataFreshness();
   const [schemaWarningDismissed, setSchemaWarningDismissed] = useState(false);
-  const partnerStats = usePartnerStats(drillState.partner, data?.data ?? []);
 
   // Chart state
   const [chartsExpanded, setChartsExpanded] = useState(() => {
@@ -161,6 +160,32 @@ export function DataDisplay() {
     searchParams,
   } = useFilterState(data?.data);
 
+  // HEALTH-01 / KI-07 fix: apply dimension filters to raw batch rows BEFORE
+  // aggregation so root-level table, chart, KPIs, and downstream consumers
+  // all reflect the filtered dataset consistently. `use-filter-state.ts` is
+  // correct (don't touch); the bug was that `rootSummaryRows` and friends
+  // operated on unfiltered `data.data`.
+  const filteredRawData = useMemo(() => {
+    const rows = data?.data;
+    if (!rows) return [];
+    if (!dimensionFilters || dimensionFilters.length === 0) return rows;
+    return rows.filter((row) =>
+      dimensionFilters.every((cf) => {
+        const value = (row as Record<string, unknown>)[cf.id];
+        if (value == null) return false;
+        // TanStack filter values can be scalars or arrays — handle both
+        if (Array.isArray(cf.value)) {
+          return cf.value.some((v) => String(v) === String(value));
+        }
+        return String(cf.value) === String(value);
+      }),
+    );
+  }, [data?.data, dimensionFilters]);
+
+  // Partner stats sourced from filteredRawData so root-level dimension filters
+  // (e.g. ACCOUNT_TYPE) cascade into partner drill-down aggregates.
+  const partnerStats = usePartnerStats(drillState.partner, filteredRawData);
+
   // Sync freshness state to context so header can display it
   useEffect(() => {
     if (data?.meta?.fetchedAt) {
@@ -173,22 +198,23 @@ export function DataDisplay() {
   }, [isFetching, setIsFetching]);
 
   // Data source depends on drill level.
-  // KI-12 fix: deps are object references (data, accountData, drillState)
-  // rather than sub-properties so the React Compiler can preserve this
-  // memoization. The downstream refs are stable via TanStack Query and
+  // KI-12 fix: deps are object references (filteredRawData, accountData,
+  // drillState) rather than sub-properties so the React Compiler can preserve
+  // this memoization. The downstream refs are stable via TanStack Query and
   // useDrillDown so broadening the deps is safe.
+  // HEALTH-01: starts from filteredRawData so root-level dimension filters
+  // cascade into partner drill-down.
   const tableData = useMemo(() => {
     if (drillState.level === 'batch') {
       return accountData?.data ?? [];
     }
-    if (!data?.data) return [];
     if (drillState.level === 'partner' && drillState.partner) {
-      return data.data.filter(
+      return filteredRawData.filter(
         (row) => getPartnerName(row) === drillState.partner,
       );
     }
-    return data.data;
-  }, [data, accountData, drillState]);
+    return filteredRawData;
+  }, [filteredRawData, accountData, drillState]);
 
   // Memoize batch-level curve for single-batch drill-down.
   // KI-12 fix: same object-ref pattern.
@@ -354,8 +380,8 @@ export function DataDisplay() {
     (data.schemaWarnings.missing.length > 0 || data.schemaWarnings.unexpected.length > 0);
 
   return (
-    <CrossPartnerProvider allRows={data.data}>
-      <EnrichedAnomalyProvider allRows={data.data}>
+    <CrossPartnerProvider allRows={filteredRawData}>
+      <EnrichedAnomalyProvider allRows={filteredRawData}>
         <SidebarDataPopulator
           allData={data.data}
           drillState={drillState}
@@ -453,7 +479,7 @@ export function DataDisplay() {
                   navigateToLevel={navigateToLevel}
                   totalRowCount={uniquePartnerCount}
                   partnerStats={partnerStats}
-                  allData={data.data}
+                  allData={filteredRawData}
                   // Lifted state
                   dimensionFilters={dimensionFilters}
                   setFilter={setFilter}
@@ -494,7 +520,7 @@ export function DataDisplay() {
             open={queryOpen}
             onOpenChange={setQueryOpen}
             drillState={drillState}
-            allData={data.data}
+            allData={filteredRawData}
             onRemoveScope={() => navigateToLevel('root')}
           />
         </div>
