@@ -66,7 +66,7 @@
 **Milestone Goal:** Invest in design foundation, fix code health, then build deferred features on the polished base. The app should feel like a product, not a prototype.
 
 **Design Foundation (Phases 25-31):**
-- [ ] **Phase 25: Code Health & Bug Fixes** — Fix root filter bug, add error boundaries, clean React anti-patterns
+- [x] **Phase 25: Code Health & Bug Fixes** — Fix root filter bug, add error boundaries, clean React anti-patterns (completed 2026-04-16)
 - [ ] **Phase 26: Design Tokens** — Spacing, typography, elevation, motion, and surface token system
 - [ ] **Phase 27: Typography & Information Hierarchy** — Type scale applied across app, tabular figures, consistent labeling
 - [ ] **Phase 28: Surfaces & Elevation** — Every container uses a named surface — cards float, tables recede, popovers lift
@@ -94,7 +94,7 @@
 | 10-14 | v2.0 | 9/9 | Complete | 2026-04-12 |
 | 15-20 | v3.0 | 9/9 | Complete | 2026-04-14 |
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
-| 25. Code Health & Bug Fixes | 3/4 | In Progress|  | - |
+| 25. Code Health & Bug Fixes | 4/4 | Complete   | 2026-04-16 | - |
 | 26. Design Tokens | v4.0 | 0/TBD | Not started | - |
 | 27. Typography & Hierarchy | v4.0 | 0/TBD | Not started | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |

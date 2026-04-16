@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-16T21:00:00.000Z"
+last_updated: "2026-04-16T20:55:52.728Z"
 progress:
-  total_phases: 27
-  completed_phases: 24
+  total_phases: 28
+  completed_phases: 25
   total_plans: 48
-  completed_plans: 46
+  completed_plans: 48
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 25 (1 of 13 in v4.0)
-Plan: 3 of 4 in current phase (25-03 not yet executed; 25-04 shipped out-of-order per Wave 1 sequencing)
-Status: In progress
-Last activity: 2026-04-16 — Completed Plan 25-04 (KI-12, KI-13, KI-14 closed: 5 refactors + 6 intentional opt-outs across 7 source files)
+Phase: 25 (complete — all 4 plans shipped)
+Plan: 4 of 4 complete (25-01, 25-02, 25-04 previously; 25-03 this session)
+Status: Phase 25 complete; ready to start next phase in v4.0
+Last activity: 2026-04-16 — Completed Plan 25-03 (HEALTH-01 / KI-07 closed: filter-before-aggregate via filteredRawData memo; 2 atomic commits b890329 + da53710)
 
-Progress: [███░░░░░░░] 23% (v4.0: 1 of ~13 phases touched; 25-01, 25-02, 25-04 complete; 25-03 pending)
+Progress: [████░░░░░░] 30% (v4.0: Phase 25 complete; 12 phases remaining)
 
 ## Shipped Milestones
 
@@ -61,12 +61,14 @@ Progress: [███░░░░░░░] 23% (v4.0: 1 of ~13 phases touched; 2
 - [Phase 25-02]: Per-section granularity locked (chart + table each wrapped); NOT per-card, NOT app-wide
 - [Phase 25-02]: resetKeys={[data]} — stable TanStack Query reference, auto-resets on new query result without coupling to refetch
 - [Phase 25-02]: Generic fallback copy "This section couldn't load." works for both mount sites; no per-section prop added
+- [Phase 25]: [Phase 25 Plan C]: filter-before-aggregate via filteredRawData memo in data-display.tsx — upstream of buildPartnerSummaryRows; threaded through 6 consumers (+1 beyond plan's 5: QueryCommandDialogWithContext); sidebar intentionally kept on data.data for navigation integrity
+- [Phase 25]: [Phase 25 Plan C]: Task 1 checkpoint auto-decision: option-b (visual-only, no test runner install) — honors CONTEXT.md locked 'don't absorb test-infra setup' boundary; plan itself flagged option-a as contradicting this
 
 ### Pending Todos
 
 - Snowflake credentials need to be provisioned in Vercel env vars
 - ANTHROPIC_API_KEY needs to be provisioned in Vercel env vars
-- Dimension filter at root level doesn't reduce table rows (bug from v2 — targeted by HEALTH-01, Phase 25)
+- Visual UAT of 6 scenarios from Plan 25-03 Task 3 (auto-approved in auto-mode; user should verify next browser session — root filter reduces rows, ACCOUNT_TYPE filter works, drill cascade, zero-match empty state, existing drill-level filters unchanged, protected files untouched)
 
 ### Blockers/Concerns
 
@@ -75,5 +77,5 @@ Progress: [███░░░░░░░] 23% (v4.0: 1 of ~13 phases touched; 2
 ## Session Continuity
 
 Last session: 2026-04-16
-Stopped at: Completed 25-04-PLAN.md (KI-12, KI-13, KI-14 closed; 5 refactors + 6 intentional opt-outs across 7 source files)
-Resume with: `/gsd:execute-phase 25` (1 plan remaining: 25-03)
+Stopped at: Completed 25-03-PLAN.md (HEALTH-01 / KI-07 closed — Phase 25 complete, all 4 plans shipped)
+Resume with: `/gsd:plan-phase` for next phase in v4.0 (design tokens is up next per Phase 25 CONTEXT decisions)
