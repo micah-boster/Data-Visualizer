@@ -67,7 +67,7 @@
 
 **Design Foundation (Phases 25-31):**
 - [x] **Phase 25: Code Health & Bug Fixes** — Fix root filter bug, add error boundaries, clean React anti-patterns (completed 2026-04-16)
-- 🚧 **Phase 26: Design Tokens** — Spacing, typography, elevation, motion, and surface token system (4/5 plans — foundation + KPI card + header + table row pilots shipped 2026-04-17; only the unlisted /tokens reference page remains)
+- [x] **Phase 26: Design Tokens** — Spacing, typography, elevation, motion, and surface token system (5/5 plans — foundation + KPI card + header + table row pilots + unlisted /tokens reference page all shipped 2026-04-17)
 - [ ] **Phase 27: Typography & Information Hierarchy** — Type scale applied across app, tabular figures, consistent labeling
 - [ ] **Phase 28: Surfaces & Elevation** — Every container uses a named surface — cards float, tables recede, popovers lift
 - [ ] **Phase 29: Component Patterns** — StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState
@@ -95,7 +95,7 @@
 | 15-20 | v3.0 | 9/9 | Complete | 2026-04-14 |
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
-| 26. Design Tokens | v4.0 | 4/5 | In Progress | - |
+| 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
 | 27. Typography & Hierarchy | v4.0 | 0/TBD | Not started | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
@@ -139,9 +139,9 @@
 **Plans**: 5 plans
 - [x] 26-01-PLAN.md — Token infrastructure in globals.css (all categories) + font swap Geist→Inter/JetBrains Mono + shadcn re-map (shipped 2026-04-17)
 - [x] 26-02-PLAN.md — Pilot: migrate KPI card to surface-raised + type tokens + tabular numerics (shipped 2026-04-17)
-- [ ] 26-03-PLAN.md — Pilot: migrate Header to surface-raised + shadow-xs + type tokens
+- [x] 26-03-PLAN.md — Pilot: migrate Header to surface-raised + shadow-xs + type tokens (shipped 2026-04-17)
 - [x] 26-04-PLAN.md — Pilot: migrate Table row to surface-inset + density tokens (dense/sparse variants) (shipped 2026-04-17)
-- [ ] 26-05-PLAN.md — Unlisted /tokens reference page with tabbed token browser and copy-to-clipboard
+- [x] 26-05-PLAN.md — Unlisted /tokens reference page with tabbed token browser and copy-to-clipboard (shipped 2026-04-17)
 
 ---
 *Last updated: 2026-04-16 — v5.0 and v6.0 milestones added; Phase 26 detail synced from v4.0-ROADMAP.md*

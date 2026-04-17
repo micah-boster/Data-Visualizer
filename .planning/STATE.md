@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: in_progress
-last_updated: "2026-04-17T00:00:00.000Z"
+last_updated: "2026-04-17T13:00:00.000Z"
 progress:
   total_phases: 28
-  completed_phases: 25
-  total_plans: 52
-  completed_plans: 53
+  completed_phases: 26
+  total_plans: 53
+  completed_plans: 54
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 26 (Design Tokens — in progress) / 32 (URL-Backed Navigation — in progress, parallel track)
-Plan: 26-05 (next — unlisted /tokens reference page) / 32-02 still awaiting human-verify on Task 4
-Status: 26-04 SHIPPED — Table body + data-table wrapper migrated to Phase 26 tokens (bg-surface-inset on scroll wrapper, data-density="dense" cascade root, h-[var(--row-height)] / px-[var(--row-padding-x)] / py-[var(--row-padding-y)], text-body vs text-body-numeric by column type, hover:bg-hover-bg duration-quick ease-default). TanStack Virtual estimateSize 42 → 32 (dense default); sparse virtualizer wiring deferred to density-toggle UI phase. globals.css extended with [data-density="dense"|"sparse"] @layer base selectors. Plan frontmatter dynamically expanded mid-task to include data-table.tsx per Task 1 Pre-step Blocker 4 resolution. User approved light + dark visual verification in own browser; post-plan brand swap (d2f0a16) transparent to pilot. 32-02 Task 4 still paused on parallel track.
-Last activity: 2026-04-17 — Shipped 26-04 Task 1 (55a5a1d table-body + data-table density-token migration); Task 2 human-verify checkpoint approved by user. Phase 26 Wave 2 complete on implementation pilots; remaining plan 26-05 is an unlisted reference page.
+Phase: 26 (Design Tokens — COMPLETE, awaiting /gsd:verify-work 26) / 32 (URL-Backed Navigation — in progress, parallel track)
+Plan: Phase 26 fully shipped (5/5). Next up: Phase 27 (Typography & Hierarchy) and Phase 28 (Surfaces & Elevation) can run in parallel. / 32-02 still awaiting human-verify on Task 4.
+Status: 26-05 SHIPPED — Unlisted /tokens reference page (robots.noindex, no nav link) with 5-tab browser (Spacing / Typography / Surfaces & Shadows / Motion / Colors) via @base-ui/react/tabs. Reusable TokenCard primitive with live example + CSS var + Tailwind class + copy-to-clipboard (Copy↔Check icon swap, sonner toast). Every Phase 26 token category covered with live demos (12+5 spacing, 6+3 type, 5 surfaces, 4 shadows, 3 radii, 9 motion combos, accent+state+neutrals+chart+interaction colors). Page's own chrome uses only tokens (dogfooding). User approved light + dark visual verification in own browser. Phase 26 now 5/5 plans complete — all DS-01..DS-06 requirements fully credited across foundation + 3 pilots + reference page. 32-02 Task 4 still paused on parallel track.
+Last activity: 2026-04-17 — Shipped 26-05 Task 1 (2c3b05e /tokens route + TokenBrowser shell + TokenCard primitive) and Task 2 (e949294 fill all tab bodies with live demos); human-verify checkpoint approved. Phase 26 complete.
 
-Progress: [██████░░░░] 40% (v4.0: Phase 25 shipped, Phase 32-01 shipped, 26-01 + 26-02 + 26-03 + 26-04 shipped; 11 phases + remaining plans)
+Progress: [██████░░░░] 42% (v4.0: Phase 25 + Phase 26 shipped, Phase 32-01 shipped; 11 remaining phases + remaining plans)
 
 ## Shipped Milestones
 
@@ -91,6 +91,10 @@ Progress: [██████░░░░] 40% (v4.0: Phase 25 shipped, Phase 32
 - [Phase 26-04]: TanStack Virtual estimateSize hardcoded to 32 (dense default) with inline comment flagging that sparse visual wiring requires dynamic estimateSize via data-density prop — deferred until a density-toggle UI phase. Deliberate deferral matches plan's own project_constraints.
 - [Phase 26-04]: Numeric vs text cell typography split at render time — text-body-numeric (JetBrains Mono + tabular-nums + lining-nums) for number columns, text-body (Inter) for text columns. Digits align vertically across rows. Proves DS-02 on the highest-data-density surface in the app.
 - [Phase 26-04]: Third pilot in a row consuming semantic tokens only (surface-inset, density, text-body, text-body-numeric, hover-bg, duration-quick, ease-default) — never brand or chart tokens. Post-plan brand palette swap (d2f0a16) passed through transparently. Semantic-token discipline is working; future pilots should preserve it.
+- [Phase 26-05]: No shadcn Tabs wrapper in repo — `@base-ui/react/tabs` used directly for /tokens. This is now the canonical tabs import path in this codebase until a wrapper is added. Future plans that need tabs should use @base-ui directly or add a ui/tabs.tsx shadcn wrapper first.
+- [Phase 26-05]: Tailwind v4 content scanner cannot see template-literal classes (e.g. `bg-neutral-${n}`, `bg-chart-${i}`). Dynamic swatches switched to inline `style={{ backgroundColor: 'var(--X)' }}` during execution. Documented workaround for any future token demo / palette surface computing colors at render time.
+- [Phase 26-05]: /tokens dogfoods the token system — page's own chrome uses only tokens (bg-surface-base, p-card-padding, gap-section, text-display, shadow-xs). Serves as both live documentation AND a self-verification surface: if /tokens renders correctly in both modes, the token system is provably complete. Unlisted (robots.noindex, no nav link) — bookmarkable direct URL only.
+- [Phase 26-05]: Unlisted reference-page pattern established — metadata.robots = { index: false, follow: false } + deliberate no-nav-link. Reusable for future internal dev surfaces (e.g., /components, /playground, /debug).
 
 ### Pending Todos
 
@@ -106,5 +110,5 @@ Progress: [██████░░░░] 40% (v4.0: Phase 25 shipped, Phase 32
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Completed 26-04-PLAN.md (Table row pilot shipped — bg-surface-inset on scroll wrapper + data-density="dense" cascade + h-[var(--row-height)]/px-[var(--row-padding-x)]/py-[var(--row-padding-y)] + text-body vs text-body-numeric by column type + hover:bg-hover-bg duration-quick ease-default; virtualizer estimateSize 42→32; user approved light + dark visual verification). 32-02 still paused at Task 4 checkpoint (independent parallel track).
-Resume with: `/gsd:execute-phase 26` to finalize Phase 26 with Plan 26-05 (unlisted /tokens reference page), or `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
+Stopped at: Completed 26-05-PLAN.md — Phase 26 Design Tokens is now fully shipped (5/5 plans). Unlisted /tokens reference page live at localhost:3000/tokens with 5-tab browser covering every Phase 26 token category, TokenCard + copy-to-clipboard, user-verified in both modes. All DS-01..DS-06 requirements fully credited. 32-02 still paused at Task 4 checkpoint (independent parallel track).
+Resume with: `/gsd:verify-work 26` to verify Phase 26 before transition, then `/gsd:plan-phase 27` (Typography & Hierarchy) and/or `/gsd:plan-phase 28` (Surfaces & Elevation) — both can run in parallel. Alternatively, `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
