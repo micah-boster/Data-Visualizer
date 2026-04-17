@@ -63,12 +63,14 @@ Progress: [████░░░░░░] 30% (v4.0: Phase 25 complete; 12 phas
 - [Phase 25-02]: Generic fallback copy "This section couldn't load." works for both mount sites; no per-section prop added
 - [Phase 25]: [Phase 25 Plan C]: filter-before-aggregate via filteredRawData memo in data-display.tsx — upstream of buildPartnerSummaryRows; threaded through 6 consumers (+1 beyond plan's 5: QueryCommandDialogWithContext); sidebar intentionally kept on data.data for navigation integrity
 - [Phase 25]: [Phase 25 Plan C]: Task 1 checkpoint auto-decision: option-b (visual-only, no test runner install) — honors CONTEXT.md locked 'don't absorb test-infra setup' boundary; plan itself flagged option-a as contradicting this
+- [Phase 25 Plan C scope extension]: Relaxed trajectory-chart `rankedPartners.length < 2` guard to `=== 0` and suppressed best-in-class overlay when only 1 partner — single-partner filter now renders chart with one line + portfolio avg (commit d9aa14b). Pre-existing UX gap caught during KI-07 verification.
 
 ### Pending Todos
 
 - Snowflake credentials need to be provisioned in Vercel env vars
 - ANTHROPIC_API_KEY needs to be provisioned in Vercel env vars
-- Visual UAT of 6 scenarios from Plan 25-03 Task 3 (auto-approved in auto-mode; user should verify next browser session — root filter reduces rows, ACCOUNT_TYPE filter works, drill cascade, zero-match empty state, existing drill-level filters unchanged, protected files untouched)
+- Visual UAT of remaining 25-03 scenarios (ACCOUNT_TYPE filter proves upstream-of-aggregate, drilldown cascade preserves root filter, zero-match FilterEmptyState + Clear filter click) — primary scenario (single-partner filter) verified this session and surfaced the trajectory-chart <2 partners guard (fixed in d9aa14b)
+- [UX — future phase] Drilled-in view should surface per-batch KPI cards prominently at top (summary stats for the selected batch when drilled into partner/batch levels). Parallels the root-level KPI cards and would make the drill experience feel symmetrical. Candidate for Phase 28 (surfaces) or a dedicated polish phase.
 
 ### Blockers/Concerns
 
