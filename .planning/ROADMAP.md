@@ -101,7 +101,7 @@
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
-| 32. URL-Backed Navigation | v4.0 | 0/TBD | Not started | - |
+| 32. URL-Backed Navigation | v4.0 | 1/2 | In Progress | - |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
 | 34. Partner Lists | v4.0 | 0/TBD | Not started | - |
 | 35. Chart Schema & Migration | v4.0 | 0/TBD | Not started | - |

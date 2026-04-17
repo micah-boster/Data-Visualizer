@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
-status: unknown
-last_updated: "2026-04-16T20:55:52.728Z"
+status: in_progress
+last_updated: "2026-04-16T22:30:00.000Z"
 progress:
   total_phases: 28
   completed_phases: 25
-  total_plans: 48
-  completed_plans: 48
+  total_plans: 50
+  completed_plans: 49
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 25 (complete — all 4 plans shipped)
-Plan: 4 of 4 complete (25-01, 25-02, 25-04 previously; 25-03 this session)
-Status: Phase 25 complete; ready to start next phase in v4.0
-Last activity: 2026-04-16 — Completed Plan 25-03 (HEALTH-01 / KI-07 closed: filter-before-aggregate via filteredRawData memo; 2 atomic commits b890329 + da53710)
+Phase: 32 (URL-Backed Navigation — in progress)
+Plan: 32-02 (current; 32-01 complete this session)
+Status: Ready to execute 32-02 (URL persistence for filters / saved-view wiring on top of URL-backed drill foundation)
+Last activity: 2026-04-16 — Completed Plan 32-01 (NAV-01, NAV-02, NAV-03 closed: URL-backed useDrillDown via next/navigation + stale-param toast; 2 atomic commits 0e4650a + 0d21652; all 8 human-verify scenarios approved on Next 16.2.3)
 
-Progress: [████░░░░░░] 30% (v4.0: Phase 25 complete; 12 phases remaining)
+Progress: [█████░░░░░] 33% (v4.0: Phase 25 shipped, Phase 32-01 shipped; 11 phases + 1 plan remaining)
 
 ## Shipped Milestones
 
@@ -64,6 +64,13 @@ Progress: [████░░░░░░] 30% (v4.0: Phase 25 complete; 12 phas
 - [Phase 25]: [Phase 25 Plan C]: filter-before-aggregate via filteredRawData memo in data-display.tsx — upstream of buildPartnerSummaryRows; threaded through 6 consumers (+1 beyond plan's 5: QueryCommandDialogWithContext); sidebar intentionally kept on data.data for navigation integrity
 - [Phase 25]: [Phase 25 Plan C]: Task 1 checkpoint auto-decision: option-b (visual-only, no test runner install) — honors CONTEXT.md locked 'don't absorb test-infra setup' boundary; plan itself flagged option-a as contradicting this
 - [Phase 25 Plan C scope extension]: Relaxed trajectory-chart `rankedPartners.length < 2` guard to `=== 0` and suppressed best-in-class overlay when only 1 partner — single-partner filter now renders chart with one line + portfolio avg (commit d9aa14b). Pre-existing UX gap caught during KI-07 verification.
+- [Phase 32-01]: Drill param names are `p` and `b` (not `partner`/`batch`) — distinct from FILTER_PARAMS in use-filter-state.ts to avoid URL slot collision. Rationale documented in use-drill-down.ts JSDoc.
+- [Phase 32-01]: `router.push` with `{ scroll: false }` (NOT `router.replace`) for all drill transitions — each drill creates a history entry so browser back pops exactly one level (NAV-02 contract).
+- [Phase 32-01]: Stale deep-links handled by validation effect in data-display.tsx — sonner toast + `navigateToLevel` step-up (partner-missing → root, batch-missing → partner). Non-destructive, no error page.
+- [Phase 32-01]: Filter params (?partner=X) and drill params (?p=X) are intentionally orthogonal URL axes — coexist by design when user filters to a partner AND drills into that same partner. Removing either would break Phase 25 filter-before-aggregate contract.
+- [Phase 32-01]: Next.js 16.2.0-16.2.2 useSearchParams stale-params regression did NOT surface — project is on 16.2.3, past the regression window.
+- [Phase 32-01]: `use-filter-state.ts` left untouched — Phase 25 regression guard honored. Verified via git diff 61e239c..0d21652.
+- [Phase 32-01]: Public-API-first rewrite — all 13 existing useDrillDown consumers required zero edits. Pattern: preserve exported types and function shapes when swapping hook internals.
 
 ### Pending Todos
 
@@ -79,5 +86,5 @@ Progress: [████░░░░░░] 30% (v4.0: Phase 25 complete; 12 phas
 ## Session Continuity
 
 Last session: 2026-04-16
-Stopped at: Completed 25-03-PLAN.md (HEALTH-01 / KI-07 closed — Phase 25 complete, all 4 plans shipped)
-Resume with: `/gsd:plan-phase` for next phase in v4.0 (design tokens is up next per Phase 25 CONTEXT decisions)
+Stopped at: Completed 32-01-PLAN.md (NAV-01, NAV-02, NAV-03 closed — URL-backed drill hook + stale-param toast shipped, user approved all 8 human-verify scenarios)
+Resume with: `/gsd:execute-phase 32` to continue with Plan 32-02 (URL persistence follow-up / breadcrumb / saved-view wiring on top of the URL-backed drill foundation)
