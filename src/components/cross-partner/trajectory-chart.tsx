@@ -68,8 +68,10 @@ export function CrossPartnerTrajectoryChart() {
   }, [crossPartnerData]);
 
   // Determine best-in-class partner (highest perDollarPlacedRate)
+  // Suppress when there's only 1 partner — best-in-class would be that same
+  // partner, rendering a duplicate line on top of itself.
   const bestInClass = useMemo(() => {
-    if (!crossPartnerData || crossPartnerData.rankedPartners.length === 0) return null;
+    if (!crossPartnerData || crossPartnerData.rankedPartners.length < 2) return null;
     const best = [...crossPartnerData.rankedPartners].sort(
       (a, b) => b.perDollarPlacedRate - a.perDollarPlacedRate,
     )[0];
@@ -112,7 +114,7 @@ export function CrossPartnerTrajectoryChart() {
     });
   }, []);
 
-  if (!crossPartnerData || crossPartnerData.rankedPartners.length < 2) {
+  if (!crossPartnerData || crossPartnerData.rankedPartners.length === 0) {
     return null;
   }
 
