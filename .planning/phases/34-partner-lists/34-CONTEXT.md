@@ -1,6 +1,6 @@
-# Phase 25: Partner Lists - Context
+# Phase 34: Partner Lists - Context
 
-**Gathered:** 2026-04-16
+**Gathered:** 2026-04-16 (originally Phase 25 in v3.5, renumbered to Phase 34 when v3.5 absorbed into v4.0)
 **Status:** Ready for planning
 
 <domain>
@@ -68,5 +68,5 @@ None — discussion stayed within phase scope
 
 ---
 
-*Phase: 25-partner-lists*
+*Phase: 34-partner-lists (renumbered from 25-partner-lists)*
 *Context gathered: 2026-04-16*

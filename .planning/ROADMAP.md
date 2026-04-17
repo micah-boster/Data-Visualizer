@@ -94,7 +94,7 @@
 | 10-14 | v2.0 | 9/9 | Complete | 2026-04-12 |
 | 15-20 | v3.0 | 9/9 | Complete | 2026-04-14 |
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
-| 25. Code Health & Bug Fixes | 4/4 | Complete   | 2026-04-16 | - |
+| 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
 | 26. Design Tokens | v4.0 | 0/TBD | Not started | - |
 | 27. Typography & Hierarchy | v4.0 | 0/TBD | Not started | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
