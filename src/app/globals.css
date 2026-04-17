@@ -441,6 +441,38 @@
   }
 }
 
+/* =============================================================================
+   NUMERIC TYPE VARIANTS (DS-02)
+   Tailwind v4 `--text-*` namespace does not bake in font-variant-numeric or
+   font-family; these utilities extend the type scale with tabular-nums +
+   lining-nums so stacked digits align across KPI cards, tables, chart axes.
+   - body / label variants swap to the mono family (`--font-mono` = JetBrains Mono)
+   - display variant intentionally inherits the sans family (Inter) for visual
+     hierarchy; only numeric features are baked in.
+   =============================================================================
+*/
+@layer utilities {
+  .text-body-numeric {
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-family: var(--font-mono), ui-monospace, monospace;
+  }
+  .text-label-numeric {
+    font-size: var(--text-label);
+    line-height: var(--text-label--line-height);
+    letter-spacing: var(--text-label--letter-spacing);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-family: var(--font-mono), ui-monospace, monospace;
+  }
+  .text-display-numeric {
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    font-weight: var(--text-display--font-weight);
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+}
+
 /* Smooth theme transitions for non-layout elements */
 @media (prefers-reduced-motion: no-preference) {
   .theme-transition * {

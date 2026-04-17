@@ -29,6 +29,10 @@ interface KpiCardProps {
  *
  * Trend arrow color is context-aware using metric polarity:
  * green = good direction, red = bad direction, gray = flat.
+ *
+ * Styling: Phase 26 token pilot — consumes --color-surface-raised,
+ * --spacing-card-padding, --shadow-sm, --radius-lg, and the type scale
+ * (text-label, text-display-numeric, text-label-numeric, text-caption).
  */
 export function KpiCard({
   label,
@@ -39,16 +43,22 @@ export function KpiCard({
   noData,
   noDataReason,
 }: KpiCardProps) {
+  // Token-migrated container classes shared across all render states.
+  const cardClasses =
+    'rounded-lg border border-border bg-surface-raised p-card-padding shadow-sm transition-colors duration-quick ease-default';
+
   // No data state: show em-dash
   if (noData) {
     return (
-      <div className="rounded-xl border border-border/50 bg-transparent p-4">
+      <div className={cardClasses}>
         <Tooltip>
           <TooltipTrigger className="block w-full text-left">
-            <div className="text-2xl font-semibold tabular-nums text-muted-foreground">
+            <div className="text-display-numeric text-muted-foreground">
               {'\u2014'}
             </div>
-            <div className="text-sm text-muted-foreground">{label}</div>
+            <div className="text-label uppercase text-muted-foreground">
+              {label}
+            </div>
           </TooltipTrigger>
           <TooltipContent>{noDataReason ?? 'No data available'}</TooltipContent>
         </Tooltip>
@@ -67,8 +77,8 @@ export function KpiCard({
 
     trendElement = (
       <Tooltip>
-        <TooltipTrigger className="inline-flex items-center">
-          <span className="text-xs text-muted-foreground">{'\u2014'}</span>
+        <TooltipTrigger className="ml-1.5 inline-flex items-center">
+          <span className="text-caption text-muted-foreground">{'\u2014'}</span>
         </TooltipTrigger>
         <TooltipContent>{tooltipText}</TooltipContent>
       </Tooltip>
@@ -90,9 +100,9 @@ export function KpiCard({
     if (trend.direction === 'flat') {
       colorClass = 'text-muted-foreground';
     } else if (isPositive) {
-      colorClass = 'text-emerald-600 dark:text-emerald-400';
+      colorClass = 'text-success-fg';
     } else {
-      colorClass = 'text-red-500 dark:text-red-400';
+      colorClass = 'text-error-fg';
     }
 
     const sign = trend.deltaPercent >= 0 ? '+' : '';
@@ -103,7 +113,9 @@ export function KpiCard({
 
     trendElement = (
       <Tooltip>
-        <TooltipTrigger className={`ml-1.5 inline-flex items-center gap-0.5 text-xs font-medium ${colorClass}`}>
+        <TooltipTrigger
+          className={`ml-1.5 inline-flex items-center gap-0.5 text-label-numeric font-medium ${colorClass}`}
+        >
           {arrow}
           {deltaText && <span>{deltaText}</span>}
         </TooltipTrigger>
@@ -113,12 +125,12 @@ export function KpiCard({
   }
 
   return (
-    <div className="rounded-xl border border-border/50 bg-transparent p-4">
+    <div className={cardClasses}>
       <div className="flex items-baseline">
-        <span className="text-2xl font-semibold tabular-nums">{value}</span>
+        <span className="text-display-numeric">{value}</span>
         {trendElement}
       </div>
-      <div className="text-sm text-muted-foreground">{label}</div>
+      <div className="text-label uppercase text-muted-foreground">{label}</div>
     </div>
   );
 }
