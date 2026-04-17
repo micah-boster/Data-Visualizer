@@ -95,7 +95,7 @@
 | 15-20 | v3.0 | 9/9 | Complete | 2026-04-14 |
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
-| 26. Design Tokens | v4.0 | 0/TBD | Not started | - |
+| 26. Design Tokens | v4.0 | 0/5 | Planned | - |
 | 27. Typography & Hierarchy | v4.0 | 0/TBD | Not started | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
@@ -136,7 +136,12 @@
   4. Motion tokens (duration-quick/normal/slow, easing-default/spring/decelerate) defined and documented
   5. Surface system (surface-base, surface-raised, surface-inset, surface-overlay, surface-floating) defined with consistent border/shadow/background treatments
   6. All tokens work correctly in both light and dark mode
-**Plans**: TBD
+**Plans**: 5 plans
+- [ ] 26-01-PLAN.md — Token infrastructure in globals.css (all categories) + font swap Geist→Inter/JetBrains Mono + shadcn re-map
+- [ ] 26-02-PLAN.md — Pilot: migrate KPI card to surface-raised + type tokens + tabular numerics
+- [ ] 26-03-PLAN.md — Pilot: migrate Header to surface-raised + shadow-xs + type tokens
+- [ ] 26-04-PLAN.md — Pilot: migrate Table row to surface-inset + density tokens (dense/sparse variants)
+- [ ] 26-05-PLAN.md — Unlisted /tokens reference page with tabbed token browser and copy-to-clipboard
 
 ---
 *Last updated: 2026-04-16 — v5.0 and v6.0 milestones added; Phase 26 detail synced from v4.0-ROADMAP.md*
