@@ -75,7 +75,7 @@
 - [ ] **Phase 31: Visual Polish Pass** — Gradient dividers, dark mode highlights, focus glows, border consistency
 
 **Structural (Phase 32):**
-- [x] **Phase 32: URL-Backed Navigation** — Drill state in URL params, browser back button, deep-linking (completed 2026-04-17)
+- [x] **Phase 32: URL-Backed Navigation** — Drill state in URL params, browser back button, deep-linking (2/2 plans — URL-backed useDrillDown + saved views carry optional drill state, shipped 2026-04-17)
 
 **Quality (Phase 33):**
 - [ ] **Phase 33: Accessibility Audit** — axe-core, ARIA, keyboard nav, contrast, reduced motion
@@ -95,7 +95,7 @@
 | 15-20 | v3.0 | 9/9 | Complete | 2026-04-14 |
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
-| 26. Design Tokens | v4.0 | Complete    | 2026-04-17 | 2026-04-17 |
+| 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
 | 27. Typography & Hierarchy | v4.0 | 0/TBD | Not started | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
