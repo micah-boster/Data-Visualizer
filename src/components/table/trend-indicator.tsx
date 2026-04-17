@@ -80,7 +80,7 @@ export function TrendIndicator({
         style={bgStyle}
       >
         {formattedValue}
-        <span className={`text-caption font-medium ${colorClass} ${opacityClass}`}>
+        <span className={`text-label ${colorClass} ${opacityClass}`}>
           {arrow}
         </span>
       </TooltipTrigger>

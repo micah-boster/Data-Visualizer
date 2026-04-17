@@ -80,13 +80,23 @@ Files in these directories are exempt from the Phase 27 type-token enforcement (
 - `src/app/tokens/**` — the `/tokens` reference page (dogfoods tokens but may reference the raw scale for documentation purposes).
 - `src/components/tokens/**` — in-app token specimens (palette swatches, type samples, spacing rulers).
 
-Any file outside the allowlist must pass the Plan 27-06 grep check:
+Any file outside the allowlist must pass the Plan 27-06 grep check. The guard is wired as `npm run check:tokens` and lives at `scripts/check-type-tokens.sh`. The script uses POSIX `grep -rE` (BSD/GNU) for portability — ripgrep is not guaranteed in CI environments, so the script does not depend on it. Equivalent ripgrep spot-checks if running by hand:
+
 ```
 rg -n 'text-(xs|sm|base|lg|xl|2xl|3xl|4xl)' src/
 rg -n '\bfont-(semibold|medium|bold|light|thin|extrabold|black)\b' src/
 ```
 
 Zero hits outside the allowlist = enforcement passes.
+
+### 27-06 scope-expansion fixes (ran when authoring the guard)
+
+The first guard run surfaced two documented-but-rule-violating font-medium pairings; both were resolved inline so the guard can pass with the strict weight policy intact:
+
+- `src/components/kpi/kpi-card.tsx:117` — `text-label-numeric font-medium` → `text-label-numeric`. The label tier already bakes weight 500, so `font-medium` was redundant.
+- `src/components/table/trend-indicator.tsx:83` — `text-caption font-medium` → `text-label`. The token swap preserves the arrow's visual prominence (weight 500 baked by label tier) without the ad-hoc weight modifier.
+
+Both match the §5 "Exception: NONE" rule and close the gaps that Phase 27-03's earlier "font-medium on arrow glyph" exception had left open.
 
 ## Outlier token audit (run on pilot)
 

@@ -114,7 +114,7 @@ export function KpiCard({
     trendElement = (
       <Tooltip>
         <TooltipTrigger
-          className={`ml-1.5 inline-flex items-center gap-0.5 text-label-numeric font-medium ${colorClass}`}
+          className={`ml-1.5 inline-flex items-center gap-0.5 text-label-numeric ${colorClass}`}
         >
           {arrow}
           {deltaText && <span>{deltaText}</span>}
