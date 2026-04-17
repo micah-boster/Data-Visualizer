@@ -12,7 +12,7 @@ export function LoadingState({ message = 'Loading data from Snowflake...' }: Loa
       <div className="relative">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/60" />
       </div>
-      <p className="text-sm text-muted-foreground animate-pulse">
+      <p className="text-body text-muted-foreground animate-pulse">
         {message}
       </p>
     </div>

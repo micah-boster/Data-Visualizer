@@ -51,7 +51,7 @@ export function AnomalyToolbarTrigger({ onDrillToPartner }: AnomalyToolbarTrigge
             render={
               <Button variant="ghost" size="icon" className="relative h-8 w-8">
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-medium text-white">
+                <span className="text-label-numeric absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-white">
                   {totalFlagged}
                 </span>
               </Button>
@@ -79,12 +79,12 @@ export function AnomalyToolbarTrigger({ onDrillToPartner }: AnomalyToolbarTrigge
                 key={partnerName}
                 type="button"
                 onClick={() => onDrillToPartner(partnerName)}
-                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs transition-colors hover:bg-muted"
+                className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-caption transition-colors hover:bg-muted"
               >
                 <span
                   className={`h-2 w-2 shrink-0 rounded-full ${SEVERITY_BG_COLORS[severity]}`}
                 />
-                <span className="font-medium text-foreground">{partnerName}</span>
+                <span className="text-label text-foreground">{partnerName}</span>
                 <span className="text-muted-foreground">{SEVERITY_LABELS[severity]}</span>
                 {topFlag && (
                   <span className="ml-auto truncate text-muted-foreground">

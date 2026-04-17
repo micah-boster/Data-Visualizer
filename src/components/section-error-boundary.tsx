@@ -38,14 +38,14 @@ function SectionFallback({ error, resetErrorBoundary }: FallbackProps) {
       <AlertTriangle className="h-4 w-4" />
       <AlertDescription className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4">
-          <span className="font-medium">
+          <span className="text-title">
             This section couldn&apos;t load.
           </span>
           <Button size="sm" variant="outline" onClick={resetErrorBoundary}>
             Try again
           </Button>
         </div>
-        <details className="text-xs text-muted-foreground">
+        <details className="text-caption text-muted-foreground">
           <summary className="cursor-pointer select-none">Show details</summary>
           <pre className="mt-1 whitespace-pre-wrap break-words">{getErrorMessage(error)}</pre>
         </details>

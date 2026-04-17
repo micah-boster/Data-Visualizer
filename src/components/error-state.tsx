@@ -17,7 +17,7 @@ export function ErrorState({ error, onRetry }: ErrorStateProps) {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Failed to load data</AlertTitle>
           <AlertDescription className="mt-2">
-            <p className="text-sm">
+            <p className="text-body">
               {error?.message || 'An unexpected error occurred while fetching data.'}
             </p>
             <Button
