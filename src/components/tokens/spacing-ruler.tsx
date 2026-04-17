@@ -61,7 +61,7 @@ export function SpacingRuler() {
               value={`${px}px`}
             >
               <div
-                className="bg-accent-warm rounded-sm"
+                className="bg-brand-green rounded-sm"
                 style={{ width: `var(--spacing-${step})`, height: '16px' }}
                 aria-hidden
               />
@@ -86,7 +86,7 @@ export function SpacingRuler() {
               value={`${px}px`}
             >
               <div
-                className="bg-accent-warm rounded-sm"
+                className="bg-brand-green rounded-sm"
                 style={{ width: `var(--spacing-${name})`, height: '16px' }}
                 aria-hidden
               />

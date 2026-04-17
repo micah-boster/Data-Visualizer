@@ -70,7 +70,7 @@ export function MotionDemo() {
           <button
             type="button"
             onClick={runAll}
-            className="text-label uppercase bg-accent-warm text-primary-foreground px-[var(--spacing-3)] py-[var(--spacing-2)] rounded-sm shadow-xs transition-colors duration-quick ease-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="text-label uppercase bg-brand-green text-primary-foreground px-[var(--spacing-3)] py-[var(--spacing-2)] rounded-sm shadow-xs transition-colors duration-quick ease-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             Run all
           </button>
@@ -97,7 +97,7 @@ export function MotionDemo() {
                   >
                     <div
                       className={cn(
-                        'size-12 bg-accent-warm rounded-md shadow-sm transition-transform',
+                        'size-12 bg-brand-green rounded-md shadow-sm transition-transform',
                         isActive && 'translate-x-20',
                       )}
                       style={{

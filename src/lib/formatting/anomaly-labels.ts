@@ -54,14 +54,14 @@ export function classifySeverity(anomaly: {
 
 /** CSS color classes for each severity level. */
 export const SEVERITY_COLORS = {
-  warning: 'text-amber-500',
-  critical: 'text-red-500',
+  warning: 'text-warning-fg',
+  critical: 'text-error-fg',
 } as const;
 
 /** Background color classes for badge dots. */
 export const SEVERITY_BG_COLORS = {
-  warning: 'bg-amber-500',
-  critical: 'bg-red-500',
+  warning: 'bg-warning-fg',
+  critical: 'bg-error-fg',
 } as const;
 
 /** Label text for each severity level. */

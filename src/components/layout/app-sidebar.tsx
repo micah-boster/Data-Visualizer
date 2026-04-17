@@ -80,7 +80,7 @@ export function AppSidebar() {
                 <>
                   {Array.from({ length: 4 }).map((_, i) => (
                     <SidebarMenuItem key={i}>
-                      <SidebarMenuSkeleton showIcon />
+                      <SidebarMenuSkeleton showIcon index={i} />
                     </SidebarMenuItem>
                   ))}
                 </>
@@ -97,7 +97,7 @@ export function AppSidebar() {
                     >
                       {p.isFlagged ? (
                         <span className="flex h-4 w-4 items-center justify-center">
-                          <span className="h-2 w-2 rounded-full bg-amber-500" />
+                          <span className="h-2 w-2 rounded-full bg-brand-purple" />
                         </span>
                       ) : (
                         <Users className="h-4 w-4" />
@@ -127,7 +127,7 @@ export function AppSidebar() {
                 <>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <SidebarMenuItem key={i}>
-                      <SidebarMenuSkeleton />
+                      <SidebarMenuSkeleton index={i} />
                     </SidebarMenuItem>
                   ))}
                 </>

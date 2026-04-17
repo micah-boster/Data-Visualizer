@@ -127,8 +127,10 @@
   --color-neutral-900: var(--neutral-900);
   --color-neutral-950: var(--neutral-950);
 
-  /* === WARM ACCENT === (amber/ochre, used sparingly) */
-  --color-accent-warm: var(--accent-warm);
+  /* === BRAND ACCENTS === (Bounce green primary + purple secondary) */
+  --color-brand-green: var(--brand-green);
+  --color-brand-green-bright: var(--brand-green-bright);
+  --color-brand-purple: var(--brand-purple);
 
   /* === STATE COLOR ALIASES === (success/warning/error/info × bg/border/fg) */
   --color-success-bg: var(--state-success-bg);
@@ -226,13 +228,21 @@
   --surface-overlay: oklch(1 0 0);            /* popover/dropdown */
   --surface-floating: oklch(1 0 0);           /* modal/toast */
 
-  /* === ACCENT (LIGHT) === warm ochre, complements chart palette without clashing */
-  --accent-warm: oklch(0.68 0.15 55);
+  /* === BRAND ACCENTS (LIGHT) === Bounce primary green + secondary purple.
+     --brand-green matches brand #03542C for filled surfaces (buttons, sidebar-primary).
+     --brand-green-bright is a lighter sibling for focus rings and selection tints so
+     they read against cream paper. --brand-purple is defined for token discoverability
+     but is not wired into any UI role yet. */
+  --brand-green: oklch(0.33 0.095 150);
+  --brand-green-bright: oklch(0.48 0.12 150);
+  --brand-purple: oklch(0.42 0.15 295);
 
   /* === STATE COLORS (LIGHT) === success/warning/error/info, each bg/border/fg */
-  --state-success-bg: oklch(0.95 0.05 140);
-  --state-success-border: oklch(0.72 0.12 140);
-  --state-success-fg: oklch(0.35 0.10 140);
+  /* success greens shifted to hue 160 (emerald) so "positive indicator" reads
+     distinctly from brand-green (hue 150 forest) when both appear in view. */
+  --state-success-bg: oklch(0.95 0.05 160);
+  --state-success-border: oklch(0.72 0.12 160);
+  --state-success-fg: oklch(0.40 0.11 160);
 
   --state-warning-bg: oklch(0.96 0.06 85);
   --state-warning-border: oklch(0.74 0.14 80);
@@ -247,13 +257,13 @@
   --state-info-fg: oklch(0.40 0.14 230);
 
   /* === INTERACTION (LIGHT) === */
-  --focus-ring: var(--accent-warm);
-  --selection-bg: color-mix(in oklch, var(--accent-warm) 18%, transparent);
+  --focus-ring: var(--brand-green-bright);
+  --selection-bg: color-mix(in oklch, var(--brand-green-bright) 18%, transparent);
   --hover-bg: color-mix(in oklch, var(--neutral-500) 8%, transparent);
 
   /* === CHART PALETTE (LIGHT) === 8 categorical hues + diverging triplet */
   --chart-categorical-1: oklch(0.60 0.15 55);   /* warm amber/ochre */
-  --chart-categorical-2: oklch(0.60 0.14 150);  /* green */
+  --chart-categorical-2: oklch(0.62 0.13 175);  /* teal-green (shifted from 150 to not clash with brand-green) */
   --chart-categorical-3: oklch(0.55 0.15 210);  /* blue */
   --chart-categorical-4: oklch(0.55 0.17 295);  /* purple */
   --chart-categorical-5: oklch(0.58 0.17 25);   /* red-orange */
@@ -263,7 +273,7 @@
 
   --chart-diverging-neg: oklch(0.60 0.18 25);   /* red */
   --chart-diverging-neu: oklch(0.75 0.010 75);  /* warm neutral */
-  --chart-diverging-pos: oklch(0.62 0.14 145);  /* green */
+  --chart-diverging-pos: oklch(0.65 0.13 165);  /* mint-green (shifted from 145 to not blur with brand-green forest) */
 
   /* === shadcn RE-MAP (LIGHT) === edit values, do NOT rename keys (DS-05 integration) */
   --background: var(--surface-base);
@@ -272,7 +282,7 @@
   --card-foreground: var(--neutral-900);
   --popover: var(--surface-overlay);
   --popover-foreground: var(--neutral-900);
-  --primary: var(--accent-warm);
+  --primary: var(--brand-green);
   --primary-foreground: var(--neutral-50);
   --secondary: var(--surface-inset);
   --secondary-foreground: var(--neutral-800);
@@ -283,7 +293,7 @@
   --destructive: var(--state-error-fg);
   --border: color-mix(in oklch, var(--neutral-500) 15%, transparent);
   --input: color-mix(in oklch, var(--neutral-500) 15%, transparent);
-  --ring: var(--accent-warm);
+  --ring: var(--brand-green-bright);
 
   /* shadcn chart-* tokens re-routed to new categorical palette */
   --chart-1: var(--chart-categorical-1);
@@ -301,12 +311,12 @@
   /* Sidebar re-mapped onto surface/neutral/accent tokens */
   --sidebar: var(--surface-base);
   --sidebar-foreground: var(--neutral-800);
-  --sidebar-primary: var(--accent-warm);
+  --sidebar-primary: var(--brand-green);
   --sidebar-primary-foreground: var(--neutral-50);
   --sidebar-accent: var(--surface-inset);
   --sidebar-accent-foreground: var(--neutral-900);
   --sidebar-border: color-mix(in oklch, var(--neutral-500) 15%, transparent);
-  --sidebar-ring: var(--accent-warm);
+  --sidebar-ring: var(--brand-green-bright);
 
   /* Heatmap cell tints re-routed to diverging chart palette */
   --cell-zero: var(--chart-diverging-neu);
@@ -335,13 +345,16 @@
   --surface-overlay: oklch(0.24 0.012 60);
   --surface-floating: oklch(0.26 0.012 60);
 
-  /* === ACCENT (DARK) === slightly brighter to maintain contrast on dark surface */
-  --accent-warm: oklch(0.74 0.13 55);
+  /* === BRAND ACCENTS (DARK) === lighter siblings of the brand greens so they
+     read against the warm near-black surface. Purple shifted lighter similarly. */
+  --brand-green: oklch(0.62 0.11 150);
+  --brand-green-bright: oklch(0.72 0.13 150);
+  --brand-purple: oklch(0.60 0.15 295);
 
   /* === STATE COLORS (DARK) === fg brighter, bg darker-tinted for contrast on dark surfaces */
-  --state-success-bg: oklch(0.25 0.04 140);
-  --state-success-border: oklch(0.50 0.10 140);
-  --state-success-fg: oklch(0.80 0.14 140);
+  --state-success-bg: oklch(0.25 0.04 160);
+  --state-success-border: oklch(0.50 0.10 160);
+  --state-success-fg: oklch(0.80 0.14 160);
 
   --state-warning-bg: oklch(0.26 0.05 80);
   --state-warning-border: oklch(0.52 0.12 75);
@@ -356,13 +369,13 @@
   --state-info-fg: oklch(0.78 0.13 230);
 
   /* === INTERACTION (DARK) === */
-  --focus-ring: var(--accent-warm);
-  --selection-bg: color-mix(in oklch, var(--accent-warm) 24%, transparent);
+  --focus-ring: var(--brand-green-bright);
+  --selection-bg: color-mix(in oklch, var(--brand-green-bright) 24%, transparent);
   --hover-bg: color-mix(in oklch, oklch(1 0 0) 6%, transparent);
 
   /* === CHART PALETTE (DARK) === lighter/brighter hues for dark surfaces */
   --chart-categorical-1: oklch(0.72 0.14 55);
-  --chart-categorical-2: oklch(0.74 0.13 150);
+  --chart-categorical-2: oklch(0.74 0.13 175);  /* teal-green (shifted from 150 to not clash with brand-green) */
   --chart-categorical-3: oklch(0.70 0.14 210);
   --chart-categorical-4: oklch(0.70 0.16 295);
   --chart-categorical-5: oklch(0.72 0.16 25);
@@ -372,7 +385,7 @@
 
   --chart-diverging-neg: oklch(0.68 0.18 25);
   --chart-diverging-neu: oklch(0.45 0.010 60);
-  --chart-diverging-pos: oklch(0.70 0.14 145);
+  --chart-diverging-pos: oklch(0.72 0.13 165);  /* mint-green (shifted from 145 to not blur with brand-green) */
 
   /* === SHADOWS (DARK) === re-tinted darker / more opaque, so edges remain visible */
   --shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.35);
@@ -393,7 +406,7 @@
   --card-foreground: var(--neutral-900);
   --popover: var(--surface-overlay);
   --popover-foreground: var(--neutral-900);
-  --primary: var(--accent-warm);
+  --primary: var(--brand-green);
   --primary-foreground: var(--neutral-50);
   --secondary: var(--surface-inset);
   --secondary-foreground: var(--neutral-800);
@@ -404,7 +417,7 @@
   --destructive: var(--state-error-fg);
   --border: color-mix(in oklch, oklch(1 0 0) 10%, transparent);
   --input: color-mix(in oklch, oklch(1 0 0) 15%, transparent);
-  --ring: var(--accent-warm);
+  --ring: var(--brand-green-bright);
 
   --chart-1: var(--chart-categorical-1);
   --chart-2: var(--chart-categorical-2);
@@ -417,12 +430,12 @@
 
   --sidebar: var(--surface-base);
   --sidebar-foreground: var(--neutral-800);
-  --sidebar-primary: var(--accent-warm);
+  --sidebar-primary: var(--brand-green);
   --sidebar-primary-foreground: var(--neutral-50);
   --sidebar-accent: var(--surface-inset);
   --sidebar-accent-foreground: var(--neutral-900);
   --sidebar-border: color-mix(in oklch, oklch(1 0 0) 10%, transparent);
-  --sidebar-ring: var(--accent-warm);
+  --sidebar-ring: var(--brand-green-bright);
 
   --cell-zero: var(--chart-diverging-neu);
   --cell-tint-low: var(--chart-diverging-neg);

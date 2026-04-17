@@ -5,21 +5,20 @@ import { SEVERITY_BG_COLORS, SEVERITY_LABELS } from '@/lib/formatting/anomaly-la
 
 interface AnomalyBadgeProps {
   severity: 'warning' | 'critical';
-  onClick: () => void;
 }
 
 /**
  * Colored dot indicator for anomaly status.
  *
- * Yellow (amber-500) for warning, red (red-500) for critical.
+ * Warning fg (amber) for warning, error fg (red) for critical.
  * Critical dots pulse subtly to draw attention.
- * Click handler opens the detail popover.
+ *
+ * Renders as a <span> so it can be placed inside PopoverTrigger's <button>
+ * without nesting buttons (invalid HTML that causes hydration errors).
  */
-export function AnomalyBadge({ severity, onClick }: AnomalyBadgeProps) {
+export function AnomalyBadge({ severity }: AnomalyBadgeProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <span
       className="flex items-center justify-center p-1"
       aria-label={`${SEVERITY_LABELS[severity]}: anomaly detected`}
     >
@@ -30,6 +29,6 @@ export function AnomalyBadge({ severity, onClick }: AnomalyBadgeProps) {
           severity === 'critical' && 'animate-pulse',
         )}
       />
-    </button>
+    </span>
   );
 }

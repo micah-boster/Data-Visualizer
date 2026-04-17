@@ -8,8 +8,9 @@ import { TokenCard } from './token-card';
  *
  * Categories:
  *   - surfaces:     five surface tiers (base/raised/inset/overlay/floating)
- *   - accent-state: --accent-warm + state colors (success/warning/error/info)
- *                   rendered as mini badges (bg/border/fg composite)
+ *   - accent-state: --brand-green + --brand-green-bright + --brand-purple +
+ *                   state colors (success/warning/error/info) rendered as
+ *                   mini badges (bg/border/fg composite)
  *   - neutrals:     11-step --neutral-50..950 ladder
  *   - chart:        categorical 1..8 + diverging 3-stop gradient
  *   - interaction:  focus-ring, selection-bg, hover-bg demonstrations
@@ -92,21 +93,42 @@ function SurfaceSwatches() {
 function AccentStateSwatches() {
   return (
     <section className="flex flex-col gap-stack">
-      <h2 className="text-heading">Accent &amp; State</h2>
+      <h2 className="text-heading">Brand &amp; State</h2>
       <p className="text-body text-muted-foreground">
-        Single warm accent (amber/ochre) used sparingly for focus, primary
-        actions, and brand moments. State colors render as bg+border+fg
-        composites — each is a complete self-contained badge recipe.
+        Bounce&apos;s brand green is the primary accent (focus rings, primary
+        actions, sidebar-active). A lighter sibling is used for focus-ring and
+        selection tints so they read on cream paper. Brand purple is defined
+        as a token for future accents; it is not currently wired into any UI
+        role. State colors render as bg+border+fg composites — complete
+        self-contained badge recipes.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-stack">
         <TokenCard
-          label="accent-warm"
-          cssVar="--color-accent-warm"
-          tailwindClass="bg-accent-warm"
-          value="Focus rings, primary actions, selection"
+          label="brand-green"
+          cssVar="--color-brand-green"
+          tailwindClass="bg-brand-green"
+          value="Primary brand. Filled buttons, sidebar-primary."
         >
-          <div className="bg-accent-warm size-20 rounded-md shadow-xs" aria-hidden />
+          <div className="bg-brand-green size-20 rounded-md shadow-xs" aria-hidden />
+        </TokenCard>
+
+        <TokenCard
+          label="brand-green-bright"
+          cssVar="--color-brand-green-bright"
+          tailwindClass="bg-brand-green-bright"
+          value="Focus rings + selection tint (readable on cream)"
+        >
+          <div className="bg-brand-green-bright size-20 rounded-md shadow-xs" aria-hidden />
+        </TokenCard>
+
+        <TokenCard
+          label="brand-purple"
+          cssVar="--color-brand-purple"
+          tailwindClass="bg-brand-purple"
+          value="Secondary brand — token only, not wired yet"
+        >
+          <div className="bg-brand-purple size-20 rounded-md shadow-xs" aria-hidden />
         </TokenCard>
 
         {STATES.map((state) => (

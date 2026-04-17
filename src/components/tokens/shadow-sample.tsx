@@ -63,7 +63,7 @@ export function ShadowSample() {
               value={RADII_PX[r]}
             >
               {/* Intentional: demoing the exact rounded utility. */}
-              <div className={`bg-accent-warm size-20 rounded-${r}`} aria-hidden />
+              <div className={`bg-brand-green size-20 rounded-${r}`} aria-hidden />
             </TokenCard>
           ))}
         </div>
