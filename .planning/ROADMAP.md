@@ -96,7 +96,7 @@
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
-| 27. Typography & Hierarchy | v4.0 | 0/TBD | Not started | - |
+| 27. Typography & Hierarchy | v4.0 | 0/6 | Not started | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
@@ -144,4 +144,26 @@
 - [x] 26-05-PLAN.md — Unlisted /tokens reference page with tabbed token browser and copy-to-clipboard (shipped 2026-04-17)
 
 ---
-*Last updated: 2026-04-16 — v5.0 and v6.0 milestones added; Phase 26 detail synced from v4.0-ROADMAP.md*
+
+### Phase 27: Typography & Information Hierarchy
+
+**Goal**: Apply the type scale across the app — consistent heading levels, tabular figures in all numeric contexts, proper label/value relationships, overline-style category labels
+**Depends on**: Phase 26
+**Effort**: Medium (touch ~78 components, tedious but mechanical)
+**Requirements**: DS-07 through DS-10
+**Success Criteria** (what must be TRUE):
+  1. Every text element in the app uses a named type scale token (no more ad-hoc text-sm/text-2xl)
+  2. All numeric displays use tabular figures (tabular-nums) — table cells, KPI values, chart axes
+  3. KPI card labels use overline style (uppercase, tracked, smaller) distinct from body text
+  4. Section headers (Charts, Table, Comparison) have consistent heading treatment with optional action slots
+**Plans**: 6 plans
+Plans:
+- [ ] 27-01-PLAN.md — Foundation: migration table + SectionHeader component + pilot migration (anomaly-detail.tsx)
+- [ ] 27-02-PLAN.md — Sweep: KPI summary, charts, cross-partner matrix, chart tooltip (axis NumericTick adoption)
+- [ ] 27-03-PLAN.md — Sweep: table surfaces + state-color expansion in trend-indicator
+- [ ] 27-04-PLAN.md — Sweep: toolbar, popovers, filters, column picker, saved views
+- [ ] 27-05-PLAN.md — Sweep: sidebar, breadcrumb, query UI, anomaly panels, empty/error/loading states
+- [ ] 27-06-PLAN.md — Enforcement: grep-in-CI guard + /tokens page SectionHeader + numeric-variant demos
+
+---
+*Last updated: 2026-04-17 — Phase 27 detail synced from v4.0-ROADMAP.md*
