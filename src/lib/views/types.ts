@@ -13,6 +13,18 @@ import type {
   ColumnSizingState,
 } from '@tanstack/react-table';
 
+/** Chart configuration persisted with a view. */
+export interface ChartViewState {
+  /** Which metric the chart displays */
+  metric: 'recoveryRate' | 'amount';
+  /** Batch names hidden by the user (names, not positional keys) */
+  hiddenBatches: string[];
+  /** Whether the average line is shown */
+  showAverage: boolean;
+  /** Whether all batches are shown (vs default limit of 8) */
+  showAllBatches: boolean;
+}
+
 /** All table state slices captured in a single snapshot. */
 export interface ViewSnapshot {
   /** TanStack sorting state — array of { id, desc } */
@@ -33,6 +45,13 @@ export interface ViewSnapshot {
   comparisonVisible?: boolean;
   /** Active column preset key (e.g. 'finance', 'outreach', 'all') */
   activePreset?: string;
+  /** Chart configuration (metric, hidden batches, toggles) */
+  chartState?: ChartViewState;
+  /** Optional captured drill state (NAV-04). Absent on views saved from root. */
+  drill?: {
+    partner?: string;
+    batch?: string;
+  };
 }
 
 /** A named, persisted view configuration. */

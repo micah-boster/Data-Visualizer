@@ -24,6 +24,18 @@ export const viewSnapshotSchema = z.object({
   chartsExpanded: z.boolean().optional(),
   comparisonVisible: z.boolean().optional(),
   activePreset: z.string().optional(),
+  chartState: z.object({
+    metric: z.enum(['recoveryRate', 'amount']),
+    hiddenBatches: z.array(z.string()),
+    showAverage: z.boolean(),
+    showAllBatches: z.boolean(),
+  }).optional(),
+  drill: z
+    .object({
+      partner: z.string().optional(),
+      batch: z.string().optional(),
+    })
+    .optional(),
 });
 
 /** Validates a single SavedView entry. */
