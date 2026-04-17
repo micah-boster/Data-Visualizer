@@ -121,5 +121,22 @@
 
 \* Phase 43 flagged for review — may be deprioritized in favor of deeper MBR integration (Phase 45)
 
+## Phase Details
+
+### Phase 26: Design Tokens
+
+**Goal**: Establish the foundational design token system — spacing, typography, elevation, motion, and surface primitives that every component will use
+**Depends on**: Phase 25
+**Effort**: Medium (decisions + CSS infrastructure + Tailwind integration)
+**Requirements**: DS-01 through DS-06
+**Success Criteria** (what must be TRUE):
+  1. Spacing scale (4px grid) defined as CSS custom properties and used by at least 3 refactored components
+  2. Typography scale (display, heading, title, label, body, caption) defined with font-size/line-height/weight/tracking
+  3. Elevation system (shadow-xs through shadow-lg) defined as multi-layer shadows with light/dark variants
+  4. Motion tokens (duration-quick/normal/slow, easing-default/spring/decelerate) defined and documented
+  5. Surface system (surface-base, surface-raised, surface-inset, surface-overlay, surface-floating) defined with consistent border/shadow/background treatments
+  6. All tokens work correctly in both light and dark mode
+**Plans**: TBD
+
 ---
-*Last updated: 2026-04-16 — v5.0 and v6.0 milestones added*
+*Last updated: 2026-04-16 — v5.0 and v6.0 milestones added; Phase 26 detail synced from v4.0-ROADMAP.md*
