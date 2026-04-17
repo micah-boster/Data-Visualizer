@@ -4,12 +4,170 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* =============================================================================
+   PHASE 26 DESIGN TOKEN SYSTEM
+   Single source of truth for spacing, typography, shadow, motion, radius,
+   surface, neutral, state-color, interaction, and chart palette tokens.
+   =============================================================================
+*/
+
+/* NOTE: naming
+   Tailwind v4 auto-generates utility classes from specific token namespaces:
+   - `--spacing-*`  → emits p-*, m-*, gap-*, w-*, h-*, etc.
+   - `--ease-*`     → emits ease-* utilities
+   - `--duration-*` → emits duration-* utilities
+   - `--text-*`     → emits text-* utilities
+   - `--shadow-*`   → emits shadow-* utilities
+   - `--radius-*`   → emits rounded-* utilities
+   - `--color-*`    → emits bg-*, text-*, border-*, ring-* utilities
+
+   Therefore semantic spacing aliases use `--spacing-inline`, `--spacing-stack`, `--spacing-section`,
+   `--spacing-card-padding`, `--spacing-page-gutter` (NOT `--space-*` as loosely referenced in CONTEXT).
+   The numeric scale `--spacing-1..12` is the canonical source; semantic aliases reference those numerics.
+
+   Easing tokens use `--ease-default`, `--ease-spring`, `--ease-decelerate` (NOT `easing-*` as loosely
+   referenced in CONTEXT) so they emit `ease-default` etc. utilities.
+
+   Renames are namespace-driven, not stylistic. Do not "fix" them back to `--space-*` / `easing-*`. */
+
+@theme {
+  /* === SPACING === (DS-01: 4px grid, numeric scale is source of truth) */
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-7: 32px;
+  --spacing-8: 40px;
+  --spacing-9: 48px;
+  --spacing-10: 64px;
+  --spacing-11: 80px;
+  --spacing-12: 96px;
+
+  /* === TYPOGRAPHY === (DS-02: 6-tier tight Linear-ish ramp) */
+  --text-display: 1.5rem;
+  --text-display--line-height: 1.2;
+  --text-display--font-weight: 600;
+
+  --text-heading: 1.125rem;
+  --text-heading--line-height: 1.35;
+  --text-heading--font-weight: 600;
+
+  --text-title: 0.9375rem;
+  --text-title--line-height: 1.4;
+  --text-title--font-weight: 500;
+
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.5;
+
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.04em;
+  --text-label--font-weight: 500;
+
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+
+  /* === SHADOWS === (DS-03: multi-layer Linear-style, warm-tinted) */
+  --shadow-xs: 0 1px 2px 0 oklch(0.2 0.015 70 / 0.04);
+  --shadow-sm:
+    0 1px 2px 0 oklch(0.2 0.015 70 / 0.05),
+    0 2px 6px -2px oklch(0.2 0.015 70 / 0.06);
+  --shadow-md:
+    0 2px 4px 0 oklch(0.2 0.015 70 / 0.05),
+    0 6px 12px -4px oklch(0.2 0.015 70 / 0.08);
+  --shadow-lg:
+    0 4px 8px 0 oklch(0.2 0.015 70 / 0.06),
+    0 12px 24px -8px oklch(0.2 0.015 70 / 0.10);
+
+  /* === MOTION === (DS-04: quick/normal/slow + 3 easing curves) */
+  --duration-quick: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+  --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+
+  /* === RADIUS === (3-step: sm/md/lg per CONTEXT) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* === DENSITY === (component-level dense/sparse, consumed by plan 04) */
+  --table-row-height-dense: 32px;
+  --table-row-height-sparse: 40px;
+}
+
 @theme inline {
+  /* === SEMANTIC SPACING ALIASES === (DS-01) */
+  --spacing-inline: var(--spacing-2);
+  --spacing-stack: var(--spacing-3);
+  --spacing-section: var(--spacing-6);
+  --spacing-card-padding: var(--spacing-4);
+  --spacing-page-gutter: var(--spacing-4);
+
+  /* === SURFACE COLOR ALIASES === (DS-05, theme-varying via :root / .dark) */
+  --color-surface-base: var(--surface-base);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-inset: var(--surface-inset);
+  --color-surface-overlay: var(--surface-overlay);
+  --color-surface-floating: var(--surface-floating);
+
+  /* === NEUTRAL SCALE COLOR ALIASES === */
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-950: var(--neutral-950);
+
+  /* === WARM ACCENT === (amber/ochre, used sparingly) */
+  --color-accent-warm: var(--accent-warm);
+
+  /* === STATE COLOR ALIASES === (success/warning/error/info × bg/border/fg) */
+  --color-success-bg: var(--state-success-bg);
+  --color-success-border: var(--state-success-border);
+  --color-success-fg: var(--state-success-fg);
+  --color-warning-bg: var(--state-warning-bg);
+  --color-warning-border: var(--state-warning-border);
+  --color-warning-fg: var(--state-warning-fg);
+  --color-error-bg: var(--state-error-bg);
+  --color-error-border: var(--state-error-border);
+  --color-error-fg: var(--state-error-fg);
+  --color-info-bg: var(--state-info-bg);
+  --color-info-border: var(--state-info-border);
+  --color-info-fg: var(--state-info-fg);
+
+  /* === INTERACTION ALIASES === */
+  --color-focus-ring: var(--focus-ring);
+  --color-selection-bg: var(--selection-bg);
+  --color-hover-bg: var(--hover-bg);
+
+  /* === CHART PALETTE === (8 categorical + diverging triplet) */
+  --color-chart-categorical-1: var(--chart-categorical-1);
+  --color-chart-categorical-2: var(--chart-categorical-2);
+  --color-chart-categorical-3: var(--chart-categorical-3);
+  --color-chart-categorical-4: var(--chart-categorical-4);
+  --color-chart-categorical-5: var(--chart-categorical-5);
+  --color-chart-categorical-6: var(--chart-categorical-6);
+  --color-chart-categorical-7: var(--chart-categorical-7);
+  --color-chart-categorical-8: var(--chart-categorical-8);
+  --color-chart-diverging-neg: var(--chart-diverging-neg);
+  --color-chart-diverging-neu: var(--chart-diverging-neu);
+  --color-chart-diverging-pos: var(--chart-diverging-pos);
+
+  /* === EXISTING shadcn-aliased tokens (preserved) === */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-inter);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -45,94 +203,230 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.55 0.2 250);
-  --chart-2: oklch(0.60 0.2 150);
-  --chart-3: oklch(0.55 0.2 30);
-  --chart-4: oklch(0.55 0.18 330);
-  --chart-5: oklch(0.58 0.15 80);
-  --chart-6: oklch(0.58 0.16 200);
-  --chart-7: oklch(0.55 0.16 290);
-  --chart-8: oklch(0.58 0.14 60);
+  /* === NEUTRAL SCALE (LIGHT) === warm stone/khaki, hue ~75 */
+  --neutral-50:  oklch(0.985 0.004 75);
+  --neutral-100: oklch(0.97  0.006 75);
+  --neutral-200: oklch(0.93  0.008 75);
+  --neutral-300: oklch(0.87  0.010 75);
+  --neutral-400: oklch(0.76  0.012 75);
+  --neutral-500: oklch(0.62  0.014 75);
+  --neutral-600: oklch(0.50  0.014 75);
+  --neutral-700: oklch(0.38  0.012 75);
+  --neutral-800: oklch(0.28  0.010 75);
+  --neutral-900: oklch(0.20  0.008 75);
+  --neutral-950: oklch(0.14  0.006 75);
+
+  /* === SURFACES (LIGHT) === warm paper; raised is paper-white above cream base (DS-05) */
+  --surface-base: oklch(0.985 0.008 85);      /* cream */
+  --surface-raised: oklch(1 0.004 85);        /* paper-white, slightly above base */
+  --surface-inset: oklch(0.965 0.012 85);     /* recessed beige */
+  --surface-overlay: oklch(1 0 0);            /* popover/dropdown */
+  --surface-floating: oklch(1 0 0);           /* modal/toast */
+
+  /* === ACCENT (LIGHT) === warm ochre, complements chart palette without clashing */
+  --accent-warm: oklch(0.68 0.15 55);
+
+  /* === STATE COLORS (LIGHT) === success/warning/error/info, each bg/border/fg */
+  --state-success-bg: oklch(0.95 0.05 140);
+  --state-success-border: oklch(0.72 0.12 140);
+  --state-success-fg: oklch(0.35 0.10 140);
+
+  --state-warning-bg: oklch(0.96 0.06 85);
+  --state-warning-border: oklch(0.74 0.14 80);
+  --state-warning-fg: oklch(0.42 0.12 70);
+
+  --state-error-bg: oklch(0.95 0.04 25);
+  --state-error-border: oklch(0.68 0.18 25);
+  --state-error-fg: oklch(0.45 0.18 25);
+
+  --state-info-bg: oklch(0.95 0.03 230);
+  --state-info-border: oklch(0.68 0.13 230);
+  --state-info-fg: oklch(0.40 0.14 230);
+
+  /* === INTERACTION (LIGHT) === */
+  --focus-ring: var(--accent-warm);
+  --selection-bg: color-mix(in oklch, var(--accent-warm) 18%, transparent);
+  --hover-bg: color-mix(in oklch, var(--neutral-500) 8%, transparent);
+
+  /* === CHART PALETTE (LIGHT) === 8 categorical hues + diverging triplet */
+  --chart-categorical-1: oklch(0.60 0.15 55);   /* warm amber/ochre */
+  --chart-categorical-2: oklch(0.60 0.14 150);  /* green */
+  --chart-categorical-3: oklch(0.55 0.15 210);  /* blue */
+  --chart-categorical-4: oklch(0.55 0.17 295);  /* purple */
+  --chart-categorical-5: oklch(0.58 0.17 25);   /* red-orange */
+  --chart-categorical-6: oklch(0.58 0.13 110);  /* olive */
+  --chart-categorical-7: oklch(0.55 0.15 250);  /* indigo */
+  --chart-categorical-8: oklch(0.58 0.16 335);  /* magenta */
+
+  --chart-diverging-neg: oklch(0.60 0.18 25);   /* red */
+  --chart-diverging-neu: oklch(0.75 0.010 75);  /* warm neutral */
+  --chart-diverging-pos: oklch(0.62 0.14 145);  /* green */
+
+  /* === shadcn RE-MAP (LIGHT) === edit values, do NOT rename keys (DS-05 integration) */
+  --background: var(--surface-base);
+  --foreground: var(--neutral-900);
+  --card: var(--surface-raised);
+  --card-foreground: var(--neutral-900);
+  --popover: var(--surface-overlay);
+  --popover-foreground: var(--neutral-900);
+  --primary: var(--accent-warm);
+  --primary-foreground: var(--neutral-50);
+  --secondary: var(--surface-inset);
+  --secondary-foreground: var(--neutral-800);
+  --muted: var(--surface-inset);
+  --muted-foreground: var(--neutral-600);
+  --accent: var(--surface-inset);
+  --accent-foreground: var(--neutral-900);
+  --destructive: var(--state-error-fg);
+  --border: color-mix(in oklch, var(--neutral-500) 15%, transparent);
+  --input: color-mix(in oklch, var(--neutral-500) 15%, transparent);
+  --ring: var(--accent-warm);
+
+  /* shadcn chart-* tokens re-routed to new categorical palette */
+  --chart-1: var(--chart-categorical-1);
+  --chart-2: var(--chart-categorical-2);
+  --chart-3: var(--chart-categorical-3);
+  --chart-4: var(--chart-categorical-4);
+  --chart-5: var(--chart-categorical-5);
+  --chart-6: var(--chart-categorical-6);
+  --chart-7: var(--chart-categorical-7);
+  --chart-8: var(--chart-categorical-8);
+
+  /* Legacy radius scalar — retained because src/components/ui/sonner.tsx consumes var(--radius) */
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-  --cell-zero: oklch(0.7 0 0);
-  --cell-tint-low: oklch(0.95 0.03 25);
-  --cell-tint-high: oklch(0.95 0.03 145);
+
+  /* Sidebar re-mapped onto surface/neutral/accent tokens */
+  --sidebar: var(--surface-base);
+  --sidebar-foreground: var(--neutral-800);
+  --sidebar-primary: var(--accent-warm);
+  --sidebar-primary-foreground: var(--neutral-50);
+  --sidebar-accent: var(--surface-inset);
+  --sidebar-accent-foreground: var(--neutral-900);
+  --sidebar-border: color-mix(in oklch, var(--neutral-500) 15%, transparent);
+  --sidebar-ring: var(--accent-warm);
+
+  /* Heatmap cell tints re-routed to diverging chart palette */
+  --cell-zero: var(--chart-diverging-neu);
+  --cell-tint-low: var(--chart-diverging-neg);
+  --cell-tint-high: var(--chart-diverging-pos);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.70 0.18 250);
-  --chart-2: oklch(0.72 0.18 150);
-  --chart-3: oklch(0.70 0.18 30);
-  --chart-4: oklch(0.70 0.16 330);
-  --chart-5: oklch(0.72 0.14 80);
-  --chart-6: oklch(0.70 0.14 200);
-  --chart-7: oklch(0.70 0.14 290);
-  --chart-8: oklch(0.72 0.12 60);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-  --cell-zero: oklch(0.45 0 0);
-  --cell-tint-low: oklch(0.25 0.04 25);
-  --cell-tint-high: oklch(0.25 0.04 145);
+  /* === NEUTRAL SCALE (DARK) === inverted, warm brown undertone hue ~60 */
+  --neutral-50:  oklch(0.14 0.008 60);
+  --neutral-100: oklch(0.20 0.010 60);
+  --neutral-200: oklch(0.28 0.012 60);
+  --neutral-300: oklch(0.38 0.014 60);
+  --neutral-400: oklch(0.50 0.014 60);
+  --neutral-500: oklch(0.62 0.014 60);
+  --neutral-600: oklch(0.76 0.012 60);
+  --neutral-700: oklch(0.87 0.010 60);
+  --neutral-800: oklch(0.93 0.008 60);
+  --neutral-900: oklch(0.97 0.006 60);
+  --neutral-950: oklch(0.985 0.004 60);
+
+  /* === SURFACES (DARK) === warm near-black; raised LIGHTER than base (DS-05 inversion, CONTEXT-locked) */
+  --surface-base: oklch(0.16 0.012 60);       /* warm near-black */
+  --surface-raised: oklch(0.22 0.012 60);     /* LIGHTER than base */
+  --surface-inset: oklch(0.12 0.010 60);      /* darker recessed */
+  --surface-overlay: oklch(0.24 0.012 60);
+  --surface-floating: oklch(0.26 0.012 60);
+
+  /* === ACCENT (DARK) === slightly brighter to maintain contrast on dark surface */
+  --accent-warm: oklch(0.74 0.13 55);
+
+  /* === STATE COLORS (DARK) === fg brighter, bg darker-tinted for contrast on dark surfaces */
+  --state-success-bg: oklch(0.25 0.04 140);
+  --state-success-border: oklch(0.50 0.10 140);
+  --state-success-fg: oklch(0.80 0.14 140);
+
+  --state-warning-bg: oklch(0.26 0.05 80);
+  --state-warning-border: oklch(0.52 0.12 75);
+  --state-warning-fg: oklch(0.82 0.14 75);
+
+  --state-error-bg: oklch(0.26 0.04 25);
+  --state-error-border: oklch(0.54 0.14 25);
+  --state-error-fg: oklch(0.78 0.16 25);
+
+  --state-info-bg: oklch(0.24 0.03 230);
+  --state-info-border: oklch(0.50 0.12 230);
+  --state-info-fg: oklch(0.78 0.13 230);
+
+  /* === INTERACTION (DARK) === */
+  --focus-ring: var(--accent-warm);
+  --selection-bg: color-mix(in oklch, var(--accent-warm) 24%, transparent);
+  --hover-bg: color-mix(in oklch, oklch(1 0 0) 6%, transparent);
+
+  /* === CHART PALETTE (DARK) === lighter/brighter hues for dark surfaces */
+  --chart-categorical-1: oklch(0.72 0.14 55);
+  --chart-categorical-2: oklch(0.74 0.13 150);
+  --chart-categorical-3: oklch(0.70 0.14 210);
+  --chart-categorical-4: oklch(0.70 0.16 295);
+  --chart-categorical-5: oklch(0.72 0.16 25);
+  --chart-categorical-6: oklch(0.72 0.12 110);
+  --chart-categorical-7: oklch(0.70 0.14 250);
+  --chart-categorical-8: oklch(0.72 0.15 335);
+
+  --chart-diverging-neg: oklch(0.68 0.18 25);
+  --chart-diverging-neu: oklch(0.45 0.010 60);
+  --chart-diverging-pos: oklch(0.70 0.14 145);
+
+  /* === SHADOWS (DARK) === re-tinted darker / more opaque, so edges remain visible */
+  --shadow-xs: 0 1px 2px 0 oklch(0 0 0 / 0.35);
+  --shadow-sm:
+    0 1px 2px 0 oklch(0 0 0 / 0.40),
+    0 2px 6px -2px oklch(0 0 0 / 0.35);
+  --shadow-md:
+    0 2px 4px 0 oklch(0 0 0 / 0.45),
+    0 6px 12px -4px oklch(0 0 0 / 0.40);
+  --shadow-lg:
+    0 4px 8px 0 oklch(0 0 0 / 0.50),
+    0 12px 24px -8px oklch(0 0 0 / 0.45);
+
+  /* === shadcn RE-MAP (DARK) === cascades through surface/neutral re-defined above */
+  --background: var(--surface-base);
+  --foreground: var(--neutral-900);
+  --card: var(--surface-raised);
+  --card-foreground: var(--neutral-900);
+  --popover: var(--surface-overlay);
+  --popover-foreground: var(--neutral-900);
+  --primary: var(--accent-warm);
+  --primary-foreground: var(--neutral-50);
+  --secondary: var(--surface-inset);
+  --secondary-foreground: var(--neutral-800);
+  --muted: var(--surface-inset);
+  --muted-foreground: var(--neutral-600);
+  --accent: var(--surface-inset);
+  --accent-foreground: var(--neutral-900);
+  --destructive: var(--state-error-fg);
+  --border: color-mix(in oklch, oklch(1 0 0) 10%, transparent);
+  --input: color-mix(in oklch, oklch(1 0 0) 15%, transparent);
+  --ring: var(--accent-warm);
+
+  --chart-1: var(--chart-categorical-1);
+  --chart-2: var(--chart-categorical-2);
+  --chart-3: var(--chart-categorical-3);
+  --chart-4: var(--chart-categorical-4);
+  --chart-5: var(--chart-categorical-5);
+  --chart-6: var(--chart-categorical-6);
+  --chart-7: var(--chart-categorical-7);
+  --chart-8: var(--chart-categorical-8);
+
+  --sidebar: var(--surface-base);
+  --sidebar-foreground: var(--neutral-800);
+  --sidebar-primary: var(--accent-warm);
+  --sidebar-primary-foreground: var(--neutral-50);
+  --sidebar-accent: var(--surface-inset);
+  --sidebar-accent-foreground: var(--neutral-900);
+  --sidebar-border: color-mix(in oklch, oklch(1 0 0) 10%, transparent);
+  --sidebar-ring: var(--accent-warm);
+
+  --cell-zero: var(--chart-diverging-neu);
+  --cell-tint-low: var(--chart-diverging-neg);
+  --cell-tint-high: var(--chart-diverging-pos);
 }
 
 @layer base {
