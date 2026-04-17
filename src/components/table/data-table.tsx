@@ -51,8 +51,8 @@ interface DataTableProps {
   views: SavedView[];
   onLoadView: (view: SavedView) => void;
   onDeleteView: (id: string) => void;
-  onSaveView: (name: string) => void;
-  onReplaceView: (name: string) => void;
+  onSaveView: (name: string, options?: { includeDrill?: boolean }) => void;
+  onReplaceView: (name: string, options?: { includeDrill?: boolean }) => void;
   hasViewWithName: (name: string) => boolean;
   restoreDefaults: () => void;
   chartsExpanded: boolean;
@@ -65,6 +65,7 @@ interface DataTableProps {
   selectedPartner: string | null;
   selectedType: string | null;
   selectedBatch: string | null;
+  canIncludeDrill?: boolean;
   snapshotRef: React.MutableRefObject<(() => ViewSnapshot) | null>;
   loadViewRef: React.MutableRefObject<((view: SavedView) => void) | null>;
 }
@@ -104,6 +105,7 @@ export function DataTable({
   selectedPartner,
   selectedType,
   selectedBatch,
+  canIncludeDrill,
   snapshotRef,
   loadViewRef,
 }: DataTableProps) {
@@ -332,6 +334,7 @@ export function DataTable({
         onSaveView={onSaveView}
         onReplaceView={onReplaceView}
         hasViewWithName={hasViewWithName}
+        canIncludeDrill={canIncludeDrill}
       />
 
       {/* Scrollable table container or empty state */}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { AlertTriangle, X } from 'lucide-react';
 import { useData } from '@/hooks/use-data';
 import { useAccountData } from '@/hooks/use-account-data';
@@ -111,6 +112,7 @@ const PartnerSparkline = dynamic(
 );
 
 export function DataDisplay() {
+  const router = useRouter();
   const { data, isLoading, isError, error, refetch, isFetching } = useData();
   const { state: drillState, drillToPartner, drillToBatch, navigateToLevel } =
     useDrillDown();
@@ -325,6 +327,21 @@ export function DataDisplay() {
       // Use window.history to avoid full re-render
       window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
 
+      // NAV-04: Drill URL update runs separately from the dimension-filter
+      // history.replaceState above. router.push ensures useSearchParams re-reads
+      // and useDrillDown re-renders (Pitfall 5 in 32-RESEARCH.md).
+      {
+        const drillParams = new URLSearchParams(window.location.search);
+        drillParams.delete('p');
+        drillParams.delete('b');
+        if (snapshot.drill?.partner) {
+          drillParams.set('p', snapshot.drill.partner);
+          if (snapshot.drill.batch) drillParams.set('b', snapshot.drill.batch);
+        }
+        const drillQs = drillParams.toString();
+        router.push(drillQs ? `?${drillQs}` : window.location.pathname, { scroll: false });
+      }
+
       // Restore chart configuration if saved
       if (snapshot.chartState && chartLoadRef.current) {
         chartLoadRef.current(snapshot.chartState);
@@ -336,7 +353,7 @@ export function DataDisplay() {
         tableLoadViewRef.current(view);
       }
     },
-    [],
+    [router],
   );
 
   const handleDeleteView = useCallback(
@@ -357,7 +374,7 @@ export function DataDisplay() {
   );
 
   const handleSaveView = useCallback(
-    (name: string) => {
+    (name: string, options?: { includeDrill?: boolean }) => {
       if (tableSnapshotRef.current) {
         const snapshot = tableSnapshotRef.current();
         // Enrich with chart + layout state
@@ -366,6 +383,14 @@ export function DataDisplay() {
         if (chartSnapshotRef.current) {
           snapshot.chartState = chartSnapshotRef.current();
         }
+        // NAV-04: optional drill capture. Only write the field when the user
+        // opted in AND we actually have drill state to save.
+        if (options?.includeDrill && drillState.level !== 'root') {
+          snapshot.drill = {
+            partner: drillState.partner ?? undefined,
+            batch: drillState.batch ?? undefined,
+          };
+        }
         saveView(name, snapshot);
         toast('View saved', {
           description: `"${name}" has been saved`,
@@ -373,17 +398,24 @@ export function DataDisplay() {
         });
       }
     },
-    [saveView, chartsExpanded, comparisonVisible],
+    [saveView, chartsExpanded, comparisonVisible, drillState],
   );
 
   const handleReplaceView = useCallback(
-    (name: string) => {
+    (name: string, options?: { includeDrill?: boolean }) => {
       if (tableSnapshotRef.current) {
         const snapshot = tableSnapshotRef.current();
         snapshot.chartsExpanded = chartsExpanded;
         snapshot.comparisonVisible = comparisonVisible;
         if (chartSnapshotRef.current) {
           snapshot.chartState = chartSnapshotRef.current();
+        }
+        // NAV-04: mirror handleSaveView — capture drill when opted in.
+        if (options?.includeDrill && drillState.level !== 'root') {
+          snapshot.drill = {
+            partner: drillState.partner ?? undefined,
+            batch: drillState.batch ?? undefined,
+          };
         }
         replaceView(name, snapshot);
         toast('View updated', {
@@ -392,7 +424,7 @@ export function DataDisplay() {
         });
       }
     },
-    [replaceView, chartsExpanded, comparisonVisible],
+    [replaceView, chartsExpanded, comparisonVisible, drillState],
   );
 
   // Refs for DataTable to expose snapshot capture and view loading
@@ -542,6 +574,8 @@ export function DataDisplay() {
                   selectedPartner={selectedPartner}
                   selectedType={selectedType}
                   selectedBatch={selectedBatch}
+                  // NAV-04: gate the 'Include drill state' checkbox
+                  canIncludeDrill={drillState.level !== 'root'}
                   // Refs for snapshot/load
                   snapshotRef={tableSnapshotRef}
                   loadViewRef={tableLoadViewRef}
@@ -695,6 +729,7 @@ function CrossPartnerDataTable({
   selectedPartner,
   selectedType,
   selectedBatch,
+  canIncludeDrill,
   // Refs
   snapshotRef,
   loadViewRef,
@@ -716,8 +751,8 @@ function CrossPartnerDataTable({
   views: SavedView[];
   onLoadView: (view: SavedView) => void;
   onDeleteView: (id: string) => void;
-  onSaveView: (name: string) => void;
-  onReplaceView: (name: string) => void;
+  onSaveView: (name: string, options?: { includeDrill?: boolean }) => void;
+  onReplaceView: (name: string, options?: { includeDrill?: boolean }) => void;
   hasViewWithName: (name: string) => boolean;
   restoreDefaults: () => void;
   chartsExpanded: boolean;
@@ -730,6 +765,7 @@ function CrossPartnerDataTable({
   selectedPartner: string | null;
   selectedType: string | null;
   selectedBatch: string | null;
+  canIncludeDrill?: boolean;
   snapshotRef: React.MutableRefObject<(() => import('@/lib/views/types').ViewSnapshot) | null>;
   loadViewRef: React.MutableRefObject<((view: SavedView) => void) | null>;
 }) {
@@ -795,6 +831,7 @@ function CrossPartnerDataTable({
       selectedPartner={selectedPartner}
       selectedType={selectedType}
       selectedBatch={selectedBatch}
+      canIncludeDrill={canIncludeDrill}
       snapshotRef={snapshotRef}
       loadViewRef={loadViewRef}
     />
