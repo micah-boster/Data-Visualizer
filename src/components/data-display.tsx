@@ -29,7 +29,7 @@ import { useSavedViews } from '@/hooks/use-saved-views';
 import { useFilterState } from '@/hooks/use-filter-state';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
 import { computeKpis } from '@/lib/computation/compute-kpis';
-import { getPartnerName } from '@/lib/utils';
+import { getPartnerName, getBatchName } from '@/lib/utils';
 import { SectionErrorBoundary } from '@/components/section-error-boundary';
 import { toast } from 'sonner';
 import type { DrillState } from '@/hooks/use-drill-down';
@@ -196,6 +196,42 @@ export function DataDisplay() {
   useEffect(() => {
     setIsFetching(isFetching);
   }, [isFetching, setIsFetching]);
+
+  // NAV-03: deep-link stale-param guard. When the URL references a partner
+  // or batch that isn't in the loaded dataset, show a toast and step up to
+  // the nearest valid level. Uses navigateToLevel (router.push) rather than
+  // router.replace so the user's back button still works coherently — matches
+  // CONTEXT's "render empty + toast, don't show error page" directive.
+  useEffect(() => {
+    if (isLoading || !data?.data || drillState.level === 'root') return;
+
+    const rows = data.data;
+    const partnerExists = drillState.partner
+      ? rows.some((r) => getPartnerName(r) === drillState.partner)
+      : true;
+
+    if (!partnerExists) {
+      toast(`Partner "${drillState.partner}" not found`, {
+        description: 'Returning to the root view.',
+      });
+      navigateToLevel('root');
+      return;
+    }
+
+    if (drillState.level === 'batch' && drillState.batch) {
+      const batchExists = rows.some(
+        (r) =>
+          getPartnerName(r) === drillState.partner &&
+          getBatchName(r) === drillState.batch,
+      );
+      if (!batchExists) {
+        toast(`Batch "${drillState.batch}" not found for ${drillState.partner}`, {
+          description: 'Returning to the partner view.',
+        });
+        navigateToLevel('partner');
+      }
+    }
+  }, [isLoading, data?.data, drillState, navigateToLevel]);
 
   // Data source depends on drill level.
   // KI-12 fix: deps are object references (filteredRawData, accountData,
