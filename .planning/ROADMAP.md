@@ -96,7 +96,7 @@
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
-| 27. Typography & Hierarchy | 6/6 | Complete   | 2026-04-17 | - |
+| 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
