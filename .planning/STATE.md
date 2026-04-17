@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-17T20:57:27.392Z"
+last_updated: "2026-04-17T22:03:55.613Z"
 progress:
   total_phases: 30
-  completed_phases: 27
+  completed_phases: 28
   total_plans: 61
-  completed_plans: 60
+  completed_plans: 61
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 27 (Typography & Hierarchy — IN PROGRESS, Wave 2 sweep plans running in parallel)
-Plan: 27-02 SHIPPED (chart + KPI + cross-partner matrix sweep, 12 files + NumericTick helper). Parallel Wave 2: 27-03, 27-04, 27-05. Then 27-06 enforcement.
-Status: 27-02 SHIPPED — 12 chart/KPI/cross-partner surfaces migrated to type tokens (collection-curve-chart, curve-tooltip, curve-legend, trajectory-chart, trajectory-tooltip, trajectory-legend, comparison-matrix, matrix-heatmap, matrix-plain-table, matrix-bar-ranking, ui/chart.tsx tooltip value, kpi-summary-cards). Shared NumericTick helper (src/components/charts/numeric-tick.tsx) shipped — canonical Recharts custom-tick with inline SVG style (JetBrains Mono + tabular-nums lining-nums); Recharts className on XAxis/YAxis doesn't propagate to SVG <text>, so tick={<NumericTick />} is the pattern. Build + typecheck pass. Checkpoint auto-approved under workflow.auto_advance=true.
-Last activity: 2026-04-17 — Shipped 27-02 (7fdd266 chart surfaces + NumericTick; da683e2 KPI summary + cross-partner matrix); Wave 2 parallel plans also landed this session: 27-03 (55d19e5 remaining-tables), 27-04 (82c9a16 toolbar), 27-05 (ebc8f69 sidebar+breadcrumb+query, 7b413fd anomaly+empty/error/loading+data-display, 13 files total). Checkpoints auto-approved under workflow.auto_advance=true. 27-06 enforcement unblocked.
+Phase: 27 (Typography & Hierarchy — COMPLETE; all 6 plans shipped)
+Plan: 27-06 SHIPPED — POSIX grep CI guard (scripts/check-type-tokens.sh) + npm run check:tokens alias + /tokens SectionHeader demo + numeric-variants in-situ demo. Guard exits 0 on clean tree; two documented-exception font-medium pairings (kpi-card trend delta, trend-indicator arrow) closed inline to honor TYPE-MIGRATION.md §5 strict weight policy. npm run build passes.
+Status: Phase 27 CLOSED. 131 ad-hoc text-* hits across 55 files at phase start → 0 hits outside allowlist at phase close. Enforcement guard ready to flip on in CI (Vercel build step / pre-commit / GitHub Actions — user-owned one-line change).
+Last activity: 2026-04-17 — Shipped 27-06 (6e0af1b script + weight-policy gap closures; f9d5ea2 /tokens demos). Phase 27 closer landed: CI guard prevents regression + /tokens dogfoods SectionHeader + numeric variants. Checkpoint auto-approved under workflow.auto_advance=true.
 
-Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phase 32 shipped; 10 remaining phases + remaining plans)
+Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phase 27 + Phase 32 shipped; 9 remaining phases)
 
 ## Shipped Milestones
 
@@ -125,6 +125,9 @@ Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phas
 - [Phase 27-03]: Table-footer aggregate ternary: isNumeric ? text-label-numeric : text-caption — single-class replacement for the text-xs + font-mono + tabular-nums triple. text-muted-foreground travels on the wrapper td className so both branches inherit
 - [Phase 27-03]: Trend arrow span uses text-caption font-medium (NOT a numeric variant) — arrow glyph ↑/↓/— is a unicode character, not a digit. Numeric variants reserved for digit-bearing spans per docs/TYPE-MIGRATION.md §7. Exception for font-medium pairing granted because arrow is glyph-only and weight carries trend-direction semantic
 - [Phase 27-03]: Filter popover type rhythm: field inputs + value-list rows = text-body; field labels above inputs = text-body; tight action buttons (Apply/Clear/Select All) = text-caption; helper/truncation text = text-caption. Reusable across future filter popovers
+- [Phase 27]: [Phase 27-06]: POSIX grep -rE over ripgrep for the check-type-tokens.sh guard — ripgrep not universally installed (missing on this dev machine + Vercel build image not guaranteed). 63-line bash script with find + grep -rE runs in <1s on src/ with zero install footprint.
+- [Phase 27]: [Phase 27-06]: Scope-expansion font-medium gap closures — kpi-card.tsx:117 trend delta dropped font-medium (text-label-numeric bakes 500 baked); trend-indicator.tsx:83 arrow span swapped text-caption font-medium → text-label (same weight 500 baked, preserves prominence, closes Phase 27-03 glyph-arrow exception). Honors TYPE-MIGRATION.md §5 Exception: NONE.
+- [Phase 27]: [Phase 27-06]: CI wiring (Vercel build step / pre-commit hook / GitHub Actions) deliberately deferred — guard + npm script live, but enabling in CI is a one-line user-owned change per plan's project_constraints.
 
 ### Pending Todos
 
@@ -140,5 +143,11 @@ Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phas
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Completed 27-01-PLAN.md — Phase 27 Typography & Hierarchy foundation shipped (1/6 plans). Canonical migration table (docs/TYPE-MIGRATION.md) published, SectionHeader (DS-10) component shipped, anomaly-detail pilot fully migrated, AGENTS.md flags type-token rule. text-metric outlier NOT added (audit found 0 sites ≥ 1.5rem). Phase 26 also fully shipped (5/5); Phase 32 fully shipped (2/2).
-Resume with: `/gsd:execute-phase 27` to continue with 27-02..27-06 (Wave 2 sweep plans can run in parallel: KPI cards, charts, toolbar, remaining surfaces; then 27-06 enforcement). Alternatively `/gsd:verify-work 27` after more plans ship, or `/gsd:plan-phase 28` (Surfaces & Elevation) as a parallel track.
+Stopped at: Completed 27-06-PLAN.md — Phase 27 Typography & Hierarchy closed (6/6 plans shipped). check-type-tokens.sh POSIX grep guard + npm run check:tokens alias + /tokens SectionHeader demo + numeric-variants in-situ demo shipped. Weight-policy gap closures: kpi-card trend delta + trend-indicator arrow no longer pair tokens with font-medium. Guard exits 0 on clean tree. CI wiring (Vercel build step / pre-commit hook / GitHub Actions) user-owned, deferred per plan constraints.
+Resume with: `/gsd:plan-phase 28` (Surfaces & Elevation — next in v1.0 milestone order), OR flip the guard on in CI (Vercel build command → `npm run check:tokens && npm run build`, or add a pre-commit hook). Alternatively `/gsd:verify-work 27` for a full phase-close audit.
+
+## Performance Metrics
+
+| Phase | Plan | Duration | Tasks | Files | Completed |
+|-------|------|----------|-------|-------|-----------|
+| 27 | 06 | ~55 min | 3 | 5 | 2026-04-17 |

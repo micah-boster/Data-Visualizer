@@ -68,7 +68,7 @@
 **Design Foundation (Phases 25-31):**
 - [x] **Phase 25: Code Health & Bug Fixes** — Fix root filter bug, add error boundaries, clean React anti-patterns (completed 2026-04-16)
 - [x] **Phase 26: Design Tokens** — Spacing, typography, elevation, motion, and surface token system (5/5 plans — foundation + KPI card + header + table row pilots + unlisted /tokens reference page all shipped 2026-04-17)
-- [ ] **Phase 27: Typography & Information Hierarchy** — Type scale applied across app, tabular figures, consistent labeling
+- [x] **Phase 27: Typography & Information Hierarchy** — Type scale applied across app, tabular figures, consistent labeling (completed 2026-04-17)
 - [ ] **Phase 28: Surfaces & Elevation** — Every container uses a named surface — cards float, tables recede, popovers lift
 - [ ] **Phase 29: Component Patterns** — StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState
 - [ ] **Phase 30: Micro-Interactions & Motion** — Drill transitions, hover lifts, press feedback, loading reveals
@@ -96,7 +96,7 @@
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
-| 27. Typography & Hierarchy | 5/6 | In Progress|  | - |
+| 27. Typography & Hierarchy | 6/6 | Complete   | 2026-04-17 | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
