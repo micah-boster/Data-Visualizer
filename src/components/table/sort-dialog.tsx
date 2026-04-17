@@ -97,7 +97,7 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
               <ArrowUpDown className="mr-1.5 h-3.5 w-3.5" />
               Sort
               {sorting.length > 1 && (
-                <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                <span className="ml-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-label-numeric text-primary-foreground">
                   {sorting.length}
                 </span>
               )}
@@ -121,14 +121,14 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
                   key={`${sortRule.id}-${index}`}
                   className="flex items-center gap-2 rounded-md border bg-card p-2"
                 >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-label-numeric">
                     {index + 1}
                   </span>
 
                   <select
                     value={sortRule.id}
                     onChange={(e) => changeColumn(index, e.target.value)}
-                    className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-sm"
+                    className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-body"
                   >
                     {COLUMN_CONFIGS.map((col) => (
                       <option

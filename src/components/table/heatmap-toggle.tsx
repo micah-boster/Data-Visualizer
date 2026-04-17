@@ -24,7 +24,7 @@ export function HeatmapToggle() {
       />
       <Label
         htmlFor="heatmap-toggle"
-        className="cursor-pointer text-xs"
+        className="cursor-pointer text-caption"
       >
         Heatmap
       </Label>

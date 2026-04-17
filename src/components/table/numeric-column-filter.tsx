@@ -49,36 +49,36 @@ export function NumericColumnFilter({
     <div className="flex flex-col gap-3 w-[200px]">
       <div className="flex flex-col gap-2">
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Min</label>
+          <label className="text-body text-muted-foreground mb-1 block">Min</label>
           <Input
             type="number"
             placeholder={dataMin != null ? String(dataMin) : 'Min'}
             value={min}
             onChange={(e) => setMin(e.target.value)}
-            className="h-8 text-xs"
+            className="h-8 text-body"
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">Max</label>
+          <label className="text-body text-muted-foreground mb-1 block">Max</label>
           <Input
             type="number"
             placeholder={dataMax != null ? String(dataMax) : 'Max'}
             value={max}
             onChange={(e) => setMax(e.target.value)}
-            className="h-8 text-xs"
+            className="h-8 text-body"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <Button size="sm" onClick={handleApply} className="h-7 text-xs flex-1">
+        <Button size="sm" onClick={handleApply} className="h-7 text-caption flex-1">
           Apply
         </Button>
         <Button
           variant="ghost"
           size="sm"
           onClick={handleClear}
-          className="h-7 text-xs"
+          className="h-7 text-caption"
         >
           Clear
         </Button>

@@ -86,7 +86,7 @@ export function TextColumnFilter({
           placeholder="Search values..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="pl-7 h-8 text-xs"
+          className="pl-7 h-8 text-body"
         />
       </div>
 
@@ -96,7 +96,7 @@ export function TextColumnFilter({
           variant="ghost"
           size="sm"
           onClick={selectAll}
-          className="h-6 text-xs px-2"
+          className="h-6 text-caption px-2"
         >
           Select All
         </Button>
@@ -104,7 +104,7 @@ export function TextColumnFilter({
           variant="ghost"
           size="sm"
           onClick={clearSelection}
-          className="h-6 text-xs px-2"
+          className="h-6 text-caption px-2"
         >
           Clear
         </Button>
@@ -116,7 +116,7 @@ export function TextColumnFilter({
           {displayedValues.map((entry) => (
             <label
               key={entry.value}
-              className="flex items-center gap-2 px-1 py-0.5 text-xs cursor-pointer hover:bg-muted/30 rounded"
+              className="flex items-center gap-2 px-1 py-0.5 text-body cursor-pointer hover:bg-muted/30 rounded"
             >
               <Checkbox
                 checked={selected.has(entry.value)}
@@ -131,14 +131,14 @@ export function TextColumnFilter({
           ))}
         </div>
         {truncated && (
-          <p className="text-xs text-muted-foreground px-1 pt-1">
+          <p className="text-caption text-muted-foreground px-1 pt-1">
             Showing {MAX_DISPLAY_VALUES} of {filteredValues.length}
           </p>
         )}
       </ScrollArea>
 
       {/* Apply */}
-      <Button size="sm" onClick={handleApply} className="h-7 text-xs">
+      <Button size="sm" onClick={handleApply} className="h-7 text-caption">
         Apply
       </Button>
     </div>
