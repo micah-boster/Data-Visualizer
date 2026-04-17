@@ -17,18 +17,21 @@ import {
 } from '@/components/ui/tooltip';
 
 interface SaveViewPopoverProps {
-  onSave: (name: string) => void;
-  onReplace: (name: string) => void;
+  onSave: (name: string, options?: { includeDrill?: boolean }) => void;
+  onReplace: (name: string, options?: { includeDrill?: boolean }) => void;
   hasViewWithName: (name: string) => boolean;
+  /** When true, render the "Include current drill state" checkbox (unchecked by default). */
+  canIncludeDrill?: boolean;
 }
 
 /**
  * Compact popover for saving the current view configuration.
  */
-export function SaveViewPopover({ onSave, onReplace, hasViewWithName }: SaveViewPopoverProps) {
+export function SaveViewPopover({ onSave, onReplace, hasViewWithName, canIncludeDrill }: SaveViewPopoverProps) {
   const [name, setName] = useState('');
   const [showReplace, setShowReplace] = useState(false);
   const [open, setOpen] = useState(false);
+  const [includeDrill, setIncludeDrill] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -37,6 +40,7 @@ export function SaveViewPopover({ onSave, onReplace, hasViewWithName }: SaveView
     } else {
       setName('');
       setShowReplace(false);
+      setIncludeDrill(false);
     }
   }, [open]);
 
@@ -49,10 +53,11 @@ export function SaveViewPopover({ onSave, onReplace, hasViewWithName }: SaveView
       setShowReplace(true);
       return;
     }
+    const options = canIncludeDrill ? { includeDrill } : undefined;
     if (isDuplicate) {
-      onReplace(trimmed);
+      onReplace(trimmed, options);
     } else {
-      onSave(trimmed);
+      onSave(trimmed, options);
     }
     setOpen(false);
   }
@@ -101,6 +106,17 @@ export function SaveViewPopover({ onSave, onReplace, hasViewWithName }: SaveView
             {showReplace ? 'Replace?' : 'Save'}
           </Button>
         </div>
+        {canIncludeDrill && (
+          <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={includeDrill}
+              onChange={(e) => setIncludeDrill(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border accent-primary"
+            />
+            Include current drill state
+          </label>
+        )}
       </PopoverContent>
     </Popover>
   );

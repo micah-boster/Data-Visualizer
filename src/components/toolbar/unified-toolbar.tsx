@@ -74,9 +74,11 @@ interface UnifiedToolbarProps {
   isFetching: boolean;
 
   // Save view
-  onSaveView: (name: string) => void;
-  onReplaceView: (name: string) => void;
+  onSaveView: (name: string, options?: { includeDrill?: boolean }) => void;
+  onReplaceView: (name: string, options?: { includeDrill?: boolean }) => void;
   hasViewWithName: (name: string) => boolean;
+  /** When true, SaveViewPopover renders the "Include current drill state" checkbox. */
+  canIncludeDrill?: boolean;
 }
 
 /**
@@ -113,6 +115,7 @@ export function UnifiedToolbar({
   onSaveView,
   onReplaceView,
   hasViewWithName,
+  canIncludeDrill,
 }: UnifiedToolbarProps) {
   const isRoot = drillState.level === 'root';
 
@@ -266,6 +269,7 @@ export function UnifiedToolbar({
           onSave={onSaveView}
           onReplace={onReplaceView}
           hasViewWithName={hasViewWithName}
+          canIncludeDrill={canIncludeDrill}
         />
       </div>
 

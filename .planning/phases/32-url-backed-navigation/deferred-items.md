@@ -1,12 +1,19 @@
 # Deferred Items — Phase 32
 
-Out-of-scope issues discovered during Phase 32 plan execution. Not fixed per the executor's SCOPE BOUNDARY rule (only fix issues directly caused by current task changes).
+## Pre-existing lint error in SaveViewPopover
 
-## Plan 32-01
+**File:** `src/components/toolbar/save-view-popover.tsx`
+**Rule:** `react-hooks/set-state-in-effect`
+**Discovered during:** Plan 32-02, Task 2
 
-### Pre-existing ESLint warning in `src/components/data-display.tsx`
+The `useEffect(() => { ... }, [open])` cleanup branch calls `setName('')` and
+`setShowReplace(false)` synchronously. This rule (part of React 19 / React
+Compiler linting) flagged the existing code before Plan 02 changes; my edits
+preserve the same pattern (adding `setIncludeDrill(false)` alongside).
 
-- **Line 25:** `'UnifiedToolbar' is defined but never used` (`@typescript-eslint/no-unused-vars`)
-- **Status:** Pre-existing on `main` prior to Plan 32-01 changes (verified via `git stash` + lint).
-- **Action taken:** None. Out of scope for Plan 32-01 which touches only the stale-param validation effect.
-- **Suggested follow-up:** Remove the unused `UnifiedToolbar` import in a standalone cleanup commit or whenever the next plan touches this file's imports.
+Verified pre-existing via `git stash && npx eslint ... && git stash pop` ->
+same error at the previous line number (38, pre-change).
+
+Out of scope for Plan 32-02 (NAV-04). Candidate fix: refactor popover open/close
+to drive resets from `onOpenChange` instead of an effect, or migrate to a
+controlled form state.
