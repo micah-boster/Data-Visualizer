@@ -8,7 +8,7 @@ progress:
   total_phases: 28
   completed_phases: 25
   total_plans: 52
-  completed_plans: 52
+  completed_plans: 53
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 26 (Design Tokens — in progress) / 32 (URL-Backed Navigation — in progress, parallel track)
-Plan: 26-04 (next — Table row pilot, Wave 2) / 32-02 still awaiting human-verify on Task 4
-Status: 26-03 SHIPPED — Header migrated to Phase 26 tokens (bg-surface-raised, shadow-xs, px-page-gutter, gap-inline, gap-stack, text-caption). Border-b dropped in favor of shadow-xs alone; backdrop-blur-sm removed (opaque surface-raised replaces it); amber stale-state colors left for a dedicated state-color phase. User approved light + dark visual verification in own browser. Post-plan brand swap (d2f0a16) transparent to header.tsx because it consumes semantic tokens only. 32-02 Tasks 1-3 still shipped awaiting Task 4 checkpoint approval.
-Last activity: 2026-04-17 — Shipped 26-03 Task 1 (0b1b713 header token migration); Task 2 human-verify checkpoint approved by user. Phase 26 Wave 2 continues with 26-04 (Table row — surface-inset + density tokens, non-overlapping file scope).
+Plan: 26-05 (next — unlisted /tokens reference page) / 32-02 still awaiting human-verify on Task 4
+Status: 26-04 SHIPPED — Table body + data-table wrapper migrated to Phase 26 tokens (bg-surface-inset on scroll wrapper, data-density="dense" cascade root, h-[var(--row-height)] / px-[var(--row-padding-x)] / py-[var(--row-padding-y)], text-body vs text-body-numeric by column type, hover:bg-hover-bg duration-quick ease-default). TanStack Virtual estimateSize 42 → 32 (dense default); sparse virtualizer wiring deferred to density-toggle UI phase. globals.css extended with [data-density="dense"|"sparse"] @layer base selectors. Plan frontmatter dynamically expanded mid-task to include data-table.tsx per Task 1 Pre-step Blocker 4 resolution. User approved light + dark visual verification in own browser; post-plan brand swap (d2f0a16) transparent to pilot. 32-02 Task 4 still paused on parallel track.
+Last activity: 2026-04-17 — Shipped 26-04 Task 1 (55a5a1d table-body + data-table density-token migration); Task 2 human-verify checkpoint approved by user. Phase 26 Wave 2 complete on implementation pilots; remaining plan 26-05 is an unlisted reference page.
 
-Progress: [█████░░░░░] 35% (v4.0: Phase 25 shipped, Phase 32-01 shipped, 26-01 + 26-02 + 26-03 shipped; 11 phases + remaining plans)
+Progress: [██████░░░░] 40% (v4.0: Phase 25 shipped, Phase 32-01 shipped, 26-01 + 26-02 + 26-03 + 26-04 shipped; 11 phases + remaining plans)
 
 ## Shipped Milestones
 
@@ -86,6 +86,11 @@ Progress: [█████░░░░░] 35% (v4.0: Phase 25 shipped, Phase 32
 - [Phase 26-03]: Amber stale-state colors left unmigrated in header.tsx — state-color migration is cross-cutting work owned by a later dedicated phase. Scoping pilots to surface/shadow/spacing/type (and deferring state colors) keeps pilot boundaries clean.
 - [Phase 26-03]: header.tsx has no title/heading text element — only a freshness indicator (text-xs → text-caption) and a theme toggle. Plan anticipated both title-exists and no-title outcomes; neither counted as a deviation.
 - [Phase 26-03]: Persistent-chrome token recipe established: bg-surface-raised + shadow-xs + px-page-gutter + gap-inline/gap-stack. Distinct from the card recipe (26-02: shadow-sm + border + p-card-padding + rounded-lg). Reusable for toolbars, app-bottom bars, and any sticky chrome.
+- [Phase 26-04]: Density variant pattern proven — [data-density="dense"|"sparse"] attribute on the wrapper + globals.css @layer base selector block assigning --row-height / --row-padding-y / --row-padding-x → consumers use arbitrary Tailwind h-[var(--row-height)] / px-[var(--row-padding-x)] / py-[var(--row-padding-y)]. Scope-local (not body/html), composable, Pattern 3 from 26-RESEARCH. Replicable for list/grid/panel components with density modes.
+- [Phase 26-04]: Background-owner for scroll containers lives on the outer scroll wrapper (data-table.tsx), not on <tbody>. Keeps header + body + footer visually unified under surface-inset and provides a single cascade root for data-density. Resolves Task 1 Pre-step Blocker 4.
+- [Phase 26-04]: TanStack Virtual estimateSize hardcoded to 32 (dense default) with inline comment flagging that sparse visual wiring requires dynamic estimateSize via data-density prop — deferred until a density-toggle UI phase. Deliberate deferral matches plan's own project_constraints.
+- [Phase 26-04]: Numeric vs text cell typography split at render time — text-body-numeric (JetBrains Mono + tabular-nums + lining-nums) for number columns, text-body (Inter) for text columns. Digits align vertically across rows. Proves DS-02 on the highest-data-density surface in the app.
+- [Phase 26-04]: Third pilot in a row consuming semantic tokens only (surface-inset, density, text-body, text-body-numeric, hover-bg, duration-quick, ease-default) — never brand or chart tokens. Post-plan brand palette swap (d2f0a16) passed through transparently. Semantic-token discipline is working; future pilots should preserve it.
 
 ### Pending Todos
 
@@ -101,5 +106,5 @@ Progress: [█████░░░░░] 35% (v4.0: Phase 25 shipped, Phase 32
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Completed 26-03-PLAN.md (Header pilot shipped — bg-surface-raised + shadow-xs + px-page-gutter + gap-inline/gap-stack + text-caption; border-b dropped in favor of shadow-xs alone; backdrop-blur-sm removed; user approved light + dark visual verification). 32-02 still paused at Task 4 checkpoint (independent parallel track).
-Resume with: `/gsd:execute-phase 26` to continue with Plan 26-04 (Table row pilot — surface-inset + density tokens) or Plan 26-05 (unlisted /tokens reference page), or `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
+Stopped at: Completed 26-04-PLAN.md (Table row pilot shipped — bg-surface-inset on scroll wrapper + data-density="dense" cascade + h-[var(--row-height)]/px-[var(--row-padding-x)]/py-[var(--row-padding-y)] + text-body vs text-body-numeric by column type + hover:bg-hover-bg duration-quick ease-default; virtualizer estimateSize 42→32; user approved light + dark visual verification). 32-02 still paused at Task 4 checkpoint (independent parallel track).
+Resume with: `/gsd:execute-phase 26` to finalize Phase 26 with Plan 26-05 (unlisted /tokens reference page), or `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
