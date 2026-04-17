@@ -34,7 +34,7 @@ export function MatrixBarRanking({ partners, metrics }: MatrixViewProps) {
           <button
             key={m.key}
             type="button"
-            className={`rounded px-2 py-1 text-xs transition-colors ${
+            className={`rounded px-2 py-1 text-caption transition-colors ${
               selectedMetric === m.key
                 ? 'bg-primary text-primary-foreground'
                 : 'bg-muted text-muted-foreground hover:bg-muted/80'
@@ -54,10 +54,10 @@ export function MatrixBarRanking({ partners, metrics }: MatrixViewProps) {
           const color = CHART_COLORS[i % CHART_COLORS.length];
           return (
             <div key={p.partnerName} className="flex items-center gap-2">
-              <span className="w-4 text-right text-xs text-muted-foreground tabular-nums">
+              <span className="w-4 text-right text-label-numeric text-muted-foreground">
                 {i + 1}.
               </span>
-              <span className="w-28 truncate text-xs font-medium">
+              <span className="w-28 truncate text-body">
                 {p.partnerName}
               </span>
               <div className="flex-1 h-5 rounded bg-muted/50 overflow-hidden">
@@ -70,7 +70,7 @@ export function MatrixBarRanking({ partners, metrics }: MatrixViewProps) {
                   }}
                 />
               </div>
-              <span className="w-16 text-right text-xs tabular-nums">
+              <span className="w-16 text-right text-label-numeric">
                 {formatValue(value, metric.format)}
               </span>
             </div>

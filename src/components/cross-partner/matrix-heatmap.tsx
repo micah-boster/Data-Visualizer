@@ -15,16 +15,16 @@ export function MatrixHeatmap({
   if (orientation === 'partners-as-rows') {
     return (
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <table className="w-full">
           <thead>
             <tr className="border-b">
-              <th className="sticky left-0 z-10 bg-background px-3 py-2 text-left font-medium text-muted-foreground">
+              <th className="sticky left-0 z-10 bg-background px-3 py-2 text-left text-label uppercase text-muted-foreground">
                 Partner
               </th>
               {metrics.map((m) => (
                 <th
                   key={m.key}
-                  className="cursor-pointer px-3 py-2 text-right font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="cursor-pointer px-3 py-2 text-right text-label uppercase text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => onSort(m.key)}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -42,7 +42,7 @@ export function MatrixHeatmap({
           <tbody>
             {partners.map((p) => (
               <tr key={p.partnerName} className="border-b last:border-0">
-                <td className="sticky left-0 z-10 bg-background px-3 py-1.5 font-medium whitespace-nowrap">
+                <td className="sticky left-0 z-10 bg-background px-3 py-1.5 text-body whitespace-nowrap">
                   {p.partnerName}
                 </td>
                 {metrics.map((m) => {
@@ -50,7 +50,7 @@ export function MatrixHeatmap({
                   return (
                     <td
                       key={m.key}
-                      className={`px-3 py-1.5 text-right tabular-nums ${getTierClass(pctile)}`}
+                      className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(pctile)}`}
                     >
                       {formatValue(m.getValue(p), m.format)}
                     </td>
@@ -67,16 +67,16 @@ export function MatrixHeatmap({
   // metrics-as-rows orientation
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs">
+      <table className="w-full">
         <thead>
           <tr className="border-b">
-            <th className="sticky left-0 z-10 bg-background px-3 py-2 text-left font-medium text-muted-foreground">
+            <th className="sticky left-0 z-10 bg-background px-3 py-2 text-left text-label uppercase text-muted-foreground">
               Metric
             </th>
             {partners.map((p) => (
               <th
                 key={p.partnerName}
-                className="px-3 py-2 text-right font-medium text-muted-foreground whitespace-nowrap"
+                className="px-3 py-2 text-right text-label uppercase text-muted-foreground whitespace-nowrap"
               >
                 {p.partnerName}
               </th>
@@ -92,7 +92,7 @@ export function MatrixHeatmap({
               }`}
               onClick={() => onSort(m.key)}
             >
-              <td className="sticky left-0 z-10 bg-background px-3 py-1.5 font-medium whitespace-nowrap">
+              <td className="sticky left-0 z-10 bg-background px-3 py-1.5 text-body whitespace-nowrap">
                 <span className="inline-flex items-center gap-1">
                   {m.label}
                   {sortMetric === m.key && (
@@ -107,7 +107,7 @@ export function MatrixHeatmap({
                 return (
                   <td
                     key={p.partnerName}
-                    className={`px-3 py-1.5 text-right tabular-nums ${getTierClass(pctile)}`}
+                    className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(pctile)}`}
                   >
                     {formatValue(m.getValue(p), m.format)}
                   </td>

@@ -69,7 +69,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
   if (kpis.totalBatches === 0) {
     return (
       <div className="flex h-24 items-center justify-center rounded-xl border border-border/50 bg-transparent">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-body text-muted-foreground">
           No batch data available for this partner
         </span>
       </div>

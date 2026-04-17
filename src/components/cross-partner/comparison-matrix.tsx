@@ -71,7 +71,7 @@ export function PartnerComparisonMatrix() {
     <Card className="shrink-0">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-1.5">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
+          <CardTitle className="text-title text-muted-foreground">
             Partner Comparison
           </CardTitle>
           <TooltipProvider>
@@ -80,11 +80,11 @@ export function PartnerComparisonMatrix() {
                 <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
               </TooltipTrigger>
               <TooltipContent side="right" className="max-w-[240px]">
-                <p className="text-xs">Compare key metrics across all partners — view as heatmap, bar ranking, or plain table.</p>
+                <p className="text-caption">Compare key metrics across all partners — view as heatmap, bar ranking, or plain table.</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <span className="text-xs text-muted-foreground/60">
+          <span className="text-caption text-muted-foreground/60">
             {sortedPartners.length} partners
           </span>
         </div>
@@ -100,7 +100,7 @@ export function PartnerComparisonMatrix() {
               title={label}
             >
               <Icon className="h-3.5 w-3.5" />
-              <span className="ml-1 text-xs">{label}</span>
+              <span className="ml-1">{label}</span>
             </Button>
           ))}
 
