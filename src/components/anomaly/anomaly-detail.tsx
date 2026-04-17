@@ -11,6 +11,7 @@ import {
 } from '@/lib/formatting/anomaly-labels';
 import { getFormatter } from '@/lib/formatting/numbers';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
+import { SectionHeader } from '@/components/layout/section-header';
 
 interface AnomalyDetailProps {
   /** Batch or partner anomaly data to display */
@@ -39,7 +40,7 @@ export function AnomalyDetail({ anomaly, norms, entityName }: AnomalyDetailProps
 
   return (
     <div className="max-w-xs space-y-3">
-      {/* Header */}
+      {/* Severity badge paired with flag count — severity color must stay inline */}
       <div className="flex items-center gap-2">
         <span className={`text-title ${SEVERITY_COLORS[severity]}`}>
           {SEVERITY_LABELS[severity]}
@@ -49,7 +50,7 @@ export function AnomalyDetail({ anomaly, norms, entityName }: AnomalyDetailProps
         </span>
       </div>
 
-      <p className="text-caption text-muted-foreground">{entityName}</p>
+      <SectionHeader title={entityName} />
 
       {/* Grouped metrics */}
       {groups.length > 0 ? (
