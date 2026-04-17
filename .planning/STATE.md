@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
-status: in_progress
-last_updated: "2026-04-17T13:00:00.000Z"
+status: unknown
+last_updated: "2026-04-17T18:11:17.619Z"
 progress:
   total_phases: 28
-  completed_phases: 26
-  total_plans: 53
-  completed_plans: 54
+  completed_phases: 27
+  total_plans: 55
+  completed_plans: 55
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 26 (Design Tokens — COMPLETE, awaiting /gsd:verify-work 26) / 32 (URL-Backed Navigation — in progress, parallel track)
-Plan: Phase 26 fully shipped (5/5). Next up: Phase 27 (Typography & Hierarchy) and Phase 28 (Surfaces & Elevation) can run in parallel. / 32-02 still awaiting human-verify on Task 4.
-Status: 26-05 SHIPPED — Unlisted /tokens reference page (robots.noindex, no nav link) with 5-tab browser (Spacing / Typography / Surfaces & Shadows / Motion / Colors) via @base-ui/react/tabs. Reusable TokenCard primitive with live example + CSS var + Tailwind class + copy-to-clipboard (Copy↔Check icon swap, sonner toast). Every Phase 26 token category covered with live demos (12+5 spacing, 6+3 type, 5 surfaces, 4 shadows, 3 radii, 9 motion combos, accent+state+neutrals+chart+interaction colors). Page's own chrome uses only tokens (dogfooding). User approved light + dark visual verification in own browser. Phase 26 now 5/5 plans complete — all DS-01..DS-06 requirements fully credited across foundation + 3 pilots + reference page. 32-02 Task 4 still paused on parallel track.
-Last activity: 2026-04-17 — Shipped 26-05 Task 1 (2c3b05e /tokens route + TokenBrowser shell + TokenCard primitive) and Task 2 (e949294 fill all tab bodies with live demos); human-verify checkpoint approved. Phase 26 complete.
+Phase: 26 (Design Tokens — COMPLETE, awaiting /gsd:verify-work 26) / 32 (URL-Backed Navigation — COMPLETE)
+Plan: Phase 26 fully shipped (5/5). Phase 32 fully shipped (2/2). No current plan. Next up: Phase 27 (Typography & Hierarchy) and Phase 28 (Surfaces & Elevation) can run in parallel.
+Status: 32-02 SHIPPED — Saved views gain optional drill state: ViewSnapshot.drill?: { partner?, batch? } with matching zod .optional() (no localStorage migration — legacy views load unchanged). SaveViewPopover renders "Include current drill state" checkbox only when drilled; default unchecked. handleSaveView captures drill when opted in AND drillState.level !== 'root'. handleLoadView performs two orthogonal URL updates: the pre-existing window.history.replaceState for filters + a new router.push for drill (?p=&b=) with scroll: false — both fire cleanly without interfering. canIncludeDrill threaded DataDisplay -> DataTable -> UnifiedToolbar -> SaveViewPopover (one extra layer beyond plan's anticipated 3 — DataTable needed prop widening). User approved all 9 human-verify scenarios including scenario 8 (legacy pre-Plan-02 views still loaded with zero parse errors). Phase 32 COMPLETE — NAV-01..NAV-04 all shipped.
+Last activity: 2026-04-17 — Shipped 32-02 Tasks 1-3 (e078f4d type+schema, ce0345e popover+toolbar, a8ce5b8 data-display handlers + DataTable prop threading); human-verify checkpoint approved all 9 scenarios. Phase 32 complete.
 
-Progress: [██████░░░░] 42% (v4.0: Phase 25 + Phase 26 shipped, Phase 32-01 shipped; 11 remaining phases + remaining plans)
+Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phase 32 shipped; 10 remaining phases + remaining plans)
 
 ## Shipped Milestones
 
@@ -95,6 +95,11 @@ Progress: [██████░░░░] 42% (v4.0: Phase 25 + Phase 26 shippe
 - [Phase 26-05]: Tailwind v4 content scanner cannot see template-literal classes (e.g. `bg-neutral-${n}`, `bg-chart-${i}`). Dynamic swatches switched to inline `style={{ backgroundColor: 'var(--X)' }}` during execution. Documented workaround for any future token demo / palette surface computing colors at render time.
 - [Phase 26-05]: /tokens dogfoods the token system — page's own chrome uses only tokens (bg-surface-base, p-card-padding, gap-section, text-display, shadow-xs). Serves as both live documentation AND a self-verification surface: if /tokens renders correctly in both modes, the token system is provably complete. Unlisted (robots.noindex, no nav link) — bookmarkable direct URL only.
 - [Phase 26-05]: Unlisted reference-page pattern established — metadata.robots = { index: false, follow: false } + deliberate no-nav-link. Reusable for future internal dev surfaces (e.g., /components, /playground, /debug).
+- [Phase 32-02]: Additive zod .optional() schema evolution pattern — ViewSnapshot.drill?: { partner?, batch? } landed with zero localStorage migration. Legacy pre-Plan-02 saved views loaded with no zod errors (scenario 8 verified). Reusable pattern: any future ViewSnapshot extension should use the same .optional() approach to preserve user-stored data across schema changes.
+- [Phase 32-02]: Two-API URL update in a single handler proven safe — window.history.replaceState (filters, non-history-worthy) and router.push (drill, history-worthy) coexist in handleLoadView without interfering. Order: filters first, drill second, so the new history entry captures the replaced filter URL as its Back destination. Precedent for any future handler that needs to mutate both axes simultaneously.
+- [Phase 32-02]: canIncludeDrill threading required an extra prop layer through DataTable — data-display renders DataTable (not UnifiedToolbar directly), so DataTable's props had to be widened to pass canIncludeDrill + options-bag onSave/onReplace signatures through. Plan's <output> section anticipated only 5 modified files; actual was 6. No scope expansion, just accurate layering.
+- [Phase 32-02]: Sonner toast copy on handleSaveView left as generic "View saved" — NOT suffixed with "(includes drill state)". Rationale: the checkbox itself is the opt-in signal, and the subsequent load flow (URL acquires ?p=&b=) serves as the receipt. Adding conditional suffixes would set an inconsistent precedent for the app's toast copy. Reopen trigger: users unable to tell which saved views are deep links — revisit via sidebar annotation rather than transient toast.
+- [Phase 32-02]: Drill capture gated on BOTH options.includeDrill AND drillState.level !== 'root' — defensive second check prevents writing snapshot.drill = {} if user opens popover while drilled, ticks the checkbox, then navigates to root before submitting. Eliminates an unlikely but possible empty-drill race.
 
 ### Pending Todos
 
@@ -110,5 +115,5 @@ Progress: [██████░░░░] 42% (v4.0: Phase 25 + Phase 26 shippe
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Completed 26-05-PLAN.md — Phase 26 Design Tokens is now fully shipped (5/5 plans). Unlisted /tokens reference page live at localhost:3000/tokens with 5-tab browser covering every Phase 26 token category, TokenCard + copy-to-clipboard, user-verified in both modes. All DS-01..DS-06 requirements fully credited. 32-02 still paused at Task 4 checkpoint (independent parallel track).
-Resume with: `/gsd:verify-work 26` to verify Phase 26 before transition, then `/gsd:plan-phase 27` (Typography & Hierarchy) and/or `/gsd:plan-phase 28` (Surfaces & Elevation) — both can run in parallel. Alternatively, `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
+Stopped at: Completed 32-02-PLAN.md — Phase 32 URL-Backed Navigation is now fully shipped (2/2 plans). NAV-01 / NAV-02 / NAV-03 shipped in Plan 01 (URL-backed useDrillDown); NAV-04 shipped in Plan 02 (saved views carry optional drill state). Additive zod .optional() means zero localStorage migration — legacy views still load. Phase 26 also fully shipped (5/5) from the parallel design-system track.
+Resume with: `/gsd:verify-work 26` to verify Phase 26 (and/or `/gsd:verify-work 32` to verify Phase 32), then `/gsd:plan-phase 27` (Typography & Hierarchy) and/or `/gsd:plan-phase 28` (Surfaces & Elevation) — both can run in parallel.
