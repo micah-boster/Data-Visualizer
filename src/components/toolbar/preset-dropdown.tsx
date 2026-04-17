@@ -30,7 +30,7 @@ export function PresetDropdown({ activePreset, onPresetChange }: PresetDropdownP
         <TooltipTrigger render={<span />}>
           <PopoverTrigger
             render={
-              <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs capitalize">
+              <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-caption capitalize">
                 <LayoutGrid className="h-3.5 w-3.5" />
                 {activePreset}
               </Button>
@@ -45,7 +45,7 @@ export function PresetDropdown({ activePreset, onPresetChange }: PresetDropdownP
             key={preset}
             type="button"
             onClick={() => onPresetChange(preset)}
-            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm capitalize transition-colors hover:bg-muted"
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-body capitalize transition-colors hover:bg-muted"
           >
             {activePreset === preset ? (
               <Check className="h-3.5 w-3.5 text-primary" />

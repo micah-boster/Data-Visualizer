@@ -40,7 +40,7 @@ export function FilterChips({
       {activeFilters.map((filter) => (
         <span
           key={filter.param}
-          className="rounded-full bg-muted text-sm px-3 py-1 flex items-center gap-1.5"
+          className="rounded-full bg-muted text-caption px-3 py-1 flex items-center gap-1.5"
         >
           {filter.label}: {filter.value}
           <button
@@ -58,7 +58,7 @@ export function FilterChips({
       {columnFilterChips?.map((chip) => (
         <span
           key={chip.columnId}
-          className="rounded-full bg-primary/10 text-sm px-3 py-1 flex items-center gap-1.5"
+          className="rounded-full bg-primary/10 text-caption px-3 py-1 flex items-center gap-1.5"
         >
           {chip.label}: {chip.displayValue}
           <button
@@ -75,7 +75,7 @@ export function FilterChips({
       <button
         type="button"
         onClick={onClearAll}
-        className="text-sm text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
+        className="text-caption text-muted-foreground hover:text-foreground underline-offset-4 hover:underline"
       >
         Clear all
       </button>

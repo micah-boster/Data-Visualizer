@@ -34,7 +34,7 @@ export function FilterCombobox({
       <Combobox.InputGroup className="relative flex items-center">
         <Combobox.Input
           placeholder={placeholder}
-          className="h-9 w-44 rounded-md border border-input bg-background px-3 pr-8 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+          className="h-9 w-44 rounded-md border border-input bg-background px-3 pr-8 text-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
         />
         <Combobox.Trigger className="absolute right-2 flex items-center text-muted-foreground">
           <ChevronDown className="h-4 w-4" />
@@ -44,14 +44,14 @@ export function FilterCombobox({
         <Combobox.Positioner className="z-50">
           <Combobox.Popup className="max-h-60 overflow-auto rounded-md border bg-popover shadow-md">
             <Combobox.List>
-              <Combobox.Empty className="px-3 py-2 text-sm text-muted-foreground">
+              <Combobox.Empty className="px-3 py-2 text-caption text-muted-foreground">
                 No matches
               </Combobox.Empty>
               {options.map((option) => (
                 <Combobox.Item
                   key={option}
                   value={option}
-                  className="cursor-pointer px-3 py-1.5 text-sm data-[highlighted]:bg-accent data-[selected]:font-medium"
+                  className="cursor-pointer px-3 py-1.5 text-body data-[highlighted]:bg-accent data-[selected]:bg-accent/40"
                 >
                   {option}
                 </Combobox.Item>

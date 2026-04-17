@@ -56,7 +56,7 @@ export function FilterPopover({
               <Button variant="ghost" size="icon" className="relative h-8 w-8">
                 <Filter className="h-4 w-4" />
                 {activeCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-label-numeric text-primary-foreground">
                     {activeCount}
                   </span>
                 )}
@@ -69,12 +69,12 @@ export function FilterPopover({
       <PopoverContent className="w-64" align="end">
         <PopoverHeader>
           <div className="flex items-center justify-between">
-            <PopoverTitle>Filters</PopoverTitle>
+            <PopoverTitle className="text-heading">Filters</PopoverTitle>
             {activeCount > 0 && (
               <button
                 type="button"
                 onClick={onClearAll}
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className="text-caption text-muted-foreground hover:text-foreground"
               >
                 Clear all
               </button>
@@ -83,7 +83,7 @@ export function FilterPopover({
         </PopoverHeader>
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Partner</label>
+            <label className="mb-1 block text-label uppercase text-muted-foreground">Partner</label>
             <FilterCombobox
               label="Partner"
               placeholder="All partners"
@@ -93,7 +93,7 @@ export function FilterPopover({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Account Type</label>
+            <label className="mb-1 block text-label uppercase text-muted-foreground">Account Type</label>
             <FilterCombobox
               label="Account Type"
               placeholder="All types"
@@ -103,7 +103,7 @@ export function FilterPopover({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">Batch</label>
+            <label className="mb-1 block text-label uppercase text-muted-foreground">Batch</label>
             <FilterCombobox
               label="Batch"
               placeholder="All batches"
@@ -119,10 +119,10 @@ export function FilterPopover({
             {activeFilters.map((f) => (
               <span
                 key={f.param}
-                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs"
+                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption"
               >
                 <span className="text-muted-foreground">{f.label}:</span>
-                <span className="font-medium">{f.value}</span>
+                <span>{f.value}</span>
                 <button
                   type="button"
                   onClick={() => onFilterChange(f.param, null)}

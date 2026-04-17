@@ -78,7 +78,7 @@ export function SaveViewPopover({ onSave, onReplace, hasViewWithName, canInclude
       </Tooltip>
       <PopoverContent className="w-56" align="end">
         <PopoverHeader>
-          <PopoverTitle>Save View</PopoverTitle>
+          <PopoverTitle className="text-heading">Save View</PopoverTitle>
         </PopoverHeader>
         <div className="flex gap-2">
           <input
@@ -94,20 +94,20 @@ export function SaveViewPopover({ onSave, onReplace, hasViewWithName, canInclude
               if (e.key === 'Escape') setOpen(false);
             }}
             placeholder="View name"
-            className="flex-1 rounded-md border bg-transparent px-2 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring"
+            className="flex-1 rounded-md border bg-transparent px-2 py-1.5 text-body outline-none focus:ring-1 focus:ring-ring"
           />
           <Button
             size="sm"
             variant={showReplace ? 'destructive' : 'default'}
             disabled={!trimmed}
             onClick={handleSubmit}
-            className="h-8 text-xs"
+            className="h-8"
           >
             {showReplace ? 'Replace?' : 'Save'}
           </Button>
         </div>
         {canIncludeDrill && (
-          <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+          <label className="mt-2 flex items-center gap-2 text-body text-muted-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={includeDrill}
