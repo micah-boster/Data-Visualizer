@@ -45,8 +45,8 @@ export function ViewsSidebar({
         className="flex flex-col w-80 sm:max-w-80 p-0"
       >
         <SheetHeader className="px-4 pt-4 pb-0">
-          <SheetTitle>Saved Views</SheetTitle>
-          <p className="text-xs text-muted-foreground">
+          <SheetTitle className="text-heading">Saved Views</SheetTitle>
+          <p className="text-caption text-muted-foreground">
             {views.length} view{views.length !== 1 ? 's' : ''}
           </p>
         </SheetHeader>
@@ -69,7 +69,7 @@ export function ViewsSidebar({
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body text-muted-foreground">
                 No saved views yet. Save your current table configuration using
                 the Save View button.
               </p>
@@ -88,7 +88,7 @@ export function ViewsSidebar({
                 onReset();
                 onOpenChange(false);
               }}
-              className="w-full text-xs text-muted-foreground hover:text-foreground gap-1.5"
+              className="w-full text-caption text-muted-foreground hover:text-foreground gap-1.5"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               Reset to Default
@@ -98,7 +98,7 @@ export function ViewsSidebar({
                 variant="ghost"
                 size="sm"
                 onClick={onRestoreDefaults}
-                className="w-full text-xs text-muted-foreground hover:text-foreground gap-1.5"
+                className="w-full text-caption text-muted-foreground hover:text-foreground gap-1.5"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Restore Starter Views

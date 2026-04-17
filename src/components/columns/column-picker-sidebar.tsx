@@ -85,8 +85,8 @@ export function ColumnPickerSidebar({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex flex-col w-[360px] sm:max-w-[360px] p-0">
         <SheetHeader className="px-4 pt-4 pb-0">
-          <SheetTitle>Manage Columns</SheetTitle>
-          <p className="text-xs text-muted-foreground">
+          <SheetTitle className="text-heading">Manage Columns</SheetTitle>
+          <p className="text-caption text-muted-foreground">
             {visibleCount} of {totalColumns} columns visible
           </p>
         </SheetHeader>
@@ -98,10 +98,10 @@ export function ColumnPickerSidebar({
 
         {/* Bulk actions */}
         <div className="flex items-center gap-2 px-4 pt-2">
-          <Button variant="outline" size="sm" onClick={showAll} className="text-xs h-7">
+          <Button variant="outline" size="sm" onClick={showAll} className="text-caption h-7">
             Show All
           </Button>
-          <Button variant="outline" size="sm" onClick={hideAll} className="text-xs h-7">
+          <Button variant="outline" size="sm" onClick={hideAll} className="text-caption h-7">
             Hide All
           </Button>
         </div>
@@ -135,7 +135,7 @@ export function ColumnPickerSidebar({
             variant="ghost"
             size="sm"
             onClick={resetToDefaults}
-            className="w-full text-xs text-muted-foreground hover:text-foreground"
+            className="w-full text-caption text-muted-foreground hover:text-foreground"
           >
             Reset to Defaults
           </Button>

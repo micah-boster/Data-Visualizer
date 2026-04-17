@@ -57,7 +57,7 @@ function DraggableColumnRow({
         onDrop?.(columnKey);
       }}
       onDragEnd={() => onDragEnd?.()}
-      className={`group/row flex items-center gap-2 px-3 py-1 pl-6 text-sm hover:bg-muted/30 ${
+      className={`group/row flex items-center gap-2 px-3 py-1 pl-6 text-body hover:bg-muted/30 ${
         isIdentity ? 'opacity-60' : ''
       }${isDragging ? ' opacity-40' : ''}${isDragOver ? ' border-t-2 border-primary' : ''}`}
     >
@@ -162,8 +162,8 @@ export function ColumnGroup({
               expanded ? 'rotate-90' : ''
             }`}
           />
-          <span className="text-sm font-medium truncate">{group.name}</span>
-          <span className="text-xs text-muted-foreground shrink-0">
+          <span className="text-label uppercase text-muted-foreground truncate">{group.name}</span>
+          <span className="text-caption text-muted-foreground shrink-0">
             {visibleCount + group.columns.filter((k) => identitySet.has(k) && columnVisibility[k]).length}/{group.columns.length}
           </span>
         </button>

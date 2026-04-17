@@ -93,14 +93,14 @@ export function SaveViewInput({
         onChange={handleNameChange}
         onKeyDown={handleKeyDown}
         placeholder="View name..."
-        className="h-8 w-48 text-xs"
+        className="h-8 w-48 text-body"
       />
       <Button
         variant={showReplace ? 'destructive' : 'outline'}
         size="sm"
         disabled={isEmpty}
         onClick={handleSave}
-        className="h-8 gap-1 text-xs px-2"
+        className="h-8 gap-1 text-caption px-2"
       >
         <Check className="h-3.5 w-3.5" />
         {showReplace ? 'Replace?' : 'Save'}

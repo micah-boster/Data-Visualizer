@@ -16,7 +16,7 @@ export function ColumnSearch({ value, onChange }: ColumnSearchProps) {
         placeholder="Search columns..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-8 pr-8 h-9 text-sm"
+        className="pl-8 pr-8 h-9 text-body"
       />
       {value && (
         <button

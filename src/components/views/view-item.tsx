@@ -15,7 +15,7 @@ export function ViewItem({ view, onLoad, onDelete }: ViewItemProps) {
     <div className="group flex items-center gap-1 rounded-md px-2 hover:bg-accent/50 transition-colors">
       <button
         type="button"
-        className="flex-1 text-left text-sm py-2 truncate cursor-pointer"
+        className="flex-1 text-left text-body py-2 truncate cursor-pointer"
         onClick={() => onLoad(view)}
       >
         <span className="flex items-center gap-1.5">
