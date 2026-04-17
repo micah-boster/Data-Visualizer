@@ -7,8 +7,8 @@ last_updated: "2026-04-17T00:00:00.000Z"
 progress:
   total_phases: 28
   completed_phases: 25
-  total_plans: 51
-  completed_plans: 51
+  total_plans: 52
+  completed_plans: 52
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 26 (Design Tokens — in progress) / 32 (URL-Backed Navigation — in progress, parallel track)
-Plan: 26-03 (next — Header pilot, Wave 2) / 32-02 still awaiting human-verify on Task 4
-Status: 26-02 SHIPPED — KPI card migrated to Phase 26 tokens (surface-raised, p-card-padding, rounded-lg, shadow-sm, text-display-numeric, text-label, semantic state colors). Three numeric utility classes (.text-body-numeric, .text-label-numeric, .text-display-numeric) added to globals.css @layer utilities. User approved light + dark visual verification in own browser (Snowflake timeouts blocked headless preview, same as 26-01). Post-plan brand swap (d2f0a16) transparent to kpi-card.tsx because it consumes semantic tokens only. 32-02 Tasks 1-3 still shipped awaiting Task 4 checkpoint approval.
-Last activity: 2026-04-17 — Shipped 26-02 Task 1 (9ce842c KPI card + numeric utilities); Task 2 human-verify checkpoint approved by user. Phase 26 Wave 2 continues with 26-03 (Header) and 26-04 (Table row, non-overlapping globals.css block).
+Plan: 26-04 (next — Table row pilot, Wave 2) / 32-02 still awaiting human-verify on Task 4
+Status: 26-03 SHIPPED — Header migrated to Phase 26 tokens (bg-surface-raised, shadow-xs, px-page-gutter, gap-inline, gap-stack, text-caption). Border-b dropped in favor of shadow-xs alone; backdrop-blur-sm removed (opaque surface-raised replaces it); amber stale-state colors left for a dedicated state-color phase. User approved light + dark visual verification in own browser. Post-plan brand swap (d2f0a16) transparent to header.tsx because it consumes semantic tokens only. 32-02 Tasks 1-3 still shipped awaiting Task 4 checkpoint approval.
+Last activity: 2026-04-17 — Shipped 26-03 Task 1 (0b1b713 header token migration); Task 2 human-verify checkpoint approved by user. Phase 26 Wave 2 continues with 26-04 (Table row — surface-inset + density tokens, non-overlapping file scope).
 
-Progress: [█████░░░░░] 35% (v4.0: Phase 25 shipped, Phase 32-01 shipped, 26-01 + 26-02 shipped; 11 phases + remaining plans)
+Progress: [█████░░░░░] 35% (v4.0: Phase 25 shipped, Phase 32-01 shipped, 26-01 + 26-02 + 26-03 shipped; 11 phases + remaining plans)
 
 ## Shipped Milestones
 
@@ -81,6 +81,11 @@ Progress: [█████░░░░░] 35% (v4.0: Phase 25 shipped, Phase 32
 - [Phase 26-02]: Trend delta colors migrated from Tailwind emerald/red palette to semantic text-success-fg / text-error-fg tokens — aligns with state-color token system shipped in 26-01, removes duplicate light/dark class lists. [Rule 2 - Missing Critical deviation] strengthens pilot coverage.
 - [Phase 26-02]: Preview screenshots unavailable (Snowflake auth timeouts, recurring Phase 26 constraint). User verified light + dark in own browser per standing preference. No code impact.
 - [Phase 26-02]: kpi-card.tsx consumes semantic tokens only (surface-raised, shadow-sm, text-success-fg, text-error-fg) — never raw brand/accent vars — so post-plan brand palette swap (accent-warm → brand-green, commit d2f0a16) passed through transparently. Future pilots should preserve this discipline.
+- [Phase 26-03]: Dropped border-b in favor of shadow-xs alone on the header — visual verification in both modes confirmed the subtle multi-layer shadow carries the "chrome floats above content" hierarchy without the hard border line. Foreshadows DS-11 (Phase 28) and establishes the shadow-for-separation > border-for-separation precedent where hierarchy is the goal.
+- [Phase 26-03]: Removed backdrop-blur-sm from the header — Phase 26 surface-raised is an opaque token by design. Blur-glass aesthetic, if desired, should be reintroduced in Phase 28 as a translucent surface variant rather than hand-rolled blur classes.
+- [Phase 26-03]: Amber stale-state colors left unmigrated in header.tsx — state-color migration is cross-cutting work owned by a later dedicated phase. Scoping pilots to surface/shadow/spacing/type (and deferring state colors) keeps pilot boundaries clean.
+- [Phase 26-03]: header.tsx has no title/heading text element — only a freshness indicator (text-xs → text-caption) and a theme toggle. Plan anticipated both title-exists and no-title outcomes; neither counted as a deviation.
+- [Phase 26-03]: Persistent-chrome token recipe established: bg-surface-raised + shadow-xs + px-page-gutter + gap-inline/gap-stack. Distinct from the card recipe (26-02: shadow-sm + border + p-card-padding + rounded-lg). Reusable for toolbars, app-bottom bars, and any sticky chrome.
 
 ### Pending Todos
 
@@ -96,5 +101,5 @@ Progress: [█████░░░░░] 35% (v4.0: Phase 25 shipped, Phase 32
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Completed 26-02-PLAN.md (KPI card pilot shipped — surface-raised + shadow-sm + text-display-numeric + semantic state colors; three numeric utility classes added to globals.css @layer utilities; user approved light + dark visual verification). 32-02 still paused at Task 4 checkpoint (independent parallel track).
-Resume with: `/gsd:execute-phase 26` to continue with Plan 26-03 (Header pilot — surface-raised + shadow-xs + type tokens) or 26-04 (Table row — surface-inset + density tokens; non-overlapping globals.css block so can run in parallel with 26-03), or `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
+Stopped at: Completed 26-03-PLAN.md (Header pilot shipped — bg-surface-raised + shadow-xs + px-page-gutter + gap-inline/gap-stack + text-caption; border-b dropped in favor of shadow-xs alone; backdrop-blur-sm removed; user approved light + dark visual verification). 32-02 still paused at Task 4 checkpoint (independent parallel track).
+Resume with: `/gsd:execute-phase 26` to continue with Plan 26-04 (Table row pilot — surface-inset + density tokens) or Plan 26-05 (unlisted /tokens reference page), or `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
