@@ -7,8 +7,8 @@ last_updated: "2026-04-17T00:00:00.000Z"
 progress:
   total_phases: 28
   completed_phases: 25
-  total_plans: 50
-  completed_plans: 50
+  total_plans: 51
+  completed_plans: 51
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 26 (Design Tokens — in progress) / 32 (URL-Backed Navigation — in progress, parallel track)
-Plan: 26-02 (next — KPI card pilot, Wave 2) / 32-02 still awaiting human-verify on Task 4
-Status: 26-01 SHIPPED — token foundation (spacing/type/shadow/motion/radius/surface/neutral/accent/state/chart) + Inter + JetBrains Mono + shadcn re-map live in globals.css + layout.tsx. User approved light + dark visual verification in own browser (Snowflake auth timeouts blocked headless preview). 32-02 Tasks 1-3 still shipped (e078f4d, ce0345e, a8ce5b8) awaiting Task 4 checkpoint approval.
-Last activity: 2026-04-17 — Shipped 26-01 Tasks 1-2 (4ef2c69 globals.css token system, 151dff7 Inter/JetBrains Mono font swap); Task 3 human-verify checkpoint approved by user. Phase 26 Wave 2 pilots (26-02/03/04) now unblocked.
+Plan: 26-03 (next — Header pilot, Wave 2) / 32-02 still awaiting human-verify on Task 4
+Status: 26-02 SHIPPED — KPI card migrated to Phase 26 tokens (surface-raised, p-card-padding, rounded-lg, shadow-sm, text-display-numeric, text-label, semantic state colors). Three numeric utility classes (.text-body-numeric, .text-label-numeric, .text-display-numeric) added to globals.css @layer utilities. User approved light + dark visual verification in own browser (Snowflake timeouts blocked headless preview, same as 26-01). Post-plan brand swap (d2f0a16) transparent to kpi-card.tsx because it consumes semantic tokens only. 32-02 Tasks 1-3 still shipped awaiting Task 4 checkpoint approval.
+Last activity: 2026-04-17 — Shipped 26-02 Task 1 (9ce842c KPI card + numeric utilities); Task 2 human-verify checkpoint approved by user. Phase 26 Wave 2 continues with 26-03 (Header) and 26-04 (Table row, non-overlapping globals.css block).
 
-Progress: [█████░░░░░] 34% (v4.0: Phase 25 shipped, Phase 32-01 shipped, 26-01 shipped; 11 phases + remaining plans)
+Progress: [█████░░░░░] 35% (v4.0: Phase 25 shipped, Phase 32-01 shipped, 26-01 + 26-02 shipped; 11 phases + remaining plans)
 
 ## Shipped Milestones
 
@@ -77,6 +77,10 @@ Progress: [█████░░░░░] 34% (v4.0: Phase 25 shipped, Phase 32
 - [Phase 26-01]: Font variable retarget via `@theme inline` (`--font-sans: var(--font-inter)`, `--font-mono: var(--font-jetbrains-mono)`) means downstream font-sans/font-mono utilities automatically pick up Inter + JetBrains Mono — future font swaps also need zero consumer edits.
 - [Phase 26-01]: Preview screenshots unavailable in headless runner (Snowflake auth timeouts). User verified in own browser and approved — matches standing preference to verify CSS visually before pushing. No code impact.
 - [Phase 26-01]: `--radius: 0.625rem` kept as legacy alias alongside new `--radius-sm/md/lg` — shadcn primitives reference `var(--radius)`, removing would regress.
+- [Phase 26-02]: Added text-display-numeric (sans family) alongside text-body-numeric / text-label-numeric (mono family) — KPI values need large display-tier type but still benefit from tabular-nums + lining-nums for vertical digit alignment across stacked cards. Three numeric variants rather than two.
+- [Phase 26-02]: Trend delta colors migrated from Tailwind emerald/red palette to semantic text-success-fg / text-error-fg tokens — aligns with state-color token system shipped in 26-01, removes duplicate light/dark class lists. [Rule 2 - Missing Critical deviation] strengthens pilot coverage.
+- [Phase 26-02]: Preview screenshots unavailable (Snowflake auth timeouts, recurring Phase 26 constraint). User verified light + dark in own browser per standing preference. No code impact.
+- [Phase 26-02]: kpi-card.tsx consumes semantic tokens only (surface-raised, shadow-sm, text-success-fg, text-error-fg) — never raw brand/accent vars — so post-plan brand palette swap (accent-warm → brand-green, commit d2f0a16) passed through transparently. Future pilots should preserve this discipline.
 
 ### Pending Todos
 
@@ -92,5 +96,5 @@ Progress: [█████░░░░░] 34% (v4.0: Phase 25 shipped, Phase 32
 ## Session Continuity
 
 Last session: 2026-04-17
-Stopped at: Completed 26-01-PLAN.md (DS-01..DS-06 foundation shipped — globals.css token system + Inter/JetBrains Mono font swap; user approved light + dark visual verification). 32-02 still paused at Task 4 checkpoint (independent parallel track).
-Resume with: `/gsd:execute-phase 26` to continue with Plan 26-02 (KPI card pilot — surface-raised + type tokens + tabular numerics), or `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
+Stopped at: Completed 26-02-PLAN.md (KPI card pilot shipped — surface-raised + shadow-sm + text-display-numeric + semantic state colors; three numeric utility classes added to globals.css @layer utilities; user approved light + dark visual verification). 32-02 still paused at Task 4 checkpoint (independent parallel track).
+Resume with: `/gsd:execute-phase 26` to continue with Plan 26-03 (Header pilot — surface-raised + shadow-xs + type tokens) or 26-04 (Table row — surface-inset + density tokens; non-overlapping globals.css block so can run in parallel with 26-03), or `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.
