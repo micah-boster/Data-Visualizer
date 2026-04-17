@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-17T20:48:53.585Z"
+last_updated: "2026-04-17T20:57:11.043Z"
 progress:
   total_phases: 30
   completed_phases: 27
   total_plans: 61
-  completed_plans: 57
+  completed_plans: 60
 ---
 
 # Project State
@@ -110,6 +110,17 @@ Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phas
 - [Phase 27-02]: Recharts axis label style moves from className to inline style objects — className with Tailwind arbitrary values (text-[11px]) propagates to SVG <text> inconsistently; style={{ fontSize, fill }} is explicit and matches the NumericTick pattern
 - [Phase 27-02]: Matrix numeric cell tier split by row-density: text-body-numeric for heatmap + plain-table (standard h-row), text-label-numeric for bar-ranking (h-5 tight rows). Same-tier cells in the same table preserve digit alignment; cross-view consistency is visual hierarchy, not absolute size
 - [Phase 27-02]: Matrix column headers standardized on .text-label uppercase text-muted-foreground (overline) — replaces previous bare font-medium text-muted-foreground and aligns with the kpi-card label recipe shipped in 26-02
+- [Phase 27-05]: Query response prose canonical tier = text-body (14px / 1.5 line-height) — no new reading-prose tier introduced; revisit in dedicated prose phase only if feedback demands. Honors CONTEXT 'keep the scale tight' lock
+- [Phase 27-05]: Sidebar pill counts migrated from text-[10px] tabular-nums to .text-label-numeric (12px / mono / tabular / tracked). Removes no-canonical arbitrary-size outlier and aligns with matrix bar-ranking recipe (27-02). Size bump from ~10px to 12px accepted per plan
+- [Phase 27-05]: Breadcrumb active segment = text-title (not text-heading). Breadcrumbs are nav chrome, not section anchors; text-heading (18px) would over-weight. text-title (0.9375rem weight 500) reads 'you are here' without anchoring
+- [Phase 27-05]: Empty state promoted from muted fine-print (text-sm font-medium + text-xs) to text-heading + text-body. Prior treatment undersold the state; promoting to heading tier makes 'No data matches your filters' read as a proper destination
+- [Phase 27-05]: data-display.tsx schema-warning standalone font-medium resolved via text-title promotion per TYPE-MIGRATION.md §4 'promote to text-title if it anchors its row'. Row-anchor tier inside AlertDescription keeps inline emphasis via semantic token
+- [Phase 27-05]: Anomaly-summary-panel + toolbar-trigger partner-name inline emphasis = .text-label (mixed-case). Applies 27-01 pilot resolution #3 — label tier bakes 500 weight + 0.04em tracking, reads as emphasis without reintroducing font-medium. Anomaly title = text-title (not text-heading) — lives inside colored alert row chrome, not a section anchor
+- [Phase 27-04]: SectionHeader NOT adopted for popover/sheet titles — override PopoverTitle/SheetTitle className with text-heading instead. Primitives own the slot semantics (data-slot='popover-title' / 'sheet-title' ARIA wiring); wrapping them in SectionHeader would detach ARIA from the primitive.
+- [Phase 27-04]: Filter chips resolved to text-caption (inline-meta tier), not text-label (categorical pill). Chips display values ('Partner: Acme Corp'), not category names. Label/overline reserved for cases where the text IS the category enum.
+- [Phase 27-04]: Combobox data-[selected]:font-medium replaced with data-[selected]:bg-accent/40. Tokens-own-weight rule forbids paired font-medium; bg tint preserves visual selected state and composes with data-[highlighted]:bg-accent.
+- [Phase 27-04]: Count-pill recipe standardized on text-label-numeric (filter count, sort count). Replaces text-[10px] font-medium — gains JetBrains Mono + tabular-nums + lining-nums at 12px for multi-digit legibility.
+- [Phase 27-03]: Pitfall-4 scoped state-color migration — when a typography sweep touches a file with a pending state-color todo (trend-indicator emerald/red → text-success-fg/text-error-fg), fold it in during the same pass. Other files touched in the plan keep existing state colors to preserve scope discipline
 
 ### Pending Todos
 
