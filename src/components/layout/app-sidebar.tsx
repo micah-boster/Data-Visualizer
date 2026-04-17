@@ -37,11 +37,11 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <span className="text-sm font-bold">B</span>
+                <span className="text-title">B</span>
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Bounce</span>
-                <span className="truncate text-xs text-muted-foreground">
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate text-title">Bounce</span>
+                <span className="truncate text-caption text-muted-foreground">
                   Data Analytics
                 </span>
               </div>
@@ -56,7 +56,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>
             Partners
             {isReady && partners.length > 0 && (
-              <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">
+              <span className="ml-auto text-label-numeric text-muted-foreground">
                 {partners.length}
               </span>
             )}
@@ -116,7 +116,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>
             Views
             {views.length > 0 && (
-              <span className="ml-auto text-[10px] tabular-nums text-muted-foreground">
+              <span className="ml-auto text-label-numeric text-muted-foreground">
                 {views.length}
               </span>
             )}
@@ -135,7 +135,7 @@ export function AppSidebar() {
 
               {isReady && views.length === 0 && (
                 <SidebarMenuItem>
-                  <SidebarMenuButton disabled className="text-xs text-muted-foreground">
+                  <SidebarMenuButton disabled className="text-caption text-muted-foreground">
                     <Bookmark className="h-4 w-4" />
                     <span>No saved views</span>
                   </SidebarMenuButton>
@@ -177,7 +177,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="sm" className="text-xs text-muted-foreground">
+            <SidebarMenuButton size="sm" className="text-caption text-muted-foreground">
               <span>v1.0</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

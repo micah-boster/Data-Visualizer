@@ -138,7 +138,7 @@ export function QuerySearchBar({
             onBlur={() => setIsFocused(false)}
             onKeyDown={handleKeyDown}
             placeholder="Ask a question about your data..."
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent text-body outline-none placeholder:text-muted-foreground"
             disabled={isActive}
           />
         </div>

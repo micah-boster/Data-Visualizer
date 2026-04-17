@@ -27,7 +27,7 @@ export function QuerySuggestedPrompts({
             e.preventDefault(); // Prevent input blur
             onSelectPrompt(prompt);
           }}
-          className="shrink-0 cursor-pointer whitespace-nowrap rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          className="text-caption shrink-0 cursor-pointer whitespace-nowrap rounded-full bg-muted px-3 py-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
         >
           {prompt}
         </button>

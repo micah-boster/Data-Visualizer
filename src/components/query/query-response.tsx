@@ -63,7 +63,7 @@ export function QueryResponse({
         <div className="flex items-start gap-3">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <div className="flex-1 space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-body text-muted-foreground">
               {isTimeout
                 ? 'Query timed out. Please try a simpler question or retry.'
                 : 'Something went wrong. Please try again.'}
@@ -92,7 +92,7 @@ export function QueryResponse({
   // Streaming or ready state
   return (
     <div className="mt-2 max-h-[200px] overflow-y-auto rounded-lg border bg-card p-4">
-      <p className="text-sm leading-relaxed text-foreground">
+      <p className="text-body text-foreground">
         {text}
         {status === 'streaming' && (
           <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-foreground/60" />
@@ -100,7 +100,7 @@ export function QueryResponse({
       </p>
       {status === 'streaming' && (
         <div className="mt-2 flex justify-end">
-          <Button variant="ghost" size="sm" onClick={onStop} className="gap-1.5 text-xs">
+          <Button variant="ghost" size="sm" onClick={onStop} className="gap-1.5">
             <Square className="h-3 w-3" />
             Stop
           </Button>

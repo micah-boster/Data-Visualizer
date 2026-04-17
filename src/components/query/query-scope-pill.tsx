@@ -27,7 +27,7 @@ export function QueryScopePill({ drillState, onRemoveScope }: QueryScopePillProp
   if (!label) return null;
 
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+    <span className="text-label inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 uppercase text-muted-foreground">
       {label}
       <button
         type="button"

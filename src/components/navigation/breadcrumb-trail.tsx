@@ -56,7 +56,7 @@ export function BreadcrumbTrail({
   return (
     <nav
       aria-label="Drill-down breadcrumb"
-      className="flex items-center gap-1 px-2 py-1.5 text-sm"
+      className="flex items-center gap-1 px-2 py-1.5"
     >
       {segments.map((seg, i) => (
         <span key={seg.level} className="flex items-center gap-1">
@@ -64,14 +64,14 @@ export function BreadcrumbTrail({
             <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
           )}
           {seg.active ? (
-            <span className="font-medium text-foreground">
+            <span className="text-title text-foreground">
               {seg.label}
               {seg.count != null ? ` (${seg.count.toLocaleString()})` : ''}
             </span>
           ) : (
             <button
               onClick={() => onNavigate(seg.level)}
-              className="text-muted-foreground hover:text-foreground hover:underline"
+              className="text-body text-muted-foreground hover:text-foreground hover:underline"
             >
               {seg.label}
               {seg.count != null ? ` (${seg.count.toLocaleString()})` : ''}
