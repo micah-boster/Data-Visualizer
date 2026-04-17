@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-17T18:11:17.619Z"
+last_updated: "2026-04-17T20:48:53.585Z"
 progress:
-  total_phases: 28
+  total_phases: 30
   completed_phases: 27
-  total_plans: 55
-  completed_plans: 55
+  total_plans: 61
+  completed_plans: 57
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 27 (Typography & Hierarchy — IN PROGRESS, 1/6 plans shipped)
-Plan: 27-01 SHIPPED (foundation + pilot). Next up: 27-02..27-05 sweep plans (can run in parallel in Wave 2) + 27-06 enforcement.
-Status: 27-01 SHIPPED — docs/TYPE-MIGRATION.md canonical migration table published (all 10 sections, pilot-resolved ambiguous cases, text-metric audit = NO), src/components/layout/section-header.tsx (DS-10) ships with locked prop contract { title, eyebrow?, description?, actions?, className? } and is server-renderable. anomaly-detail.tsx pilot migrated end-to-end: 6 text-xs + 1 text-sm font-semibold + 4 font-medium hits resolved via migration table (text-sm font-semibold → text-title; text-xs → text-caption; text-xs font-medium → text-label; inline font-medium spans dropped). SectionHeader adopted at one real call site (entity-name anchor, promoted to text-heading). AGENTS.md flags the Phase 27 type-token rule + allowlist (ui/**, app/tokens/**, components/tokens/**). Build + typecheck pass. Task 3 human-verify checkpoint auto-approved under workflow.auto_advance=true.
-Last activity: 2026-04-17 — Shipped 27-01 Tasks 1-2 (12dc748 migration table + SectionHeader + pilot migration; 5bb1683 SectionHeader adoption in pilot); checkpoint auto-approved.
+Phase: 27 (Typography & Hierarchy — IN PROGRESS, Wave 2 sweep plans running in parallel)
+Plan: 27-02 SHIPPED (chart + KPI + cross-partner matrix sweep, 12 files + NumericTick helper). Parallel Wave 2: 27-03, 27-04, 27-05. Then 27-06 enforcement.
+Status: 27-02 SHIPPED — 12 chart/KPI/cross-partner surfaces migrated to type tokens (collection-curve-chart, curve-tooltip, curve-legend, trajectory-chart, trajectory-tooltip, trajectory-legend, comparison-matrix, matrix-heatmap, matrix-plain-table, matrix-bar-ranking, ui/chart.tsx tooltip value, kpi-summary-cards). Shared NumericTick helper (src/components/charts/numeric-tick.tsx) shipped — canonical Recharts custom-tick with inline SVG style (JetBrains Mono + tabular-nums lining-nums); Recharts className on XAxis/YAxis doesn't propagate to SVG <text>, so tick={<NumericTick />} is the pattern. Build + typecheck pass. Checkpoint auto-approved under workflow.auto_advance=true.
+Last activity: 2026-04-17 — Shipped 27-02 (7fdd266 chart surfaces + NumericTick; da683e2 KPI summary + cross-partner matrix); checkpoint auto-approved.
 
 Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phase 32 shipped; 10 remaining phases + remaining plans)
 
@@ -106,6 +106,10 @@ Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phas
 - [Phase 27-01]: Inline numeric values inside caption-tier prose lines NOT upgraded to .text-body-numeric — mixing 0.75rem caption with 0.875rem body-numeric on same line creates a visible size bump. Numeric variants reserved for pure-numeric cells (table body, KPI value, chart tick). Deferred: future pass can re-layout popovers in numeric-aware grids.
 - [Phase 27-01]: SectionHeader is server-renderable (no 'use client', no hooks, no handlers) — keeps it usable in RSC contexts for all future adopters.
 - [Phase 27-01]: SectionHeader eyebrow prop is NEUTRAL meta text only — when a badge color must remain on the text (e.g. severity badges via SEVERITY_COLORS), keep the badge as a sibling inline element, not an eyebrow. Pilot adoption: entity name → SectionHeader title, severity badge + flag count → inline spans above.
+- [Phase 27-02]: NumericTick (src/components/charts/numeric-tick.tsx) is the canonical Recharts custom-tick for this codebase — optional-typed x/y/payload + null guard pattern is the shape for any future custom tick (Recharts injects positional props at runtime; strict-typed-required fails the JSX <Component /> type check)
+- [Phase 27-02]: Recharts axis label style moves from className to inline style objects — className with Tailwind arbitrary values (text-[11px]) propagates to SVG <text> inconsistently; style={{ fontSize, fill }} is explicit and matches the NumericTick pattern
+- [Phase 27-02]: Matrix numeric cell tier split by row-density: text-body-numeric for heatmap + plain-table (standard h-row), text-label-numeric for bar-ranking (h-5 tight rows). Same-tier cells in the same table preserve digit alignment; cross-view consistency is visual hierarchy, not absolute size
+- [Phase 27-02]: Matrix column headers standardized on .text-label uppercase text-muted-foreground (overline) — replaces previous bare font-medium text-muted-foreground and aligns with the kpi-card label recipe shipped in 26-02
 
 ### Pending Todos
 
