@@ -97,7 +97,7 @@
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
 | 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
-| 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
+| 28. Surfaces & Elevation | v4.0 | 0/8 | Planned | - |
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
@@ -166,4 +166,31 @@ Plans:
 - [ ] 27-06-PLAN.md — Enforcement: grep-in-CI guard + /tokens page SectionHeader + numeric-variant demos
 
 ---
-*Last updated: 2026-04-17 — Phase 27 detail synced from v4.0-ROADMAP.md*
+
+### Phase 28: Surfaces & Elevation
+
+**Goal**: Apply the surface and shadow system to every container in the app — cards float, tables recede, popovers lift, the header has presence
+**Depends on**: Phase 26 (tokens defined). Can run in parallel with Phase 27.
+**Effort**: Medium (~15-20 components, shadcn overrides are the tricky part)
+**Requirements**: DS-11 through DS-17
+**Success Criteria** (what must be TRUE):
+  1. Header uses subtle bottom shadow (not just border-b) creating a float effect
+  2. KPI cards use surface-raised (border + soft shadow) — they pop off the background
+  3. Table area uses surface-inset — slightly recessed, data is the focus
+  4. Chart containers use surface-raised with consistent padding and corner radius
+  5. Popovers and dropdowns use surface-overlay with multi-layer shadows
+  6. Sidebar has subtle depth separation from main content (right edge treatment)
+  7. All surface treatments are consistent — no more 3 different card styles
+**Plans**: 8 plans
+Plans:
+- [ ] 28-01-PLAN.md — Foundation: 4 semantic elevation tokens + surface-translucent + /tokens demo section
+- [ ] 28-02-PLAN.md — Pilot: Header translucent + backdrop-blur + elevation-chrome + sticky
+- [ ] 28-03-PLAN.md — Pilot: KPI cards + skeleton + empty-state retune to elevation-raised
+- [ ] 28-04-PLAN.md — Pilot: Table inset cleanup — drop outer frame, sticky column header lift, remove zebra
+- [ ] 28-05-PLAN.md — Sweep: Chart container raised shells + query cards + anomaly panel
+- [ ] 28-06-PLAN.md — Sweep: Popover/Sheet/Dialog/Combobox/Recharts overlay family
+- [ ] 28-07-PLAN.md — Sweep: Sidebar (base) + content (raised) three-surface reconciliation
+- [ ] 28-08-PLAN.md — Enforcement: scripts/check-surfaces.sh POSIX grep guard + DS-17 cleanup
+
+---
+*Last updated: 2026-04-17 — Phase 28 planned: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
