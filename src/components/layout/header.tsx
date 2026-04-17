@@ -29,14 +29,14 @@ export function Header() {
   }, [fetchedAt]);
 
   return (
-    <header className="flex h-10 shrink-0 items-center gap-2 border-b border-border/50 bg-background/80 backdrop-blur-sm px-4">
+    <header className="flex h-10 shrink-0 items-center gap-inline bg-surface-raised shadow-xs px-page-gutter">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 !h-4" />
       <div className="flex flex-1 items-center justify-end">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-stack">
           {/* Data freshness indicator */}
           {fetchedAt && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
               {isFetching ? (
                 <>
                   <Loader2 className="h-3 w-3 animate-spin" />
