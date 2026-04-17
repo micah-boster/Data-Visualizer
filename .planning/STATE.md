@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-17T20:57:11.043Z"
+last_updated: "2026-04-17T20:57:27.392Z"
 progress:
   total_phases: 30
   completed_phases: 27
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 Phase: 27 (Typography & Hierarchy — IN PROGRESS, Wave 2 sweep plans running in parallel)
 Plan: 27-02 SHIPPED (chart + KPI + cross-partner matrix sweep, 12 files + NumericTick helper). Parallel Wave 2: 27-03, 27-04, 27-05. Then 27-06 enforcement.
 Status: 27-02 SHIPPED — 12 chart/KPI/cross-partner surfaces migrated to type tokens (collection-curve-chart, curve-tooltip, curve-legend, trajectory-chart, trajectory-tooltip, trajectory-legend, comparison-matrix, matrix-heatmap, matrix-plain-table, matrix-bar-ranking, ui/chart.tsx tooltip value, kpi-summary-cards). Shared NumericTick helper (src/components/charts/numeric-tick.tsx) shipped — canonical Recharts custom-tick with inline SVG style (JetBrains Mono + tabular-nums lining-nums); Recharts className on XAxis/YAxis doesn't propagate to SVG <text>, so tick={<NumericTick />} is the pattern. Build + typecheck pass. Checkpoint auto-approved under workflow.auto_advance=true.
-Last activity: 2026-04-17 — Shipped 27-02 (7fdd266 chart surfaces + NumericTick; da683e2 KPI summary + cross-partner matrix); checkpoint auto-approved.
+Last activity: 2026-04-17 — Shipped 27-02 (7fdd266 chart surfaces + NumericTick; da683e2 KPI summary + cross-partner matrix); Wave 2 parallel plans also landed this session: 27-03 (55d19e5 remaining-tables), 27-04 (82c9a16 toolbar), 27-05 (ebc8f69 sidebar+breadcrumb+query, 7b413fd anomaly+empty/error/loading+data-display, 13 files total). Checkpoints auto-approved under workflow.auto_advance=true. 27-06 enforcement unblocked.
 
 Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phase 32 shipped; 10 remaining phases + remaining plans)
 
@@ -121,6 +121,10 @@ Progress: [███████░░░] 44% (v4.0: Phase 25 + Phase 26 + Phas
 - [Phase 27-04]: Combobox data-[selected]:font-medium replaced with data-[selected]:bg-accent/40. Tokens-own-weight rule forbids paired font-medium; bg tint preserves visual selected state and composes with data-[highlighted]:bg-accent.
 - [Phase 27-04]: Count-pill recipe standardized on text-label-numeric (filter count, sort count). Replaces text-[10px] font-medium — gains JetBrains Mono + tabular-nums + lining-nums at 12px for multi-digit legibility.
 - [Phase 27-03]: Pitfall-4 scoped state-color migration — when a typography sweep touches a file with a pending state-color todo (trend-indicator emerald/red → text-success-fg/text-error-fg), fold it in during the same pass. Other files touched in the plan keep existing state colors to preserve scope discipline
+- [Phase 27-03]: Tight-pill numeric badge recipe: .text-label-numeric (not .text-body-numeric) for h-4/h-5 circular badges containing digits — preserves 0.75rem pill height while gaining mono + tabular-nums + lining-nums. Unifies sort-dialog trigger/draft pills, sort-indicator pill, percentile-cell pill
+- [Phase 27-03]: Table-footer aggregate ternary: isNumeric ? text-label-numeric : text-caption — single-class replacement for the text-xs + font-mono + tabular-nums triple. text-muted-foreground travels on the wrapper td className so both branches inherit
+- [Phase 27-03]: Trend arrow span uses text-caption font-medium (NOT a numeric variant) — arrow glyph ↑/↓/— is a unicode character, not a digit. Numeric variants reserved for digit-bearing spans per docs/TYPE-MIGRATION.md §7. Exception for font-medium pairing granted because arrow is glyph-only and weight carries trend-direction semantic
+- [Phase 27-03]: Filter popover type rhythm: field inputs + value-list rows = text-body; field labels above inputs = text-body; tight action buttons (Apply/Clear/Select All) = text-caption; helper/truncation text = text-caption. Reusable across future filter popovers
 
 ### Pending Todos
 
