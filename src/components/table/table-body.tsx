@@ -16,7 +16,10 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 42,
+    // Dense default — matches --table-row-height-dense (32px). Sparse (40px)
+    // would need dynamic estimate wired to the container's data-density attr;
+    // deferred to the density-toggle UI phase (see 26-CONTEXT Deferred Ideas).
+    estimateSize: () => 32,
     overscan: 10,
   });
 
@@ -43,7 +46,7 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
         return (
           <tr
             key={row.id}
-            className={`transition-colors hover:bg-muted/50 ${
+            className={`h-[var(--row-height)] transition-colors duration-quick ease-default hover:bg-hover-bg ${
               isEvenRow ? 'bg-muted/30' : ''
             }`}
           >
@@ -59,7 +62,7 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
                     width: cell.column.getSize(),
                     minWidth: cell.column.getSize(),
                   }}
-                  className={`overflow-hidden text-ellipsis whitespace-nowrap px-3 py-2 text-sm${isNumeric ? ' text-right tabular-nums' : ''}`}
+                  className={`overflow-hidden text-ellipsis whitespace-nowrap px-[var(--row-padding-x)] py-[var(--row-padding-y)] ${isNumeric ? 'text-body-numeric text-right' : 'text-body'}`}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext()) ?? '\u2014'}
                 </td>

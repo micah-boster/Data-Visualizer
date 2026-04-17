@@ -439,6 +439,27 @@
   html {
     @apply font-sans scroll-smooth;
   }
+
+  /* =========================================================================
+     DENSITY SELECTORS (DS-01, DS-06)
+     Scope: applied on a container (e.g. the table wrapper). Descendants
+     consume the propagated --row-height / --row-padding-* vars via
+     var() in className (e.g. h-[var(--row-height)], py-[var(--row-padding-y)]).
+     Phase 26 ships dense as default; sparse variant is plumbed but not
+     wired to a UI toggle — that ships in a later density-toggle phase.
+     TanStack Virtual's estimateSize (a JS number) is locked to the dense
+     default value; dynamic sparse sizing is a deferred wiring step.
+     ========================================================================= */
+  [data-density="dense"] {
+    --row-height: var(--table-row-height-dense);
+    --row-padding-y: var(--spacing-2);  /* 8px */
+    --row-padding-x: var(--spacing-3);  /* 12px */
+  }
+  [data-density="sparse"] {
+    --row-height: var(--table-row-height-sparse);
+    --row-padding-y: var(--spacing-3);  /* 12px */
+    --row-padding-x: var(--spacing-4);  /* 16px */
+  }
 }
 
 /* =============================================================================
