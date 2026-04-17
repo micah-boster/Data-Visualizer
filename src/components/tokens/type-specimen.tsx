@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { SectionHeader } from '@/components/layout/section-header';
 import { TokenCard } from './token-card';
 
 /**
@@ -146,6 +147,69 @@ export function TypeSpecimen() {
               </p>
             </TokenCard>
           ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-stack">
+        <h2 className="text-heading">SectionHeader (DS-10)</h2>
+        <p className="text-body text-muted-foreground">
+          Shared section anchor with <code className="text-body-numeric">title</code>,
+          optional <code className="text-body-numeric">eyebrow</code>,{' '}
+          <code className="text-body-numeric">description</code>, and{' '}
+          <code className="text-body-numeric">actions</code> slot. Title uses{' '}
+          <code className="text-body-numeric">text-heading</code>; eyebrow uses{' '}
+          <code className="text-body-numeric">.text-label uppercase text-muted-foreground</code>.
+        </p>
+
+        <div className="flex flex-col gap-stack p-card-padding bg-surface-raised rounded-lg">
+          <SectionHeader title="Title only" />
+        </div>
+
+        <div className="flex flex-col gap-stack p-card-padding bg-surface-raised rounded-lg">
+          <SectionHeader
+            eyebrow="Metrics"
+            title="Partner performance"
+            description="Rolling 12-month comparison across partners"
+          />
+        </div>
+
+        <div className="flex flex-col gap-stack p-card-padding bg-surface-raised rounded-lg">
+          <SectionHeader
+            eyebrow="Analysis"
+            title="Collection curves"
+            description="Per-batch projected vs. actual collection trajectory"
+            actions={
+              <>
+                <button type="button" className="text-body text-muted-foreground">
+                  Reset
+                </button>
+                <button type="button" className="text-body text-foreground">
+                  Save
+                </button>
+              </>
+            }
+          />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-stack">
+        <h2 className="text-heading">Numeric variants (in-situ)</h2>
+        <p className="text-body text-muted-foreground">
+          The numeric tiers in real-world cards. Notice the inset block&apos;s
+          three rows — tabular + lining nums keep digits column-aligned across
+          varying widths, which is the point.
+        </p>
+
+        <div className="flex flex-col gap-stack p-card-padding bg-surface-raised rounded-lg">
+          <span className="text-label uppercase text-muted-foreground">Collection rate</span>
+          <span className="text-display-numeric">87.42%</span>
+          <span className="text-label-numeric text-success-fg">+2.34%</span>
+        </div>
+
+        <div className="flex flex-col gap-stack p-card-padding bg-surface-inset rounded-lg">
+          <div className="text-body-numeric">1,234,567.89</div>
+          <div className="text-body-numeric">  987,654.32</div>
+          <div className="text-body-numeric">    4,321.10</div>
         </div>
       </section>
     </div>
