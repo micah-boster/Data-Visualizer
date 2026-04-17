@@ -26,6 +26,9 @@ interface AnomalyDetailProps {
  *
  * Displays: severity header, grouped metrics with actual values,
  * expected ranges, and deviation magnitudes.
+ *
+ * Typography migrated to Phase 27 tokens. See docs/TYPE-MIGRATION.md
+ * for the ad-hoc → token mapping used here.
  */
 export function AnomalyDetail({ anomaly, norms, entityName }: AnomalyDetailProps) {
   // Get flags and groups from either BatchAnomaly or PartnerAnomaly
@@ -38,22 +41,22 @@ export function AnomalyDetail({ anomaly, norms, entityName }: AnomalyDetailProps
     <div className="max-w-xs space-y-3">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <span className={`text-sm font-semibold ${SEVERITY_COLORS[severity]}`}>
+        <span className={`text-title ${SEVERITY_COLORS[severity]}`}>
           {SEVERITY_LABELS[severity]}
         </span>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-caption text-muted-foreground">
           {flags.length} anomalous metric{flags.length !== 1 ? 's' : ''}
         </span>
       </div>
 
-      <p className="text-xs text-muted-foreground">{entityName}</p>
+      <p className="text-caption text-muted-foreground">{entityName}</p>
 
       {/* Grouped metrics */}
       {groups.length > 0 ? (
         <div className="space-y-2">
           {groups.map((group: AnomalyGroup) => (
             <div key={group.groupKey}>
-              <p className="text-xs font-medium text-muted-foreground">{group.label}</p>
+              <p className="text-label text-muted-foreground">{group.label}</p>
               <ul className="mt-1 space-y-1.5">
                 {group.flags.map((flag) => {
                   const config = COLUMN_CONFIGS.find((c) => c.key === flag.metric);
@@ -61,8 +64,8 @@ export function AnomalyDetail({ anomaly, norms, entityName }: AnomalyDetailProps
                   const norm = norms?.[flag.metric];
 
                   return (
-                    <li key={flag.metric} className="text-xs">
-                      <span className="font-medium">{getMetricLabel(flag.metric)}:</span>{' '}
+                    <li key={flag.metric} className="text-caption">
+                      <span>{getMetricLabel(flag.metric)}:</span>{' '}
                       <span>{formatter(flag.value)}</span>
                       {norm && (
                         <span className="text-muted-foreground">
@@ -89,8 +92,8 @@ export function AnomalyDetail({ anomaly, norms, entityName }: AnomalyDetailProps
             const norm = norms?.[flag.metric];
 
             return (
-              <li key={flag.metric} className="text-xs">
-                <span className="font-medium">{getMetricLabel(flag.metric)}:</span>{' '}
+              <li key={flag.metric} className="text-caption">
+                <span>{getMetricLabel(flag.metric)}:</span>{' '}
                 <span>{formatter(flag.value)}</span>
                 {norm && (
                   <span className="text-muted-foreground">
