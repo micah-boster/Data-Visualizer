@@ -29,7 +29,7 @@ export function PercentileCell({ percentile, rank, total }: PercentileCellProps)
 
   return (
     <span
-      className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${colorClass}`}
+      className={`inline-flex items-center rounded px-1.5 py-0.5 text-label-numeric ${colorClass}`}
     >
       P{pValue} ({rank}/{total})
     </span>

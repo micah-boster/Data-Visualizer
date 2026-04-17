@@ -45,9 +45,9 @@ export function TrendIndicator({
   if (trend.direction === 'flat') {
     colorClass = 'text-muted-foreground';
   } else if (isPositive) {
-    colorClass = 'text-emerald-600 dark:text-emerald-400';
+    colorClass = 'text-success-fg';
   } else {
-    colorClass = 'text-red-500 dark:text-red-400';
+    colorClass = 'text-error-fg';
   }
 
   const opacityClass = lowConfidence ? 'opacity-50' : '';
@@ -80,7 +80,7 @@ export function TrendIndicator({
         style={bgStyle}
       >
         {formattedValue}
-        <span className={`text-xs font-medium ${colorClass} ${opacityClass}`}>
+        <span className={`text-caption font-medium ${colorClass} ${opacityClass}`}>
           {arrow}
         </span>
       </TooltipTrigger>
@@ -102,7 +102,7 @@ export function InsufficientTrendIndicator({
     <Tooltip>
       <TooltipTrigger className="inline-flex items-center gap-1">
         {formattedValue}
-        <span className="text-xs text-muted-foreground">{'\u2014'}</span>
+        <span className="text-caption text-muted-foreground">{'\u2014'}</span>
       </TooltipTrigger>
       <TooltipContent>Need 3+ batches for trending</TooltipContent>
     </Tooltip>

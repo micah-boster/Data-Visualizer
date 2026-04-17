@@ -79,7 +79,7 @@ export function TableFooter({ table }: TableFooterProps) {
                 width: column.getSize(),
                 minWidth: column.getSize(),
               }}
-              className={`whitespace-nowrap bg-muted px-3 py-2 text-xs text-muted-foreground${isNumeric ? ' text-right tabular-nums' : ''}`}
+              className={`whitespace-nowrap bg-muted px-3 py-2 text-muted-foreground ${isNumeric ? 'text-label-numeric text-right' : 'text-caption'}`}
             >
               {displayValue}
             </td>
