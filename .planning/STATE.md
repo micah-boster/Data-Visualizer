@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: in_progress
-last_updated: "2026-04-16T22:30:00.000Z"
+last_updated: "2026-04-17T00:00:00.000Z"
 progress:
   total_phases: 28
   completed_phases: 25
   total_plans: 50
-  completed_plans: 49
+  completed_plans: 50
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 32 (URL-Backed Navigation — in progress)
-Plan: 32-02 (awaiting human-verify checkpoint)
-Status: Tasks 1-3 of 32-02 shipped (commits e078f4d, ce0345e, a8ce5b8). Awaiting user approval on Task 4 checkpoint (9 end-to-end scenarios: drill checkbox visibility, save with/without drill, load drilled/non-drilled views, back button, legacy views).
-Last activity: 2026-04-17 — Shipped 32-02 Tasks 1-3: optional drill field in ViewSnapshot/zod schema + 'Include drill state' checkbox in SaveViewPopover + router.push drill URL in handleLoadView + canIncludeDrill threaded data-display→DataTable→UnifiedToolbar→SaveViewPopover. TSC clean, pre-existing lint warnings logged to deferred-items.md.
+Phase: 26 (Design Tokens — in progress) / 32 (URL-Backed Navigation — in progress, parallel track)
+Plan: 26-02 (next — KPI card pilot, Wave 2) / 32-02 still awaiting human-verify on Task 4
+Status: 26-01 SHIPPED — token foundation (spacing/type/shadow/motion/radius/surface/neutral/accent/state/chart) + Inter + JetBrains Mono + shadcn re-map live in globals.css + layout.tsx. User approved light + dark visual verification in own browser (Snowflake auth timeouts blocked headless preview). 32-02 Tasks 1-3 still shipped (e078f4d, ce0345e, a8ce5b8) awaiting Task 4 checkpoint approval.
+Last activity: 2026-04-17 — Shipped 26-01 Tasks 1-2 (4ef2c69 globals.css token system, 151dff7 Inter/JetBrains Mono font swap); Task 3 human-verify checkpoint approved by user. Phase 26 Wave 2 pilots (26-02/03/04) now unblocked.
 
-Progress: [█████░░░░░] 33% (v4.0: Phase 25 shipped, Phase 32-01 shipped; 11 phases + 1 plan remaining)
+Progress: [█████░░░░░] 34% (v4.0: Phase 25 shipped, Phase 32-01 shipped, 26-01 shipped; 11 phases + remaining plans)
 
 ## Shipped Milestones
 
@@ -71,6 +71,12 @@ Progress: [█████░░░░░] 33% (v4.0: Phase 25 shipped, Phase 32
 - [Phase 32-01]: Next.js 16.2.0-16.2.2 useSearchParams stale-params regression did NOT surface — project is on 16.2.3, past the regression window.
 - [Phase 32-01]: `use-filter-state.ts` left untouched — Phase 25 regression guard honored. Verified via git diff 61e239c..0d21652.
 - [Phase 32-01]: Public-API-first rewrite — all 13 existing useDrillDown consumers required zero edits. Pattern: preserve exported types and function shapes when swapping hook internals.
+- [Phase 26-01]: Tailwind v4 namespace-driven naming locked in — `--spacing-*` (not `--space-*`) and `--ease-*` (not `--easing-*`) so utilities auto-emit. Semantic aliases reference numeric primitives. Rationale comment block placed inline in globals.css.
+- [Phase 26-01]: Dark-mode surface-raised (0.22) > surface-base (0.16) > surface-inset (0.12) — intentional inversion of shadcn's raised-is-darker convention per CONTEXT lock. Light mode keeps conventional raised-is-lighter.
+- [Phase 26-01]: shadcn vars re-mapped in place (background/card/popover/primary/border/ring/sidebar/chart-1..8) inside both :root and .dark blocks — zero consumer edits required, preserves the contract with every existing ui/ component.
+- [Phase 26-01]: Font variable retarget via `@theme inline` (`--font-sans: var(--font-inter)`, `--font-mono: var(--font-jetbrains-mono)`) means downstream font-sans/font-mono utilities automatically pick up Inter + JetBrains Mono — future font swaps also need zero consumer edits.
+- [Phase 26-01]: Preview screenshots unavailable in headless runner (Snowflake auth timeouts). User verified in own browser and approved — matches standing preference to verify CSS visually before pushing. No code impact.
+- [Phase 26-01]: `--radius: 0.625rem` kept as legacy alias alongside new `--radius-sm/md/lg` — shadcn primitives reference `var(--radius)`, removing would regress.
 
 ### Pending Todos
 
@@ -85,6 +91,6 @@ Progress: [█████░░░░░] 33% (v4.0: Phase 25 shipped, Phase 32
 
 ## Session Continuity
 
-Last session: 2026-04-16
-Stopped at: Completed 32-01-PLAN.md (NAV-01, NAV-02, NAV-03 closed — URL-backed drill hook + stale-param toast shipped, user approved all 8 human-verify scenarios)
-Resume with: `/gsd:execute-phase 32` to continue with Plan 32-02 (URL persistence follow-up / breadcrumb / saved-view wiring on top of the URL-backed drill foundation)
+Last session: 2026-04-17
+Stopped at: Completed 26-01-PLAN.md (DS-01..DS-06 foundation shipped — globals.css token system + Inter/JetBrains Mono font swap; user approved light + dark visual verification). 32-02 still paused at Task 4 checkpoint (independent parallel track).
+Resume with: `/gsd:execute-phase 26` to continue with Plan 26-02 (KPI card pilot — surface-raised + type tokens + tabular numerics), or `/gsd:execute-phase 32` to resume the parallel URL-navigation track with 32-02 Task 4.

@@ -67,7 +67,7 @@
 
 **Design Foundation (Phases 25-31):**
 - [x] **Phase 25: Code Health & Bug Fixes** — Fix root filter bug, add error boundaries, clean React anti-patterns (completed 2026-04-16)
-- [ ] **Phase 26: Design Tokens** — Spacing, typography, elevation, motion, and surface token system
+- 🚧 **Phase 26: Design Tokens** — Spacing, typography, elevation, motion, and surface token system (1/5 plans — foundation shipped 2026-04-17, Wave 2 pilots next)
 - [ ] **Phase 27: Typography & Information Hierarchy** — Type scale applied across app, tabular figures, consistent labeling
 - [ ] **Phase 28: Surfaces & Elevation** — Every container uses a named surface — cards float, tables recede, popovers lift
 - [ ] **Phase 29: Component Patterns** — StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState
@@ -95,7 +95,7 @@
 | 15-20 | v3.0 | 9/9 | Complete | 2026-04-14 |
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
-| 26. Design Tokens | v4.0 | 0/5 | Planned | - |
+| 26. Design Tokens | v4.0 | 1/5 | In Progress | - |
 | 27. Typography & Hierarchy | v4.0 | 0/TBD | Not started | - |
 | 28. Surfaces & Elevation | v4.0 | 0/TBD | Not started | - |
 | 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
@@ -137,7 +137,7 @@
   5. Surface system (surface-base, surface-raised, surface-inset, surface-overlay, surface-floating) defined with consistent border/shadow/background treatments
   6. All tokens work correctly in both light and dark mode
 **Plans**: 5 plans
-- [ ] 26-01-PLAN.md — Token infrastructure in globals.css (all categories) + font swap Geist→Inter/JetBrains Mono + shadcn re-map
+- [x] 26-01-PLAN.md — Token infrastructure in globals.css (all categories) + font swap Geist→Inter/JetBrains Mono + shadcn re-map (shipped 2026-04-17)
 - [ ] 26-02-PLAN.md — Pilot: migrate KPI card to surface-raised + type tokens + tabular numerics
 - [ ] 26-03-PLAN.md — Pilot: migrate Header to surface-raised + shadow-xs + type tokens
 - [ ] 26-04-PLAN.md — Pilot: migrate Table row to surface-inset + density tokens (dense/sparse variants)
