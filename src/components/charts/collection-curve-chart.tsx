@@ -22,6 +22,7 @@ import {
 import { useCurveChartState } from "@/components/charts/use-curve-chart-state";
 import { CurveTooltip, CHART_COLORS } from "@/components/charts/curve-tooltip";
 import { CurveLegend } from "@/components/charts/curve-legend";
+import { NumericTick } from "@/components/charts/numeric-tick";
 import { Button } from "@/components/ui/button";
 import { BarChart3 } from "lucide-react";
 
@@ -174,7 +175,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
     return (
       <div className="flex h-[40vh] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
         <BarChart3 className="h-10 w-10 opacity-30" />
-        <p className="text-sm">No collection curve data available</p>
+        <p className="text-body">No collection curve data available</p>
       </div>
     );
   }
@@ -191,14 +192,14 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
           chart data, Y-axis formatting, and tooltip values reactively via
           the `metric` state in useCurveChartState. */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground">
+        <h3 className="text-title text-muted-foreground">
           Collection Curves
         </h3>
         <div className="flex gap-1">
           <Button
             variant={metric === "recoveryRate" ? "default" : "outline"}
             size="sm"
-            className="h-7 text-xs"
+            className="h-7"
             onClick={metric === "recoveryRate" ? undefined : toggleMetric}
           >
             Recovery Rate %
@@ -206,7 +207,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
           <Button
             variant={metric === "amount" ? "default" : "outline"}
             size="sm"
-            className="h-7 text-xs"
+            className="h-7"
             onClick={metric === "amount" ? undefined : toggleMetric}
           >
             Dollars Collected
@@ -230,7 +231,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
                 ticks={collectionMonthsTicks}
                 domain={[1, maxAge]}
                 tickFormatter={(m: number) => `${m}`}
-                className="text-[10px]"
+                tick={<NumericTick />}
               />
               <YAxis
                 tickFormatter={
@@ -242,7 +243,8 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
                           : `$${v}`
                 }
                 width={55}
-                label={{ value: metric === "recoveryRate" ? "Recovery Rate %" : "Dollars Collected", angle: -90, position: "insideLeft", offset: 5, className: "fill-muted-foreground text-[11px]" }}
+                tick={<NumericTick anchor="end" dy={4} />}
+                label={{ value: metric === "recoveryRate" ? "Recovery Rate %" : "Dollars Collected", angle: -90, position: "insideLeft", offset: 5, style: { fontSize: 11, fill: 'var(--muted-foreground)' } }}
               />
               <Tooltip
                 content={(props) => (
@@ -298,7 +300,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
               )}
             </LineChart>
           </ChartContainer>
-          <p className="text-center text-[11px] text-muted-foreground -mt-1">Months Since Placement</p>
+          <p className="text-center text-caption text-muted-foreground -mt-1">Months Since Placement</p>
         </div>
 
         {/* Right-side legend */}

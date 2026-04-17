@@ -37,7 +37,7 @@ export function TrajectoryTooltip({
 
   return (
     <div className="rounded-lg border bg-background/95 px-3 py-2 shadow-md backdrop-blur-sm">
-      <p className="mb-1 text-xs font-medium text-muted-foreground">
+      <p className="mb-1 text-label text-muted-foreground">
         Month {label}
       </p>
       <div className="space-y-0.5">
@@ -54,8 +54,8 @@ export function TrajectoryTooltip({
           return (
             <div
               key={entry.dataKey}
-              className={`flex items-center justify-between gap-4 text-xs ${
-                isHovered ? 'font-semibold' : isRef ? 'text-muted-foreground' : ''
+              className={`flex items-center justify-between gap-4 ${
+                isHovered ? 'text-title' : isRef ? 'text-caption text-muted-foreground' : 'text-caption'
               }`}
             >
               <div className="flex items-center gap-1.5">
@@ -65,7 +65,7 @@ export function TrajectoryTooltip({
                 />
                 <span className="truncate max-w-[140px]">{name}</span>
               </div>
-              <span className="tabular-nums">
+              <span className="text-label-numeric">
                 {entry.value !== undefined ? `${entry.value.toFixed(1)}%` : '—'}
               </span>
             </div>

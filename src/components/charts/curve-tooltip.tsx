@@ -81,13 +81,13 @@ export function CurveTooltip({
     : null;
 
   return (
-    <div className="rounded-lg border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md">
-      <p className="font-medium">{displayName}</p>
-      <p className="text-muted-foreground">
+    <div className="rounded-lg border bg-popover px-3 py-2 text-body text-popover-foreground shadow-md">
+      <p className="text-title">{displayName}</p>
+      <p className="text-body-numeric text-muted-foreground">
         {formatValue(entry.value, metric)} at Month {label}
       </p>
       {anomaly && anomaly.flags.length > 0 && (
-        <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
+        <p className="mt-1 flex items-center gap-1 text-caption text-red-500">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
           {getMetricLabel(anomaly.flags[0].metric)}{" "}
           {formatDeviation(anomaly.flags[0].zScore, anomaly.flags[0].direction)}

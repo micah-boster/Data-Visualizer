@@ -14,6 +14,7 @@ import type { ChartConfig } from '@/components/ui/chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CHART_COLORS } from '@/components/charts/curve-tooltip';
+import { NumericTick } from '@/components/charts/numeric-tick';
 import { COLLECTION_MONTHS } from '@/lib/computation/reshape-curves';
 import { useCrossPartnerContext } from '@/contexts/cross-partner-provider';
 import type { CrossPartnerEntry, CurvePoint } from '@/types/partner-stats';
@@ -123,14 +124,14 @@ export function CrossPartnerTrajectoryChart() {
   return (
     <Card className="shrink-0">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-title text-muted-foreground">
           Collection Trajectories
         </CardTitle>
         <div className="flex gap-1">
           <Button
             variant={curveMode === 'dollarWeighted' ? 'default' : 'outline'}
             size="sm"
-            className="h-7 text-xs"
+            className="h-7"
             onClick={curveMode === 'dollarWeighted' ? undefined : () => setCurveMode('dollarWeighted')}
           >
             $ Weighted
@@ -138,7 +139,7 @@ export function CrossPartnerTrajectoryChart() {
           <Button
             variant={curveMode === 'equalWeight' ? 'default' : 'outline'}
             size="sm"
-            className="h-7 text-xs"
+            className="h-7"
             onClick={curveMode === 'equalWeight' ? undefined : () => setCurveMode('equalWeight')}
           >
             Equal Weight
@@ -158,17 +159,18 @@ export function CrossPartnerTrajectoryChart() {
               ticks={[...COLLECTION_MONTHS]}
               domain={[1, 'dataMax']}
               tickFormatter={(m: number) => `${m}`}
-              className="text-[10px]"
+              tick={<NumericTick />}
             />
             <YAxis
               tickFormatter={(v: number) => `${v}%`}
               width={45}
+              tick={<NumericTick anchor="end" dy={4} />}
               label={{
                 value: 'Recovery Rate %',
                 angle: -90,
                 position: 'insideLeft',
                 offset: 5,
-                className: 'fill-muted-foreground text-[11px]',
+                style: { fontSize: 11, fill: 'var(--muted-foreground)' },
               }}
             />
             <Tooltip
@@ -230,7 +232,7 @@ export function CrossPartnerTrajectoryChart() {
             )}
           </LineChart>
         </ChartContainer>
-        <p className="text-center text-[11px] text-muted-foreground -mt-1">
+        <p className="text-center text-caption text-muted-foreground -mt-1">
           Months Since Placement
         </p>
         <TrajectoryLegend
