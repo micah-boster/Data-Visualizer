@@ -47,11 +47,11 @@ export function Header() {
                   <span
                     className={`inline-block h-1.5 w-1.5 rounded-full ${
                       stale
-                        ? 'bg-amber-500 animate-pulse'
-                        : 'bg-emerald-500'
+                        ? 'bg-warning-fg animate-pulse'
+                        : 'bg-success-fg'
                     }`}
                   />
-                  <span className={stale ? 'text-amber-600 dark:text-amber-400' : ''}>
+                  <span className={stale ? 'text-warning-fg' : ''}>
                     {formatTime(fetchedAt)}
                   </span>
                 </>
