@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 32 (URL-Backed Navigation — in progress)
-Plan: 32-02 (current; 32-01 complete this session)
-Status: Ready to execute 32-02 (URL persistence for filters / saved-view wiring on top of URL-backed drill foundation)
-Last activity: 2026-04-16 — Completed Plan 32-01 (NAV-01, NAV-02, NAV-03 closed: URL-backed useDrillDown via next/navigation + stale-param toast; 2 atomic commits 0e4650a + 0d21652; all 8 human-verify scenarios approved on Next 16.2.3)
+Plan: 32-02 (awaiting human-verify checkpoint)
+Status: Tasks 1-3 of 32-02 shipped (commits e078f4d, ce0345e, a8ce5b8). Awaiting user approval on Task 4 checkpoint (9 end-to-end scenarios: drill checkbox visibility, save with/without drill, load drilled/non-drilled views, back button, legacy views).
+Last activity: 2026-04-17 — Shipped 32-02 Tasks 1-3: optional drill field in ViewSnapshot/zod schema + 'Include drill state' checkbox in SaveViewPopover + router.push drill URL in handleLoadView + canIncludeDrill threaded data-display→DataTable→UnifiedToolbar→SaveViewPopover. TSC clean, pre-existing lint warnings logged to deferred-items.md.
 
 Progress: [█████░░░░░] 33% (v4.0: Phase 25 shipped, Phase 32-01 shipped; 11 phases + 1 plan remaining)
 
