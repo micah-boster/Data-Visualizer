@@ -52,6 +52,13 @@ export interface ViewSnapshot {
     partner?: string;
     batch?: string;
   };
+  /**
+   * Phase 34 — optional partner-list reference. Additive field; pre-Phase-34
+   * saved views load with listId: undefined. Sanitized on load by
+   * useSavedViews: if the referenced list no longer exists, the field is
+   * stripped (non-destructive; view still loads with no list activation).
+   */
+  listId?: string | null;
 }
 
 /** A named, persisted view configuration. */

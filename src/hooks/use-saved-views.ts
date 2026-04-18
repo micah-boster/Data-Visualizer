@@ -20,8 +20,18 @@ const KNOWN_COLUMNS = new Set(COLUMN_CONFIGS.map((c) => c.key));
 /**
  * Strip unknown column keys from a view snapshot.
  * Handles schema evolution when columns are added or removed.
+ *
+ * Phase 34: also non-destructively strips snapshot.listId when the referenced
+ * partner list is unknown. A saved view whose list was deleted still loads
+ * cleanly — it just does not activate any list on load. Callers that don't
+ * need list-awareness can pass an empty set (conservative default — strips
+ * all listIds), but the default caller passes the real known-list-ids from
+ * usePartnerLists.
  */
-function sanitizeSnapshot(snapshot: ViewSnapshot): ViewSnapshot {
+function sanitizeSnapshot(
+  snapshot: ViewSnapshot,
+  knownListIds: Set<string>,
+): ViewSnapshot {
   return {
     ...snapshot,
     sorting: (snapshot.sorting ?? []).filter((s) => KNOWN_COLUMNS.has(s.id)),
@@ -41,20 +51,29 @@ function sanitizeSnapshot(snapshot: ViewSnapshot): ViewSnapshot {
         KNOWN_COLUMNS.has(k),
       ),
     ),
+    // Phase 34 — strip unknown listId. Preserves loading behavior for views
+    // that reference deleted lists (no crash, no toast, no list activation).
+    listId:
+      snapshot.listId && knownListIds.has(snapshot.listId)
+        ? snapshot.listId
+        : undefined,
   };
 }
 
 /**
- * Sanitize all views in a list, stripping unknown column keys.
+ * Sanitize all views in a list, stripping unknown column keys and unknown listIds.
  */
-function sanitizeViews(views: SavedView[]): SavedView[] {
+function sanitizeViews(
+  views: SavedView[],
+  knownListIds: Set<string>,
+): SavedView[] {
   return views.map((v) => ({
     ...v,
-    snapshot: sanitizeSnapshot(v.snapshot),
+    snapshot: sanitizeSnapshot(v.snapshot, knownListIds),
   }));
 }
 
-export function useSavedViews() {
+export function useSavedViews(knownListIds?: Set<string>) {
   // Initialize empty for SSR/hydration safety
   const [views, setViews] = useState<SavedView[]>([]);
   const hasHydrated = useRef(false);
@@ -63,14 +82,18 @@ export function useSavedViews() {
   // localStorage values in useEffect to avoid Next.js hydration mismatch.
   // Do NOT convert to derived state — reading localStorage during render
   // breaks SSR. (KI-13 deferred: see Phase 25 Plan D.)
+  //
+  // Phase 34: re-runs when knownListIds changes (e.g. a partner list is
+  // created/deleted), so stale listIds get sanitized without a page reload.
   useEffect(() => {
     let loaded = loadSavedViews();
     if (loaded.length === 0) {
       loaded = getDefaultViews();
     }
-    setViews(sanitizeViews(loaded));
+    const ids = knownListIds ?? new Set<string>();
+    setViews(sanitizeViews(loaded, ids));
     hasHydrated.current = true;
-  }, []);
+  }, [knownListIds]);
 
   // Persist to localStorage after hydration on every change
   useEffect(() => {

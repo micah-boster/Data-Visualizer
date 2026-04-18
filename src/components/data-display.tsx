@@ -28,6 +28,7 @@ import { UnifiedToolbar } from '@/components/toolbar/unified-toolbar';
 import { QueryCommandDialog } from '@/components/query/query-command-dialog';
 import { useAnomalyContext } from '@/contexts/anomaly-provider';
 import { useActivePartnerList } from '@/contexts/active-partner-list';
+import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { useSavedViews } from '@/hooks/use-saved-views';
 import { useFilterState } from '@/hooks/use-filter-state';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
@@ -144,6 +145,16 @@ export function DataDisplay() {
   // Query dialog state
   const [queryOpen, setQueryOpen] = useState(false);
 
+  // Phase 34-04: known partner-list ids feed useSavedViews so sanitizeSnapshot
+  // can strip stale snapshot.listId values (non-destructive — views still
+  // load, they just don't activate a list that no longer exists). Re-memoed
+  // whenever the lists collection changes.
+  const { lists: partnerLists } = usePartnerListsContext();
+  const knownListIds = useMemo(
+    () => new Set(partnerLists.map((l) => l.id)),
+    [partnerLists],
+  );
+
   // Lifted state: saved views
   const {
     views,
@@ -153,7 +164,7 @@ export function DataDisplay() {
     hasViewWithName,
     replaceView,
     restoreDefaults,
-  } = useSavedViews();
+  } = useSavedViews(knownListIds);
 
   // Lifted state: dimension filters (URL-backed)
   const {
@@ -167,7 +178,10 @@ export function DataDisplay() {
   // Active partner list (Phase 34 — LIST-03). Flows through the same
   // filteredRawData memo as dimension filters so KPIs, charts, and table
   // share ONE filter pipeline (Pitfall 2 lock).
-  const { activeList } = useActivePartnerList();
+  // Phase 34-04: setActiveListId is pulled here too so handleLoadView can
+  // activate a view's referenced list (already sanitized — guaranteed known
+  // or undefined).
+  const { activeList, setActiveListId } = useActivePartnerList();
 
   // HEALTH-01 / KI-07 fix: apply dimension filters to raw batch rows BEFORE
   // aggregation so root-level table, chart, KPIs, and downstream consumers
@@ -372,13 +386,23 @@ export function DataDisplay() {
         chartLoadRef.current(snapshot.chartState);
       }
 
+      // Phase 34-04: apply partner-list activation when the view carries a
+      // valid listId. Sanitization in useSavedViews has already guaranteed the
+      // id is either a known list or undefined — no runtime validation needed
+      // here. When listId is undefined we DO NOT clear the currently-active
+      // list (CONTEXT lock: "loading a view without a list reference does
+      // not clear the active list").
+      if (snapshot.listId) {
+        setActiveListId(snapshot.listId);
+      }
+
       // The rest (sorting, visibility, order, column filters, sizing, preset)
       // is handled by DataTable via the onLoadView callback
       if (tableLoadViewRef.current) {
         tableLoadViewRef.current(view);
       }
     },
-    [router],
+    [router, setActiveListId],
   );
 
   const handleDeleteView = useCallback(

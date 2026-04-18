@@ -36,6 +36,10 @@ export const viewSnapshotSchema = z.object({
       batch: z.string().optional(),
     })
     .optional(),
+  // Phase 34 — optional partner-list reference. Mirrors the additive-optional
+  // evolution used for `drill` in Phase 32-02: legacy saved views load with
+  // listId: undefined and safeParse succeeds.
+  listId: z.string().nullable().optional(),
 });
 
 /** Validates a single SavedView entry. */
