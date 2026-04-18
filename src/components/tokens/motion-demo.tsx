@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { TokenCard } from './token-card';
 import { Button } from '@/components/ui/button';
 import { DataPanel } from '@/components/patterns/data-panel';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Interactive motion playground — 9 duration × easing combinations.
@@ -261,7 +262,157 @@ export function MotionDemo() {
           </DataPanel>
         </div>
       </section>
+
+      <ChartExpandDemo />
+
+      <SkeletonCrossFadeDemo />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Chart expand / collapse (DS-24)
+//
+// grid-template-rows 0fr ↔ 1fr transition at --duration-normal × --ease-default.
+// Inner overflow-hidden guards Pitfall 8 (content sliver at collapsed state).
+// ---------------------------------------------------------------------------
+
+function ChartExpandDemo() {
+  const [expanded, setExpanded] = useState(true);
+
+  return (
+    <section className="flex flex-col gap-stack">
+      <div className="flex flex-col gap-[var(--spacing-1)]">
+        <div className="flex items-baseline gap-inline">
+          <h2 className="text-heading">Chart expand / collapse</h2>
+          <span className="text-label uppercase text-muted-foreground">
+            DS-24
+          </span>
+        </div>
+        <p className="text-body text-muted-foreground">
+          Chart region animates height via{' '}
+          <code className="text-caption">grid-template-rows</code> 0fr ↔ 1fr
+          at <code className="text-caption">--duration-normal</code> ×{' '}
+          <code className="text-caption">--ease-default</code>. Inner{' '}
+          <code className="text-caption">overflow-hidden</code> guards against
+          content sliver at the collapsed state.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-stack">
+        <div>
+          <Button
+            variant="secondary"
+            onClick={() => setExpanded((e) => !e)}
+          >
+            {expanded ? 'Collapse' : 'Expand'} chart area
+          </Button>
+        </div>
+        <div
+          className={cn(
+            'grid transition-[grid-template-rows] duration-normal ease-default',
+            expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised">
+              <span className="text-label uppercase text-muted-foreground">
+                Chart area
+              </span>
+              <div className="h-32 bg-surface-inset rounded-sm mt-[var(--spacing-2)] flex items-center justify-center text-body text-muted-foreground">
+                Dummy chart content (replace with real chart shape in
+                production)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton → content (DS-27)
+//
+// Cross-fade with ~150ms overlap. Skeleton fades out at --duration-quick ×
+// --ease-default; content fades in at --duration-normal × --ease-decelerate.
+// Overlap window is the 0-150ms where both layers co-render.
+// ---------------------------------------------------------------------------
+
+function SkeletonCrossFadeDemo() {
+  const [loading, setLoading] = useState(false);
+  const [skeletonVisible, setSkeletonVisible] = useState(false);
+  const [contentReady, setContentReady] = useState(true);
+
+  function simulate() {
+    setLoading(true);
+    setSkeletonVisible(true);
+    setContentReady(false);
+    setTimeout(() => {
+      setContentReady(true);
+      setTimeout(() => setSkeletonVisible(false), 150);
+      setLoading(false);
+    }, 800);
+  }
+
+  return (
+    <section className="flex flex-col gap-stack">
+      <div className="flex flex-col gap-[var(--spacing-1)]">
+        <div className="flex items-baseline gap-inline">
+          <h2 className="text-heading">Skeleton → content</h2>
+          <span className="text-label uppercase text-muted-foreground">
+            DS-27
+          </span>
+        </div>
+        <p className="text-body text-muted-foreground">
+          Skeleton fades out at{' '}
+          <code className="text-caption">--duration-quick</code> ×{' '}
+          <code className="text-caption">--ease-default</code> while content
+          fades in at <code className="text-caption">--duration-normal</code>{' '}
+          × <code className="text-caption">--ease-decelerate</code>, with a
+          ~150ms overlap. Matches the &ldquo;content arriving&rdquo; mental
+          model used across the app.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-stack">
+        <div>
+          <Button
+            variant="secondary"
+            onClick={simulate}
+            disabled={loading}
+          >
+            Simulate loading (800ms)
+          </Button>
+        </div>
+        <div className="relative min-h-[140px] rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised">
+          {skeletonVisible && (
+            <div
+              className={cn(
+                'transition-opacity duration-quick ease-default',
+                contentReady
+                  ? 'absolute inset-0 p-card-padding opacity-0 pointer-events-none'
+                  : 'opacity-100',
+              )}
+              aria-hidden={contentReady}
+            >
+              <Skeleton className="h-6 w-2/3 mb-[var(--spacing-2)]" />
+              <Skeleton className="h-4 w-full mb-[var(--spacing-1)]" />
+              <Skeleton className="h-4 w-5/6" />
+            </div>
+          )}
+          {contentReady && (
+            <div className="transition-opacity duration-normal ease-decelerate opacity-100">
+              <h3 className="text-title">Loaded content</h3>
+              <p className="text-body text-muted-foreground">
+                Cross-faded from skeleton. ~150ms overlap window between
+                skeleton fade-out and content fade-in.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
