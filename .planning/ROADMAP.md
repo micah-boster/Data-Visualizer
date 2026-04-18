@@ -210,9 +210,9 @@ Plans:
   8. `/tokens` page gains a Component Patterns section with a live example of every variant of every pattern
 **Plans**: 5 plans (4 pattern plans in Wave 1 + 1 enforcement plan in Wave 2)
 Plans:
-- [ ] 29-01-PLAN.md — StatCard pattern + migrate kpi-summary-cards + delete legacy KpiCard + /tokens specimen (DS-18)
-- [ ] 29-02-PLAN.md — DataPanel pattern + migrate 3 chart/matrix shells (comparison-matrix, trajectory-chart, collection-curve-chart) + /tokens specimen (DS-19, DS-20)
-- [ ] 29-03-PLAN.md — EmptyState pattern (4 variants) + migrate data-display + data-table + delete 2 legacy files + /tokens specimen (DS-22)
+- [x] 29-01-PLAN.md — StatCard pattern + migrate kpi-summary-cards + delete legacy KpiCard + /tokens specimen (DS-18)
+- [x] 29-02-PLAN.md — DataPanel pattern + migrate 3 chart/matrix shells (comparison-matrix, trajectory-chart, collection-curve-chart) + /tokens specimen (DS-19, DS-20)
+- [x] 29-03-PLAN.md — EmptyState pattern (4 variants) + migrate data-display + data-table + delete 2 legacy files + /tokens specimen (DS-22)
 - [x] 29-04-PLAN.md — ToolbarDivider sibling pattern + migrate unified-toolbar 2 divider sites + /tokens specimen (DS-21)
 - [ ] 29-05-PLAN.md — Enforcement: scripts/check-components.sh POSIX guard + npm alias + /tokens Component Patterns 6th tab aggregator + comparison-matrix:110 divider gap closure (DS-18, DS-19, DS-20, DS-21, DS-22)
 **Status**: ⏸ Planning

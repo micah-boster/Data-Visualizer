@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 Phase: 29 (Component Patterns — in progress; Plans 01-04 shipped, Plan 05 aggregator queued)
 Plan: 29-01 SHIPPED — StatCard pattern (src/components/patterns/stat-card.tsx) with all 7 first-class states (value / loading / error / no-data / insufficient-data / stale / comparison); kpi-summary-cards.tsx migrated (4 usages + loading grid); legacy kpi-card.tsx DELETED; /tokens specimen exported for Plan 05 aggregator. check:tokens + check:surfaces + `npm run build` all pass.
-Status: Phase 29 still in progress — Plans 01, 02, 03, 04 shipped; Plan 05 aggregator (check:components grep guard + token-browser wire-up + comparison-matrix.tsx:110 audit) remains queued. Prior "pre-existing build errors" referenced in 29-04 notes are no longer failing after 29-01 + 29-03 migrations resolved the relevant surfaces.
-Last activity: 2026-04-18 — Shipped 29-01 (64f65ad StatCard component; 4615ab1 kpi-summary-cards migration + KpiCard deletion; 409abf1 /tokens specimen). Trend explanatory phrase 'vs rolling avg of prior batches' promoted from tooltip-only to visible second-line chrome; stale + comparison deliberately ship as prop surface only per Pitfalls 1 & 2.
+Status: Phase 29 still in progress — Plans 01, 02, 03, 04 shipped (executed in order 02 → 03 → 04 → 01 across sessions); Plan 05 aggregator (check:components grep guard + token-browser wire-up + comparison-matrix.tsx:110 audit) remains queued. Prior "pre-existing build errors" referenced in 29-04 notes resolved implicitly by 29-01 + 29-03 migrations.
+Last activity: 2026-04-18 — Shipped 29-01 (64f65ad StatCard component; 4615ab1 kpi-summary-cards migration + KpiCard deletion; 409abf1 /tokens specimen). Trend explanatory phrase 'vs rolling avg of prior batches' promoted from tooltip-only affordance to visible second-line chrome; stale + comparison deliberately ship as prop surface only per Pitfalls 1 & 2.
 
 Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phase 27 + Phase 32 shipped; 9 remaining phases)
 
@@ -136,6 +136,10 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 - [Phase 29-03]: Three-state action override surface (undefined=default CTA, null=suppress, ReactNode=override) ships on EmptyState. Reusable for other composed patterns needing 'default vs suppress vs override' slot semantics.
 - [Phase 29-03]: Strict migrate-then-delete ordering (Pitfall 8 avoidance): all legacy imports migrated and grep-verified zero before rm. Zero parallel-support window; no alias re-exports, no @deprecated.
 - [Phase 29-03]: Copy-semantic realignment at data-display.tsx:440: legacy rendered SearchX + 'No data matches your filters' for a dataset-empty trigger. New default Database + 'No data yet' restores semantic-to-trigger alignment. Filter-miss copy now lives exclusively on no-results variant.
+- [Phase 29-01]: StatCard trend delta uses .text-label-numeric alone (no paired font-medium) — keeps check:tokens green while preserving mono + tabular-nums digit alignment. Follows Phase 27-06 weight-policy precedent.
+- [Phase 29-01]: StatCard stale + comparison props ship as prop surface only (Pitfalls 1 & 2 deferred). stale awaits DataResponse.meta.source plumbing; comparison awaits a cross-partner drill-in consumer. Documented inline via JSDoc above each prop.
+- [Phase 29-01]: Trend explanatory phrase "vs rolling avg of prior batches" promoted from KpiCard tooltip-only affordance to visible second-line chrome. Cards grow slightly taller per CONTEXT layout lock; users no longer need to hover to see the baseline comparison.
+- [Phase 29-01]: StatCard helper sub-components (LabelRow, TrendLine, InsufficientTrendLine) kept file-local rather than exported — shared recipe inside the pattern, not a public surface. Keeps the pattern API minimal (StatCard + StatCardProps + StatCardTrend) and concentrates token discipline in a single file.
 
 ### Pending Todos
 
@@ -143,6 +147,8 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 - ANTHROPIC_API_KEY needs to be provisioned in Vercel env vars
 - Visual UAT of remaining 25-03 scenarios (ACCOUNT_TYPE filter proves upstream-of-aggregate, drilldown cascade preserves root filter, zero-match FilterEmptyState + Clear filter click) — primary scenario (single-partner filter) verified this session and surfaced the trajectory-chart <2 partners guard (fixed in d9aa14b)
 - [UX — future phase] Drilled-in view should surface per-batch KPI cards prominently at top (summary stats for the selected batch when drilled into partner/batch levels). Parallels the root-level KPI cards and would make the drill experience feel symmetrical. Candidate for Phase 28 (surfaces) or a dedicated polish phase.
+- [Phase 29-01 follow-up] Extend DataResponse.meta with `source: 'cache' | 'snowflake'` and thread through data-freshness context so StatCard.stale has a live signal. Today the prop is a pure surface (Pitfall 1) — no consumer passes stale={true} outside the /tokens specimen.
+- [Phase 29-01 follow-up] Wire StatCard.comparison into a cross-partner drill-in feature when one is designed. PartnerNormsProvider already exposes Record<string, MetricNorm>; the comparison-value/label strings can derive from norms.mean once a UI shell exists (Pitfall 2).
 
 ### Blockers/Concerns
 
@@ -151,8 +157,8 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 29-04-PLAN.md — ToolbarDivider pattern + unified-toolbar migration + /tokens specimen. Two task commits (51e99e0, 560a036) atomic; SUMMARY.md + deferred-items.md written. check:tokens / check:surfaces pass; `npm run build` baseline-fails on pre-existing unrelated errors (collection-curve-chart useCurveChartState surface, data-display EmptyState missing variant — Plan 05 / earlier-refactor owners).
-Resume with: `/gsd:execute-phase 29` to continue with Plan 29-05 (aggregator + check:components guard + comparison-matrix.tsx:110 audit), OR address the two pre-existing build errors in a dedicated fix pass before Plan 05 runs.
+Stopped at: Completed 29-01-PLAN.md — StatCard pattern + kpi-summary-cards migration + legacy KpiCard deletion + /tokens specimen. Three task commits atomic (64f65ad, 4615ab1, 409abf1). SUMMARY.md written. `npm run build` passes end-to-end; check:tokens / check:surfaces both green. Plans 02, 03, 04 already shipped in prior sessions; Plan 05 aggregator is the only Phase 29 plan remaining.
+Resume with: `/gsd:execute-phase 29` to run Plan 29-05 (aggregator — ComponentPatternsSpecimen + token-browser 6th tab + check:components grep guard + comparison-matrix.tsx:110 divider audit). Phase 29 closes at Plan 05.
 
 ## Performance Metrics
 
@@ -162,5 +168,5 @@ Resume with: `/gsd:execute-phase 29` to continue with Plan 29-05 (aggregator + c
 | 29 | 04 | ~2 min | 2 | 3 | 2026-04-18 |
 | 29 | 03 | ~3 min | 2 | 4 | 2026-04-18 |
 | 29 | 01 | ~15 min | 3 | 4 | 2026-04-18 |
-| Phase 29 P02 | ~3 min | 3 tasks | 5 files |
+| 29 | 02 | ~3 min | 3 | 5 | 2026-04-18 |
 
