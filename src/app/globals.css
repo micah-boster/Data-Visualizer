@@ -81,6 +81,31 @@
     0 4px 8px 0 oklch(0.2 0.015 70 / 0.06),
     0 12px 24px -8px oklch(0.2 0.015 70 / 0.10);
 
+  /* === SEMANTIC ELEVATIONS === (DS-11: 3-layer compounds for primary containers)
+     Layer structure per recipe: key shadow + ambient diffuse shadow + inset rim highlight.
+     Semantic-over-raw ethos: primary containers (headers, KPI cards, charts, popovers,
+     modals) MUST consume `shadow-elevation-*` utilities. Raw --shadow-xs/sm/md/lg
+     primitives above remain for badges, chips, and one-off edge cases.
+     Dark mode values are hand-tuned in the .dark block — CONTEXT lock (Pitfall 3):
+     DO NOT derive dark shadows via color-mix/calc from light values; use pure black
+     at higher opacity to keep depth legible against near-black surfaces. */
+  --shadow-elevation-chrome:
+    0 1px 2px 0 oklch(0.2 0.015 70 / 0.04),
+    0 2px 8px -2px oklch(0.2 0.015 70 / 0.05),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.06);
+  --shadow-elevation-raised:
+    0 1px 2px 0 oklch(0.2 0.015 70 / 0.06),
+    0 4px 12px -2px oklch(0.2 0.015 70 / 0.08),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.08);
+  --shadow-elevation-overlay:
+    0 2px 4px 0 oklch(0.2 0.015 70 / 0.08),
+    0 8px 24px -4px oklch(0.2 0.015 70 / 0.12),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.10);
+  --shadow-elevation-floating:
+    0 4px 8px 0 oklch(0.2 0.015 70 / 0.10),
+    0 16px 40px -8px oklch(0.2 0.015 70 / 0.16),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.12);
+
   /* === MOTION === (DS-04: quick/normal/slow + 3 easing curves) */
   --duration-quick: 120ms;
   --duration-normal: 200ms;
@@ -113,6 +138,9 @@
   --color-surface-inset: var(--surface-inset);
   --color-surface-overlay: var(--surface-overlay);
   --color-surface-floating: var(--surface-floating);
+  /* DS-11 translucent header surface: semi-opaque paper-white w/ fallthrough blur.
+     Header-only — pair with `backdrop-blur-md` on the consuming element. */
+  --color-surface-translucent: var(--surface-translucent);
 
   /* === NEUTRAL SCALE COLOR ALIASES === */
   --color-neutral-50: var(--neutral-50);
@@ -227,6 +255,7 @@
   --surface-inset: oklch(0.965 0.012 85);     /* recessed beige */
   --surface-overlay: oklch(1 0 0);            /* popover/dropdown */
   --surface-floating: oklch(1 0 0);           /* modal/toast */
+  --surface-translucent: color-mix(in oklch, var(--surface-raised) 80%, transparent); /* DS-11 header glass */
 
   /* === BRAND ACCENTS (LIGHT) === Bounce primary green + secondary purple.
      --brand-green matches brand #03542C for filled surfaces (buttons, sidebar-primary).
@@ -344,6 +373,7 @@
   --surface-inset: oklch(0.12 0.010 60);      /* darker recessed */
   --surface-overlay: oklch(0.24 0.012 60);
   --surface-floating: oklch(0.26 0.012 60);
+  --surface-translucent: color-mix(in oklch, var(--surface-raised) 82%, transparent); /* DS-11 header glass; 2% more opaque vs light to stay legible */
 
   /* === BRAND ACCENTS (DARK) === lighter siblings of the brand greens so they
      read against the warm near-black surface. Purple shifted lighter similarly. */
@@ -398,6 +428,27 @@
   --shadow-lg:
     0 4px 8px 0 oklch(0 0 0 / 0.50),
     0 12px 24px -8px oklch(0 0 0 / 0.45);
+
+  /* === SEMANTIC ELEVATIONS (DARK) === hand-tuned per Pitfall 3.
+     Pure black at progressively higher opacity so multi-layer depth remains
+     readable against warm near-black surfaces. Inset rim uses a faint white
+     highlight — dimmer than light-mode to avoid over-bright glare. */
+  --shadow-elevation-chrome:
+    0 1px 2px 0 oklch(0 0 0 / 0.35),
+    0 2px 8px -2px oklch(0 0 0 / 0.30),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.04);
+  --shadow-elevation-raised:
+    0 1px 2px 0 oklch(0 0 0 / 0.45),
+    0 4px 12px -2px oklch(0 0 0 / 0.40),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.05);
+  --shadow-elevation-overlay:
+    0 2px 4px 0 oklch(0 0 0 / 0.55),
+    0 8px 24px -4px oklch(0 0 0 / 0.45),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.07);
+  --shadow-elevation-floating:
+    0 4px 8px 0 oklch(0 0 0 / 0.65),
+    0 16px 40px -8px oklch(0 0 0 / 0.55),
+    inset 0 1px 0 0 oklch(1 0 0 / 0.09);
 
   /* === shadcn RE-MAP (DARK) === cascades through surface/neutral re-defined above */
   --background: var(--surface-base);
