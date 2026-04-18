@@ -24,6 +24,7 @@ import { CurveTooltip, CHART_COLORS } from "@/components/charts/curve-tooltip";
 import { CurveLegend } from "@/components/charts/curve-legend";
 import { NumericTick } from "@/components/charts/numeric-tick";
 import { Button } from "@/components/ui/button";
+import { DataPanel } from "@/components/patterns/data-panel";
 import { BarChart3 } from "lucide-react";
 
 interface CollectionCurveChartProps {
@@ -171,14 +172,16 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
   }, []);
 
   // Empty state: no curves at all
+  // TODO(29-03): consider replacing empty body with <EmptyState variant="no-data" />
+  // once Plan 29-03 ships. Not imported here to keep waves parallel.
   if (curves.length === 0) {
     return (
-      <div className="rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
+      <DataPanel title="Collection Curves">
         <div className="flex h-[40vh] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
           <BarChart3 className="h-10 w-10 opacity-30" />
           <p className="text-body">No collection curve data available</p>
         </div>
-      </div>
+      </DataPanel>
     );
   }
 
@@ -187,17 +190,15 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
   const maxAge = Math.max(...sortedCurves.map((c) => c.ageInMonths), 1);
   const collectionMonthsTicks = COLLECTION_MONTHS.filter((m) => m <= maxAge);
 
+  // Metric-toggle cluster drives the UI-04 view switch. Toggling between
+  // Recovery Rate % and Dollars Collected updates the chart data, Y-axis
+  // formatting, and tooltip values reactively via `metric` state in
+  // useCurveChartState. Flows through DataPanel's actions slot.
   return (
-    <div className="rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
-      <div className="w-full space-y-2">
-      {/* Header with metric toggle — this IS the metric view switch (UI-04).
-          Toggling between Recovery Rate % and Dollars Collected updates the
-          chart data, Y-axis formatting, and tooltip values reactively via
-          the `metric` state in useCurveChartState. */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-title text-muted-foreground">
-          Collection Curves
-        </h3>
+    <DataPanel
+      title="Collection Curves"
+      contentClassName="space-y-2"
+      actions={
         <div className="flex gap-1">
           <Button
             variant={metric === "recoveryRate" ? "default" : "outline"}
@@ -216,8 +217,8 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
             Dollars Collected
           </Button>
         </div>
-      </div>
-
+      }
+    >
       {/* Chart + Legend layout */}
       <div className="flex gap-4">
         {/* Chart area */}
@@ -321,7 +322,6 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
           onToggleShowAll={toggleShowAll}
         />
       </div>
-      </div>
-    </div>
+    </DataPanel>
   );
 }
