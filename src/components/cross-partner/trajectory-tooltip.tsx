@@ -36,7 +36,7 @@ export function TrajectoryTooltip({
     });
 
   return (
-    <div className="rounded-lg border bg-background/95 px-3 py-2 shadow-md backdrop-blur-sm">
+    <div className="rounded-lg bg-surface-overlay shadow-elevation-overlay px-3 py-2">
       <p className="mb-1 text-label text-muted-foreground">
         Month {label}
       </p>

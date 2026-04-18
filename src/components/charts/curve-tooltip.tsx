@@ -81,7 +81,7 @@ export function CurveTooltip({
     : null;
 
   return (
-    <div className="rounded-lg border bg-popover px-3 py-2 text-body text-popover-foreground shadow-md">
+    <div className="rounded-lg bg-surface-overlay shadow-elevation-overlay px-3 py-2 text-body text-popover-foreground">
       <p className="text-title">{displayName}</p>
       <p className="text-body-numeric text-muted-foreground">
         {formatValue(entry.value, metric)} at Month {label}

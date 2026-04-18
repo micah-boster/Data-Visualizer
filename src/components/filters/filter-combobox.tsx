@@ -42,7 +42,7 @@ export function FilterCombobox({
       </Combobox.InputGroup>
       <Combobox.Portal>
         <Combobox.Positioner className="z-50">
-          <Combobox.Popup className="max-h-60 overflow-auto rounded-md border bg-popover shadow-md">
+          <Combobox.Popup className="max-h-60 overflow-auto rounded-md bg-surface-overlay shadow-elevation-overlay">
             <Combobox.List>
               <Combobox.Empty className="px-3 py-2 text-caption text-muted-foreground">
                 No matches

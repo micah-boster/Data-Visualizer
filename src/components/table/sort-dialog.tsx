@@ -119,7 +119,7 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
               return (
                 <div
                   key={`${sortRule.id}-${index}`}
-                  className="flex items-center gap-2 rounded-md border bg-card p-2"
+                  className="flex items-center gap-2 rounded-md bg-surface-raised/40 p-2"
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-label-numeric">
                     {index + 1}
@@ -128,7 +128,7 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
                   <select
                     value={sortRule.id}
                     onChange={(e) => changeColumn(index, e.target.value)}
-                    className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1 text-body"
+                    className="min-w-0 flex-1 rounded-md border border-input bg-surface-base px-2 py-1 text-body"
                   >
                     {COLUMN_CONFIGS.map((col) => (
                       <option

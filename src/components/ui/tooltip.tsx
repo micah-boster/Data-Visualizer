@@ -47,6 +47,10 @@ function TooltipContent({
         sideOffset={sideOffset}
         className="isolate z-50"
       >
+        {/* Phase 28-06: intentionally NOT normalized to bg-surface-overlay /
+            shadow-elevation-overlay — this inverted bg-foreground pill is a
+            distinct hover-hint affordance that reads differently from popovers
+            and dropdowns. Preservation is CONTEXT-locked. */}
         <TooltipPrimitive.Popup
           data-slot="tooltip-content"
           className={cn(
