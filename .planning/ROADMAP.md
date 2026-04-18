@@ -193,5 +193,23 @@ Plans:
 - [x] 28-08-PLAN.md — Enforcement: scripts/check-surfaces.sh POSIX grep guard + DS-17 cleanup
 **Status**: ✅ Complete (2026-04-17) — 8/8 plans shipped; all DS-11→DS-17 verified; check:surfaces guard green
 
+### Phase 29: Component Patterns
+
+**Goal**: Five reusable composed patterns (StatCard, DataPanel, SectionHeader-extended, ToolbarGroup, EmptyState) standardize common UI shapes; legacy components are deleted, every call site is migrated, and a CI grep guard prevents regression
+**Depends on**: Phase 26 (tokens), Phase 27 (type scale), Phase 28 (surfaces — all complete)
+**Effort**: Medium (~5 patterns + full migration + grep guard + /tokens demo additions)
+**Requirements**: DS-18 through DS-22
+**Success Criteria** (what must be TRUE):
+  1. StatCard renders all first-class states (value, loading, error, no-data, insufficient-data, stale, comparison) at one canonical size with polarity-aware trend on a second line
+  2. DataPanel exposes header/content/footer slots; header is required and composes the existing SectionHeader internally
+  3. EmptyState ships four variants (no-data, no-results, error, permissions) each with a canonical Lucide icon and a sensible default CTA that callers can override or suppress
+  4. ToolbarGroup separates semantically distinct button clusters in unified-toolbar with a subtle vertical divider
+  5. SectionHeader is extended only where DataPanel migration surfaces a concrete gap (no speculative extension)
+  6. KpiCard, src/components/empty-state.tsx, and src/components/filters/filter-empty-state.tsx are deleted; zero imports remain (no parallel-support window)
+  7. `check:components` npm script (POSIX grep guard, modeled on check:tokens / check:surfaces) is wired into CI and green
+  8. `/tokens` page gains a Component Patterns section with a live example of every variant of every pattern
+**Plans**: TBD (planner decides — context targets 5 plans, one per pattern, with optional sixth for the grep-guard + /tokens enforcement step)
+**Status**: ⏸ Planning
+
 ---
-*Last updated: 2026-04-17 — Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
+*Last updated: 2026-04-17 — Phase 29 detail section added; Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
