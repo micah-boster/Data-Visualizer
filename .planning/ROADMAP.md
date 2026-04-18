@@ -98,7 +98,7 @@
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
 | 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
 | 28. Surfaces & Elevation | 8/8 | Complete   | 2026-04-18 | - |
-| 29. Component Patterns | v4.0 | 0/TBD | Not started | - |
+| 29. Component Patterns | v4.0 | 0/5 | Planning | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
@@ -208,8 +208,31 @@ Plans:
   6. KpiCard, src/components/empty-state.tsx, and src/components/filters/filter-empty-state.tsx are deleted; zero imports remain (no parallel-support window)
   7. `check:components` npm script (POSIX grep guard, modeled on check:tokens / check:surfaces) is wired into CI and green
   8. `/tokens` page gains a Component Patterns section with a live example of every variant of every pattern
-**Plans**: TBD (planner decides — context targets 5 plans, one per pattern, with optional sixth for the grep-guard + /tokens enforcement step)
+**Plans**: 5 plans (4 pattern plans in Wave 1 + 1 enforcement plan in Wave 2)
+Plans:
+- [ ] 29-01-PLAN.md — StatCard pattern + migrate kpi-summary-cards + delete legacy KpiCard + /tokens specimen (DS-18)
+- [ ] 29-02-PLAN.md — DataPanel pattern + migrate 3 chart/matrix shells (comparison-matrix, trajectory-chart, collection-curve-chart) + /tokens specimen (DS-19, DS-20)
+- [ ] 29-03-PLAN.md — EmptyState pattern (4 variants) + migrate data-display + data-table + delete 2 legacy files + /tokens specimen (DS-22)
+- [ ] 29-04-PLAN.md — ToolbarDivider sibling pattern + migrate unified-toolbar 2 divider sites + /tokens specimen (DS-21)
+- [ ] 29-05-PLAN.md — Enforcement: scripts/check-components.sh POSIX guard + npm alias + /tokens Component Patterns 6th tab aggregator + comparison-matrix:110 divider gap closure (DS-18, DS-19, DS-20, DS-21, DS-22)
 **Status**: ⏸ Planning
 
+### Phase 32: URL-Backed Navigation
+
+**Goal**: Move drill-down state from React state to URL params — enable browser back button, deep-linking, and shareable URLs
+**Depends on**: Phase 25 only. **Fully independent of design track** — ran in parallel with Phases 26-31.
+**Effort**: Medium-Large (structural rewrite of useDrillDown, touches orchestrator + 5-6 components, known gotcha with useSearchParams freezes)
+**Requirements**: NAV-01 through NAV-04
+**Success Criteria** (what must be TRUE):
+  1. Drill state (partner, batch) is reflected in URL params (?p=X&b=Y)
+  2. Browser back button navigates up drill levels correctly
+  3. Deep-linking to a URL with partner/batch params loads the correct drill state
+  4. Saved views can optionally include drill state for shareable bookmarks
+**Plans**: 2 plans
+Plans:
+- [x] 32-01-PLAN.md — URL-backed useDrillDown hook (useSearchParams/usePathname/useRouter, `?p=&b=` contract, router.push for history, stale-param toast in data-display.tsx)
+- [x] 32-02-PLAN.md — Saved views optional drill field (ViewSnapshot.drill? + zod .optional(), conditional "Include current drill state" checkbox, canIncludeDrill prop threading, legacy view backward compat)
+**Status**: ✅ Complete (2026-04-17) — 2/2 plans shipped; all NAV-01→NAV-04 verified (13/13 must-haves in 32-VERIFICATION.md)
+
 ---
-*Last updated: 2026-04-17 — Phase 29 detail section added; Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
+*Last updated: 2026-04-17 — Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 29 detail section added; Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
