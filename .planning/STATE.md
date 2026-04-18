@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T14:14:28.212Z"
+last_updated: "2026-04-18T14:20:00.911Z"
 progress:
   total_phases: 33
   completed_phases: 29
   total_plans: 80
-  completed_plans: 75
+  completed_plans: 76
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 30 (Micro-Interactions & Motion — Wave 1 complete)
-Plan: 30-01 shipped 2026-04-18. Next up: Wave 2 (30-02 state-color semantics) per phase plan. 4/5 plans remaining.
-Status: In progress. Plan 30-01 executed 3 tasks + SUMMARY + atomic commits. A11Y-05 global reduced-motion override live; DS-25 .hover-lift utility live + piloted on KPI cards; check:motion POSIX guard live as 4th enforcement script; /tokens Motion tab extended with reduced-motion policy section + hover-lift live demo.
-Last activity: 2026-04-18 — Shipped 30-01 (motion foundation). Commits: de076f9 (globals.css reduced-motion + hover-lift), 381d8d0 (check:motion guard + pre-existing duration-N sweep), 3f0be3f (StatCard.interactive + kpi-summary-cards pilot + motion-demo sections). All 4 check scripts green. `npm run build` succeeds.
+Phase: 30 (Micro-Interactions & Motion — Wave 2 in progress)
+Plan: 30-02 shipped 2026-04-18. Next up: Wave 3 (30-03 interactive-card sweep) per phase plan. 3/5 plans remaining.
+Status: In progress. Plan 30-02 executed 2 tasks + SUMMARY + atomic commits. DS-23 drill cross-fade live at data-display boundary (charts + KPI strip + table fade together at duration-normal × ease-default); data-drill-fade attribute + contain: layout Pitfall-3 guard shipped; /tokens Motion tab gains DrillCrossFadeDemo with 3 level buttons.
+Last activity: 2026-04-18 — Shipped 30-02 (drill cross-fade). Commits: 872cc37 (data-display drill boundary wrapped in transition-opacity duration-normal ease-default), e6d1037 (/tokens Motion tab drill cross-fade live demo). All 4 check scripts green. `npm run build` succeeds.
 
-Progress: [███████████████████░] 75/80 plans (94% — v1.0 milestone)
+Progress: [███████████████████░] 76/80 plans (95% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -150,6 +150,11 @@ Progress: [███████████████████░] 75/80 p
 - [Phase 30-01]: A11Y-05 reduced-motion override placed OUTSIDE any @layer (top-level @media); .hover-lift utility placed INSIDE existing @layer utilities block next to text-*-numeric variants. !important required to beat Tailwind and inline styles.
 - [Phase 30-01]: Pre-existing numeric duration-N sweep folded into check:motion guard-landing commit [Rule 3]: 6 sites migrated (duration-150/200/300 to duration-quick/normal/slow). Visual delta <=30ms per site, within UI perceptual threshold.
 - [Phase 30-01]: kpi-summary-cards interactive={true} applied UNIFORMLY to all 6 StatCard render sites. Loading skeletons excluded by StatCard short-circuit precedence. Pattern is semantically interactive even before drill handler wires.
+- [Phase 30-02]: Re-key + transition-opacity locked as primary pattern for state-change cross-fades (RESEARCH Open Q#4 option A). Dual-mount is documented escalation path if TanStack Virtual re-virtualization exposes a visible flash — not escalated speculatively.
+- [Phase 30-02]: Single outer drill wrapper (not two sibling wrappers for charts + table) enforces the "no stagger" CONTEXT lock. One re-key = one frame-parity remount = children arrive together as one composed scene.
+- [Phase 30-02]: Composite drill key shape `drill-${level}-${partner ?? 'none'}-${batch ?? 'none'}`. Includes all three axes so future cross-partner drills and batch→batch transitions within a level also get fresh mounts. 'none' sentinel avoids empty-segment key collisions like `drill-root--`.
+- [Phase 30-02]: Pitfall 3 scroll-jump defense: inline `style={{ contain: 'layout' }}` on the drill wrapper complements use-drill-down's existing router.push `{ scroll: false }`. check:motion regex scopes to transitionDuration/transitionTimingFunction only, so contain is not flagged. No router contract touched.
+- [Phase 30-02]: DrillCrossFadeDemo on /tokens mirrors production recipe 1:1 (same re-key + same transition-opacity duration-normal ease-default utilities). Establishes pattern: any future motion-utility docs page should preview the exact mechanism users will experience in-app.
 
 ### Pending Todos
 
@@ -167,7 +172,7 @@ Progress: [███████████████████░] 75/80 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 30-01-PLAN.md (motion foundation + DS-25 pilot). A11Y-05 reduced-motion override + .hover-lift utility live; check:motion POSIX guard green; StatCard.interactive piloted on KPI cards; /tokens Motion tab extended. Ready for Wave 2 (Plan 30-02).
+Stopped at: Completed 30-02-PLAN.md (drill cross-fade DS-23). data-display boundary wraps drill-variant region in transition-opacity duration-normal ease-default keyed on drill identity; data-drill-fade attribute + contain: layout Pitfall-3 guard shipped; /tokens Motion tab gains DrillCrossFadeDemo. All 4 guard scripts green. Ready for Wave 3 (Plan 30-03 interactive-card sweep).
 Resume file: None
 
 ## Performance Metrics
@@ -181,4 +186,5 @@ Resume file: None
 | 29 | 02 | ~3 min | 3 | 5 | 2026-04-18 |
 | 29 | 05 | ~15 min | 3 | 4 | 2026-04-18 |
 | 30 | 01 | ~4 min | 3 | 10 | 2026-04-18 |
+| 30 | 02 | ~2 min | 2 | 2 | 2026-04-18 |
 
