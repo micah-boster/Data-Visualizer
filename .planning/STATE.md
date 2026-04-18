@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** Phase 25 — Code Health & Bug Fixes
+**Current focus:** Phase 30 — Micro-Interactions & Motion
 
 ## Current Position
 
-Phase: 29 (Component Patterns — COMPLETE; all 5 plans shipped)
-Plan: 29-05 SHIPPED — scripts/check-components.sh POSIX grep guard (no ripgrep) + `npm run check:components` alias; ComponentPatternsSpecimen aggregator wrapped in TooltipProvider; /tokens gains 6th "Component Patterns" tab stacking all four Wave 1 specimens; comparison-matrix.tsx:100 divider migrated to <ToolbarDivider /> closing the Plan 04 scope-reduction gap. Full suite (check:tokens + check:surfaces + check:components + build) all exit 0.
-Status: Phase 29 CLOSED. 5/5 plans shipped. DS-18/19/20/21/22 all complete AND mechanically CI-guarded. /tokens dogfoods the pattern system (6 tabs). Legacy deletions holding (kpi-card.tsx, empty-state.tsx, filter-empty-state.tsx all absent). CI wiring deferred per Phase 27-06 / 28-08 precedent — user flips `npm run check:components` into Vercel build / pre-commit / GitHub Actions as a one-line change.
-Last activity: 2026-04-18 — Shipped 29-05 (97b6c0b guard + alias; 789b890 /tokens Component Patterns tab; 2925bf3 comparison-matrix ToolbarDivider migration). Wave 2 executor spawn rate-limited mid-run; orchestrator executed inline preserving atomic per-task commits. Full 4-check suite green on clean tree.
+Phase: 30 (Micro-Interactions & Motion — ready to plan)
+Plan: Not started — Phase 30 ready to plan. CONTEXT.md exists at .planning/phases/30-micro-interactions-and-motion/30-CONTEXT.md; context already gathered during discuss-phase, can go directly to `/gsd:plan-phase 30`.
+Status: Ready to plan. Phase 29 closed 2026-04-18 with 5/5 plans shipped + 14/14 verification truths passed + DS-18..22 all mechanically CI-guarded via `npm run check:components`. Auto-advance chain continues into Phase 30.
+Last activity: 2026-04-18 — Completed Phase 29 Component Patterns (Wave 1: 29-01..04 parallel; Wave 2: 29-05 inline after executor rate-limit). Verification passed. `phase complete` ran: roadmap_updated + state_updated. Transition proceeding to Phase 30 planning under --auto.
 
-Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phase 27 + Phase 32 shipped; 9 remaining phases)
+Progress: [████████████████████] 74/75 plans (99% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -162,8 +162,8 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 29-05-PLAN.md — Phase 29 CLOSED. All 5 plans shipped (29-01 StatCard, 29-02 DataPanel, 29-03 EmptyState, 29-04 ToolbarDivider, 29-05 guard + /tokens aggregator + comparison-matrix gap closure). Three task commits atomic for 29-05 (97b6c0b, 789b890, 2925bf3). Full suite green: check:tokens + check:surfaces + check:components + build all exit 0. /tokens now has 6 tabs with live demos of every first-class pattern.
-Resume with: `/gsd:plan-phase 30` (Micro-interactions — next in v1.0 milestone order), OR flip the three guards on in CI (Vercel build command → `npm run check:tokens && npm run check:surfaces && npm run check:components && npm run build`). Alternatively `/gsd:verify-work 29` for a full phase-close audit.
+Stopped at: Phase 29 complete, transitioning to Phase 30. All 5 plans shipped; verification 14/14 passed; 4-check enforcement suite green. Phase 30 CONTEXT.md already exists — auto-advance goes directly to `/gsd:plan-phase 30` (skipping discuss-phase).
+Resume file: None
 
 ## Performance Metrics
 

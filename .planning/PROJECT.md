@@ -38,29 +38,42 @@ Surface abnormal account and batch performance data so the partnerships team can
 - ✓ Cross-partner trajectory overlay chart with reference lines — v3.0
 - ✓ Partner comparison matrix (heatmap, bar ranking, plain table) — v3.0
 - ✓ All v3.0 integration bugs resolved, codebase production-grade — v3.1
+- ✓ Component patterns (StatCard, DataPanel, SectionHeader, ToolbarGroup/Divider, EmptyState) with CI-guarded enforcement — v4.0 Phase 29
 
-### Current Milestone: v3.5 Flexible Charts & Metabase Import
+### Current Milestone: v4.0 Design System & Daily-Driver UX
 
-**Goal:** Replace the hardcoded collection curve chart with a unified chart system where users pick axes and chart type, and add Metabase query import to lower migration friction.
+**Goal:** Invest in design foundation (tokens, surfaces, typography, motion), fix code health issues, then build deferred features (Partner Lists, Chart Builder, Metabase Import) on the polished base. Absorbs v3.5 scope.
 
 **Target features:**
-- Custom chart builder: user-selectable X/Y axes, line/scatter/bar types, collection curves as a preset
-- Metabase query import: accept MBQL (JSON) or Metabase-generated SQL and translate to app queries
-- Live account drill-down with corrected master_accounts schema (already wired)
+- Design token system: spacing, typography, elevation, motion, surfaces
+- Surface & elevation vocabulary applied to every container
+- Micro-interactions and visual polish pass
+- URL-backed drill-down navigation (browser back button, deep-linking)
+- Accessibility audit (WCAG AA, keyboard nav, screen readers)
+- Partner Lists (carried from v3.5)
+- Custom chart builder (carried from v3.5)
+- Metabase SQL import (carried from v3.5)
 
 ### Active
 
-- [ ] Custom chart builder replacing hardcoded CollectionCurveChart
-- [ ] Metabase query import (MBQL and SQL)
-- [ ] Snowflake credentials in Vercel env vars (live data instead of static cache)
-- [ ] ANTHROPIC_API_KEY in Vercel env vars (enable Claude query in production)
+- [ ] Code health fixes (6 known issues: KI-07, KI-12, KI-13, KI-14, KI-16, KI-22)
+- [ ] Design token system (spacing, typography, elevation, motion, surfaces)
+- [ ] Surface & elevation applied to all components
+- [ ] Micro-interactions & visual polish
+- [ ] URL-backed navigation
+- [ ] Accessibility audit
+- [ ] Partner Lists, Chart Builder, Metabase SQL Import
 
 ### Out of Scope
 
-- Dynamic curve re-projection based on actuals — requires forecasting model, v4+
-- Dashboard layout with drag/drop widgets — v4 feature
-- Exportable partner summary reports — v4 feature
-- Active anomaly notifications (Slack/email) — v4, after passive anomaly detection proves value
+- Dynamic curve re-projection based on actuals — v5.0 (Phase 42)
+- Partner scorecard ingestion & competitive intelligence — v5.0
+- Contractual target tracking & triangulation views — v5.0
+- MBR pipeline integration — v6.0
+- Pattern alerts to Slack — v6.0
+- Action connections (Slack, Notion) — v6.0
+- Dashboard layout with drag/drop widgets — v6.5+
+- Exportable partner summary reports — v6.5+
 - Real-time data streaming — batch/scheduled refresh is sufficient
 - Mobile-optimized UI — desktop-first for 2-3 internal users
 - User authentication — small team, can add later if needed
@@ -69,7 +82,7 @@ Surface abnormal account and batch performance data so the partnerships team can
 - Text-to-SQL generation — dataset fits in context, SQL injection risk
 - Full chat/conversation interface — point queries, not conversations
 - AI-generated charts — existing Recharts charts are excellent
-- Metabase query import — moved to v3.5 Active
+- Metabase query import — moved to v4.0 Active
 
 ## Context
 
@@ -79,7 +92,7 @@ Surface abnormal account and batch performance data so the partnerships team can
 - **Data source:** `agg_batch_performance_summary` (61 columns), `master_accounts` (78 columns, drill-down)
 - **Static cache:** 477 batch rows + Affirm March account drill-down. Auto-switches to live Snowflake when credentials are added.
 - **Team:** 2-3 internal partnerships team members
-- **Known tech debt:** 22 items in docs/KNOWN-ISSUES.md (0 high, 9 medium, 13 low). Drill-down uses React state not URL params. ANTHROPIC_API_KEY and Snowflake credentials pending Vercel provisioning.
+- **Known tech debt:** 22 items in docs/KNOWN-ISSUES.md (0 high, 9 medium, 13 low). Drill-down uses React state not URL params (v4.0 Phase 32). ANTHROPIC_API_KEY and Snowflake credentials pending Vercel provisioning.
 
 ## Constraints
 
@@ -116,4 +129,4 @@ Surface abnormal account and batch performance data so the partnerships team can
 | Known issues documented comprehensively | Production-grade codebase snapshot | ✓ Good — 22 issues catalogued |
 
 ---
-*Last updated: 2026-04-15 after v3.5 milestone start*
+*Last updated: 2026-04-18 after Phase 29 — Component patterns shipped + CI-guarded*
