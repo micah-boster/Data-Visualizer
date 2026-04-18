@@ -3,6 +3,15 @@
 # Mirrors scripts/check-type-tokens.sh / check-surfaces.sh / check-components.sh.
 # POSIX grep (not ripgrep) — Phase 27-06/28-08 precedent: not installed on all CI images.
 # Per STATE Phase 27-06/28-08: CI wiring (Vercel / pre-commit / GitHub Actions) is user-owned.
+#
+# ALLOWLIST NOTES (Phase 30 close-out):
+# - src/components/ui/**  — shadcn primitives carry known motion debt (sheet,
+#   popover, dialog hardcoded durations). Plan 30-05 manually retargeted
+#   sidebar.tsx to tokens; other primitives stay on shadcn defaults per Phase 28
+#   precedent (known-debt allowlist). Future phase can sweep.
+# - src/components/tokens/**  — motion-demo.tsx legitimately uses inline style
+#   for 9-combo iteration.
+# - src/app/tokens/**  — token reference page.
 set -euo pipefail
 
 files_to_check() {
