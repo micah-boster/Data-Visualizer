@@ -242,6 +242,26 @@ Plans:
 - [x] 30-05-PLAN.md — Wave 4 — Sidebar lockstep + close-out (DS-28 + all DS-23..27 + A11Y-05): sidebar.tsx token retarget with data-state direction-aware easing (Pitfall 2), /tokens sidebar demo + Phase 30 aggregator, human-verify checkpoint signing off full motion suite
 **Status**: ✅ Complete (2026-04-18) — 5/5 plans shipped; DS-23..28 + A11Y-05 all complete; `npm run check:motion` guard live; human-verify checkpoint approved full motion suite end-to-end (9/9 browser checks pass)
 
+### Phase 31: Visual Polish Pass
+
+**Goal**: The finishing touches that make the difference — gradient dividers, dark-mode glass highlights, focus glows, scrollbar polish, consistent border opacities, and refined table row hover — all sitting on top of the tokens/surfaces/motion primitives shipped in Phases 26–28
+**Depends on**: Phase 26 (tokens), Phase 28 (surface + shadow elevation pairs), Phase 30 (motion duration/easing tokens). Runs after Phase 30 (cosmetic pass on the polished, animated app).
+**Effort**: Small-Medium (pure CSS, many small changes across globals + a handful of components)
+**Requirements**: DS-29 through DS-34
+**Success Criteria** (what must be TRUE):
+  1. Horizontal section separators (KPI band ↔ charts ↔ table) and ToolbarGroup vertical dividers use gradient-fade (center-solid, transparent at both ends); everything else keeps hard borders
+  2. Dark-mode `surface-raised` (KPI cards, chart cards, query cards) carries a ~6–8% white inset top-edge highlight via `box-shadow` (no border-top, no pseudo-elements); header/sidebar/overlays untouched
+  3. Focus-visible on form controls + interactive containers (inputs, selects, comboboxes, buttons; `focus-within` on ToolbarGroups + saved-view rows) uses a soft spread-glow built from the existing `--ring` token, with hard-outline a11y fallback
+  4. A single border-opacity standard (~8%, same token in both light and dark) replaces the existing border/50, border/30, and ad-hoc values across cards, panels, and table
+  5. Table row hover uses a soft neutral bg tint (~muted/4) with `--duration-quick` + `--ease-default`; tint-only (no geometry shift, no leading-edge accent bar, no chevron fade-in)
+  6. Named scroll containers (table, sidebar, popovers) render thin (8–10px), always-visible, theme-aware scrollbars; document/body scroll stays with OS default
+  7. No raw border-color hex/rgb literals or per-component border-opacity overrides remain in app code outside the allowlist (guard-enforced, modeled on check:tokens / check:surfaces / check:components / check:motion)
+  8. `/tokens` page gains a Visual Polish tab with live specimens of each treatment (gradient divider, glass highlight, focus glow, border standard, row hover, scrollbar)
+**Plans**: TBD
+
+**After Phase 31, kick off:**
+- **Phase 33** (Accessibility Audit) — audit the final polished state
+
 ### Phase 32: URL-Backed Navigation
 
 **Goal**: Move drill-down state from React state to URL params — enable browser back button, deep-linking, and shareable URLs
