@@ -183,14 +183,15 @@ Plans:
   7. All surface treatments are consistent — no more 3 different card styles
 **Plans**: 8 plans
 Plans:
-- [ ] 28-01-PLAN.md — Foundation: 4 semantic elevation tokens + surface-translucent + /tokens demo section
-- [ ] 28-02-PLAN.md — Pilot: Header translucent + backdrop-blur + elevation-chrome + sticky
-- [ ] 28-03-PLAN.md — Pilot: KPI cards + skeleton + empty-state retune to elevation-raised
-- [ ] 28-04-PLAN.md — Pilot: Table inset cleanup — drop outer frame, sticky column header lift, remove zebra
-- [ ] 28-05-PLAN.md — Sweep: Chart container raised shells + query cards + anomaly panel
-- [ ] 28-06-PLAN.md — Sweep: Popover/Sheet/Dialog/Combobox/Recharts overlay family
-- [ ] 28-07-PLAN.md — Sweep: Sidebar (base) + content (raised) three-surface reconciliation
-- [ ] 28-08-PLAN.md — Enforcement: scripts/check-surfaces.sh POSIX grep guard + DS-17 cleanup
+- [x] 28-01-PLAN.md — Foundation: 4 semantic elevation tokens + surface-translucent + /tokens demo section
+- [x] 28-02-PLAN.md — Pilot: Header translucent + backdrop-blur + elevation-chrome + sticky
+- [x] 28-03-PLAN.md — Pilot: KPI cards + skeleton + empty-state retune to elevation-raised
+- [x] 28-04-PLAN.md — Pilot: Table inset cleanup — drop outer frame, sticky column header lift, remove zebra
+- [x] 28-05-PLAN.md — Sweep: Chart container raised shells + query cards + anomaly panel
+- [x] 28-06-PLAN.md — Sweep: Popover/Sheet/Dialog/Combobox/Recharts overlay family
+- [x] 28-07-PLAN.md — Sweep: Sidebar (base) + content (raised) three-surface reconciliation
+- [x] 28-08-PLAN.md — Enforcement: scripts/check-surfaces.sh POSIX grep guard + DS-17 cleanup
+**Status**: ✅ Complete (2026-04-17) — 8/8 plans shipped; all DS-11→DS-17 verified; check:surfaces guard green
 
 ---
-*Last updated: 2026-04-17 — Phase 28 planned: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
+*Last updated: 2026-04-17 — Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
