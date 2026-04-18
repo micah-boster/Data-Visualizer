@@ -166,6 +166,91 @@ export function MotionDemo() {
           </div>
         </div>
       </section>
+
+      <DrillCrossFadeDemo />
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Drill cross-fade (DS-23)
+//
+// Mirrors the real data-display.tsx drill boundary mechanism: a content wrapper
+// re-keys on drill identity, and `transition-opacity duration-normal ease-default`
+// softens the swap. Clicking the level buttons triggers the same transition
+// users will see in the app when drilling root → partner → batch.
+// ---------------------------------------------------------------------------
+
+const DRILL_LEVELS = ['root', 'partner', 'batch'] as const;
+type DemoDrillLevel = (typeof DRILL_LEVELS)[number];
+
+const DEMO_CONTENT: Record<DemoDrillLevel, { title: string; body: string }> = {
+  root: {
+    title: 'All partners',
+    body: 'Cross-partner matrix + trajectory chart. One row per partner.',
+  },
+  partner: {
+    title: 'Acme Corp',
+    body: 'KPI cards + partner-level table. One row per batch.',
+  },
+  batch: {
+    title: 'Batch 2024-Q3',
+    body: 'Batch collection curve + row-level account detail.',
+  },
+};
+
+function DrillCrossFadeDemo() {
+  const [demoLevel, setDemoLevel] = useState<DemoDrillLevel>('root');
+
+  return (
+    <section className="flex flex-col gap-stack">
+      <div className="flex flex-col gap-[var(--spacing-1)]">
+        <div className="flex items-baseline gap-inline">
+          <h2 className="text-heading">Drill cross-fade</h2>
+          <span className="text-label uppercase text-muted-foreground">
+            DS-23
+          </span>
+        </div>
+        <p className="text-body text-muted-foreground">
+          Drilling between root, partner, and batch levels cross-fades the
+          content region at{' '}
+          <code className="text-caption">--duration-normal</code> ×{' '}
+          <code className="text-caption">--ease-default</code>. Header, sidebar,
+          and sticky chrome stay steady. Symmetric cross-fade — browser back /
+          forward replays identically.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-stack">
+        <div className="flex gap-inline">
+          {DRILL_LEVELS.map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setDemoLevel(l)}
+              aria-pressed={demoLevel === l}
+              className={cn(
+                'px-[var(--spacing-3)] py-[var(--spacing-2)] rounded-sm text-label uppercase transition-colors duration-quick ease-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                demoLevel === l
+                  ? 'bg-brand-green text-primary-foreground'
+                  : 'bg-surface-inset text-foreground hover:bg-hover-bg',
+              )}
+            >
+              {l}
+            </button>
+          ))}
+        </div>
+        <div
+          key={`demo-drill-${demoLevel}`}
+          data-drill-fade
+          className="transition-opacity duration-normal ease-default rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised min-h-[120px]"
+        >
+          <h3 className="text-title">{DEMO_CONTENT[demoLevel].title}</h3>
+          <p className="text-body text-muted-foreground">
+            {DEMO_CONTENT[demoLevel].body}
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }
