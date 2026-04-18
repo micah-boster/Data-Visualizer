@@ -98,7 +98,7 @@
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
 | 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
 | 28. Surfaces & Elevation | 8/8 | Complete   | 2026-04-18 | - |
-| 29. Component Patterns | 2/5 | In Progress|  | - |
+| 29. Component Patterns | 4/5 | In Progress|  | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |

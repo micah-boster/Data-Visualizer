@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T04:22:25.519Z"
+last_updated: "2026-04-18T04:22:38.265Z"
 progress:
   total_phases: 32
   completed_phases: 28
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 29 (Component Patterns — in progress; 1/5 plans executed via this session; prior plans 01-03 present in tree, 04 just shipped)
-Plan: 29-04 SHIPPED — ToolbarDivider sibling component (src/components/patterns/toolbar-divider.tsx) + /tokens specimen + unified-toolbar.tsx migration (2 raw divider divs → <ToolbarDivider />). check:tokens + check:surfaces pass. Pre-existing main-tree build errors (collection-curve-chart, data-display EmptyState) verified out of scope via stash-compare; logged in deferred-items.md for Plan 05 / earlier owners.
-Status: Phase 29 still in progress. Plan 29-05 aggregator (check:components grep guard + token-browser wire-up + comparison-matrix.tsx:110 audit) remains queued. Two pre-existing build errors in unrelated files need resolution before full `npm run build` passes.
-Last activity: 2026-04-18 — Shipped 29-04 (51e99e0 pattern + specimen; 560a036 unified-toolbar migration). Resolved decision #5 sibling-pattern locked; no ToolbarGroup wrapper. Pitfall 5 analysis confirmed no stray-divider risk at either site (clusters always have visible Columns/Sort on left, Export/SaveView on right).
+Phase: 29 (Component Patterns — in progress; Plans 01-04 shipped, Plan 05 aggregator queued)
+Plan: 29-01 SHIPPED — StatCard pattern (src/components/patterns/stat-card.tsx) with all 7 first-class states (value / loading / error / no-data / insufficient-data / stale / comparison); kpi-summary-cards.tsx migrated (4 usages + loading grid); legacy kpi-card.tsx DELETED; /tokens specimen exported for Plan 05 aggregator. check:tokens + check:surfaces + `npm run build` all pass.
+Status: Phase 29 still in progress — Plans 01, 02, 03, 04 shipped; Plan 05 aggregator (check:components grep guard + token-browser wire-up + comparison-matrix.tsx:110 audit) remains queued. Prior "pre-existing build errors" referenced in 29-04 notes are no longer failing after 29-01 + 29-03 migrations resolved the relevant surfaces.
+Last activity: 2026-04-18 — Shipped 29-01 (64f65ad StatCard component; 4615ab1 kpi-summary-cards migration + KpiCard deletion; 409abf1 /tokens specimen). Trend explanatory phrase 'vs rolling avg of prior batches' promoted from tooltip-only to visible second-line chrome; stale + comparison deliberately ship as prop surface only per Pitfalls 1 & 2.
 
 Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phase 27 + Phase 32 shipped; 9 remaining phases)
 
@@ -132,6 +132,10 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 - [Phase 29-04]: No conditional guards on migrated dividers — Pitfall 5 analysis: Columns/Sort always render (left); Export/SaveView always render (right); zero stray-divider risk
 - [Phase 29-04]: comparison-matrix.tsx:110 mx-1 divider intentionally out of scope — Plan 29-05 check:components guard will audit (allowlist+justification OR separate sweep)
 - [Phase 29-04]: Specimen file (patterns-specimen-toolbar.tsx) NOT wired into token-browser.tsx — Plan 29-05 aggregator owns wiring; each plan scoped to own file(s)
+- [Phase 29-03]: EmptyState pattern variant is chosen by TRIGGER CONDITION, not legacy copy. data-display.tsx:440 (dataset empty) = 'no-data'; data-table.tsx:342 (filters excluded all rows) = 'no-results'. Codifies Pitfall 3 from 29-RESEARCH.
+- [Phase 29-03]: Three-state action override surface (undefined=default CTA, null=suppress, ReactNode=override) ships on EmptyState. Reusable for other composed patterns needing 'default vs suppress vs override' slot semantics.
+- [Phase 29-03]: Strict migrate-then-delete ordering (Pitfall 8 avoidance): all legacy imports migrated and grep-verified zero before rm. Zero parallel-support window; no alias re-exports, no @deprecated.
+- [Phase 29-03]: Copy-semantic realignment at data-display.tsx:440: legacy rendered SearchX + 'No data matches your filters' for a dataset-empty trigger. New default Database + 'No data yet' restores semantic-to-trigger alignment. Filter-miss copy now lives exclusively on no-results variant.
 
 ### Pending Todos
 
