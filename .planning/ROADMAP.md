@@ -99,7 +99,7 @@
 | 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
 | 28. Surfaces & Elevation | 8/8 | Complete   | 2026-04-18 | - |
 | 29. Component Patterns | 5/5 | Complete    | 2026-04-18 | - |
-| 30. Micro-Interactions & Motion | 2/5 | In Progress|  | - |
+| 30. Micro-Interactions & Motion | 3/5 | In Progress|  | - |
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |

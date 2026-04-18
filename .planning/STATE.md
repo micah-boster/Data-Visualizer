@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T14:20:00.911Z"
+last_updated: "2026-04-18T14:27:22.892Z"
 progress:
-  total_phases: 33
+  total_phases: 34
   completed_phases: 29
   total_plans: 80
-  completed_plans: 76
+  completed_plans: 77
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 30 (Micro-Interactions & Motion — Wave 2 in progress)
-Plan: 30-02 shipped 2026-04-18. Next up: Wave 3 (30-03 interactive-card sweep) per phase plan. 3/5 plans remaining.
-Status: In progress. Plan 30-02 executed 2 tasks + SUMMARY + atomic commits. DS-23 drill cross-fade live at data-display boundary (charts + KPI strip + table fade together at duration-normal × ease-default); data-drill-fade attribute + contain: layout Pitfall-3 guard shipped; /tokens Motion tab gains DrillCrossFadeDemo with 3 level buttons.
-Last activity: 2026-04-18 — Shipped 30-02 (drill cross-fade). Commits: 872cc37 (data-display drill boundary wrapped in transition-opacity duration-normal ease-default), e6d1037 (/tokens Motion tab drill cross-fade live demo). All 4 check scripts green. `npm run build` succeeds.
+Phase: 30 (Micro-Interactions & Motion — Wave 2 complete; Wave 3 next)
+Plan: 30-03 shipped 2026-04-18. Next up: 30-04 per phase plan. 2/5 plans remaining.
+Status: In progress. Plan 30-03 executed 3 tasks + SUMMARY + atomic commits. DS-26 button press-scale live (default + secondary variants hover:scale-[1.01] active:scale-[0.98] with not-aria-[haspopup] opt-out); Pitfall 7 base-class translate-y-px removed; data-press-scale runtime attribute wired to A11Y-05 reduced-motion override; DataPanel gains interactive?: boolean prop (.hover-lift sweep, DS-25); /tokens Motion tab gains Button press + Panel hover-lift demos.
+Last activity: 2026-04-18 — Shipped 30-03 (button press-scale + DataPanel interactive). Commits: 09cbad1 (button variant-scoped scale + duration-quick + data-press-scale), 3230962 (DataPanel.interactive prop + hover-lift chassis), 28543b6 (/tokens Motion tab — 6 button variants demo + interactive/static DataPanel demo). All 4 check scripts green. `npm run build` succeeds.
 
-Progress: [███████████████████░] 76/80 plans (95% — v1.0 milestone)
+Progress: [████████████████████] 77/80 plans (96% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -155,6 +155,11 @@ Progress: [███████████████████░] 76/80 p
 - [Phase 30-02]: Composite drill key shape `drill-${level}-${partner ?? 'none'}-${batch ?? 'none'}`. Includes all three axes so future cross-partner drills and batch→batch transitions within a level also get fresh mounts. 'none' sentinel avoids empty-segment key collisions like `drill-root--`.
 - [Phase 30-02]: Pitfall 3 scroll-jump defense: inline `style={{ contain: 'layout' }}` on the drill wrapper complements use-drill-down's existing router.push `{ scroll: false }`. check:motion regex scopes to transitionDuration/transitionTimingFunction only, so contain is not flagged. No router contract touched.
 - [Phase 30-02]: DrillCrossFadeDemo on /tokens mirrors production recipe 1:1 (same re-key + same transition-opacity duration-normal ease-default utilities). Establishes pattern: any future motion-utility docs page should preview the exact mechanism users will experience in-app.
+- [Phase 30]: [Phase 30-03]: Pitfall 7 resolved — base-class active:not-aria-[haspopup]:translate-y-px REMOVED, replaced by variant-scoped hover/active scale on default + secondary only. Eliminates composite translate+scale read ('nudges down AND shrinks'). Non-primary variants (outline/ghost/destructive/link) lose the translate feedback entirely — acceptable per DS-26 scope lock.
+- [Phase 30]: [Phase 30-03]: data-press-scale runtime attribute over base-class data attr — Button function checks variant === 'default' || 'secondary' and emits data-press-scale={pressScale || undefined}. React omits undefined attributes, so only scaled variants participate in the A11Y-05 [data-press-scale]:hover/:active → transform: none override. Pattern reusable for any future scaled/translated component needing reduced-motion neutralize.
+- [Phase 30]: [Phase 30-03]: DataPanel call-site wiring all DEFERRED — all 3 existing consumers (comparison-matrix, trajectory-chart, collection-curve-chart) have no onClick on the panel itself (actions live inside the actions slot). interactive prop surface ships live but unused outside /tokens specimen. Wires on when drill-expand or overlay-expand feature lands; no per-site adjustments needed.
+- [Phase 30]: [Phase 30-03]: Base-class Button duration-quick added alongside transition-all — replaces Tailwind's implicit 150ms fallback with explicit 120ms token. Delta within 30ms perceptual threshold; check:motion Check-5 was only matching literal duration-150 (soft-miss on transition-all without duration). Explicit token removes the implicit-fallback footgun.
+- [Phase 30]: [Phase 30-03]: --duration-micro (60ms) NOT introduced. CONTEXT floated it as follow-up if 120ms press feels laggy; no pilot signal yet. Kept duration-quick consistent across color/bg/transform. Reopen only if in-browser feedback flags press as sluggish — add in dedicated plan with single-site pilot first.
 
 ### Pending Todos
 
@@ -172,7 +177,7 @@ Progress: [███████████████████░] 76/80 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 30-02-PLAN.md (drill cross-fade DS-23). data-display boundary wraps drill-variant region in transition-opacity duration-normal ease-default keyed on drill identity; data-drill-fade attribute + contain: layout Pitfall-3 guard shipped; /tokens Motion tab gains DrillCrossFadeDemo. All 4 guard scripts green. Ready for Wave 3 (Plan 30-03 interactive-card sweep).
+Stopped at: Completed 30-03-PLAN.md (button press-scale DS-26 + DataPanel interactive DS-25 sweep). button.tsx variants gain hover:not-aria-[haspopup]:scale-[1.01] active:not-aria-[haspopup]:scale-[0.98] on default + secondary only; base-class Pitfall-7 translate-y-px removed; data-press-scale runtime attribute wired for A11Y-05 reduced-motion; DataPanel.interactive?: boolean prop shipped (chassis .hover-lift); /tokens Motion tab gains Button press + Panel hover-lift demos. All 4 guard scripts green. Ready for Plan 30-04.
 Resume file: None
 
 ## Performance Metrics
@@ -187,4 +192,5 @@ Resume file: None
 | 29 | 05 | ~15 min | 3 | 4 | 2026-04-18 |
 | 30 | 01 | ~4 min | 3 | 10 | 2026-04-18 |
 | 30 | 02 | ~2 min | 2 | 2 | 2026-04-18 |
+| Phase 30 P03 | ~2 min | 3 tasks | 3 files |
 
