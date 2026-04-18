@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T19:30:19.473Z"
+last_updated: "2026-04-18T19:38:53.823Z"
 progress:
-  total_phases: 34
+  total_phases: 35
   completed_phases: 30
-  total_plans: 84
-  completed_plans: 80
+  total_plans: 90
+  completed_plans: 83
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 34 (Partner Lists) — in progress
-Plan: 34-01 3/3 tasks complete — types/schema/storage/defaults/filter-evaluator (5f70a3b) + usePartnerLists (92c3d50) + ActivePartnerListProvider (907ae89). SUMMARY.md written.
-Status: Plan 34-01 ships the partner-lists data layer: 7 new files, zero existing files touched, all 4 check:* guards + build green. LIST-04 satisfied. Ready for Plan 34-02 (sidebar section).
-Last activity: 2026-04-18 — Completed 34-01 end-to-end; single blocking auto-fix (React 19 JSX namespace import) folded into Task 3.
+Plan: 34-02 3/3 tasks complete — PartnerListsSidebarGroup (1aa72b6) + shared PartnerListsProvider wiring (e9b2f20) + filteredRawData/SidebarDataPopulator threading (e275f6f). SUMMARY.md written. Plan 34-03 already landed in parallel (CreateListDialog).
+Status: Plan 34-02 ships the sidebar surface + activation pipeline: 2 new files, 3 modified files, all 4 check:* guards + build green. LIST-03 + LIST-05 satisfied. With 34-01/02/03 shipped, Plan 34-04 (integration wiring — mount dialog inside AppSidebar, replace onCreateList/onEditList no-ops, end-to-end smoke) is the last remaining piece.
+Last activity: 2026-04-18 — Completed 34-02 end-to-end; zero auto-fixes. Provider escalated from app-sidebar.tsx to providers.tsx via PartnerListsProvider (option-b context) because AppSidebar and DataDisplay are siblings under SidebarProvider (plan's anticipated escalation branch).
 
-Progress: [████████████████████] 80/84 plans (95% — v1.0 milestone)
+Progress: [████████████████████] 83/90 plans (92% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -175,6 +175,19 @@ Progress: [████████████████████] 80/84 p
 - [Phase 34-01]: `filter-evaluator.ts` accepts `Array<Record<string, unknown>>` rather than a Snowflake-specific row type — stays portable and testable across any row shape.
 - [Phase 34-01]: Stale-ID recovery lives on the provider (useEffect sanitizer) — when the active list is deleted, `activeListId` resets to `null` automatically. No consumer-side plumbing needed.
 - [Phase 34-01]: React 19 `JSX` namespace regression — `JSX.Element` is no longer a global type; must be imported as `type JSX` from `react`. Blocking auto-fix (Rule 3) applied to `ActivePartnerListProvider`. Pattern for any future explicit `JSX.Element` return annotation in this codebase.
+- [Phase 34-03]: CreateListDialog shipped as a Sheet (right side, `sm:max-w-2xl`) — Research Open Q #4 default honored; no centered-Dialog fallback needed.
+- [Phase 34-03]: Existing `FilterCombobox` is single-select by design (`value: string | null`); composed a local multi-select using Popover + Checkbox inside AttributeFilterBar rather than extending the shared primitive. Keeps the single-select surface stable for its current callers.
+- [Phase 34-03]: `usePartnerLists` hook NOT modified — Plan 01 shipped `updateList` correctly; the safety-net `files_modified` entry was not needed.
+- [Phase 34-03]: `source: 'attribute' | 'manual'` derived at save time from `Object.values(filters).some(arr => arr?.length > 0)` — never hard-coded. Edit mode never mutates source (Pitfall 7, locked at creation).
+- [Phase 34-03]: Selected pane is unaffected by attribute filter changes — filter scopes Available pane only (sticky-selection semantics). Plan's must_haves.truths #2 verbatim.
+- [Phase 34-03]: Edit-mode hydration useEffect depends on `(open, editMode?.listId)` only; exhaustive-deps relax is explicit + commented so list-state mutations elsewhere don't clobber the in-progress edit form.
+- [Phase 34-03]: DualPaneTransfer prunes stale per-pane-check ids via `useMemo` Set intersection — handles parent removing ids from available/selected while the child still has them checked. Prevents phantom Add/Remove counts.
+- [Phase 34-03]: SheetTitle styled with `className='text-heading'` override per Phase 27-04 rule; NOT wrapped in SectionHeader — primitive owns the `data-slot='sheet-title'` ARIA wiring.
+- [Phase 34-03]: ATTRIBUTES const in `attribute-filter-bar.tsx` is the single-line extension point for future attributes (PRODUCT_TYPE / REVENUE_BAND). Adding one requires config entry + schema `.optional()` field + filter-evaluator AND gate. Three-step additive change, no component rewrite.
+- [Phase 34]: [Phase 34-02]: ActivePartnerListProvider escalated from app-sidebar.tsx to providers.tsx — AppSidebar and DataDisplay are siblings under SidebarProvider, so the provider must live higher than both. PartnerListsProvider (new context file) wraps usePartnerLists() once and nests ActivePartnerListProvider with shared lists.
+- [Phase 34]: [Phase 34-02]: filteredRawData memo extended with a SECOND filter pass (Phase 34 activeList after Phase 25 dimension filters), not a parallel memo — keeps single source of truth; all downstream consumers (KPIs, charts, table, QueryCommandDialog) inherit the list filter with zero per-site edits.
+- [Phase 34]: [Phase 34-02]: SidebarDataPopulator.allowedPartnerIds: string[] | null is a DISPLAY-SCOPING prop (narrows what is rendered without changing the source roster). Roster source stays data.data per Phase 25 navigation-integrity lock; null sentinel = no active list = render everyone.
+- [Phase 34]: [Phase 34-02]: Stacked SidebarMenuAction recipe (edit at className='right-7' + delete at default right-1) chosen over popover-menu fallback. Shadcn SidebarMenuAction composes cleanly via className override; no @base-ui/react/popover dependency introduced.
 
 ### Pending Todos
 
@@ -192,8 +205,8 @@ Progress: [████████████████████] 80/84 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 34-01-PLAN.md. Partner-lists data layer shipped: 7 new files (types, schema, storage, defaults, filter-evaluator, usePartnerLists hook, ActivePartnerListProvider context), zero existing files touched. All 4 check:* guards + build green. LIST-04 satisfied. Single blocking auto-fix: React 19 `JSX` namespace import (folded into Task 3 commit 907ae89). Ready for Plan 34-02 (sidebar section).
-Resume file: .planning/phases/34-partner-lists/34-02-PLAN.md
+Stopped at: Completed 34-03-PLAN.md (create/edit dialog) and 34-02-PLAN.md (sidebar section) running in parallel. 34-03 shipped 3 new files under src/components/partner-lists/ (dual-pane-transfer, attribute-filter-bar, create-list-dialog); LIST-01 + LIST-02 satisfied. 34-02 shipped PartnerListsSidebarGroup wiring via shared provider + filteredRawData thread-through. All 4 check:* guards + build green. Ready for Plan 34-04 (integration) to wire dialog open/edit state into the sidebar group.
+Resume file: .planning/phases/34-partner-lists/34-04-PLAN.md
 
 ## Performance Metrics
 
@@ -211,4 +224,6 @@ Resume file: .planning/phases/34-partner-lists/34-02-PLAN.md
 | 30 | 04 | ~5 min | 3 | 2 | 2026-04-18 |
 | 30 | 05 | ~4 min + human-verify | 3 | 3 | 2026-04-18 |
 | 34 | 01 | ~3 min | 3 | 7 | 2026-04-18 |
+| 34 | 03 | ~3 min | 2 | 3 | 2026-04-18 |
+| 34 | 02 | ~5 min | 3 | 5 | 2026-04-18 |
 

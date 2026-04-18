@@ -103,7 +103,7 @@
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
-| 34. Partner Lists | 1/4 | In Progress|  | - |
+| 34. Partner Lists | 3/4 | In Progress|  | - |
 | 35. Chart Schema & Migration | v4.0 | 0/TBD | Not started | - |
 | 36. Chart Builder | v4.0 | 0/TBD | Not started | - |
 | 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |
@@ -257,7 +257,14 @@ Plans:
   6. Named scroll containers (table, sidebar, popovers) render thin (8–10px), always-visible, theme-aware scrollbars; document/body scroll stays with OS default
   7. No raw border-color hex/rgb literals or per-component border-opacity overrides remain in app code outside the allowlist (guard-enforced, modeled on check:tokens / check:surfaces / check:components / check:motion)
   8. `/tokens` page gains a Visual Polish tab with live specimens of each treatment (gradient divider, glass highlight, focus glow, border standard, row hover, scrollbar)
-**Plans**: TBD
+**Plans**: 6 plans across 3 waves (Wave 1: 4 parallel foundation/utility plans; Wave 2: gradient divider consumer layer; Wave 3: enforcement + /tokens aggregator + human-verify)
+Plans:
+- [ ] 31-01-PLAN.md — DS-32 border retune (8% in both modes, --input stays 15%) + DS-30 glass highlight bump (dark --shadow-elevation-raised inset 0.05→0.07) — globals.css token-level only, no consumer edits
+- [ ] 31-02-PLAN.md — DS-31 .focus-glow + .focus-glow-within utilities (`:has(:focus-visible)` per Pitfall 2) + migrate 2 legacy focus sites (filter-combobox, save-view-popover) + add focus-within to ToolbarGroup + saved-view row
+- [ ] 31-03-PLAN.md — DS-34 narrow scrollbar scope: remove global ::-webkit-scrollbar, add .thin-scrollbar utility + 3 scrollbar tokens, opt in 6 named containers (data-table, sidebar, filter-combobox, sort-dialog, query-response, curve-legend; reconcile sidebar no-scrollbar→thin-scrollbar)
+- [ ] 31-04-PLAN.md — DS-33 validate-first row hover retune: in-browser check current --hover-bg vs CONTEXT ~muted/4; no-op or soften (light 8→5, dark 6→4); Phase 30 wiring untouched
+- [ ] 31-05-PLAN.md — DS-29 gradient dividers: .divider-horizontal-fade + .divider-vertical-fade utilities, new SectionDivider component at 2 data-display junctions, ToolbarDivider internal recipe swap (3 consumers inherit) — depends on 31-01 for retuned --border
+- [ ] 31-06-PLAN.md — Enforcement + close-out: scripts/check-polish.sh POSIX guard + npm run check:polish + /tokens 7th "Polish" tab with 6 live specimens + human-verify checkpoint signing off full pass (DS-29..DS-34)
 
 **After Phase 31, kick off:**
 - **Phase 33** (Accessibility Audit) — audit the final polished state
