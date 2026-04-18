@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check:tokens": "bash scripts/check-type-tokens.sh",
-    "check:surfaces": "bash scripts/check-surfaces.sh"
+    "check:components": "bash scripts/check-components.sh",
+    "check:surfaces": "bash scripts/check-surfaces.sh",
+    "check:tokens": "bash scripts/check-type-tokens.sh"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
