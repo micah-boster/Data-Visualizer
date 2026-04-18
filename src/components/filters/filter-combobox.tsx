@@ -34,7 +34,7 @@ export function FilterCombobox({
       <Combobox.InputGroup className="relative flex items-center">
         <Combobox.Input
           placeholder={placeholder}
-          className="h-9 w-44 rounded-md border border-input bg-background px-3 pr-8 text-body placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+          className="h-9 w-44 rounded-md border border-input bg-background px-3 pr-8 text-body placeholder:text-muted-foreground focus:outline-none focus-glow"
         />
         <Combobox.Trigger className="absolute right-2 flex items-center text-muted-foreground">
           <ChevronDown className="h-4 w-4" />

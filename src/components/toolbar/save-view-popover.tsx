@@ -94,7 +94,7 @@ export function SaveViewPopover({ onSave, onReplace, hasViewWithName, canInclude
               if (e.key === 'Escape') setOpen(false);
             }}
             placeholder="View name"
-            className="flex-1 rounded-md border bg-transparent px-2 py-1.5 text-body outline-none focus:ring-1 focus:ring-ring"
+            className="flex-1 rounded-md border bg-transparent px-2 py-1.5 text-body focus:outline-none focus-glow"
           />
           <Button
             size="sm"
