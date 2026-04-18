@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { DataFreshnessProvider } from '@/contexts/data-freshness';
 import { SidebarDataProvider } from '@/contexts/sidebar-data';
+import { PartnerListsProvider } from '@/contexts/partner-lists';
 import { getQueryClient } from '@/lib/query-client';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -20,7 +21,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <TooltipProvider>
           <DataFreshnessProvider>
             <SidebarDataProvider>
-              {children}
+              <PartnerListsProvider>
+                {children}
+              </PartnerListsProvider>
             </SidebarDataProvider>
           </DataFreshnessProvider>
         </TooltipProvider>

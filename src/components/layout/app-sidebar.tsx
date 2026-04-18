@@ -2,6 +2,8 @@
 
 import { Users, Bookmark, Trash2, Star, LayoutDashboard } from 'lucide-react';
 import { useSidebarData } from '@/contexts/sidebar-data';
+import { usePartnerListsContext } from '@/contexts/partner-lists';
+import { PartnerListsSidebarGroup } from '@/components/partner-lists/partner-lists-sidebar-group';
 import {
   Sidebar,
   SidebarContent,
@@ -30,6 +32,11 @@ export function AppSidebar() {
     isReady,
   } = useSidebarData();
 
+  // Partner-lists data comes from the shared provider so the sidebar and
+  // data-display read from the same usePartnerLists() call (single source
+  // of truth for the persisted lists + CRUD actions).
+  const { lists, deleteList, restoreList } = usePartnerListsContext();
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -51,6 +58,19 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Partner Lists — CONTEXT lock: must appear ABOVE the Partners section. */}
+        <PartnerListsSidebarGroup
+          lists={lists}
+          deleteList={deleteList}
+          restoreList={restoreList}
+          onCreateList={() => {
+            // Wired by Plan 03 (CreateListDialog open-state setter).
+          }}
+          onEditList={() => {
+            // Wired by Plan 03 (CreateListDialog edit-mode open-state setter).
+          }}
+        />
+
         {/* Partner navigation */}
         <SidebarGroup>
           <SidebarGroupLabel>
