@@ -22,7 +22,7 @@ import { UnifiedToolbar } from '@/components/toolbar/unified-toolbar';
 import { TableHeader } from './table-header';
 import { TableBody } from './table-body';
 import { TableFooter } from './table-footer';
-import { FilterEmptyState } from '@/components/filters/filter-empty-state';
+import { EmptyState } from '@/components/patterns/empty-state';
 import { ColumnPickerSidebar } from '@/components/columns/column-picker-sidebar';
 import type { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
 import type { TrendingData, CrossPartnerData } from '@/types/partner-stats';
@@ -339,7 +339,7 @@ export function DataTable({
 
       {/* Scrollable table container or empty state */}
       {(rootFilterEmpty || (!hasFilteredRows && hasActiveFilters && isRoot)) ? (
-        <FilterEmptyState onClearFilters={clearAll} />
+        <EmptyState variant="no-results" onAction={clearAll} />
       ) : (
         <div
           ref={tableContainerRef}

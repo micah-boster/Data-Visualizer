@@ -18,7 +18,7 @@ import { CrossPartnerProvider, useCrossPartnerContext } from '@/contexts/cross-p
 import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingState } from '@/components/loading-state';
 import { ErrorState } from '@/components/error-state';
-import { EmptyState } from '@/components/empty-state';
+import { EmptyState } from '@/components/patterns/empty-state';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/table/data-table';
@@ -437,7 +437,7 @@ export function DataDisplay() {
 
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState error={error} onRetry={() => refetch()} />;
-  if (!data || data.data.length === 0) return <EmptyState />;
+  if (!data || data.data.length === 0) return <EmptyState variant="no-data" />;
   if (drillState.level === 'batch' && isAccountError) {
     return <ErrorState error={accountError} onRetry={() => navigateToLevel('partner')} />;
   }
