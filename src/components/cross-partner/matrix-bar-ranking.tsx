@@ -62,7 +62,7 @@ export function MatrixBarRanking({ partners, metrics }: MatrixViewProps) {
               </span>
               <div className="flex-1 h-5 rounded bg-muted/50 overflow-hidden">
                 <div
-                  className="h-full rounded transition-all duration-300"
+                  className="h-full rounded transition-all duration-slow"
                   style={{
                     width: `${Math.max(pct, 1)}%`,
                     backgroundColor: color,

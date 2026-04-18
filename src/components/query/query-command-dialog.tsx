@@ -41,8 +41,8 @@ export function QueryCommandDialog({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/30 data-ending-style:opacity-0 data-starting-style:opacity-0 transition-opacity duration-150 supports-backdrop-filter:backdrop-blur-xs" />
-        <DialogPrimitive.Popup className="fixed left-1/2 top-[15%] z-50 w-full max-w-2xl -translate-x-1/2 rounded-xl bg-surface-floating p-0 shadow-elevation-floating transition duration-150 data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95">
+        <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/30 data-ending-style:opacity-0 data-starting-style:opacity-0 transition-opacity duration-quick supports-backdrop-filter:backdrop-blur-xs" />
+        <DialogPrimitive.Popup className="fixed left-1/2 top-[15%] z-50 w-full max-w-2xl -translate-x-1/2 rounded-xl bg-surface-floating p-0 shadow-elevation-floating transition duration-quick data-ending-style:opacity-0 data-ending-style:scale-95 data-starting-style:opacity-0 data-starting-style:scale-95">
           <DialogPrimitive.Title className="sr-only">
             Ask a question about your data
           </DialogPrimitive.Title>

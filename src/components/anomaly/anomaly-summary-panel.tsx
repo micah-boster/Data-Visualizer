@@ -60,7 +60,7 @@ export function AnomalySummaryPanel({ onDrillToPartner }: AnomalySummaryPanelPro
 
       {/* Expanded list */}
       <div
-        className="overflow-hidden transition-all duration-200"
+        className="overflow-hidden transition-all duration-normal"
         style={{
           maxHeight: isExpanded ? `${flaggedPartners.length * 48 + 8}px` : '0px',
         }}

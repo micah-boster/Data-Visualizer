@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:components": "bash scripts/check-components.sh",
+    "check:motion": "bash scripts/check-motion.sh",
     "check:surfaces": "bash scripts/check-surfaces.sh",
     "check:tokens": "bash scripts/check-type-tokens.sh"
   },

@@ -76,7 +76,7 @@ export function TrendIndicator({
   return (
     <Tooltip>
       <TooltipTrigger
-        className={`inline-flex items-center gap-1${bgStyle ? ' rounded px-1 -mx-1 transition-colors duration-150' : ''}`}
+        className={`inline-flex items-center gap-1${bgStyle ? ' rounded px-1 -mx-1 transition-colors duration-quick' : ''}`}
         style={bgStyle}
       >
         {formattedValue}

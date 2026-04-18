@@ -79,7 +79,7 @@ export function FormattedCell({
         return (
           <Tooltip>
             <TooltipTrigger
-              className="rounded px-1 -mx-1 transition-colors duration-150"
+              className="rounded px-1 -mx-1 transition-colors duration-quick"
               style={{ backgroundColor: bgColor }}
             >
               {formattedValue}
