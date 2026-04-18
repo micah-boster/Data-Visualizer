@@ -103,7 +103,7 @@
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
-| 34. Partner Lists | v4.0 | 0/TBD | Not started | - |
+| 34. Partner Lists | 1/4 | In Progress|  | - |
 | 35. Chart Schema & Migration | v4.0 | 0/TBD | Not started | - |
 | 36. Chart Builder | v4.0 | 0/TBD | Not started | - |
 | 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |

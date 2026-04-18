@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T19:19:26.480Z"
+last_updated: "2026-04-18T19:30:19.473Z"
 progress:
   total_phases: 34
   completed_phases: 30
   total_plans: 84
-  completed_plans: 79
+  completed_plans: 80
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 30 (Micro-Interactions & Motion) — ✅ COMPLETE (2026-04-18)
-Plan: 30-05 3/3 tasks complete — sidebar retarget (92cc355) + /tokens aggregator (671f2b7) + human-verify APPROVED (all 9 checks pass).
-Status: Phase 30 close-out complete. DS-23..28 + A11Y-05 all shipped and user-verified end-to-end. `npm run check:motion` guard live. /tokens Motion tab serves as canonical reference for every animated surface. Ready for `/gsd:verify-phase 30` and Phase 31 kick-off.
-Last activity: 2026-04-18 — Shipped 30-05 Tasks 1+2, received human-verify approval, wrote SUMMARY.md, flipped DS-28 + Phase 30 close-out across REQUIREMENTS / ROADMAP / STATE. Final metadata commit pending.
+Phase: 34 (Partner Lists) — in progress
+Plan: 34-01 3/3 tasks complete — types/schema/storage/defaults/filter-evaluator (5f70a3b) + usePartnerLists (92c3d50) + ActivePartnerListProvider (907ae89). SUMMARY.md written.
+Status: Plan 34-01 ships the partner-lists data layer: 7 new files, zero existing files touched, all 4 check:* guards + build green. LIST-04 satisfied. Ready for Plan 34-02 (sidebar section).
+Last activity: 2026-04-18 — Completed 34-01 end-to-end; single blocking auto-fix (React 19 JSX namespace import) folded into Task 3.
 
-Progress: [████████████████████] 79/84 plans (94% — v1.0 milestone)
+Progress: [████████████████████] 80/84 plans (95% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -168,6 +168,13 @@ Progress: [████████████████████] 79/84 p
 - [Phase 30-05]: Option A (wholesale ui/** allowlist) shipped over Option B (per-file allowlist). scripts/check-motion.sh header documents the carve-out rationale inline — sidebar.tsx manually retargeted, sheet/popover/dialog retain shadcn defaults until a dedicated sweep phase. Matches Phase 28 precedent.
 - [Phase 30-05]: Direction-aware easing mechanism locked — shadcn Sidebar carries `data-state` on outer wrapper (line 211), child elements use Tailwind `group-data-[state=expanded]:ease-decelerate` + `group-data-[state=collapsed]:ease-default` variants. Reusable for any future primitive with an expand/collapse binary state.
 - [Phase 30-05]: Human-verify checkpoint approved on first pass — zero regressions across 9 browser checks (/tokens demos, KPI hover, drill cross-fade, chart expand, button press, skeleton reveal, sidebar lockstep, reduced-motion OS toggle, all guards + build). First time in Phase 30 that every motion surface was co-verified in a single session with reduced-motion toggling.
+- [Phase 34-01]: `PartnerList.source` ('attribute' | 'manual') locked at createList and excluded from updateList's Pick<> (Pitfall 7) — attribute lists always get Refresh, manual hand-picked lists never do. Type-level enforcement means downstream surfaces don't need runtime guards.
+- [Phase 34-01]: `activeListId` is memory-only (useState<string | null>), NOT persisted to localStorage per CONTEXT Open Q #3 — page reload returns to "no active list", consistent with non-modal opt-in filter semantics.
+- [Phase 34-01]: `ActivePartnerListProvider` accepts `lists` as prop rather than owning storage — single source of truth lives in `usePartnerLists` higher up the tree. Sidebar + dialog + any future consumer read the same collection.
+- [Phase 34-01]: `attributeFiltersSchema` is `.strict()` — unknown keys fail safeParse at load time, forcing a schema update (additive `.optional()` fields) before a new attribute can land. v1 ships ACCOUNT_TYPE only; PRODUCT_TYPE / REVENUE_BAND deferred.
+- [Phase 34-01]: `filter-evaluator.ts` accepts `Array<Record<string, unknown>>` rather than a Snowflake-specific row type — stays portable and testable across any row shape.
+- [Phase 34-01]: Stale-ID recovery lives on the provider (useEffect sanitizer) — when the active list is deleted, `activeListId` resets to `null` automatically. No consumer-side plumbing needed.
+- [Phase 34-01]: React 19 `JSX` namespace regression — `JSX.Element` is no longer a global type; must be imported as `type JSX` from `react`. Blocking auto-fix (Rule 3) applied to `ActivePartnerListProvider`. Pattern for any future explicit `JSX.Element` return annotation in this codebase.
 
 ### Pending Todos
 
@@ -185,8 +192,8 @@ Progress: [████████████████████] 79/84 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Phase 30 CLOSED. Plan 30-05 3/3 tasks complete (sidebar retarget 92cc355 + /tokens aggregator 671f2b7 + human-verify APPROVED). All DS-23..28 + A11Y-05 shipped and user-verified. SidebarInset flex-driven lockstep ratified by check #7 (stayed untouched). SUMMARY.md written; REQUIREMENTS/ROADMAP/STATE updated to reflect Phase 30 close-out. Ready for `/gsd:verify-phase 30` and Phase 31 kick-off (Visual Polish Pass: DS-29..34).
-Resume file: .planning/phases/31-visual-polish/ (context already captured in prior commit ff53cb1)
+Stopped at: Completed 34-01-PLAN.md. Partner-lists data layer shipped: 7 new files (types, schema, storage, defaults, filter-evaluator, usePartnerLists hook, ActivePartnerListProvider context), zero existing files touched. All 4 check:* guards + build green. LIST-04 satisfied. Single blocking auto-fix: React 19 `JSX` namespace import (folded into Task 3 commit 907ae89). Ready for Plan 34-02 (sidebar section).
+Resume file: .planning/phases/34-partner-lists/34-02-PLAN.md
 
 ## Performance Metrics
 
@@ -203,4 +210,5 @@ Resume file: .planning/phases/31-visual-polish/ (context already captured in pri
 | 30 | 03 | ~2 min | 3 | 3 | 2026-04-18 |
 | 30 | 04 | ~5 min | 3 | 2 | 2026-04-18 |
 | 30 | 05 | ~4 min + human-verify | 3 | 3 | 2026-04-18 |
+| 34 | 01 | ~3 min | 3 | 7 | 2026-04-18 |
 
