@@ -59,6 +59,23 @@ export function MotionDemo() {
   return (
     <div className="flex flex-col gap-section">
       <section className="flex flex-col gap-stack">
+        <div className="flex flex-col gap-[var(--spacing-1)]">
+          <h2 className="text-heading">Reduced motion</h2>
+          <p className="text-body text-muted-foreground">
+            When your OS has{' '}
+            <code className="text-caption">prefers-reduced-motion: reduce</code>{' '}
+            set, every transition in the app collapses to instant. Translate
+            and scale transforms neutralize to identity. Test by enabling
+            Reduce Motion in System Settings → Accessibility → Display.
+          </p>
+          <p className="text-caption text-muted-foreground">
+            This page&apos;s own demos respect the OS preference by design —
+            faithful to user intent, not an exception.
+          </p>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-stack">
         <div className="flex items-center justify-between gap-inline flex-wrap">
           <div className="flex flex-col gap-[var(--spacing-1)]">
             <h2 className="text-heading">Duration × Easing</h2>
@@ -111,6 +128,42 @@ export function MotionDemo() {
               );
             }),
           )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-stack">
+        <div className="flex flex-col gap-[var(--spacing-1)]">
+          <div className="flex items-baseline gap-inline">
+            <h2 className="text-heading">Card hover lift</h2>
+            <span className="text-label uppercase text-muted-foreground">
+              DS-25
+            </span>
+          </div>
+          <p className="text-body text-muted-foreground">
+            Interactive cards use the{' '}
+            <code className="text-caption">.hover-lift</code> utility —
+            translate-Y -1px + shadow step from elevation-raised to
+            elevation-overlay, duration-quick × ease-spring.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-stack">
+          <div className="flex flex-col gap-[var(--spacing-1)]">
+            <span className="text-label uppercase text-muted-foreground">
+              Interactive
+            </span>
+            <div className="rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised hover-lift">
+              <span className="text-body">Hover me — I lift.</span>
+            </div>
+          </div>
+          <div className="flex flex-col gap-[var(--spacing-1)]">
+            <span className="text-label uppercase text-muted-foreground">
+              Static
+            </span>
+            <div className="rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised transition-colors duration-quick ease-default">
+              <span className="text-body">Static card — I don&apos;t lift.</span>
+            </div>
+          </div>
         </div>
       </section>
     </div>

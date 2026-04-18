@@ -92,13 +92,26 @@ export interface StatCardProps {
     value: string;
     trend?: StatCardTrend;
   };
+  /**
+   * When true, card translate-Y -1px + shadow steps up to elevation-overlay
+   * on hover (Phase 30 DS-25). Use for KPI cards that drill, chart cards that
+   * expand, or rows that open panels. Static container cards leave this false.
+   */
+  interactive?: boolean;
   /** Escape hatch for callers that need to nudge chassis classes. */
   className?: string;
 }
 
 // Canonical chassis — Phase 28 locked recipe, preserved verbatim from KpiCard.
-const CARD_CLASSES =
-  'rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised transition-colors duration-quick ease-default';
+// Phase 30 DS-25 — interactive cards get hover-lift (transform + box-shadow
+// transition). Non-interactive stay on the original transition-colors.
+// Merge rule: pick ONE of {transition-colors, .hover-lift} — CSS cascade
+// means the last-declared transition-property wins. Documented in
+// 30-RESEARCH Pitfall 4.
+const CARD_BASE =
+  'rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised';
+const CARD_INTERACTIVE_TRANSITION = 'hover-lift';
+const CARD_STATIC_TRANSITION = 'transition-colors duration-quick ease-default';
 
 const TREND_EXPLANATION = 'vs rolling avg of prior batches';
 
@@ -203,14 +216,20 @@ export function StatCard(props: StatCardProps) {
     batchCount,
     stale,
     comparison,
+    interactive = false,
     className,
   } = props;
+
+  const chassis = cn(
+    CARD_BASE,
+    interactive ? CARD_INTERACTIVE_TRANSITION : CARD_STATIC_TRANSITION,
+  );
 
   // 1. Loading — skeleton shell. Runs first so all other props are ignored
   //    until data resolves.
   if (loading) {
     return (
-      <div className={cn(CARD_CLASSES, className)}>
+      <div className={cn(chassis, className)}>
         <Skeleton className="mb-2 h-7 w-20" />
         <Skeleton className="h-3 w-24" />
         <Skeleton className="mt-2 h-4 w-14" />
@@ -226,7 +245,7 @@ export function StatCard(props: StatCardProps) {
         : 'Failed to load';
 
     return (
-      <div className={cn(CARD_CLASSES, className)}>
+      <div className={cn(chassis, className)}>
         <div className="flex items-center gap-1.5">
           <AlertTriangle className="h-4 w-4 text-error-fg" />
           <span className="text-label uppercase text-muted-foreground">
@@ -242,7 +261,7 @@ export function StatCard(props: StatCardProps) {
   //    preservation of KpiCard behavior).
   if (noData) {
     return (
-      <div className={cn(CARD_CLASSES, className)}>
+      <div className={cn(chassis, className)}>
         <Tooltip>
           <TooltipTrigger className="block w-full text-left">
             <div className="text-display-numeric text-muted-foreground">
@@ -264,7 +283,7 @@ export function StatCard(props: StatCardProps) {
   //    only per Pitfall 2; no live consumer in Phase 29.
   if (comparison) {
     return (
-      <div className={cn(CARD_CLASSES, className)}>
+      <div className={cn(chassis, className)}>
         <LabelRow label={label} icon={icon} stale={stale} />
         <div className="mt-2 grid grid-cols-2 divide-x divide-border">
           <div className="pr-3">
@@ -285,7 +304,7 @@ export function StatCard(props: StatCardProps) {
 
   // 5. Default — single-column: label row, value line, optional trend line.
   return (
-    <div className={cn(CARD_CLASSES, className)}>
+    <div className={cn(chassis, className)}>
       <LabelRow label={label} icon={icon} stale={stale} />
       <div className="text-display-numeric">
         <span>{value}</span>

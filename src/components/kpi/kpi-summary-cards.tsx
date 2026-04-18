@@ -82,6 +82,11 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
         const value = kpis[spec.key];
         const formattedValue = spec.format(value);
 
+        // Phase 30 DS-25: KPI cards are interactive affordances — lift on
+        // hover even before a drill handler is wired. When drill wiring lands
+        // in a later phase, the visual affordance is already in place.
+        const INTERACTIVE = true;
+
         // No trend metric: render plain card
         if (!spec.trendMetric) {
           return (
@@ -89,6 +94,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
               key={spec.key}
               label={spec.label}
               value={formattedValue}
+              interactive={INTERACTIVE}
             />
           );
         }
@@ -107,6 +113,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
                 value={formattedValue}
                 noData
                 noDataReason="No batches at 12mo yet"
+                interactive={INTERACTIVE}
               />
             );
           }
@@ -121,6 +128,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
               value={formattedValue}
               insufficientData
               batchCount={trending.batchCount}
+              interactive={INTERACTIVE}
             />
           );
         }
@@ -144,6 +152,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
                   }
                 : null
             }
+            interactive={INTERACTIVE}
           />
         );
       })}
