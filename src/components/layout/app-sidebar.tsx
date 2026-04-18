@@ -31,7 +31,7 @@ export function AppSidebar() {
   } = useSidebarData();
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
