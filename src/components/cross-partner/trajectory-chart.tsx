@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { ChartContainer } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DataPanel } from '@/components/patterns/data-panel';
 import { Button } from '@/components/ui/button';
 import { CHART_COLORS } from '@/components/charts/curve-tooltip';
 import { NumericTick } from '@/components/charts/numeric-tick';
@@ -122,11 +122,11 @@ export function CrossPartnerTrajectoryChart() {
   const partnerNames = sortedPartners.map((p) => p.partnerName);
 
   return (
-    <Card className="shrink-0 shadow-elevation-raised">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-title text-muted-foreground">
-          Collection Trajectories
-        </CardTitle>
+    <DataPanel
+      title="Collection Trajectories"
+      className="shrink-0"
+      contentClassName="space-y-2"
+      actions={
         <div className="flex gap-1">
           <Button
             variant={curveMode === 'dollarWeighted' ? 'default' : 'outline'}
@@ -145,8 +145,8 @@ export function CrossPartnerTrajectoryChart() {
             Equal Weight
           </Button>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2 pt-0">
+      }
+    >
         <ChartContainer config={chartConfig} className="h-[45vh] w-full">
           <LineChart
             data={pivotedData}
@@ -242,7 +242,6 @@ export function CrossPartnerTrajectoryChart() {
           bestPartnerName={bestInClass?.name ?? null}
           onTogglePartner={togglePartner}
         />
-      </CardContent>
-    </Card>
+    </DataPanel>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback } from 'react';
 import { ArrowLeftRight, Grid3X3, BarChart3, Table, Info } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DataPanel } from '@/components/patterns/data-panel';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -67,27 +67,17 @@ export function PartnerComparisonMatrix() {
     onSort: handleSort,
   };
 
+  // DataPanel gap noted for 29-SUMMARY: SectionHeader's title slot is plain
+  // text only — this panel has an inline info-tooltip + partner-count meta
+  // cluster next to the title. Carrying that through SectionHeader would
+  // require a title-adjacent slot. Workaround: render the meta cluster at
+  // the top of the content slot (above the matrix views). Keeps
+  // SectionHeader unchanged per CONTEXT rule "extend only on concrete gap".
   return (
-    <Card className="shrink-0 shadow-elevation-raised">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div className="flex items-center gap-1.5">
-          <CardTitle className="text-title text-muted-foreground">
-            Partner Comparison
-          </CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger className="cursor-help">
-                <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-[240px]">
-                <p className="text-caption">Compare key metrics across all partners — view as heatmap, bar ranking, or plain table.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <span className="text-caption text-muted-foreground/60">
-            {sortedPartners.length} partners
-          </span>
-        </div>
+    <DataPanel
+      title="Partner Comparison"
+      className="shrink-0"
+      actions={
         <div className="flex items-center gap-1">
           {/* View mode toggle */}
           {VIEW_MODES.map(({ key, label, Icon }) => (
@@ -124,12 +114,28 @@ export function PartnerComparisonMatrix() {
             </>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {viewMode === 'heatmap' && <MatrixHeatmap {...viewProps} />}
-        {viewMode === 'bar' && <MatrixBarRanking {...viewProps} />}
-        {viewMode === 'plain' && <MatrixPlainTable {...viewProps} />}
-      </CardContent>
-    </Card>
+      }
+    >
+      <div className="flex items-center gap-1.5 mb-stack">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger className="cursor-help">
+              <Info className="h-3.5 w-3.5 text-muted-foreground/60" />
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-[240px]">
+              <p className="text-caption">
+                Compare key metrics across all partners — view as heatmap, bar ranking, or plain table.
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <span className="text-caption text-muted-foreground/60">
+          {sortedPartners.length} partners
+        </span>
+      </div>
+      {viewMode === 'heatmap' && <MatrixHeatmap {...viewProps} />}
+      {viewMode === 'bar' && <MatrixBarRanking {...viewProps} />}
+      {viewMode === 'plain' && <MatrixPlainTable {...viewProps} />}
+    </DataPanel>
   );
 }
