@@ -1,7 +1,6 @@
 'use client';
 
-import { KpiCard } from '@/components/kpi/kpi-card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { StatCard } from '@/components/patterns/stat-card';
 import { formatCount, formatPercentage, formatAbbreviatedCurrency } from '@/lib/formatting';
 import type { KpiAggregates, TrendingData } from '@/types/partner-stats';
 
@@ -46,20 +45,21 @@ interface KpiSummaryCardsProps {
  * 6-card KPI summary grid displayed above the batch table at partner drill-down.
  *
  * Handles three states:
- * - Loading (kpis null): skeleton placeholders
+ * - Loading (kpis null): <StatCard loading /> placeholders
  * - Zero batches: centered "no data" message
  * - Normal: formatted values with trend arrows on rate cards
+ *
+ * Phase 29 migration: swapped KpiCard → StatCard. All 4 usages (plain,
+ * no-data, insufficient-data, trend) now route through the canonical
+ * pattern. Legacy KpiCard file deleted.
  */
 export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
-  // Loading state: skeleton cards
+  // Loading state: skeleton cards via StatCard's loading branch
   if (kpis === null) {
     return (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised">
-            <Skeleton className="mb-2 h-7 w-20" />
-            <Skeleton className="h-4 w-14" />
-          </div>
+          <StatCard key={i} label="" value="" loading />
         ))}
       </div>
     );
@@ -85,7 +85,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
         // No trend metric: render plain card
         if (!spec.trendMetric) {
           return (
-            <KpiCard
+            <StatCard
               key={spec.key}
               label={spec.label}
               value={formattedValue}
@@ -101,7 +101,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
           );
           if (!has12moTrend) {
             return (
-              <KpiCard
+              <StatCard
                 key={spec.key}
                 label={spec.label}
                 value={formattedValue}
@@ -115,7 +115,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
         // Insufficient history: gray dash
         if (trending?.insufficientHistory) {
           return (
-            <KpiCard
+            <StatCard
               key={spec.key}
               label={spec.label}
               value={formattedValue}
@@ -131,7 +131,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
         );
 
         return (
-          <KpiCard
+          <StatCard
             key={spec.key}
             label={spec.label}
             value={formattedValue}
