@@ -320,7 +320,13 @@
   --accent: var(--surface-inset);
   --accent-foreground: var(--neutral-900);
   --destructive: var(--state-error-fg);
-  --border: color-mix(in oklch, var(--neutral-500) 15%, transparent);
+  /*
+   * Phase 31 DS-32: Single border-opacity standard at ~8% in both light and dark.
+   * Cards, panels, and the table are meant to read as almost borderless and lean
+   * on surface + shadow (Phase 28) for shape. --input stays at 15% for form-control
+   * affordance (intentional divergence).
+   */
+  --border: color-mix(in oklch, var(--neutral-500) 8%, transparent);
   --input: color-mix(in oklch, var(--neutral-500) 15%, transparent);
   --ring: var(--brand-green-bright);
 
@@ -466,7 +472,8 @@
   --accent: var(--surface-inset);
   --accent-foreground: var(--neutral-900);
   --destructive: var(--state-error-fg);
-  --border: color-mix(in oklch, oklch(1 0 0) 10%, transparent);
+  /* Phase 31 DS-32: --border retuned to 8% (matches :root); --input stays at 15% for form-control affordance. */
+  --border: color-mix(in oklch, oklch(1 0 0) 8%, transparent);
   --input: color-mix(in oklch, oklch(1 0 0) 15%, transparent);
   --ring: var(--brand-green-bright);
 
