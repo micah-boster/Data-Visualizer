@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T19:38:53.823Z"
+last_updated: "2026-04-18T19:48:27.676Z"
 progress:
   total_phases: 35
   completed_phases: 30
   total_plans: 90
-  completed_plans: 83
+  completed_plans: 84
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** Phase 30 closed — ready to advance to Phase 31 (Visual Polish Pass)
+**Current focus:** Phase 31 (Visual Polish Pass) in progress — token-level retunes landing first
 
 ## Current Position
 
-Phase: 34 (Partner Lists) — in progress
-Plan: 34-02 3/3 tasks complete — PartnerListsSidebarGroup (1aa72b6) + shared PartnerListsProvider wiring (e9b2f20) + filteredRawData/SidebarDataPopulator threading (e275f6f). SUMMARY.md written. Plan 34-03 already landed in parallel (CreateListDialog).
-Status: Plan 34-02 ships the sidebar surface + activation pipeline: 2 new files, 3 modified files, all 4 check:* guards + build green. LIST-03 + LIST-05 satisfied. With 34-01/02/03 shipped, Plan 34-04 (integration wiring — mount dialog inside AppSidebar, replace onCreateList/onEditList no-ops, end-to-end smoke) is the last remaining piece.
-Last activity: 2026-04-18 — Completed 34-02 end-to-end; zero auto-fixes. Provider escalated from app-sidebar.tsx to providers.tsx via PartnerListsProvider (option-b context) because AppSidebar and DataDisplay are siblings under SidebarProvider (plan's anticipated escalation branch).
+Phase: 31 (Visual Polish Pass) — in progress
+Plan: 31-01 3/3 tasks complete — DS-32 --border unified to 8% in :root + .dark (ef83e56) + DS-30 dark --shadow-elevation-raised inset bumped 0.05 → 0.07 (0eec2ea). SUMMARY.md written. Single-file two-hunk edit; zero consumer files touched.
+Status: Plan 31-01 lands both token retunes that unblock downstream 31 work. All 4 check:* guards + Next.js build green on first pass, no auto-fixes. --input intentionally held at 15% as form-control affordance divergence, documented inline in globals.css. Light-mode --shadow-elevation-raised explicitly NOT given a matching inset highlight per CONTEXT lock.
+Last activity: 2026-04-18 — Completed 31-01 end-to-end; two atomic commits (one per task), verification task (no commit). Ready for 31-02.
 
-Progress: [████████████████████] 83/90 plans (92% — v1.0 milestone)
+Progress: [████████████████████] 84/90 plans (93% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -188,6 +188,9 @@ Progress: [████████████████████] 83/90 p
 - [Phase 34]: [Phase 34-02]: filteredRawData memo extended with a SECOND filter pass (Phase 34 activeList after Phase 25 dimension filters), not a parallel memo — keeps single source of truth; all downstream consumers (KPIs, charts, table, QueryCommandDialog) inherit the list filter with zero per-site edits.
 - [Phase 34]: [Phase 34-02]: SidebarDataPopulator.allowedPartnerIds: string[] | null is a DISPLAY-SCOPING prop (narrows what is rendered without changing the source roster). Roster source stays data.data per Phase 25 navigation-integrity lock; null sentinel = no active list = render everyone.
 - [Phase 34]: [Phase 34-02]: Stacked SidebarMenuAction recipe (edit at className='right-7' + delete at default right-1) chosen over popover-menu fallback. Shadcn SidebarMenuAction composes cleanly via className override; no @base-ui/react/popover dependency introduced.
+- [Phase 31-01]: DS-32 --border unified to 8% in :root and .dark (was 15%/10%); --input held at 15% as intentional form-control divergence, documented inline in globals.css
+- [Phase 31-01]: DS-30 dark --shadow-elevation-raised third-layer inset bumped 0.05 -> 0.07 for glass top-edge highlight on KPI/chart/query cards; light-mode analog declined per CONTEXT lock
+- [Phase 31-01]: Path A (token-level retune) shipped over per-consumer edits — zero consumer files touched; avoids Tailwind shadow-composition pitfall (Pitfall 1)
 
 ### Pending Todos
 
@@ -205,8 +208,8 @@ Progress: [████████████████████] 83/90 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 34-03-PLAN.md (create/edit dialog) and 34-02-PLAN.md (sidebar section) running in parallel. 34-03 shipped 3 new files under src/components/partner-lists/ (dual-pane-transfer, attribute-filter-bar, create-list-dialog); LIST-01 + LIST-02 satisfied. 34-02 shipped PartnerListsSidebarGroup wiring via shared provider + filteredRawData thread-through. All 4 check:* guards + build green. Ready for Plan 34-04 (integration) to wire dialog open/edit state into the sidebar group.
-Resume file: .planning/phases/34-partner-lists/34-04-PLAN.md
+Stopped at: Completed 31-01-PLAN.md — DS-32 border retune (8% across :root + .dark) + DS-30 dark --shadow-elevation-raised inset glass highlight bump (0.05 → 0.07) landed in src/app/globals.css. Two-hunk edit, zero consumer files touched, --input held at 15% as intentional divergence. All 4 check:* guards + build green. Ready for Plan 31-02.
+Resume file: .planning/phases/31-visual-polish-pass/31-02-PLAN.md
 
 ## Performance Metrics
 
@@ -226,4 +229,5 @@ Resume file: .planning/phases/34-partner-lists/34-04-PLAN.md
 | 34 | 01 | ~3 min | 3 | 7 | 2026-04-18 |
 | 34 | 03 | ~3 min | 2 | 3 | 2026-04-18 |
 | 34 | 02 | ~5 min | 3 | 5 | 2026-04-18 |
+| 31 | 01 | ~3 min | 3 | 1 | 2026-04-18 |
 
