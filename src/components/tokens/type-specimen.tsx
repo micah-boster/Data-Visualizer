@@ -206,10 +206,10 @@ export function TypeSpecimen() {
           <span className="text-label-numeric text-success-fg">+2.34%</span>
         </div>
 
-        <div className="flex flex-col gap-stack p-card-padding bg-surface-inset rounded-lg">
+        <div className="flex flex-col gap-stack p-card-padding bg-surface-inset rounded-lg text-right">
           <div className="text-body-numeric">1,234,567.89</div>
-          <div className="text-body-numeric">  987,654.32</div>
-          <div className="text-body-numeric">    4,321.10</div>
+          <div className="text-body-numeric">987,654.32</div>
+          <div className="text-body-numeric">4,321.10</div>
         </div>
       </section>
     </div>
