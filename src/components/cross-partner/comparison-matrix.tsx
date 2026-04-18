@@ -3,6 +3,7 @@
 import { useMemo, useState, useCallback } from 'react';
 import { ArrowLeftRight, Grid3X3, BarChart3, Table, Info } from 'lucide-react';
 import { DataPanel } from '@/components/patterns/data-panel';
+import { ToolbarDivider } from '@/components/patterns/toolbar-divider';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -97,7 +98,7 @@ export function PartnerComparisonMatrix() {
           {/* Orientation toggle (not for bar mode) */}
           {viewMode !== 'bar' && (
             <>
-              <span className="mx-1 h-4 w-px bg-border" />
+              <ToolbarDivider />
               <Button
                 variant="ghost"
                 size="sm"
