@@ -790,6 +790,33 @@ function CrossPartnerDataTable({
         ? rootColumnDefs
         : undefined;
 
+  // Prune dimension filters whose column id isn't in the currently-rendered
+  // column set. Root columns replace batch-level BATCH/BATCH_AGE/ACCOUNT_TYPE
+  // with partner-summary columns, so an ACCOUNT_TYPE or BATCH filter
+  // (from a saved view, URL state, or a persisted default) would otherwise be
+  // forwarded to tanstack-table's state.columnFilters where it throws
+  // "Column with id 'ACCOUNT_TYPE' does not exist" during getFilteredRowModel.
+  // Upstream row filtering (filteredRawData in DataDisplay) still honors the
+  // full filter set, so the filter keeps its semantic effect on root summary
+  // aggregation — we just don't hand a stale column id to the table.
+  // Partner level uses the default batch-level columns (which DO contain
+  // ACCOUNT_TYPE/BATCH), so leave those filters untouched there.
+  const prunedDimensionFilters = useMemo(() => {
+    const defs =
+      drillState.level === 'batch'
+        ? accountColumnDefs
+        : drillState.level === 'root'
+          ? rootColumnDefs
+          : undefined;
+    if (!defs) return dimensionFilters;
+    const validIds = new Set(
+      defs
+        .map((d) => (d as { id?: string }).id)
+        .filter((id): id is string => Boolean(id)),
+    );
+    return dimensionFilters.filter((f) => validIds.has(f.id));
+  }, [dimensionFilters, drillState.level, rootColumnDefs]);
+
   return (
     <DataTable
       key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
@@ -809,7 +836,7 @@ function CrossPartnerDataTable({
       trendingData={drillState.level === 'partner' ? partnerStats?.trending ?? null : null}
       crossPartnerData={drillState.level === 'root' ? crossPartnerData : undefined}
       // Lifted state
-      dimensionFilters={dimensionFilters}
+      dimensionFilters={prunedDimensionFilters}
       setFilter={setFilter}
       clearAllDimension={clearAllDimension}
       activeFilters={activeFilters}
