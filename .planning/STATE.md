@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 29 (Component Patterns — in progress; Plans 01-04 shipped, Plan 05 aggregator queued)
-Plan: 29-01 SHIPPED — StatCard pattern (src/components/patterns/stat-card.tsx) with all 7 first-class states (value / loading / error / no-data / insufficient-data / stale / comparison); kpi-summary-cards.tsx migrated (4 usages + loading grid); legacy kpi-card.tsx DELETED; /tokens specimen exported for Plan 05 aggregator. check:tokens + check:surfaces + `npm run build` all pass.
-Status: Phase 29 still in progress — Plans 01, 02, 03, 04 shipped (executed in order 02 → 03 → 04 → 01 across sessions); Plan 05 aggregator (check:components grep guard + token-browser wire-up + comparison-matrix.tsx:110 audit) remains queued. Prior "pre-existing build errors" referenced in 29-04 notes resolved implicitly by 29-01 + 29-03 migrations.
-Last activity: 2026-04-18 — Shipped 29-01 (64f65ad StatCard component; 4615ab1 kpi-summary-cards migration + KpiCard deletion; 409abf1 /tokens specimen). Trend explanatory phrase 'vs rolling avg of prior batches' promoted from tooltip-only affordance to visible second-line chrome; stale + comparison deliberately ship as prop surface only per Pitfalls 1 & 2.
+Phase: 29 (Component Patterns — COMPLETE; all 5 plans shipped)
+Plan: 29-05 SHIPPED — scripts/check-components.sh POSIX grep guard (no ripgrep) + `npm run check:components` alias; ComponentPatternsSpecimen aggregator wrapped in TooltipProvider; /tokens gains 6th "Component Patterns" tab stacking all four Wave 1 specimens; comparison-matrix.tsx:100 divider migrated to <ToolbarDivider /> closing the Plan 04 scope-reduction gap. Full suite (check:tokens + check:surfaces + check:components + build) all exit 0.
+Status: Phase 29 CLOSED. 5/5 plans shipped. DS-18/19/20/21/22 all complete AND mechanically CI-guarded. /tokens dogfoods the pattern system (6 tabs). Legacy deletions holding (kpi-card.tsx, empty-state.tsx, filter-empty-state.tsx all absent). CI wiring deferred per Phase 27-06 / 28-08 precedent — user flips `npm run check:components` into Vercel build / pre-commit / GitHub Actions as a one-line change.
+Last activity: 2026-04-18 — Shipped 29-05 (97b6c0b guard + alias; 789b890 /tokens Component Patterns tab; 2925bf3 comparison-matrix ToolbarDivider migration). Wave 2 executor spawn rate-limited mid-run; orchestrator executed inline preserving atomic per-task commits. Full 4-check suite green on clean tree.
 
 Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phase 27 + Phase 32 shipped; 9 remaining phases)
 
@@ -140,6 +140,11 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 - [Phase 29-01]: StatCard stale + comparison props ship as prop surface only (Pitfalls 1 & 2 deferred). stale awaits DataResponse.meta.source plumbing; comparison awaits a cross-partner drill-in consumer. Documented inline via JSDoc above each prop.
 - [Phase 29-01]: Trend explanatory phrase "vs rolling avg of prior batches" promoted from KpiCard tooltip-only affordance to visible second-line chrome. Cards grow slightly taller per CONTEXT layout lock; users no longer need to hover to see the baseline comparison.
 - [Phase 29-01]: StatCard helper sub-components (LabelRow, TrendLine, InsufficientTrendLine) kept file-local rather than exported — shared recipe inside the pattern, not a public surface. Keeps the pattern API minimal (StatCard + StatCardProps + StatCardTrend) and concentrates token discipline in a single file.
+- [Phase 29-05]: check:components guard allowlists `src/components/patterns/**`, `src/components/tokens/**`, `src/app/tokens/**` for the ad-hoc-divider recipe check. Patterns/ owns the canonical recipe; tokens/ + app/tokens/ legitimately reference it as documentation text inside `<code>` JSX. Legacy-import check is NOT allowlisted for these dirs — patterns themselves must not import legacy.
+- [Phase 29-05]: comparison-matrix divider margin normalized `mx-1` → `mx-0.5` as ToolbarDivider adopts the canonical recipe. 2px-per-side delta accepted per resolved decision #5 (app-wide divider consistency over preserving original margin). Visual-equivalent at typical button-cluster densities; reopen only if a concrete regression surfaces.
+- [Phase 29-05]: Wave 2 executor agent rate-limited at spawn; orchestrator executed inline. Atomic per-task commits (97b6c0b, 789b890, 2925bf3) preserved — same commit shape the executor would have produced. Pattern: when a subagent fails before work starts, orchestrator-inline fallback is acceptable for single-plan waves; for multi-plan waves, retry spawn first.
+- [Phase 29-05]: ComponentPatternsSpecimen wraps all 4 specimens in a single TooltipProvider at the aggregator layer — StatCard's no-data/insufficient-data states use Tooltip primitives (29-RESEARCH Pitfall 7). Per-specimen TooltipProvider would have been redundant; parent-layer wrap is the pattern.
+- [Phase 29-05]: CI wiring (Vercel build / pre-commit / GitHub Actions) deliberately deferred per Phase 27-06 + 28-08 precedent. Three guards now ship (check:tokens, check:surfaces, check:components) — user flips them on via a single build-command edit when ready.
 
 ### Pending Todos
 
@@ -157,8 +162,8 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 29-01-PLAN.md — StatCard pattern + kpi-summary-cards migration + legacy KpiCard deletion + /tokens specimen. Three task commits atomic (64f65ad, 4615ab1, 409abf1). SUMMARY.md written. `npm run build` passes end-to-end; check:tokens / check:surfaces both green. Plans 02, 03, 04 already shipped in prior sessions; Plan 05 aggregator is the only Phase 29 plan remaining.
-Resume with: `/gsd:execute-phase 29` to run Plan 29-05 (aggregator — ComponentPatternsSpecimen + token-browser 6th tab + check:components grep guard + comparison-matrix.tsx:110 divider audit). Phase 29 closes at Plan 05.
+Stopped at: Completed 29-05-PLAN.md — Phase 29 CLOSED. All 5 plans shipped (29-01 StatCard, 29-02 DataPanel, 29-03 EmptyState, 29-04 ToolbarDivider, 29-05 guard + /tokens aggregator + comparison-matrix gap closure). Three task commits atomic for 29-05 (97b6c0b, 789b890, 2925bf3). Full suite green: check:tokens + check:surfaces + check:components + build all exit 0. /tokens now has 6 tabs with live demos of every first-class pattern.
+Resume with: `/gsd:plan-phase 30` (Micro-interactions — next in v1.0 milestone order), OR flip the three guards on in CI (Vercel build command → `npm run check:tokens && npm run check:surfaces && npm run check:components && npm run build`). Alternatively `/gsd:verify-work 29` for a full phase-close audit.
 
 ## Performance Metrics
 
@@ -169,4 +174,5 @@ Resume with: `/gsd:execute-phase 29` to run Plan 29-05 (aggregator — Component
 | 29 | 03 | ~3 min | 2 | 4 | 2026-04-18 |
 | 29 | 01 | ~15 min | 3 | 4 | 2026-04-18 |
 | 29 | 02 | ~3 min | 3 | 5 | 2026-04-18 |
+| 29 | 05 | ~15 min | 3 | 4 | 2026-04-18 |
 

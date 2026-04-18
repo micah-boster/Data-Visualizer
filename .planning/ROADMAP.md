@@ -70,7 +70,7 @@
 - [x] **Phase 26: Design Tokens** — Spacing, typography, elevation, motion, and surface token system (5/5 plans — foundation + KPI card + header + table row pilots + unlisted /tokens reference page all shipped 2026-04-17)
 - [x] **Phase 27: Typography & Information Hierarchy** — Type scale applied across app, tabular figures, consistent labeling (completed 2026-04-17)
 - [x] **Phase 28: Surfaces & Elevation** — Every container uses a named surface — cards float, tables recede, popovers lift (completed 2026-04-18)
-- [ ] **Phase 29: Component Patterns** — StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState
+- [x] **Phase 29: Component Patterns** — StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState (completed 2026-04-18)
 - [ ] **Phase 30: Micro-Interactions & Motion** — Drill transitions, hover lifts, press feedback, loading reveals
 - [ ] **Phase 31: Visual Polish Pass** — Gradient dividers, dark mode highlights, focus glows, border consistency
 
@@ -98,7 +98,7 @@
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
 | 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
 | 28. Surfaces & Elevation | 8/8 | Complete   | 2026-04-18 | - |
-| 29. Component Patterns | 4/5 | In Progress|  | - |
+| 29. Component Patterns | 5/5 | Complete   | 2026-04-18 | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
