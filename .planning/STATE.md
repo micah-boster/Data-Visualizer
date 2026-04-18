@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T13:05:24.381Z"
+last_updated: "2026-04-18T14:14:28.212Z"
 progress:
   total_phases: 33
   completed_phases: 29
-  total_plans: 75
-  completed_plans: 74
+  total_plans: 80
+  completed_plans: 75
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 30 (Micro-Interactions & Motion — ready to plan)
-Plan: Not started — Phase 30 ready to plan. CONTEXT.md exists at .planning/phases/30-micro-interactions-and-motion/30-CONTEXT.md; context already gathered during discuss-phase, can go directly to `/gsd:plan-phase 30`.
-Status: Ready to plan. Phase 29 closed 2026-04-18 with 5/5 plans shipped + 14/14 verification truths passed + DS-18..22 all mechanically CI-guarded via `npm run check:components`. Auto-advance chain continues into Phase 30.
-Last activity: 2026-04-18 — Completed Phase 29 Component Patterns (Wave 1: 29-01..04 parallel; Wave 2: 29-05 inline after executor rate-limit). Verification passed. `phase complete` ran: roadmap_updated + state_updated. Transition proceeding to Phase 30 planning under --auto.
+Phase: 30 (Micro-Interactions & Motion — Wave 1 complete)
+Plan: 30-01 shipped 2026-04-18. Next up: Wave 2 (30-02 state-color semantics) per phase plan. 4/5 plans remaining.
+Status: In progress. Plan 30-01 executed 3 tasks + SUMMARY + atomic commits. A11Y-05 global reduced-motion override live; DS-25 .hover-lift utility live + piloted on KPI cards; check:motion POSIX guard live as 4th enforcement script; /tokens Motion tab extended with reduced-motion policy section + hover-lift live demo.
+Last activity: 2026-04-18 — Shipped 30-01 (motion foundation). Commits: de076f9 (globals.css reduced-motion + hover-lift), 381d8d0 (check:motion guard + pre-existing duration-N sweep), 3f0be3f (StatCard.interactive + kpi-summary-cards pilot + motion-demo sections). All 4 check scripts green. `npm run build` succeeds.
 
-Progress: [████████████████████] 74/75 plans (99% — v1.0 milestone)
+Progress: [███████████████████░] 75/80 plans (94% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -145,6 +145,11 @@ Progress: [████████████████████] 74/75 p
 - [Phase 29-05]: Wave 2 executor agent rate-limited at spawn; orchestrator executed inline. Atomic per-task commits (97b6c0b, 789b890, 2925bf3) preserved — same commit shape the executor would have produced. Pattern: when a subagent fails before work starts, orchestrator-inline fallback is acceptable for single-plan waves; for multi-plan waves, retry spawn first.
 - [Phase 29-05]: ComponentPatternsSpecimen wraps all 4 specimens in a single TooltipProvider at the aggregator layer — StatCard's no-data/insufficient-data states use Tooltip primitives (29-RESEARCH Pitfall 7). Per-specimen TooltipProvider would have been redundant; parent-layer wrap is the pattern.
 - [Phase 29-05]: CI wiring (Vercel build / pre-commit / GitHub Actions) deliberately deferred per Phase 27-06 + 28-08 precedent. Three guards now ship (check:tokens, check:surfaces, check:components) — user flips them on via a single build-command edit when ready.
+- [Phase 30-01]: RESEARCH Open Q#1 resolved: --duration-quick stays at 120ms (CONTEXT 100ms reference treated as loose). Preserves Phase 26/27/28 motion cadence.
+- [Phase 30-01]: Pitfall 4 merge rule: transition-colors and .hover-lift are mutually exclusive per card instance (CSS cascade last-wins on transition-property). StatCard chassis picks ONE via ternary.
+- [Phase 30-01]: A11Y-05 reduced-motion override placed OUTSIDE any @layer (top-level @media); .hover-lift utility placed INSIDE existing @layer utilities block next to text-*-numeric variants. !important required to beat Tailwind and inline styles.
+- [Phase 30-01]: Pre-existing numeric duration-N sweep folded into check:motion guard-landing commit [Rule 3]: 6 sites migrated (duration-150/200/300 to duration-quick/normal/slow). Visual delta <=30ms per site, within UI perceptual threshold.
+- [Phase 30-01]: kpi-summary-cards interactive={true} applied UNIFORMLY to all 6 StatCard render sites. Loading skeletons excluded by StatCard short-circuit precedence. Pattern is semantically interactive even before drill handler wires.
 
 ### Pending Todos
 
@@ -162,7 +167,7 @@ Progress: [████████████████████] 74/75 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Phase 29 complete, transitioning to Phase 30. All 5 plans shipped; verification 14/14 passed; 4-check enforcement suite green. Phase 30 CONTEXT.md already exists — auto-advance goes directly to `/gsd:plan-phase 30` (skipping discuss-phase).
+Stopped at: Completed 30-01-PLAN.md (motion foundation + DS-25 pilot). A11Y-05 reduced-motion override + .hover-lift utility live; check:motion POSIX guard green; StatCard.interactive piloted on KPI cards; /tokens Motion tab extended. Ready for Wave 2 (Plan 30-02).
 Resume file: None
 
 ## Performance Metrics
@@ -175,4 +180,5 @@ Resume file: None
 | 29 | 01 | ~15 min | 3 | 4 | 2026-04-18 |
 | 29 | 02 | ~3 min | 3 | 5 | 2026-04-18 |
 | 29 | 05 | ~15 min | 3 | 4 | 2026-04-18 |
+| 30 | 01 | ~4 min | 3 | 10 | 2026-04-18 |
 
