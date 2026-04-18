@@ -580,6 +580,25 @@
     transform: translateY(-1px);
     box-shadow: var(--shadow-elevation-overlay);
   }
+
+  /*
+   * Phase 31 DS-31: Single focus-glow language.
+   * - .focus-glow on individual focusable elements (inputs, buttons, selects)
+   * - .focus-glow-within on interactive containers (ToolbarGroup cluster, saved-view row)
+   * - Uses :has(:focus-visible) on the within variant so mouse clicks do NOT fire the glow (31-RESEARCH Pitfall 2)
+   * - Hard outline stays as an a11y fallback when box-shadow is clipped or :focus-visible is not honored
+   * - Static — NO transition-property; prefers-reduced-motion story is intact
+   */
+  .focus-glow:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent);
+  }
+  .focus-glow-within:has(:focus-visible) {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent);
+  }
 }
 
 /* Smooth theme transitions for non-layout elements */
