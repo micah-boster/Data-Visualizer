@@ -29,7 +29,7 @@ export function Header() {
   }, [fetchedAt]);
 
   return (
-    <header className="flex h-10 shrink-0 items-center gap-inline bg-surface-raised shadow-xs px-page-gutter">
+    <header className="sticky top-0 z-20 flex h-10 shrink-0 items-center gap-inline bg-surface-translucent backdrop-blur-md shadow-elevation-chrome px-page-gutter">
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 !h-4" />
       <div className="flex flex-1 items-center justify-end">
