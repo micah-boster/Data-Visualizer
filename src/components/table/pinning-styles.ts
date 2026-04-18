@@ -10,7 +10,7 @@ import type { CSSProperties } from 'react';
  */
 export function getCommonPinningStyles<T>(
   column: Column<T>,
-  opts?: { isEvenRow?: boolean; isHeader?: boolean }
+  opts?: { isHeader?: boolean }
 ): CSSProperties {
   const isPinned = column.getIsPinned();
   const isLastLeftPinnedColumn =
@@ -29,11 +29,13 @@ export function getCommonPinningStyles<T>(
     position: isPinned ? 'sticky' : 'relative',
     width: column.getSize(),
     zIndex: isPinned ? 1 : 0,
-    // Pinned cells need opaque backgrounds so content doesn't show through
+    // Pinned cells need opaque backgrounds so content doesn't show through.
+    // Phase 28-04: zebra removed; pinned body cells match the inset pane,
+    // pinned header cells match the header lift (surface-base).
     backgroundColor: isPinned
-      ? (opts?.isHeader || opts?.isEvenRow)
-        ? 'var(--color-muted)'
-        : 'var(--color-background)'
+      ? opts?.isHeader
+        ? 'var(--color-surface-base)'
+        : 'var(--color-surface-inset)'
       : undefined,
   };
 }

@@ -30,7 +30,7 @@ export function TableHeader({
   onDragEnd,
 }: TableHeaderProps) {
   return (
-    <thead className="sticky top-0 z-20">
+    <thead className="sticky top-0 z-10 bg-surface-base shadow-xs">
       {table.getHeaderGroups().map((headerGroup) => (
         <tr key={headerGroup.id}>
           {headerGroup.headers.map((header) => (

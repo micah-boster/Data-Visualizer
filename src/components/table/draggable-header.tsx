@@ -59,7 +59,7 @@ export function DraggableHeader({
         e.preventDefault();
         onDrop?.(header.id);
       }}
-      className={`group/header relative select-none overflow-hidden bg-muted px-3 py-2 text-label text-foreground${isNumeric ? ' text-right' : ' text-left'}`}
+      className={`group/header relative select-none overflow-hidden bg-surface-base px-3 py-2 text-label text-foreground${isNumeric ? ' text-right' : ' text-left'}`}
     >
       {header.isPlaceholder ? null : (
         <div

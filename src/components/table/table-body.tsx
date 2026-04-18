@@ -41,17 +41,14 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
       )}
       {virtualRows.map((virtualRow) => {
         const row = rows[virtualRow.index];
-        const isEvenRow = virtualRow.index % 2 === 0;
 
         return (
           <tr
             key={row.id}
-            className={`h-[var(--row-height)] transition-colors duration-quick ease-default hover:bg-hover-bg ${
-              isEvenRow ? 'bg-muted/30' : ''
-            }`}
+            className="h-[var(--row-height)] transition-colors duration-quick ease-default hover:bg-hover-bg"
           >
             {row.getVisibleCells().map((cell) => {
-              const pinningStyles = getCommonPinningStyles(cell.column, { isEvenRow });
+              const pinningStyles = getCommonPinningStyles(cell.column);
               const meta = cell.column.columnDef.meta as { type?: string } | undefined;
               const isNumeric = meta?.type ? isNumericType(meta.type) : false;
               return (
