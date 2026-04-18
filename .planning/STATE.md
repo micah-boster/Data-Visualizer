@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T14:27:22.892Z"
+last_updated: "2026-04-18T14:35:52.397Z"
 progress:
   total_phases: 34
   completed_phases: 29
-  total_plans: 80
-  completed_plans: 77
+  total_plans: 84
+  completed_plans: 78
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 30 (Micro-Interactions & Motion — Wave 2 complete; Wave 3 next)
-Plan: 30-03 shipped 2026-04-18. Next up: 30-04 per phase plan. 2/5 plans remaining.
-Status: In progress. Plan 30-03 executed 3 tasks + SUMMARY + atomic commits. DS-26 button press-scale live (default + secondary variants hover:scale-[1.01] active:scale-[0.98] with not-aria-[haspopup] opt-out); Pitfall 7 base-class translate-y-px removed; data-press-scale runtime attribute wired to A11Y-05 reduced-motion override; DataPanel gains interactive?: boolean prop (.hover-lift sweep, DS-25); /tokens Motion tab gains Button press + Panel hover-lift demos.
-Last activity: 2026-04-18 — Shipped 30-03 (button press-scale + DataPanel interactive). Commits: 09cbad1 (button variant-scoped scale + duration-quick + data-press-scale), 3230962 (DataPanel.interactive prop + hover-lift chassis), 28543b6 (/tokens Motion tab — 6 button variants demo + interactive/static DataPanel demo). All 4 check scripts green. `npm run build` succeeds.
+Phase: 30 (Micro-Interactions & Motion — Wave 3 in progress)
+Plan: 30-04 shipped 2026-04-18. Next up: 30-05 (final wave — sidebar + cleanup). 1/5 plans remaining.
+Status: In progress. Plan 30-04 executed 3 tasks + SUMMARY + atomic commits. DS-24 chart expand/collapse live (grid-template-rows 0fr↔1fr + overflow-hidden Pitfall-8 guard); DS-27 skeleton→content cross-fade live (dual-mount with 150ms overlap window, skeleton fades --duration-quick × --ease-default, content fades --duration-normal × --ease-decelerate); /tokens Motion tab gains ChartExpandDemo + SkeletonCrossFadeDemo.
+Last activity: 2026-04-18 — Shipped 30-04 (chart expand + skeleton cross-fade). Commits: 1b7e547 (grid-template-rows wrapper on chart region), 0ab039f (skeleton→content dual-mount with 150ms overlap), f8f765a (/tokens Motion tab demos). All 4 check scripts green. `npm run build` succeeds.
 
-Progress: [████████████████████] 77/80 plans (96% — v1.0 milestone)
+Progress: [███████████████████ ] 78/84 plans (93% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -160,6 +160,9 @@ Progress: [████████████████████] 77/80 p
 - [Phase 30]: [Phase 30-03]: DataPanel call-site wiring all DEFERRED — all 3 existing consumers (comparison-matrix, trajectory-chart, collection-curve-chart) have no onClick on the panel itself (actions live inside the actions slot). interactive prop surface ships live but unused outside /tokens specimen. Wires on when drill-expand or overlay-expand feature lands; no per-site adjustments needed.
 - [Phase 30]: [Phase 30-03]: Base-class Button duration-quick added alongside transition-all — replaces Tailwind's implicit 150ms fallback with explicit 120ms token. Delta within 30ms perceptual threshold; check:motion Check-5 was only matching literal duration-150 (soft-miss on transition-all without duration). Explicit token removes the implicit-fallback footgun.
 - [Phase 30]: [Phase 30-03]: --duration-micro (60ms) NOT introduced. CONTEXT floated it as follow-up if 120ms press feels laggy; no pilot signal yet. Kept duration-quick consistent across color/bg/transform. Reopen only if in-browser feedback flags press as sluggish — add in dedicated plan with single-site pilot first.
+- [Phase 30-04]: RESEARCH Pattern 3 (grid-template-rows 0fr↔1fr) selected for DS-24 over explicit-height CSS + fixed-snap alternatives. Inner overflow-hidden is non-negotiable (Pitfall 8). Chart children always mounted when in scope — grid drives height rather than mount/unmount gating.
+- [Phase 30-04]: DS-27 dual-mount 150ms-overlap cross-fade applied at the main data-display.tsx isLoading boundary (LoadingState as skeleton layer). Dynamic-import Suspense fallbacks NOT targeted — they're internal-controlled and unreachable. FadeSwap pattern deliberately NOT extracted (≤2 external sites; inline per plan rule).
+- [Phase 30-04]: Option A (grid-rows-only, no opacity layer) selected for DS-24 content fade. overflow-hidden visually absents collapsed content; extra opacity tween is speculative complexity. Escalate to Option B only on pilot signal of visible pop at the collapsed boundary.
 
 ### Pending Todos
 
@@ -177,7 +180,7 @@ Progress: [████████████████████] 77/80 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 30-03-PLAN.md (button press-scale DS-26 + DataPanel interactive DS-25 sweep). button.tsx variants gain hover:not-aria-[haspopup]:scale-[1.01] active:not-aria-[haspopup]:scale-[0.98] on default + secondary only; base-class Pitfall-7 translate-y-px removed; data-press-scale runtime attribute wired for A11Y-05 reduced-motion; DataPanel.interactive?: boolean prop shipped (chassis .hover-lift); /tokens Motion tab gains Button press + Panel hover-lift demos. All 4 guard scripts green. Ready for Plan 30-04.
+Stopped at: Completed 30-04-PLAN.md (chart expand/collapse DS-24 + skeleton→content cross-fade DS-27). data-display.tsx chart region wrapped in grid-template-rows 0fr↔1fr transition with inner overflow-hidden (Pitfall 8 guard); sparkline renders outside collapsible region. data-display.tsx loading boundary uses dual-mount skeletonVisible + contentReady with 150ms overlap window; skeleton layer absolute-positioned z-10 pointer-events-none during fade-out. motion-demo.tsx gains ChartExpandDemo (DS-24) + SkeletonCrossFadeDemo (DS-27). All 4 guard scripts green. Ready for Plan 30-05.
 Resume file: None
 
 ## Performance Metrics
@@ -192,5 +195,6 @@ Resume file: None
 | 29 | 05 | ~15 min | 3 | 4 | 2026-04-18 |
 | 30 | 01 | ~4 min | 3 | 10 | 2026-04-18 |
 | 30 | 02 | ~2 min | 2 | 2 | 2026-04-18 |
-| Phase 30 P03 | ~2 min | 3 tasks | 3 files |
+| 30 | 03 | ~2 min | 3 | 3 | 2026-04-18 |
+| 30 | 04 | ~5 min | 3 | 2 | 2026-04-18 |
 
