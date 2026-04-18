@@ -45,6 +45,13 @@ export interface DataPanelProps {
   className?: string;
   /** Merged onto the content wrapper (between header and footer) */
   contentClassName?: string;
+  /**
+   * When true, panel translates -1px + shadow steps to elevation-overlay on hover.
+   * Use for panels that trigger interaction on click (drill-into, expand, open detail).
+   * Static display panels leave this false. Matches the StatCard.interactive recipe
+   * (DS-25 canonical hover-lift — see Plan 30-01).
+   */
+  interactive?: boolean;
 }
 
 export function DataPanel({
@@ -56,11 +63,13 @@ export function DataPanel({
   footer,
   className,
   contentClassName,
+  interactive,
 }: DataPanelProps) {
   return (
     <div
       className={cn(
         'rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised',
+        interactive && 'hover-lift',
         className,
       )}
     >
