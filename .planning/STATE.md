@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
-status: unknown
-last_updated: "2026-04-18T14:35:52.397Z"
+status: phase-complete
+last_updated: "2026-04-18T15:10:00.000Z"
 progress:
   total_phases: 34
-  completed_phases: 29
+  completed_phases: 30
   total_plans: 84
-  completed_plans: 78
+  completed_plans: 79
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** Phase 30 — Micro-Interactions & Motion
+**Current focus:** Phase 30 closed — ready to advance to Phase 31 (Visual Polish Pass)
 
 ## Current Position
 
-Phase: 30 (Micro-Interactions & Motion — Wave 4 in progress, awaiting human-verify)
-Plan: 30-05 2/3 tasks complete — sidebar retarget (92cc355) + /tokens aggregator (671f2b7). Task 3 is a blocking human-verify checkpoint for full Phase 30 motion suite end-to-end.
-Status: Paused at checkpoint. DS-28 sidebar lockstep retargeted (lines 221/233/403 → duration-normal + group-data-[state]:ease-decelerate/ease-default). /tokens Motion tab gains SidebarLockstepDemo + Phase30Aggregator. check:motion green, build green. Awaiting "approved" resume-signal to close Phase 30.
-Last activity: 2026-04-18 — Shipped 30-05 Tasks 1+2. Commits: 92cc355 (sidebar.tsx motion tokens + check-motion.sh allowlist notes), 671f2b7 (motion-demo.tsx sidebar lockstep + Phase 30 aggregator). Blocking human-verify checkpoint next.
+Phase: 30 (Micro-Interactions & Motion) — ✅ COMPLETE (2026-04-18)
+Plan: 30-05 3/3 tasks complete — sidebar retarget (92cc355) + /tokens aggregator (671f2b7) + human-verify APPROVED (all 9 checks pass).
+Status: Phase 30 close-out complete. DS-23..28 + A11Y-05 all shipped and user-verified end-to-end. `npm run check:motion` guard live. /tokens Motion tab serves as canonical reference for every animated surface. Ready for `/gsd:verify-phase 30` and Phase 31 kick-off.
+Last activity: 2026-04-18 — Shipped 30-05 Tasks 1+2, received human-verify approval, wrote SUMMARY.md, flipped DS-28 + Phase 30 close-out across REQUIREMENTS / ROADMAP / STATE. Final metadata commit pending.
 
-Progress: [███████████████████ ] 78/84 plans (93% — v1.0 milestone)
+Progress: [████████████████████] 79/84 plans (94% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -163,6 +163,11 @@ Progress: [███████████████████ ] 78/84 pla
 - [Phase 30-04]: RESEARCH Pattern 3 (grid-template-rows 0fr↔1fr) selected for DS-24 over explicit-height CSS + fixed-snap alternatives. Inner overflow-hidden is non-negotiable (Pitfall 8). Chart children always mounted when in scope — grid drives height rather than mount/unmount gating.
 - [Phase 30-04]: DS-27 dual-mount 150ms-overlap cross-fade applied at the main data-display.tsx isLoading boundary (LoadingState as skeleton layer). Dynamic-import Suspense fallbacks NOT targeted — they're internal-controlled and unreachable. FadeSwap pattern deliberately NOT extracted (≤2 external sites; inline per plan rule).
 - [Phase 30-04]: Option A (grid-rows-only, no opacity layer) selected for DS-24 content fade. overflow-hidden visually absents collapsed content; extra opacity tween is speculative complexity. Escalate to Option B only on pilot signal of visible pop at the collapsed boundary.
+- [Phase 30-05]: SidebarInset (line 305) left UNTOUCHED — flex-driven margin shift verified smooth in human-verify check #7; no explicit `transition-[margin,width]` added to the inset. Escalate only if future layout change (e.g., absolute-positioned inset) breaks the lockstep.
+- [Phase 30-05]: SidebarRail (line 292) `transition-all ease-linear` left UNTOUCHED — no numeric duration hardcode, out of plan scope per Phase 27/28 scope-discipline precedent. Future ease-linear sweep across ui/** primitives is a natural inclusion.
+- [Phase 30-05]: Option A (wholesale ui/** allowlist) shipped over Option B (per-file allowlist). scripts/check-motion.sh header documents the carve-out rationale inline — sidebar.tsx manually retargeted, sheet/popover/dialog retain shadcn defaults until a dedicated sweep phase. Matches Phase 28 precedent.
+- [Phase 30-05]: Direction-aware easing mechanism locked — shadcn Sidebar carries `data-state` on outer wrapper (line 211), child elements use Tailwind `group-data-[state=expanded]:ease-decelerate` + `group-data-[state=collapsed]:ease-default` variants. Reusable for any future primitive with an expand/collapse binary state.
+- [Phase 30-05]: Human-verify checkpoint approved on first pass — zero regressions across 9 browser checks (/tokens demos, KPI hover, drill cross-fade, chart expand, button press, skeleton reveal, sidebar lockstep, reduced-motion OS toggle, all guards + build). First time in Phase 30 that every motion surface was co-verified in a single session with reduced-motion toggling.
 
 ### Pending Todos
 
@@ -180,8 +185,8 @@ Progress: [███████████████████ ] 78/84 pla
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Plan 30-05 Tasks 1+2 complete, PAUSED at Task 3 (human-verify checkpoint — blocking). sidebar.tsx lines 221/233/403 retargeted from duration-200 ease-linear to duration-normal + group-data-[state=expanded]:ease-decelerate / group-data-[state=collapsed]:ease-default. SidebarInset left untouched (flex-driven lockstep) pending human-verify signal. check-motion.sh comment header updated with ui/** allowlist rationale. motion-demo.tsx gains SidebarLockstepDemo + Phase30Aggregator. Line 292 (SidebarRail transition-all ease-linear, no numeric duration) left untouched per plan scope discipline. Await user "approved" to close Phase 30 or gap-report per Plan 30-06.
-Resume file: .planning/phases/30-micro-interactions-and-motion/30-05-PLAN.md (Task 3 checkpoint)
+Stopped at: Phase 30 CLOSED. Plan 30-05 3/3 tasks complete (sidebar retarget 92cc355 + /tokens aggregator 671f2b7 + human-verify APPROVED). All DS-23..28 + A11Y-05 shipped and user-verified. SidebarInset flex-driven lockstep ratified by check #7 (stayed untouched). SUMMARY.md written; REQUIREMENTS/ROADMAP/STATE updated to reflect Phase 30 close-out. Ready for `/gsd:verify-phase 30` and Phase 31 kick-off (Visual Polish Pass: DS-29..34).
+Resume file: .planning/phases/31-visual-polish/ (context already captured in prior commit ff53cb1)
 
 ## Performance Metrics
 
@@ -197,4 +202,5 @@ Resume file: .planning/phases/30-micro-interactions-and-motion/30-05-PLAN.md (Ta
 | 30 | 02 | ~2 min | 2 | 2 | 2026-04-18 |
 | 30 | 03 | ~2 min | 3 | 3 | 2026-04-18 |
 | 30 | 04 | ~5 min | 3 | 2 | 2026-04-18 |
+| 30 | 05 | ~4 min + human-verify | 3 | 3 | 2026-04-18 |
 
