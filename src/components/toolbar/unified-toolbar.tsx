@@ -24,6 +24,7 @@ import { PresetDropdown } from './preset-dropdown';
 import { FilterPopover } from './filter-popover';
 import { SaveViewPopover } from './save-view-popover';
 import { SortDialog } from '@/components/table/sort-dialog';
+import { ToolbarDivider } from '@/components/patterns/toolbar-divider';
 import { cn } from '@/lib/utils';
 
 interface UnifiedToolbarProps {
@@ -165,7 +166,7 @@ export function UnifiedToolbar({
           <TooltipContent>{chartsExpanded ? 'Hide charts' : 'Show charts'}</TooltipContent>
         </Tooltip>
 
-        <div className="mx-0.5 h-4 w-px bg-border" />
+        <ToolbarDivider />
 
         {/* Preset dropdown (root only) */}
         {isRoot && (
@@ -233,7 +234,7 @@ export function UnifiedToolbar({
           />
         )}
 
-        <div className="mx-0.5 h-4 w-px bg-border" />
+        <ToolbarDivider />
 
         {/* Export */}
         <Tooltip>
