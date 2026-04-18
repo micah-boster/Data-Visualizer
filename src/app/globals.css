@@ -556,12 +556,52 @@
     font-weight: var(--text-display--font-weight);
     font-variant-numeric: tabular-nums lining-nums;
   }
+
+  /* Phase 30 DS-25 — Interactive card hover lift.
+     Composes Phase 28 elevation pair (raised → overlay) with Phase 26 motion
+     tokens (duration-quick + ease-spring). Consumers are expected to carry
+     shadow-elevation-raised at rest; .hover-lift owns the transition + hover
+     target. Do NOT stack with transition-colors — merge property lists or
+     apply .hover-lift in place of a plain transition-colors utility. */
+  .hover-lift {
+    transition-property: transform, box-shadow;
+    transition-duration: var(--duration-quick);
+    transition-timing-function: var(--ease-spring);
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-elevation-overlay);
+  }
 }
 
 /* Smooth theme transitions for non-layout elements */
 @media (prefers-reduced-motion: no-preference) {
   .theme-transition * {
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.15s ease;
+  }
+}
+
+/* Phase 30 — A11Y-05: Full reduced-motion disable.
+   CONTEXT lock: no per-component opt-out. Users with vestibular issues get a
+   fully static UI — translate/scale/opacity transitions all collapse to instant.
+   !important is required because Tailwind utilities have specificity 0,1,0 and
+   some inline styles can win unauthored. Verified zero element.animate() usage
+   in src/ (no Web Animations API dependency to disrupt). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0ms !important;
+    transition-delay: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+  /* Neutralize Phase 30 lift + press transforms so motionless = positionless. */
+  .hover-lift:hover,
+  .hover-lift:focus-visible,
+  [data-press-scale]:hover,
+  [data-press-scale]:active {
+    transform: none !important;
   }
 }
 
