@@ -266,6 +266,10 @@ export function MotionDemo() {
       <ChartExpandDemo />
 
       <SkeletonCrossFadeDemo />
+
+      <SidebarLockstepDemo />
+
+      <Phase30Aggregator />
     </div>
   );
 }
@@ -447,7 +451,7 @@ function DrillCrossFadeDemo() {
   const [demoLevel, setDemoLevel] = useState<DemoDrillLevel>('root');
 
   return (
-    <section className="flex flex-col gap-stack">
+    <section id="ds-23" className="flex flex-col gap-stack">
       <div className="flex flex-col gap-[var(--spacing-1)]">
         <div className="flex items-baseline gap-inline">
           <h2 className="text-heading">Drill cross-fade</h2>
@@ -495,6 +499,152 @@ function DrillCrossFadeDemo() {
           </p>
         </div>
       </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sidebar lockstep (DS-28)
+//
+// Sidebar width + main-content margin animate together at --duration-normal.
+// Opening uses --ease-decelerate (arrival curve); closing uses --ease-default.
+// Sidebar contents stay visible throughout — no fade, just clipping via
+// overflow-hidden on the collapsing container.
+// ---------------------------------------------------------------------------
+
+function SidebarLockstepDemo() {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  return (
+    <section id="ds-28" className="flex flex-col gap-stack">
+      <div className="flex flex-col gap-[var(--spacing-1)]">
+        <div className="flex items-baseline gap-inline">
+          <h2 className="text-heading">Sidebar lockstep</h2>
+          <span className="text-label uppercase text-muted-foreground">
+            DS-28
+          </span>
+        </div>
+        <p className="text-body text-muted-foreground">
+          Sidebar width + main-content margin animate together at{' '}
+          <code className="text-caption">--duration-normal</code>. Opening uses{' '}
+          <code className="text-caption">--ease-decelerate</code> (arrival
+          curve); closing uses{' '}
+          <code className="text-caption">--ease-default</code>. Sidebar
+          contents stay visible throughout — no fade.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-stack">
+        <div>
+          <Button
+            variant="secondary"
+            onClick={() => setSidebarOpen((o) => !o)}
+          >
+            {sidebarOpen ? 'Collapse' : 'Expand'} demo sidebar
+          </Button>
+        </div>
+        <div className="flex border border-border rounded-lg overflow-hidden h-48">
+          <div
+            data-state={sidebarOpen ? 'expanded' : 'collapsed'}
+            className={cn(
+              'transition-[width] duration-normal data-[state=expanded]:ease-decelerate data-[state=collapsed]:ease-default bg-sidebar overflow-hidden',
+              sidebarOpen ? 'w-48' : 'w-12',
+            )}
+          >
+            <div className="p-card-padding flex flex-col gap-inline">
+              <span className="text-label uppercase text-muted-foreground whitespace-nowrap">
+                Sidebar
+              </span>
+              <span className="text-body whitespace-nowrap">Item 1</span>
+              <span className="text-body whitespace-nowrap">Item 2</span>
+              <span className="text-body whitespace-nowrap">Item 3</span>
+            </div>
+          </div>
+          <div className="flex-1 bg-surface-base p-card-padding">
+            <span className="text-label uppercase text-muted-foreground">
+              Main content
+            </span>
+            <p className="text-body mt-[var(--spacing-2)]">
+              Margin shift is lockstep with sidebar width — the flex layout
+              ties them together automatically.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Phase 30 motion surfaces aggregator
+//
+// Reference list of every surface shipped in Phase 30. Each entry points back
+// to the corresponding in-page section so future Claude or Micah can visit
+// /tokens and see every motion surface demonstrated live in one place.
+// ---------------------------------------------------------------------------
+
+function Phase30Aggregator() {
+  return (
+    <section className="flex flex-col gap-stack">
+      <div className="flex flex-col gap-[var(--spacing-1)]">
+        <h2 className="text-heading">Phase 30 motion surfaces</h2>
+        <p className="text-body text-muted-foreground">
+          Every surface below ships in Phase 30, token-backed, and gated by{' '}
+          <code className="text-caption">prefers-reduced-motion</code>.
+        </p>
+      </div>
+
+      <ul className="flex flex-col gap-[var(--spacing-2)] text-body">
+        <li>
+          <span className="text-label uppercase text-muted-foreground mr-[var(--spacing-2)]">
+            DS-23
+          </span>
+          Drill cross-fade — see &ldquo;Drill cross-fade&rdquo; section above
+        </li>
+        <li>
+          <span className="text-label uppercase text-muted-foreground mr-[var(--spacing-2)]">
+            DS-24
+          </span>
+          Chart expand / collapse — see &ldquo;Chart expand / collapse&rdquo;
+          section above
+        </li>
+        <li>
+          <span className="text-label uppercase text-muted-foreground mr-[var(--spacing-2)]">
+            DS-25
+          </span>
+          Interactive card hover lift — see &ldquo;Card hover lift&rdquo; +
+          &ldquo;Panel hover lift&rdquo; sections above
+        </li>
+        <li>
+          <span className="text-label uppercase text-muted-foreground mr-[var(--spacing-2)]">
+            DS-26
+          </span>
+          Button press scale — see &ldquo;Button press scale&rdquo; section
+          above
+        </li>
+        <li>
+          <span className="text-label uppercase text-muted-foreground mr-[var(--spacing-2)]">
+            DS-27
+          </span>
+          Skeleton → content cross-fade — see &ldquo;Skeleton → content&rdquo;
+          section above
+        </li>
+        <li>
+          <span className="text-label uppercase text-muted-foreground mr-[var(--spacing-2)]">
+            DS-28
+          </span>
+          Sidebar lockstep — see &ldquo;Sidebar lockstep&rdquo; section above
+        </li>
+        <li>
+          <span className="text-label uppercase text-muted-foreground mr-[var(--spacing-2)]">
+            A11Y-05
+          </span>
+          Reduced motion — OS{' '}
+          <code className="text-caption">prefers-reduced-motion: reduce</code>{' '}
+          disables all transitions globally. See &ldquo;Reduced motion&rdquo;
+          section above.
+        </li>
+      </ul>
     </section>
   );
 }
