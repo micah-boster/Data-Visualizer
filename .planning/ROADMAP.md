@@ -99,7 +99,7 @@
 | 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
 | 28. Surfaces & Elevation | 8/8 | Complete   | 2026-04-18 | - |
 | 29. Component Patterns | 5/5 | Complete    | 2026-04-18 | - |
-| 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
+| 30. Micro-Interactions & Motion | v4.0 | 0/5 | Planned | - |
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
@@ -233,8 +233,14 @@ Plans:
   7. `@media (prefers-reduced-motion: reduce)` sets ALL transition-duration to 0ms and removes translate/scale transforms — global media query, no per-component opt-out
   8. `check:motion` POSIX grep guard (modeled on check:tokens / check:surfaces / check:components) flags raw duration-[Nms] / ease-[cubic-bezier(…)] / inline transitionDuration / raw transition: … Nms outside allowlist
   9. `/tokens` Motion tab gains live demos of every animated surface shipping in this phase
-**Plans**: TBD (gsd-planner output)
-**Status**: ⏸ Planning
+**Plans**: 5 plans (1 foundation + 3 sweeps/pilots + 1 enforcement/close-out across 4 waves)
+Plans:
+- [ ] 30-01-PLAN.md — Wave 1 — Motion foundation + KPI card hover pilot: reduced-motion global override, .hover-lift utility, check:motion grep guard, StatCard interactive prop, /tokens Motion tab reduced-motion + hover-lift demos (DS-25 pilot, A11Y-05)
+- [ ] 30-02-PLAN.md — Wave 2 — Drill cross-fade (DS-23): data-display.tsx drill boundary wrapped at --duration-normal × --ease-default, keyed on drill identity, symmetric for URL back/forward, Pitfall 3 scroll-jump guard, /tokens drill demo
+- [ ] 30-03-PLAN.md — Wave 2 — Buttons + cards sweep (DS-25, DS-26): default/secondary button press scale(1.01/0.98) + data-press-scale attr, Pitfall 7 translate-y removal, DataPanel interactive prop, /tokens button + panel demos
+- [ ] 30-04-PLAN.md — Wave 3 — Skeleton + chart expand (DS-24, DS-27): chart grid-template-rows 0fr↔1fr transition with overflow-hidden Pitfall 8 guard, skeleton→content dual-mount 150ms overlap cross-fade, /tokens demos
+- [ ] 30-05-PLAN.md — Wave 4 — Sidebar lockstep + close-out (DS-28 + all DS-23..27 + A11Y-05): sidebar.tsx token retarget with data-state direction-aware easing (Pitfall 2), /tokens sidebar demo + Phase 30 aggregator, human-verify checkpoint signing off full motion suite
+**Status**: ⏸ Planned (5 plans ready, 4 waves)
 
 ### Phase 32: URL-Backed Navigation
 
@@ -254,4 +260,4 @@ Plans:
 **Status**: ✅ Complete (2026-04-17) — 2/2 plans shipped; all NAV-01→NAV-04 verified (13/13 must-haves in 32-VERIFICATION.md)
 
 ---
-*Last updated: 2026-04-18 — Phase 30 detail section added; Phase 29 closed (5/5 plans, 14/14 truths, DS-18..22 CI-guarded); Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
+*Last updated: 2026-04-18 — Phase 30 planned (5 plans across 4 waves); Phase 29 closed (5/5 plans, 14/14 truths, DS-18..22 CI-guarded); Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
