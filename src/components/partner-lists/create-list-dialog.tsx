@@ -14,7 +14,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { usePartnerLists } from '@/hooks/use-partner-lists';
+import { usePartnerListsContext } from '@/contexts/partner-lists';
+import { useActivePartnerList } from '@/contexts/active-partner-list';
 import { evaluateFilters } from '@/lib/partner-lists/filter-evaluator';
 import { getPartnerName, getStringField } from '@/lib/utils';
 import type { PartnerListFilters } from '@/lib/partner-lists/types';
@@ -64,7 +65,15 @@ export function CreateListDialog({
   allRows,
   editMode = null,
 }: CreateListDialogProps) {
-  const { createList, updateList, getList, hasListWithName } = usePartnerLists();
+  // Phase 34-04: consume the shared PartnerListsProvider context so creates/edits
+  // write to the single upstream hook instance. Calling usePartnerLists() here
+  // would spin up a parallel React-state copy and desync from the sidebar's
+  // view of the list collection within the session.
+  const { createList, updateList, getList, hasListWithName } =
+    usePartnerListsContext();
+  // Phase 34-04: activate newly-created lists immediately so the user sees the
+  // filter cascade without a second click. Edit mode never changes activation.
+  const { setActiveListId } = useActivePartnerList();
 
   const [name, setName] = useState('');
   const [filters, setFilters] = useState<PartnerListFilters>({});
@@ -210,7 +219,10 @@ export function CreateListDialog({
       updateList(editMode.listId, { name: trimmed, partnerIds, filters });
       toast('List updated', { description: `"${trimmed}" saved` });
     } else {
-      createList({ name: trimmed, partnerIds, filters, source });
+      const created = createList({ name: trimmed, partnerIds, filters, source });
+      // Activate the newly-created list so the user sees the filter take effect
+      // immediately (Plan 34-04 must_haves.truths #3).
+      setActiveListId(created.id);
       toast('List created', { description: `"${trimmed}" is ready to use` });
     }
 

@@ -1,9 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { Users, Bookmark, Trash2, Star, LayoutDashboard } from 'lucide-react';
 import { useSidebarData } from '@/contexts/sidebar-data';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { PartnerListsSidebarGroup } from '@/components/partner-lists/partner-lists-sidebar-group';
+import { CreateListDialog } from '@/components/partner-lists/create-list-dialog';
+import { useData } from '@/hooks/use-data';
 import {
   Sidebar,
   SidebarContent,
@@ -37,6 +40,15 @@ export function AppSidebar() {
   // of truth for the persisted lists + CRUD actions).
   const { lists, deleteList, restoreList } = usePartnerListsContext();
 
+  // Phase 34-04: CreateListDialog open/edit state owned at the sidebar level so
+  // the group header "+" and per-row pencil actions share a single mount of
+  // the Sheet. allRows sources from the same TanStack Query cache the rest of
+  // the app reads — query client dedupes the fetch, no extra request.
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editListId, setEditListId] = useState<string | null>(null);
+  const { data: queryData } = useData();
+  const allRows = queryData?.data ?? [];
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -64,10 +76,12 @@ export function AppSidebar() {
           deleteList={deleteList}
           restoreList={restoreList}
           onCreateList={() => {
-            // Wired by Plan 03 (CreateListDialog open-state setter).
+            setEditListId(null);
+            setCreateDialogOpen(true);
           }}
-          onEditList={() => {
-            // Wired by Plan 03 (CreateListDialog edit-mode open-state setter).
+          onEditList={(id) => {
+            setEditListId(id);
+            setCreateDialogOpen(true);
           }}
         />
 
@@ -203,6 +217,24 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      {/*
+        Phase 34-04: CreateListDialog rendered from AppSidebar because both
+        entry points (the group "+" action and per-row pencil) live inside
+        PartnerListsSidebarGroup. The Sheet primitive portals itself, so its
+        DOM location inside <Sidebar> does not affect the overlay position.
+        Closing the dialog also clears editListId so the next open defaults
+        to create mode.
+      */}
+      <CreateListDialog
+        open={createDialogOpen}
+        onOpenChange={(next) => {
+          setCreateDialogOpen(next);
+          if (!next) setEditListId(null);
+        }}
+        allRows={allRows}
+        editMode={editListId ? { listId: editListId } : null}
+      />
     </Sidebar>
   );
 }
