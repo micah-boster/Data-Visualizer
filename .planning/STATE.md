@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-17T22:42:05.412Z"
+last_updated: "2026-04-18T04:22:25.519Z"
 progress:
-  total_phases: 31
+  total_phases: 32
   completed_phases: 28
-  total_plans: 61
-  completed_plans: 61
+  total_plans: 75
+  completed_plans: 73
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 27 (Typography & Hierarchy — COMPLETE; all 6 plans shipped)
-Plan: 27-06 SHIPPED — POSIX grep CI guard (scripts/check-type-tokens.sh) + npm run check:tokens alias + /tokens SectionHeader demo + numeric-variants in-situ demo. Guard exits 0 on clean tree; two documented-exception font-medium pairings (kpi-card trend delta, trend-indicator arrow) closed inline to honor TYPE-MIGRATION.md §5 strict weight policy. npm run build passes.
-Status: Phase 27 CLOSED. 131 ad-hoc text-* hits across 55 files at phase start → 0 hits outside allowlist at phase close. Enforcement guard ready to flip on in CI (Vercel build step / pre-commit / GitHub Actions — user-owned one-line change).
-Last activity: 2026-04-17 — Shipped 27-06 (6e0af1b script + weight-policy gap closures; f9d5ea2 /tokens demos). Phase 27 closer landed: CI guard prevents regression + /tokens dogfoods SectionHeader + numeric variants. Checkpoint auto-approved under workflow.auto_advance=true.
+Phase: 29 (Component Patterns — in progress; 1/5 plans executed via this session; prior plans 01-03 present in tree, 04 just shipped)
+Plan: 29-04 SHIPPED — ToolbarDivider sibling component (src/components/patterns/toolbar-divider.tsx) + /tokens specimen + unified-toolbar.tsx migration (2 raw divider divs → <ToolbarDivider />). check:tokens + check:surfaces pass. Pre-existing main-tree build errors (collection-curve-chart, data-display EmptyState) verified out of scope via stash-compare; logged in deferred-items.md for Plan 05 / earlier owners.
+Status: Phase 29 still in progress. Plan 29-05 aggregator (check:components grep guard + token-browser wire-up + comparison-matrix.tsx:110 audit) remains queued. Two pre-existing build errors in unrelated files need resolution before full `npm run build` passes.
+Last activity: 2026-04-18 — Shipped 29-04 (51e99e0 pattern + specimen; 560a036 unified-toolbar migration). Resolved decision #5 sibling-pattern locked; no ToolbarGroup wrapper. Pitfall 5 analysis confirmed no stray-divider risk at either site (clusters always have visible Columns/Sort on left, Export/SaveView on right).
 
 Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phase 27 + Phase 32 shipped; 9 remaining phases)
 
@@ -128,6 +128,10 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 - [Phase 27]: [Phase 27-06]: POSIX grep -rE over ripgrep for the check-type-tokens.sh guard — ripgrep not universally installed (missing on this dev machine + Vercel build image not guaranteed). 63-line bash script with find + grep -rE runs in <1s on src/ with zero install footprint.
 - [Phase 27]: [Phase 27-06]: Scope-expansion font-medium gap closures — kpi-card.tsx:117 trend delta dropped font-medium (text-label-numeric bakes 500 baked); trend-indicator.tsx:83 arrow span swapped text-caption font-medium → text-label (same weight 500 baked, preserves prominence, closes Phase 27-03 glyph-arrow exception). Honors TYPE-MIGRATION.md §5 Exception: NONE.
 - [Phase 27]: [Phase 27-06]: CI wiring (Vercel build step / pre-commit hook / GitHub Actions) deliberately deferred — guard + npm script live, but enabling in CI is a one-line user-owned change per plan's project_constraints.
+- [Phase 29-04]: Sibling <ToolbarDivider /> pattern locked over ToolbarGroup wrapper (resolved decision #5) — less invasive, preserves isRoot conditional rendering shape
+- [Phase 29-04]: No conditional guards on migrated dividers — Pitfall 5 analysis: Columns/Sort always render (left); Export/SaveView always render (right); zero stray-divider risk
+- [Phase 29-04]: comparison-matrix.tsx:110 mx-1 divider intentionally out of scope — Plan 29-05 check:components guard will audit (allowlist+justification OR separate sweep)
+- [Phase 29-04]: Specimen file (patterns-specimen-toolbar.tsx) NOT wired into token-browser.tsx — Plan 29-05 aggregator owns wiring; each plan scoped to own file(s)
 
 ### Pending Todos
 
@@ -142,12 +146,17 @@ Progress: [████████░░] 47% (v4.0: Phase 25 + Phase 26 + Phas
 
 ## Session Continuity
 
-Last session: 2026-04-17
-Stopped at: Completed 27-06-PLAN.md — Phase 27 Typography & Hierarchy closed (6/6 plans shipped). check-type-tokens.sh POSIX grep guard + npm run check:tokens alias + /tokens SectionHeader demo + numeric-variants in-situ demo shipped. Weight-policy gap closures: kpi-card trend delta + trend-indicator arrow no longer pair tokens with font-medium. Guard exits 0 on clean tree. CI wiring (Vercel build step / pre-commit hook / GitHub Actions) user-owned, deferred per plan constraints.
-Resume with: `/gsd:plan-phase 28` (Surfaces & Elevation — next in v1.0 milestone order), OR flip the guard on in CI (Vercel build command → `npm run check:tokens && npm run build`, or add a pre-commit hook). Alternatively `/gsd:verify-work 27` for a full phase-close audit.
+Last session: 2026-04-18
+Stopped at: Completed 29-04-PLAN.md — ToolbarDivider pattern + unified-toolbar migration + /tokens specimen. Two task commits (51e99e0, 560a036) atomic; SUMMARY.md + deferred-items.md written. check:tokens / check:surfaces pass; `npm run build` baseline-fails on pre-existing unrelated errors (collection-curve-chart useCurveChartState surface, data-display EmptyState missing variant — Plan 05 / earlier-refactor owners).
+Resume with: `/gsd:execute-phase 29` to continue with Plan 29-05 (aggregator + check:components guard + comparison-matrix.tsx:110 audit), OR address the two pre-existing build errors in a dedicated fix pass before Plan 05 runs.
 
 ## Performance Metrics
 
 | Phase | Plan | Duration | Tasks | Files | Completed |
 |-------|------|----------|-------|-------|-----------|
 | 27 | 06 | ~55 min | 3 | 5 | 2026-04-17 |
+| 29 | 04 | ~2 min | 2 | 3 | 2026-04-18 |
+| 29 | 03 | ~3 min | 2 | 4 | 2026-04-18 |
+| 29 | 01 | ~15 min | 3 | 4 | 2026-04-18 |
+| Phase 29 P02 | ~3 min | 3 tasks | 5 files |
+

@@ -98,7 +98,7 @@
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
 | 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
 | 28. Surfaces & Elevation | 8/8 | Complete   | 2026-04-18 | - |
-| 29. Component Patterns | v4.0 | 0/5 | Planning | - |
+| 29. Component Patterns | 2/5 | In Progress|  | - |
 | 30. Micro-Interactions & Motion | v4.0 | 0/TBD | Not started | - |
 | 31. Visual Polish Pass | v4.0 | 0/TBD | Not started | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
@@ -213,7 +213,7 @@ Plans:
 - [ ] 29-01-PLAN.md — StatCard pattern + migrate kpi-summary-cards + delete legacy KpiCard + /tokens specimen (DS-18)
 - [ ] 29-02-PLAN.md — DataPanel pattern + migrate 3 chart/matrix shells (comparison-matrix, trajectory-chart, collection-curve-chart) + /tokens specimen (DS-19, DS-20)
 - [ ] 29-03-PLAN.md — EmptyState pattern (4 variants) + migrate data-display + data-table + delete 2 legacy files + /tokens specimen (DS-22)
-- [ ] 29-04-PLAN.md — ToolbarDivider sibling pattern + migrate unified-toolbar 2 divider sites + /tokens specimen (DS-21)
+- [x] 29-04-PLAN.md — ToolbarDivider sibling pattern + migrate unified-toolbar 2 divider sites + /tokens specimen (DS-21)
 - [ ] 29-05-PLAN.md — Enforcement: scripts/check-components.sh POSIX guard + npm alias + /tokens Component Patterns 6th tab aggregator + comparison-matrix:110 divider gap closure (DS-18, DS-19, DS-20, DS-21, DS-22)
 **Status**: ⏸ Planning
 
