@@ -68,7 +68,7 @@ export function PartnerComparisonMatrix() {
   };
 
   return (
-    <Card className="shrink-0">
+    <Card className="shrink-0 shadow-elevation-raised">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-1.5">
           <CardTitle className="text-title text-muted-foreground">

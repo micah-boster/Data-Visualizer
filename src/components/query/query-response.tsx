@@ -41,7 +41,7 @@ export function QueryResponse({
   // Loading skeleton
   if (status === 'submitted') {
     return (
-      <div className="mt-2 rounded-lg border bg-card p-4">
+      <div className="mt-2 rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
         <div className="space-y-2">
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
@@ -59,7 +59,7 @@ export function QueryResponse({
       error?.name === 'AbortError';
 
     return (
-      <div className="mt-2 rounded-lg border border-destructive/20 bg-card p-4">
+      <div className="mt-2 rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding border border-destructive/20">
         <div className="flex items-start gap-3">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <div className="flex-1 space-y-2">
@@ -91,7 +91,7 @@ export function QueryResponse({
 
   // Streaming or ready state
   return (
-    <div className="mt-2 max-h-[200px] overflow-y-auto rounded-lg border bg-card p-4">
+    <div className="mt-2 max-h-[200px] overflow-y-auto rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
       <p className="text-body text-foreground">
         {text}
         {status === 'streaming' && (

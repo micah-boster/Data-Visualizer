@@ -38,7 +38,7 @@ export function AnomalySummaryPanel({ onDrillToPartner }: AnomalySummaryPanelPro
   const totalFlagged = [...partnerAnomalies.values()].filter((a) => a.isFlagged).length;
 
   return (
-    <div className="shrink-0 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+    <div className="shrink-0 rounded-lg border border-warning-border bg-warning-bg shadow-elevation-raised">
       {/* Collapsed bar */}
       <button
         type="button"

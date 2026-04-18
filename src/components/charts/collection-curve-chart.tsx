@@ -173,9 +173,11 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
   // Empty state: no curves at all
   if (curves.length === 0) {
     return (
-      <div className="flex h-[40vh] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
-        <BarChart3 className="h-10 w-10 opacity-30" />
-        <p className="text-body">No collection curve data available</p>
+      <div className="rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
+        <div className="flex h-[40vh] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+          <BarChart3 className="h-10 w-10 opacity-30" />
+          <p className="text-body">No collection curve data available</p>
+        </div>
       </div>
     );
   }
@@ -186,7 +188,8 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
   const collectionMonthsTicks = COLLECTION_MONTHS.filter((m) => m <= maxAge);
 
   return (
-    <div className="w-full space-y-2">
+    <div className="rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
+      <div className="w-full space-y-2">
       {/* Header with metric toggle — this IS the metric view switch (UI-04).
           Toggling between Recovery Rate % and Dollars Collected updates the
           chart data, Y-axis formatting, and tooltip values reactively via
@@ -317,6 +320,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
           onToggleAverage={toggleAverage}
           onToggleShowAll={toggleShowAll}
         />
+      </div>
       </div>
     </div>
   );

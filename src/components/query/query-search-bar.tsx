@@ -124,7 +124,7 @@ export function QuerySearchBar({
   return (
     <div className="shrink-0">
       {/* Search bar card */}
-      <div className="rounded-lg border bg-card p-3 shadow-sm">
+      <div className="rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
         {/* Input row */}
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 shrink-0 text-muted-foreground" />

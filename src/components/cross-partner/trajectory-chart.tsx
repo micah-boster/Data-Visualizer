@@ -122,7 +122,7 @@ export function CrossPartnerTrajectoryChart() {
   const partnerNames = sortedPartners.map((p) => p.partnerName);
 
   return (
-    <Card className="shrink-0">
+    <Card className="shrink-0 shadow-elevation-raised">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-title text-muted-foreground">
           Collection Trajectories
