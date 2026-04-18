@@ -27,11 +27,13 @@ Users can create, manage, and apply named partner groupings to focus the table a
 - Lists show just the name in the sidebar — no count badges
 
 ### Attribute filtering
-- Three filter dimensions available: product type, account type, revenue band
-- Multi-select per attribute (e.g. product type = 1P AND 3P returns partners matching either)
+- **v1 scope (this phase):** ACCOUNT_TYPE only. PRODUCT_TYPE and REVENUE_BAND are not in the schema today (verified against `src/lib/columns/config.ts`); adding them is out-of-scope data-pipeline work.
+- Multi-select on ACCOUNT_TYPE (e.g. Enterprise AND SMB returns partners matching either)
+- Filter UI should be built so additional attributes can be added later without a breaking change
 - Lists snapshot the matching partners at creation time (stored as partner IDs)
 - A "Refresh" action on the list re-runs the original filter criteria to capture new matches
 - Filter criteria are stored alongside the snapshot so refresh is possible
+- **Decision made:** 2026-04-18 — reduced from three attributes to one after research surfaced the schema gap. Manual dual-pane selection remains the primary creation path; ACCOUNT_TYPE is the narrowing aid.
 
 ### List-to-view relationship
 - Lists and views are independent concepts — lists exist as their own entities in localStorage
@@ -62,7 +64,7 @@ Users can create, manage, and apply named partner groupings to focus the table a
 <deferred>
 ## Deferred Ideas
 
-None — discussion stayed within phase scope
+- **PRODUCT_TYPE and REVENUE_BAND attribute filters** — not in `src/lib/columns/config.ts` today. Requires upstream data-pipeline work (Snowflake column additions or derived-band product decision on what the bucket boundaries should be). Candidates to pair with Phase 38 (Scorecard Ingestion) or a dedicated attribute-enrichment phase. Filter UI built in Phase 34 should accept additional attributes additively.
 
 </deferred>
 
