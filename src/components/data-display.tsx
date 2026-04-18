@@ -27,6 +27,7 @@ import { KpiSummaryCards } from '@/components/kpi/kpi-summary-cards';
 import { UnifiedToolbar } from '@/components/toolbar/unified-toolbar';
 import { QueryCommandDialog } from '@/components/query/query-command-dialog';
 import { useAnomalyContext } from '@/contexts/anomaly-provider';
+import { useActivePartnerList } from '@/contexts/active-partner-list';
 import { useSavedViews } from '@/hooks/use-saved-views';
 import { useFilterState } from '@/hooks/use-filter-state';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
@@ -163,27 +164,50 @@ export function DataDisplay() {
     searchParams,
   } = useFilterState(data?.data);
 
+  // Active partner list (Phase 34 — LIST-03). Flows through the same
+  // filteredRawData memo as dimension filters so KPIs, charts, and table
+  // share ONE filter pipeline (Pitfall 2 lock).
+  const { activeList } = useActivePartnerList();
+
   // HEALTH-01 / KI-07 fix: apply dimension filters to raw batch rows BEFORE
   // aggregation so root-level table, chart, KPIs, and downstream consumers
   // all reflect the filtered dataset consistently. `use-filter-state.ts` is
   // correct (don't touch); the bug was that `rootSummaryRows` and friends
   // operated on unfiltered `data.data`.
+  //
+  // Phase 34 LIST-03: after dimension filters, additionally narrow to the
+  // active partner list's partnerIds (if any). Keeps the filter-before-
+  // aggregate contract intact — all downstream consumers (KPIs, trajectory,
+  // comparison matrix, table) pick up the list filter through this single
+  // memo.
   const filteredRawData = useMemo(() => {
     const rows = data?.data;
     if (!rows) return [];
-    if (!dimensionFilters || dimensionFilters.length === 0) return rows;
-    return rows.filter((row) =>
-      dimensionFilters.every((cf) => {
-        const value = (row as Record<string, unknown>)[cf.id];
-        if (value == null) return false;
-        // TanStack filter values can be scalars or arrays — handle both
-        if (Array.isArray(cf.value)) {
-          return cf.value.some((v) => String(v) === String(value));
-        }
-        return String(cf.value) === String(value);
-      }),
-    );
-  }, [data?.data, dimensionFilters]);
+    let out = rows;
+
+    // 1. Dimension filters (Phase 25 — HEALTH-01)
+    if (dimensionFilters && dimensionFilters.length > 0) {
+      out = out.filter((row) =>
+        dimensionFilters.every((cf) => {
+          const value = (row as Record<string, unknown>)[cf.id];
+          if (value == null) return false;
+          // TanStack filter values can be scalars or arrays — handle both
+          if (Array.isArray(cf.value)) {
+            return cf.value.some((v) => String(v) === String(value));
+          }
+          return String(cf.value) === String(value);
+        }),
+      );
+    }
+
+    // 2. Active partner list (Phase 34 — LIST-03)
+    if (activeList && activeList.partnerIds.length > 0) {
+      const allow = new Set(activeList.partnerIds);
+      out = out.filter((row) => allow.has(getPartnerName(row) ?? ''));
+    }
+
+    return out;
+  }, [data?.data, dimensionFilters, activeList]);
 
   // Partner stats sourced from filteredRawData so root-level dimension filters
   // (e.g. ACCOUNT_TYPE) cascade into partner drill-down aggregates.
@@ -491,6 +515,7 @@ export function DataDisplay() {
       <EnrichedAnomalyProvider allRows={filteredRawData}>
         <SidebarDataPopulator
           allData={data.data}
+          allowedPartnerIds={activeList?.partnerIds ?? null}
           drillState={drillState}
           drillToPartner={drillToPartner}
           navigateToLevel={navigateToLevel}
@@ -717,6 +742,7 @@ function EnrichedAnomalyProvider({
 
 function SidebarDataPopulator({
   allData,
+  allowedPartnerIds,
   drillState,
   drillToPartner,
   navigateToLevel,
@@ -726,6 +752,13 @@ function SidebarDataPopulator({
   onSaveView,
 }: {
   allData: Record<string, unknown>[];
+  /**
+   * When non-null, restrict the sidebar's displayed partners to this set.
+   * The ROSTER SOURCE remains `allData` (Phase 25 navigation-integrity lock);
+   * this prop only narrows what is rendered in the sidebar when an active
+   * partner list is applied. `null` = no active list, show everyone.
+   */
+  allowedPartnerIds: string[] | null;
   drillState: DrillState;
   drillToPartner: (name: string) => void;
   navigateToLevel: (level: import('@/hooks/use-drill-down').DrillLevel) => void;
@@ -751,14 +784,23 @@ function SidebarDataPopulator({
         .map(([name]) => name),
     );
 
-    return [...partnerGroups.entries()]
+    const deduped = [...partnerGroups.entries()]
       .map(([name, batchCount]) => ({
         name,
         batchCount,
         isFlagged: flaggedSet.has(name),
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [allData, partnerAnomalies]);
+
+    // Phase 34 LIST-03: when an active partner list is applied, narrow the
+    // DISPLAYED sidebar entries to its partnerIds set. The underlying roster
+    // source is still `allData` (Phase 25 navigation-integrity lock — drill
+    // into partners inside the active list still works; partners outside
+    // it are simply not shown).
+    if (!allowedPartnerIds) return deduped;
+    const allow = new Set(allowedPartnerIds);
+    return deduped.filter((p) => allow.has(p.name));
+  }, [allData, partnerAnomalies, allowedPartnerIds]);
 
   const anomalyCount = useMemo(
     () => [...partnerAnomalies.values()].filter((a) => a.isFlagged).length,
