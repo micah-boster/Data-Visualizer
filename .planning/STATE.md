@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 30 (Micro-Interactions & Motion — Wave 3 in progress)
-Plan: 30-04 shipped 2026-04-18. Next up: 30-05 (final wave — sidebar + cleanup). 1/5 plans remaining.
-Status: In progress. Plan 30-04 executed 3 tasks + SUMMARY + atomic commits. DS-24 chart expand/collapse live (grid-template-rows 0fr↔1fr + overflow-hidden Pitfall-8 guard); DS-27 skeleton→content cross-fade live (dual-mount with 150ms overlap window, skeleton fades --duration-quick × --ease-default, content fades --duration-normal × --ease-decelerate); /tokens Motion tab gains ChartExpandDemo + SkeletonCrossFadeDemo.
-Last activity: 2026-04-18 — Shipped 30-04 (chart expand + skeleton cross-fade). Commits: 1b7e547 (grid-template-rows wrapper on chart region), 0ab039f (skeleton→content dual-mount with 150ms overlap), f8f765a (/tokens Motion tab demos). All 4 check scripts green. `npm run build` succeeds.
+Phase: 30 (Micro-Interactions & Motion — Wave 4 in progress, awaiting human-verify)
+Plan: 30-05 2/3 tasks complete — sidebar retarget (92cc355) + /tokens aggregator (671f2b7). Task 3 is a blocking human-verify checkpoint for full Phase 30 motion suite end-to-end.
+Status: Paused at checkpoint. DS-28 sidebar lockstep retargeted (lines 221/233/403 → duration-normal + group-data-[state]:ease-decelerate/ease-default). /tokens Motion tab gains SidebarLockstepDemo + Phase30Aggregator. check:motion green, build green. Awaiting "approved" resume-signal to close Phase 30.
+Last activity: 2026-04-18 — Shipped 30-05 Tasks 1+2. Commits: 92cc355 (sidebar.tsx motion tokens + check-motion.sh allowlist notes), 671f2b7 (motion-demo.tsx sidebar lockstep + Phase 30 aggregator). Blocking human-verify checkpoint next.
 
 Progress: [███████████████████ ] 78/84 plans (93% — v1.0 milestone)
 
@@ -180,8 +180,8 @@ Progress: [███████████████████ ] 78/84 pla
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 30-04-PLAN.md (chart expand/collapse DS-24 + skeleton→content cross-fade DS-27). data-display.tsx chart region wrapped in grid-template-rows 0fr↔1fr transition with inner overflow-hidden (Pitfall 8 guard); sparkline renders outside collapsible region. data-display.tsx loading boundary uses dual-mount skeletonVisible + contentReady with 150ms overlap window; skeleton layer absolute-positioned z-10 pointer-events-none during fade-out. motion-demo.tsx gains ChartExpandDemo (DS-24) + SkeletonCrossFadeDemo (DS-27). All 4 guard scripts green. Ready for Plan 30-05.
-Resume file: None
+Stopped at: Plan 30-05 Tasks 1+2 complete, PAUSED at Task 3 (human-verify checkpoint — blocking). sidebar.tsx lines 221/233/403 retargeted from duration-200 ease-linear to duration-normal + group-data-[state=expanded]:ease-decelerate / group-data-[state=collapsed]:ease-default. SidebarInset left untouched (flex-driven lockstep) pending human-verify signal. check-motion.sh comment header updated with ui/** allowlist rationale. motion-demo.tsx gains SidebarLockstepDemo + Phase30Aggregator. Line 292 (SidebarRail transition-all ease-linear, no numeric duration) left untouched per plan scope discipline. Await user "approved" to close Phase 30 or gap-report per Plan 30-06.
+Resume file: .planning/phases/30-micro-interactions-and-motion/30-05-PLAN.md (Task 3 checkpoint)
 
 ## Performance Metrics
 
