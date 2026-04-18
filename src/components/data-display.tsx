@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useData } from '@/hooks/use-data';
 import { useAccountData } from '@/hooks/use-account-data';
 import { useDrillDown } from '@/hooks/use-drill-down';
@@ -509,34 +510,57 @@ export function DataDisplay() {
             className="transition-opacity duration-normal ease-default flex min-h-0 flex-1 flex-col"
             style={{ contain: 'layout' }}
           >
-            {/* Collapsible charts section */}
+            {/*
+              DS-24 chart expand/collapse region.
+              Wrapper uses `grid-template-rows: 0fr ↔ 1fr` transition at
+              --duration-normal × --ease-default. Inner `overflow-hidden` is
+              non-negotiable (Pitfall 8) — without it, collapsed charts spill
+              a sliver below the row line on fat charts (PartnerComparisonMatrix,
+              CollectionCurveChart). Chart children are always mounted when in
+              scope for the current drill level; the grid drives height so
+              expand→collapse is a smooth height transition rather than a hard
+              mount/unmount. Sparkline renders OUTSIDE the collapsible region
+              (sibling, not nested) so it's always mounted when its conditions
+              match and doesn't participate in the grid transition.
+              Option A (grid-rows-only, no opacity layer) selected per plan —
+              escalate to Option B opacity layer only if pilot shows a visible
+              pop at the collapsed boundary.
+            */}
             <SectionErrorBoundary resetKeys={[data]}>
-              {chartsExpanded && (
-                <div className="shrink-0 px-2 pt-2 space-y-2">
-                  {drillState.level === 'root' && (
-                    <>
-                      <CrossPartnerTrajectoryChart />
-                      {comparisonVisible && <PartnerComparisonMatrix />}
-                    </>
-                  )}
-                  {drillState.level === 'partner' && (
-                    <>
-                      <KpiSummaryCards
-                        kpis={partnerStats?.kpis ?? null}
-                        trending={partnerStats?.trending ?? null}
-                      />
-                      {partnerStats?.curves && partnerStats.curves.length >= 2 && (
-                        <CollectionCurveChart curves={partnerStats.curves} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
-                      )}
-                    </>
-                  )}
-                  {batchCurve && (
-                    <CollectionCurveChart curves={batchCurve} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
-                  )}
+              <div
+                className={cn(
+                  'grid transition-[grid-template-rows] duration-normal ease-default',
+                  chartsExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+                )}
+                data-charts-expanded={chartsExpanded}
+              >
+                <div className="overflow-hidden">
+                  <div className="shrink-0 px-2 pt-2 space-y-2">
+                    {drillState.level === 'root' && (
+                      <>
+                        <CrossPartnerTrajectoryChart />
+                        {comparisonVisible && <PartnerComparisonMatrix />}
+                      </>
+                    )}
+                    {drillState.level === 'partner' && (
+                      <>
+                        <KpiSummaryCards
+                          kpis={partnerStats?.kpis ?? null}
+                          trending={partnerStats?.trending ?? null}
+                        />
+                        {partnerStats?.curves && partnerStats.curves.length >= 2 && (
+                          <CollectionCurveChart curves={partnerStats.curves} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                        )}
+                      </>
+                    )}
+                    {batchCurve && (
+                      <CollectionCurveChart curves={batchCurve} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
 
-              {/* Sparkline when charts collapsed */}
+              {/* Sparkline when charts collapsed — OUTSIDE the collapsible region */}
               {!chartsExpanded && drillState.level === 'root' && (
                 <div className="shrink-0 px-2 pt-2">
                   <RootSparkline />
