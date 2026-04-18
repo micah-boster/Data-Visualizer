@@ -214,7 +214,26 @@ Plans:
 - [x] 29-02-PLAN.md — DataPanel pattern + migrate 3 chart/matrix shells (comparison-matrix, trajectory-chart, collection-curve-chart) + /tokens specimen (DS-19, DS-20)
 - [x] 29-03-PLAN.md — EmptyState pattern (4 variants) + migrate data-display + data-table + delete 2 legacy files + /tokens specimen (DS-22)
 - [x] 29-04-PLAN.md — ToolbarDivider sibling pattern + migrate unified-toolbar 2 divider sites + /tokens specimen (DS-21)
-- [ ] 29-05-PLAN.md — Enforcement: scripts/check-components.sh POSIX guard + npm alias + /tokens Component Patterns 6th tab aggregator + comparison-matrix:110 divider gap closure (DS-18, DS-19, DS-20, DS-21, DS-22)
+- [x] 29-05-PLAN.md — Enforcement: scripts/check-components.sh POSIX guard + npm alias + /tokens Component Patterns 6th tab aggregator + comparison-matrix:110 divider gap closure (DS-18, DS-19, DS-20, DS-21, DS-22)
+**Status**: ✅ Complete (2026-04-18) — 5/5 plans shipped; all DS-18..22 verified (14/14 must-haves in 29-VERIFICATION.md); `npm run check:components` guard live; /tokens dogfoods pattern system (6 tabs)
+
+### Phase 30: Micro-Interactions & Motion
+
+**Goal**: Apply purposeful motion to state changes across the app using Phase 26's existing motion tokens and Phase 28's elevation pairs — drill cross-fade, chart expand/collapse, interactive card hover lift, button micro-scale, skeleton→content reveal, sidebar lockstep width — all gated by `prefers-reduced-motion` and enforced by a `check:motion` grep guard
+**Depends on**: Phase 26 (motion tokens --duration-*/--ease-*), Phase 28 (elevation-raised / elevation-overlay pairs), Phase 29 (component patterns to animate). Runs independently of Phase 32 (URL-back compat is direction-agnostic by design).
+**Effort**: Medium (6 motion surfaces + A11Y-05 reduced-motion media query + check:motion POSIX guard + /tokens Motion tab additions)
+**Requirements**: DS-23 through DS-28, A11Y-05 (reduced-motion, shipped here to avoid Phase 33 retrofit)
+**Success Criteria** (what must be TRUE):
+  1. Drill-down transitions cross-fade (content region + KPI strip together, header/sidebar/chrome steady) at --duration-normal with no stagger
+  2. Chart expand/collapse animates height with content fade, honoring --duration-normal + --ease-default
+  3. Interactive cards (KPI, chart, drill-capable rows) translate-Y -1px + shadow step up on hover using Phase 28 elevation-raised → elevation-overlay pair, --duration-quick + --ease-spring
+  4. Primary + secondary buttons scale(1.01) on hover and scale(0.98) on active with --duration-quick; icon-chip + ghost buttons stay unscaled (bg tint only)
+  5. Skeleton → content cross-fades with ~150ms overlap (--ease-decelerate incoming, --ease-default outgoing)
+  6. Sidebar open/close animates width + main-content margin in lockstep at --duration-normal with --ease-decelerate (open) / --ease-default (close)
+  7. `@media (prefers-reduced-motion: reduce)` sets ALL transition-duration to 0ms and removes translate/scale transforms — global media query, no per-component opt-out
+  8. `check:motion` POSIX grep guard (modeled on check:tokens / check:surfaces / check:components) flags raw duration-[Nms] / ease-[cubic-bezier(…)] / inline transitionDuration / raw transition: … Nms outside allowlist
+  9. `/tokens` Motion tab gains live demos of every animated surface shipping in this phase
+**Plans**: TBD (gsd-planner output)
 **Status**: ⏸ Planning
 
 ### Phase 32: URL-Backed Navigation
@@ -235,4 +254,4 @@ Plans:
 **Status**: ✅ Complete (2026-04-17) — 2/2 plans shipped; all NAV-01→NAV-04 verified (13/13 must-haves in 32-VERIFICATION.md)
 
 ---
-*Last updated: 2026-04-17 — Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 29 detail section added; Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
+*Last updated: 2026-04-18 — Phase 30 detail section added; Phase 29 closed (5/5 plans, 14/14 truths, DS-18..22 CI-guarded); Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
