@@ -56,7 +56,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
     return (
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-border/50 bg-transparent p-4">
+          <div key={i} className="rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised">
             <Skeleton className="mb-2 h-7 w-20" />
             <Skeleton className="h-4 w-14" />
           </div>
@@ -68,7 +68,7 @@ export function KpiSummaryCards({ kpis, trending }: KpiSummaryCardsProps) {
   // Zero-batch partner: no data message
   if (kpis.totalBatches === 0) {
     return (
-      <div className="flex h-24 items-center justify-center rounded-xl border border-border/50 bg-transparent">
+      <div className="flex h-24 items-center justify-center rounded-lg bg-surface-raised shadow-elevation-raised">
         <span className="text-body text-muted-foreground">
           No batch data available for this partner
         </span>

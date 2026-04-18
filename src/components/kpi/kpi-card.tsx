@@ -30,9 +30,11 @@ interface KpiCardProps {
  * Trend arrow color is context-aware using metric polarity:
  * green = good direction, red = bad direction, gray = flat.
  *
- * Styling: Phase 26 token pilot — consumes --color-surface-raised,
- * --spacing-card-padding, --shadow-sm, --radius-lg, and the type scale
- * (text-label, text-display-numeric, text-label-numeric, text-caption).
+ * Styling: Phase 28 semantic-elevation tier — consumes --color-surface-raised,
+ * --spacing-card-padding, --shadow-elevation-raised, --radius-lg, and the type
+ * scale (text-label, text-display-numeric, text-label-numeric, text-caption).
+ * Border dropped in Phase 28; rim-highlight layer inside shadow-elevation-raised
+ * carries top-edge definition. Transition preserved as Phase 30's hover-lift anchor.
  */
 export function KpiCard({
   label,
@@ -43,9 +45,11 @@ export function KpiCard({
   noData,
   noDataReason,
 }: KpiCardProps) {
-  // Token-migrated container classes shared across all render states.
+  // Semantic-elevation container (DS-12). Rim highlight in shadow-elevation-raised
+  // carries the top edge — border dropped to avoid double-edge. Transition retained
+  // so Phase 30 can layer hover:shadow-elevation-overlay without re-pass.
   const cardClasses =
-    'rounded-lg border border-border bg-surface-raised p-card-padding shadow-sm transition-colors duration-quick ease-default';
+    'rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised transition-colors duration-quick ease-default';
 
   // No data state: show em-dash
   if (noData) {
