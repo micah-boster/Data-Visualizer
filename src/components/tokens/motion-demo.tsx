@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { TokenCard } from './token-card';
+import { Button } from '@/components/ui/button';
+import { DataPanel } from '@/components/patterns/data-panel';
 
 /**
  * Interactive motion playground — 9 duration × easing combinations.
@@ -168,6 +170,97 @@ export function MotionDemo() {
       </section>
 
       <DrillCrossFadeDemo />
+
+      <section className="flex flex-col gap-stack">
+        <div className="flex flex-col gap-[var(--spacing-1)]">
+          <div className="flex items-baseline gap-inline">
+            <h2 className="text-heading">Button press scale</h2>
+            <span className="text-label uppercase text-muted-foreground">
+              DS-26
+            </span>
+          </div>
+          <p className="text-body text-muted-foreground">
+            Primary + secondary buttons scale(1.01) on hover, scale(0.98) on
+            active. Other variants (ghost, outline, destructive, link) use bg
+            tint only — no scale. Dropdown triggers (aria-haspopup) opt out
+            because the menu is the feedback.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-stack">
+          <div className="flex flex-col gap-[var(--spacing-1)] items-start">
+            <span className="text-label uppercase text-muted-foreground">
+              Default (scales)
+            </span>
+            <Button variant="default">Hover me, press me</Button>
+          </div>
+          <div className="flex flex-col gap-[var(--spacing-1)] items-start">
+            <span className="text-label uppercase text-muted-foreground">
+              Secondary (scales)
+            </span>
+            <Button variant="secondary">Hover me, press me</Button>
+          </div>
+          <div className="flex flex-col gap-[var(--spacing-1)] items-start">
+            <span className="text-label uppercase text-muted-foreground">
+              Outline (no scale)
+            </span>
+            <Button variant="outline">Tint only</Button>
+          </div>
+          <div className="flex flex-col gap-[var(--spacing-1)] items-start">
+            <span className="text-label uppercase text-muted-foreground">
+              Ghost (no scale)
+            </span>
+            <Button variant="ghost">Tint only</Button>
+          </div>
+          <div className="flex flex-col gap-[var(--spacing-1)] items-start">
+            <span className="text-label uppercase text-muted-foreground">
+              Destructive (no scale)
+            </span>
+            <Button variant="destructive">Tint only</Button>
+          </div>
+          <div className="flex flex-col gap-[var(--spacing-1)] items-start">
+            <span className="text-label uppercase text-muted-foreground">
+              Link (no scale)
+            </span>
+            <Button variant="link">Underline only</Button>
+          </div>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-stack">
+        <div className="flex flex-col gap-[var(--spacing-1)]">
+          <div className="flex items-baseline gap-inline">
+            <h2 className="text-heading">Panel hover lift</h2>
+            <span className="text-label uppercase text-muted-foreground">
+              DS-25
+            </span>
+          </div>
+          <p className="text-body text-muted-foreground">
+            DataPanel-based chart + matrix shells opt into the same{' '}
+            <code className="text-caption">.hover-lift</code> recipe used by
+            interactive StatCards. Non-interactive display panels stay static.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-stack">
+          <DataPanel
+            title="Interactive panel"
+            eyebrow="click to expand / drill"
+            interactive
+          >
+            <p className="text-body text-muted-foreground">
+              Hover me — I lift (translate-Y -1px + elevation-raised →
+              elevation-overlay, duration-quick × ease-spring).
+            </p>
+          </DataPanel>
+          <DataPanel title="Static display panel" eyebrow="no interaction">
+            <p className="text-body text-muted-foreground">
+              I stay put. Static panels leave{' '}
+              <code className="text-caption">interactive</code> unset.
+            </p>
+          </DataPanel>
+        </div>
+      </section>
     </div>
   );
 }
