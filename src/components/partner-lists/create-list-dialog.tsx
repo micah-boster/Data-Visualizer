@@ -233,7 +233,7 @@ export function CreateListDialog({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-2xl p-card-padding flex flex-col gap-section"
+        className="w-full data-[side=right]:sm:max-w-2xl p-card-padding flex flex-col gap-section overflow-y-auto"
       >
         <SheetHeader className="p-0">
           <SheetTitle className="text-heading">

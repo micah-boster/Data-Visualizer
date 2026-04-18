@@ -149,7 +149,7 @@ export function DualPaneTransfer<T extends { id: string; name: string }>({
   }, [prunedSelectedChecked, onMoveLeft]);
 
   return (
-    <div className="grid grid-cols-[1fr_auto_1fr] gap-section items-start">
+    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-section items-start">
       <Pane
         title={`Available (${available.length})`}
         items={available}
