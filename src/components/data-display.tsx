@@ -436,11 +436,45 @@ export function DataDisplay() {
   const chartSnapshotRef = useRef<(() => ChartViewState) | null>(null);
   const chartLoadRef = useRef<((state: ChartViewState) => void) | null>(null);
 
-  if (isLoading) return <LoadingState />;
+  // DS-27: skeleton → content cross-fade with ~150ms overlap window.
+  // Tracks two booleans independently so both layers can be rendered during
+  // the overlap. When isLoading flips true → skeleton mounts immediately,
+  // content unmounts. When isLoading flips false → content mounts at t=0
+  // (fades in at --ease-decelerate × --duration-normal), skeleton starts
+  // fading at t=0 (--ease-default × --duration-quick), skeleton unmounts
+  // at t=150ms. The overlap window is 0-150ms where both layers are visible.
+  // Reduced-motion path: global @media override collapses transitions to 0ms,
+  // so the timer still fires at 150ms but no animation is seen — clean hard
+  // swap. animate-pulse on the skeleton is neutralized by the same override.
+  const [skeletonVisible, setSkeletonVisible] = useState(isLoading);
+  const [contentReady, setContentReady] = useState(!isLoading);
+
+  useEffect(() => {
+    if (isLoading) {
+      setSkeletonVisible(true);
+      setContentReady(false);
+    } else {
+      setContentReady(true);
+      const t = setTimeout(() => setSkeletonVisible(false), 150);
+      return () => clearTimeout(t);
+    }
+  }, [isLoading]);
+
   if (isError) return <ErrorState error={error} onRetry={() => refetch()} />;
-  if (!data || data.data.length === 0) return <EmptyState variant="no-data" />;
+  if (!isLoading && (!data || data.data.length === 0)) return <EmptyState variant="no-data" />;
   if (drillState.level === 'batch' && isAccountError) {
     return <ErrorState error={accountError} onRetry={() => navigateToLevel('partner')} />;
+  }
+
+  // Pre-overlap / still-loading: skeleton-only render, no content mounted yet.
+  if (!contentReady || !data) {
+    return (
+      <div className="relative">
+        <div className="transition-opacity duration-quick ease-default opacity-100">
+          <LoadingState />
+        </div>
+      </div>
+    );
   }
 
   const hasSchemaWarnings =
@@ -448,6 +482,10 @@ export function DataDisplay() {
     data.schemaWarnings &&
     (data.schemaWarnings.missing.length > 0 || data.schemaWarnings.unexpected.length > 0);
 
+  // DS-27 overlap window: skeleton layer co-renders with content for the first
+  // 150ms after data arrival, absolute-positioned above and fading out while
+  // content fades in. After the overlap, skeletonVisible flips false and only
+  // the content layer remains.
   return (
     <CrossPartnerProvider allRows={filteredRawData}>
       <EnrichedAnomalyProvider allRows={filteredRawData}>
@@ -462,7 +500,19 @@ export function DataDisplay() {
           onSaveView={handleSaveView}
         />
 
-        <div className="flex h-[calc(100vh-3.5rem)] flex-col">
+        {skeletonVisible && (
+          <div
+            className="absolute inset-0 z-10 transition-opacity duration-quick ease-default opacity-0 pointer-events-none"
+            aria-hidden
+          >
+            <LoadingState />
+          </div>
+        )}
+
+        <div className={cn(
+          "flex h-[calc(100vh-3.5rem)] flex-col transition-opacity duration-normal ease-decelerate",
+          contentReady ? "opacity-100" : "opacity-0",
+        )}>
           {/* Schema warnings */}
           {hasSchemaWarnings && (
             <Alert className="relative shrink-0 mx-2 mt-2">
