@@ -491,99 +491,118 @@ export function DataDisplay() {
             </Alert>
           )}
 
-          {/* Collapsible charts section */}
-          <SectionErrorBoundary resetKeys={[data]}>
-            {chartsExpanded && (
-              <div className="shrink-0 px-2 pt-2 space-y-2">
-                {drillState.level === 'root' && (
-                  <>
-                    <CrossPartnerTrajectoryChart />
-                    {comparisonVisible && <PartnerComparisonMatrix />}
-                  </>
-                )}
-                {drillState.level === 'partner' && (
-                  <>
-                    <KpiSummaryCards
-                      kpis={partnerStats?.kpis ?? null}
-                      trending={partnerStats?.trending ?? null}
-                    />
-                    {partnerStats?.curves && partnerStats.curves.length >= 2 && (
-                      <CollectionCurveChart curves={partnerStats.curves} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
-                    )}
-                  </>
-                )}
-                {batchCurve && (
-                  <CollectionCurveChart curves={batchCurve} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
-                )}
-              </div>
-            )}
-
-            {/* Sparkline when charts collapsed */}
-            {!chartsExpanded && drillState.level === 'root' && (
-              <div className="shrink-0 px-2 pt-2">
-                <RootSparkline />
-              </div>
-            )}
-            {!chartsExpanded && drillState.level === 'partner' && partnerStats?.curves && partnerStats.curves.length >= 2 && (
-              <div className="shrink-0 px-2 pt-2">
-                <PartnerSparkline curves={partnerStats.curves} />
-              </div>
-            )}
-          </SectionErrorBoundary>
-
-          {/* Interactive data table with toolbar */}
-          <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
+          {/*
+            DS-23 drill cross-fade boundary.
+            Re-key on drill identity → React unmounts + remounts the subtree;
+            `transition-opacity duration-normal ease-default` softens the swap.
+            Symmetric (opacity-only), so browser back/forward replays identically
+            with zero direction tracking. Header, sidebar, sticky chrome render
+            OUTSIDE this wrapper and stay steady.
+            `contain: layout` holds the container height stable mid-fade so
+            scroll position does not jump on multi-batch partners (Pitfall 3).
+            Reduced-motion @media override in globals.css collapses this to an
+            instant swap for users with prefers-reduced-motion: reduce.
+          */}
+          <div
+            key={`drill-${drillState.level}-${drillState.partner ?? 'none'}-${drillState.batch ?? 'none'}`}
+            data-drill-fade
+            className="transition-opacity duration-normal ease-default flex min-h-0 flex-1 flex-col"
+            style={{ contain: 'layout' }}
+          >
+            {/* Collapsible charts section */}
             <SectionErrorBoundary resetKeys={[data]}>
-            <div className="min-h-0 flex-1 flex flex-col">
-              {drillState.level === 'batch' && isAccountLoading ? (
-                <LoadingState />
-              ) : (
-                <CrossPartnerDataTable
-                  drillState={drillState}
-                  tableData={tableData}
-                  isFetching={isFetching}
-                  drillToPartner={drillToPartner}
-                  drillToBatch={drillToBatch}
-                  navigateToLevel={navigateToLevel}
-                  totalRowCount={uniquePartnerCount}
-                  partnerStats={partnerStats}
-                  allData={filteredRawData}
-                  // Lifted state
-                  dimensionFilters={dimensionFilters}
-                  setFilter={setFilter}
-                  clearAllDimension={clearAllDimension}
-                  activeFilters={activeFilters}
-                  searchParams={searchParams}
-                  views={views}
-                  onLoadView={handleLoadView}
-                  onDeleteView={handleDeleteView}
-                  onSaveView={handleSaveView}
-                  onReplaceView={handleReplaceView}
-                  hasViewWithName={hasViewWithName}
-                  restoreDefaults={restoreDefaults}
-                  // Chart state for toolbar
-                  chartsExpanded={chartsExpanded}
-                  onToggleCharts={toggleCharts}
-                  comparisonVisible={comparisonVisible}
-                  // Query
-                  onOpenQuery={() => setQueryOpen(true)}
-                  // Filter options
-                  partnerOptions={partnerOptions}
-                  typeOptions={typeOptions}
-                  batchOptions={batchOptions}
-                  selectedPartner={selectedPartner}
-                  selectedType={selectedType}
-                  selectedBatch={selectedBatch}
-                  // NAV-04: gate the 'Include drill state' checkbox
-                  canIncludeDrill={drillState.level !== 'root'}
-                  // Refs for snapshot/load
-                  snapshotRef={tableSnapshotRef}
-                  loadViewRef={tableLoadViewRef}
-                />
+              {chartsExpanded && (
+                <div className="shrink-0 px-2 pt-2 space-y-2">
+                  {drillState.level === 'root' && (
+                    <>
+                      <CrossPartnerTrajectoryChart />
+                      {comparisonVisible && <PartnerComparisonMatrix />}
+                    </>
+                  )}
+                  {drillState.level === 'partner' && (
+                    <>
+                      <KpiSummaryCards
+                        kpis={partnerStats?.kpis ?? null}
+                        trending={partnerStats?.trending ?? null}
+                      />
+                      {partnerStats?.curves && partnerStats.curves.length >= 2 && (
+                        <CollectionCurveChart curves={partnerStats.curves} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                      )}
+                    </>
+                  )}
+                  {batchCurve && (
+                    <CollectionCurveChart curves={batchCurve} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                  )}
+                </div>
               )}
-            </div>
+
+              {/* Sparkline when charts collapsed */}
+              {!chartsExpanded && drillState.level === 'root' && (
+                <div className="shrink-0 px-2 pt-2">
+                  <RootSparkline />
+                </div>
+              )}
+              {!chartsExpanded && drillState.level === 'partner' && partnerStats?.curves && partnerStats.curves.length >= 2 && (
+                <div className="shrink-0 px-2 pt-2">
+                  <PartnerSparkline curves={partnerStats.curves} />
+                </div>
+              )}
             </SectionErrorBoundary>
-          </PartnerNormsProvider>
+
+            {/* Interactive data table with toolbar */}
+            <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
+              <SectionErrorBoundary resetKeys={[data]}>
+              <div className="min-h-0 flex-1 flex flex-col">
+                {drillState.level === 'batch' && isAccountLoading ? (
+                  <LoadingState />
+                ) : (
+                  <CrossPartnerDataTable
+                    drillState={drillState}
+                    tableData={tableData}
+                    isFetching={isFetching}
+                    drillToPartner={drillToPartner}
+                    drillToBatch={drillToBatch}
+                    navigateToLevel={navigateToLevel}
+                    totalRowCount={uniquePartnerCount}
+                    partnerStats={partnerStats}
+                    allData={filteredRawData}
+                    // Lifted state
+                    dimensionFilters={dimensionFilters}
+                    setFilter={setFilter}
+                    clearAllDimension={clearAllDimension}
+                    activeFilters={activeFilters}
+                    searchParams={searchParams}
+                    views={views}
+                    onLoadView={handleLoadView}
+                    onDeleteView={handleDeleteView}
+                    onSaveView={handleSaveView}
+                    onReplaceView={handleReplaceView}
+                    hasViewWithName={hasViewWithName}
+                    restoreDefaults={restoreDefaults}
+                    // Chart state for toolbar
+                    chartsExpanded={chartsExpanded}
+                    onToggleCharts={toggleCharts}
+                    comparisonVisible={comparisonVisible}
+                    // Query
+                    onOpenQuery={() => setQueryOpen(true)}
+                    // Filter options
+                    partnerOptions={partnerOptions}
+                    typeOptions={typeOptions}
+                    batchOptions={batchOptions}
+                    selectedPartner={selectedPartner}
+                    selectedType={selectedType}
+                    selectedBatch={selectedBatch}
+                    // NAV-04: gate the 'Include drill state' checkbox
+                    canIncludeDrill={drillState.level !== 'root'}
+                    // Refs for snapshot/load
+                    snapshotRef={tableSnapshotRef}
+                    loadViewRef={tableLoadViewRef}
+                  />
+                )}
+              </div>
+              </SectionErrorBoundary>
+            </PartnerNormsProvider>
+          </div>
 
           {/* Query command dialog */}
           <QueryCommandDialogWithContext
