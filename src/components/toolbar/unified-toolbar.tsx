@@ -179,44 +179,47 @@ export function UnifiedToolbar({
         {/* Heatmap toggle (partner+ only, self-hides at root) */}
         <HeatmapToggle />
 
-        {/* Columns */}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={onOpenColumnPicker}
-              >
-                <Columns3 className="h-4 w-4" />
-              </Button>
-            }
-          />
-          <TooltipContent>Columns ({visibleColumnCount}/{totalColumnCount})</TooltipContent>
-        </Tooltip>
+        {/* Columns + Sort cluster — keyboard-focus glow via :has(:focus-visible) */}
+        <div className="flex items-center gap-1 rounded-md focus-glow-within">
+          {/* Columns */}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={onOpenColumnPicker}
+                >
+                  <Columns3 className="h-4 w-4" />
+                </Button>
+              }
+            />
+            <TooltipContent>Columns ({visibleColumnCount}/{totalColumnCount})</TooltipContent>
+          </Tooltip>
 
-        {/* Sort */}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn('h-8 w-8', sorting.length > 0 && 'bg-muted')}
-                onClick={() => setSortOpen(true)}
-              >
-                <ArrowUpDown className="h-4 w-4" />
-                {sorting.length > 1 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-label-numeric text-primary-foreground">
-                    {sorting.length}
-                  </span>
-                )}
-              </Button>
-            }
-          />
-          <TooltipContent>Sort</TooltipContent>
-        </Tooltip>
+          {/* Sort */}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn('h-8 w-8', sorting.length > 0 && 'bg-muted')}
+                  onClick={() => setSortOpen(true)}
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  {sorting.length > 1 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-label-numeric text-primary-foreground">
+                      {sorting.length}
+                    </span>
+                  )}
+                </Button>
+              }
+            />
+            <TooltipContent>Sort</TooltipContent>
+          </Tooltip>
+        </div>
 
         {/* Filters (root only) */}
         {isRoot && (
@@ -236,42 +239,45 @@ export function UnifiedToolbar({
 
         <ToolbarDivider />
 
-        {/* Export */}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                disabled={isFetching || table.getRowModel().rows.length === 0}
-                onClick={() => {
-                  // Inline export — same as ExportButton logic
-                  import('@/lib/export/csv').then(({ buildCSVFromTable }) => {
-                    import('@/lib/export/download').then(({ downloadCSV, getExportFilename }) => {
-                      import('sonner').then(({ toast }) => {
-                        const { csv, rowCount } = buildCSVFromTable(table, activeFilters);
-                        downloadCSV(csv, getExportFilename());
-                        toast.success(`Exported ${rowCount} rows to CSV`);
+        {/* Export + Save view cluster — keyboard-focus glow via :has(:focus-visible) */}
+        <div className="flex items-center gap-1 rounded-md focus-glow-within">
+          {/* Export */}
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  disabled={isFetching || table.getRowModel().rows.length === 0}
+                  onClick={() => {
+                    // Inline export — same as ExportButton logic
+                    import('@/lib/export/csv').then(({ buildCSVFromTable }) => {
+                      import('@/lib/export/download').then(({ downloadCSV, getExportFilename }) => {
+                        import('sonner').then(({ toast }) => {
+                          const { csv, rowCount } = buildCSVFromTable(table, activeFilters);
+                          downloadCSV(csv, getExportFilename());
+                          toast.success(`Exported ${rowCount} rows to CSV`);
+                        });
                       });
                     });
-                  });
-                }}
-              >
-                <Download className="h-4 w-4" />
-              </Button>
-            }
-          />
-          <TooltipContent>Export CSV</TooltipContent>
-        </Tooltip>
+                  }}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              }
+            />
+            <TooltipContent>Export CSV</TooltipContent>
+          </Tooltip>
 
-        {/* Save view */}
-        <SaveViewPopover
-          onSave={onSaveView}
-          onReplace={onReplaceView}
-          hasViewWithName={hasViewWithName}
-          canIncludeDrill={canIncludeDrill}
-        />
+          {/* Save view */}
+          <SaveViewPopover
+            onSave={onSaveView}
+            onReplace={onReplaceView}
+            hasViewWithName={hasViewWithName}
+            canIncludeDrill={canIncludeDrill}
+          />
+        </div>
       </div>
 
       {/* Sort dialog — controlled externally, trigger hidden */}

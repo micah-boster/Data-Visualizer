@@ -12,7 +12,7 @@ interface ViewItemProps {
 
 export function ViewItem({ view, onLoad, onDelete }: ViewItemProps) {
   return (
-    <div className="group flex items-center gap-1 rounded-md px-2 hover:bg-accent/50 transition-colors">
+    <div className="group flex items-center gap-1 rounded-md px-2 hover:bg-accent/50 transition-colors focus-glow-within">
       <button
         type="button"
         className="flex-1 text-left text-body py-2 truncate cursor-pointer"
