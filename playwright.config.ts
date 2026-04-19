@@ -21,8 +21,15 @@ export default defineConfig({
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    // NOTE: no SNOWFLAKE_ACCOUNT env → isStaticMode() returns true →
-    // deterministic static-cache fixture (5 batches × 2 partners).
+    // Force static-cache mode by unsetting the two vars isStaticMode() checks
+    // (src/lib/static-cache/fallback.ts). Even if the developer has creds in
+    // .env.local, Playwright's webServer.env overrides give us a deterministic
+    // 5-batch × 2-partner fixture (Affirm, American First Finance) with zero
+    // Snowflake plumbing. axe runs consistently across machines.
+    env: {
+      SNOWFLAKE_ACCOUNT: '',
+      SNOWFLAKE_USERNAME: '',
+    },
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
 });

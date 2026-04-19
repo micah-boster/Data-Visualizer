@@ -1,0 +1,53 @@
+{
+  "captured": "2026-04-19",
+  "captured_by": "Phase 33-01 baseline sweep",
+  "playwright_version": "1.59.x",
+  "axe_core_version": "4.10.x",
+  "routes_tested": [
+    "dashboard-root",
+    "dashboard-partner",
+    "dashboard-batch",
+    "dashboard-filtered",
+    "saved-view-popover-open"
+  ],
+  "themes_tested": [
+    "light",
+    "dark"
+  ],
+  "summary": {
+    "critical": 57,
+    "serious": 7,
+    "moderate": 0,
+    "minor": 0
+  },
+  "violations_by_rule": {
+    "button-name": {
+      "impact": "critical",
+      "count": 57,
+      "sample_routes": [
+        "dashboard-root[light]",
+        "dashboard-root[dark]",
+        "dashboard-partner[light]",
+        "dashboard-partner[dark]",
+        "dashboard-batch[light]"
+      ]
+    },
+    "scrollable-region-focusable": {
+      "impact": "serious",
+      "count": 3,
+      "sample_routes": [
+        "dashboard-root[light]",
+        "dashboard-root[dark]",
+        "saved-view-popover-open[light]"
+      ]
+    },
+    "color-contrast": {
+      "impact": "serious",
+      "count": 4,
+      "sample_routes": [
+        "dashboard-filtered[light]"
+      ]
+    }
+  },
+  "note": "Advisory artifact — downstream Plans 02-04 consume this as context. NOT a skip-list. Plan 05 flips suite from advisory to blocking once zeroed."
+}

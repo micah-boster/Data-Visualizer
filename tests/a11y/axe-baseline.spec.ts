@@ -55,15 +55,17 @@ for (const route of ROUTES) {
         'Plan 01 baseline advisory — remediation owned by Plans 02 (ARIA), 03 (keyboard/focus), 04 (contrast). Plan 05 flips blocking.',
       );
 
+      test.setTimeout(90_000);
       await setTheme(page, theme);
-      await page.goto(route.url);
-      await page.waitForLoadState('networkidle');
-      // Wait for table body (data loaded) or empty-state sentinel. Avoids
-      // running axe against a transient skeleton DOM which would introduce
-      // non-determinism around aria-busy.
+      await page.goto(route.url, { waitUntil: 'domcontentloaded' });
+      // DOM-ready + data sentinel is the deterministic ready signal.
+      // networkidle does NOT fire — the dashboard has long-lived React Query
+      // polling. Wait for the rendered table/empty-state then a small settle
+      // window for post-hydration ARIA to stabilize.
       await page.waitForSelector('table tbody tr, [data-empty-state]', {
-        timeout: 10_000,
+        timeout: 30_000,
       });
+      await page.waitForTimeout(500);
 
       const results = await new AxeBuilder({ page }).withTags(A11Y_TAGS).analyze();
 
@@ -85,20 +87,21 @@ test('a11y: saved-view popover open [light]', async ({ page }) => {
     'Plan 01 baseline advisory — popover trigger labeling lands in Plan 02.',
   );
 
+  test.setTimeout(90_000);
   await setTheme(page, 'light');
-  await page.goto('/');
-  await page.waitForSelector('table tbody tr, [data-empty-state]');
-  // Heuristic trigger: first toolbar popover-trigger (save-view popover on
-  // toolbar). Switch to getByRole name match after Plan 02 ships aria-labels.
-  await page
-    .locator('[data-slot="popover-trigger"]')
-    .first()
-    .click({ trial: false })
-    .catch(() => {
-      // Swallow — popover may not be present on every render; the axe run
-      // below still validates the visible DOM regardless.
-    });
-  await page.waitForTimeout(200);
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('table tbody tr, [data-empty-state]', { timeout: 30_000 });
+  await page.waitForTimeout(500);
+  // Best-effort popover click. Bounded timeout + catch so a flaky click
+  // never hangs the run; axe still runs against whatever DOM is visible.
+  // Plan 02 will retarget via getByRole('button', { name: /save view/i }).
+  try {
+    const trigger = page.locator('[data-slot="popover-trigger"]').first();
+    await trigger.click({ timeout: 3_000 });
+    await page.waitForTimeout(300);
+  } catch {
+    /* tolerate — audit proceeds against closed-state DOM */
+  }
 
   const results = await new AxeBuilder({ page }).withTags(A11Y_TAGS).analyze();
   const blocking = results.violations.filter(

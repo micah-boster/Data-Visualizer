@@ -15,7 +15,9 @@
     "check:motion": "bash scripts/check-motion.sh",
     "check:polish": "bash scripts/check-polish.sh",
     "check:surfaces": "bash scripts/check-surfaces.sh",
-    "check:tokens": "bash scripts/check-type-tokens.sh"
+    "check:tokens": "bash scripts/check-type-tokens.sh",
+    "smoke:charts": "node --experimental-strip-types src/lib/charts/stale-column.smoke.ts",
+    "smoke:transitions": "node --experimental-strip-types src/lib/charts/transitions.smoke.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
