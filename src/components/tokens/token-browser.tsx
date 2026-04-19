@@ -7,15 +7,18 @@ import { ShadowSample } from './shadow-sample';
 import { MotionDemo } from './motion-demo';
 import { ColorSwatch } from './color-swatch';
 import { ComponentPatternsSpecimen } from './component-patterns-specimen';
+import { VisualPolishSpecimen } from './visual-polish-specimen';
 
 /**
  * Main tabbed token browser used by the /tokens page.
  *
- * Tabs (6): Spacing / Typography / Surfaces & Shadows / Motion / Colors /
- *            Component Patterns.
+ * Tabs (7): Spacing / Typography / Surfaces & Shadows / Motion / Colors /
+ *            Component Patterns / Visual Polish.
  * Surfaces & Shadows is a merged tab that renders surface swatches, shadow samples,
  * and radius samples together. Component Patterns (Phase 29) aggregates the
- * StatCard, DataPanel, EmptyState, and ToolbarDivider specimens.
+ * StatCard, DataPanel, EmptyState, and ToolbarDivider specimens. Visual Polish
+ * (Phase 31) aggregates the six DS-29..DS-34 treatments (gradient divider, glass
+ * highlight, focus glow, border standard, row hover, scrollbar).
  *
  * Tabs primitive: `@base-ui/react/tabs` (no shadcn Tabs in this repo).
  * Plan 26-05 notes: no `src/components/ui/tabs.tsx` existed at plan time, so Base UI
@@ -72,6 +75,12 @@ export function TokenBrowser() {
             >
               Component Patterns
             </Tabs.Tab>
+            <Tabs.Tab
+              value="polish"
+              className="text-label px-[var(--spacing-3)] py-[var(--spacing-2)] rounded-sm text-muted-foreground data-[selected]:text-foreground data-[selected]:bg-surface-raised data-[selected]:shadow-xs transition-colors duration-quick ease-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Visual Polish
+            </Tabs.Tab>
           </Tabs.List>
 
           <Tabs.Panel value="spacing" className="focus-visible:outline-none">
@@ -102,6 +111,9 @@ export function TokenBrowser() {
           </Tabs.Panel>
           <Tabs.Panel value="patterns" className="focus-visible:outline-none">
             <ComponentPatternsSpecimen />
+          </Tabs.Panel>
+          <Tabs.Panel value="polish" className="focus-visible:outline-none">
+            <VisualPolishSpecimen />
           </Tabs.Panel>
         </Tabs.Root>
       </div>
