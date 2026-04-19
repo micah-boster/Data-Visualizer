@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-19T02:08:22.723Z"
+last_updated: "2026-04-19T02:15:02.799Z"
 progress:
   total_phases: 36
   completed_phases: 31
   total_plans: 92
-  completed_plans: 88
+  completed_plans: 89
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 31 (Visual Polish Pass) — in flight alongside v4.0 feature tracks
-Plan: 31-05 3/3 tasks complete — DS-29 gradient dividers shipped at the two CONTEXT-locked junctions. `.divider-horizontal-fade` + `.divider-vertical-fade` declared inside @layer utilities; new `SectionDivider` component placed at KPI↔charts + charts↔table junctions in data-display.tsx; `ToolbarDivider` internal background swapped bg-border → divider-vertical-fade (all 3 consumers inherit transparently). Commits 53c42ba, 456e4ba.
-Status: All 4 design-system guards (check:tokens / check:surfaces / check:components / check:motion) + Next.js build pass. Regression grep confirms only globals.css + toolbar-divider.tsx + section-divider.tsx reference `divider-*-fade` utilities (31-06 adds /tokens specimen as the 4th). Every other border-t / border-b / hr keeps its hard border per CONTEXT lock.
-Last activity: 2026-04-18 — Completed 31-05; next on deck is 31-06 (final plan in phase 31, Visual Polish /tokens specimen).
+Phase: 35 (Chart Schema Migration) — type-layer migration complete alongside Phase 31 visual-polish tail
+Plan: 35-01 2/2 tasks complete — ChartDefinition discriminated-union (type + version) lands with lazy-on-read migration inside sanitizeSnapshot; 5-assertion Node smoke test locks CHRT-02 contract; all 4 consumers retyped; ChartViewState interface removed. Commits 55fc4fe (Task 1 contract), 1f9d316 (Task 2 atomic consumer wiring + defaults rewrite).
+Status: npm run smoke:migrate-chart passes (5 assertions), npx tsc --noEmit zero errors, npm run build green, all 4 check:* guards green. grep -rn ChartViewState src/ returns 3 doc-comment hits (zero type references). Single migrateChartState call site at use-saved-views.ts:59.
+Last activity: 2026-04-19 — Completed 35-01; next on deck is next incomplete plan (35-02 validation/human-verify, or 31-06 visual polish specimen).
 
-Progress: [████████████████████] 88/90 plans (98% — v1.0 milestone)
+Progress: [████████████████████] 89/92 plans (97% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -207,6 +207,13 @@ Progress: [████████████████████] 88/90 p
 - [Phase 31-05]: data-display.tsx KPI↔charts divider nested inside the chart-expand grid and the curves.length >= 2 guard — no stray divider when chart is absent; charts↔table divider sits between the chart SectionErrorBoundary and the PartnerNormsProvider so it co-re-keys on drill changes without entering the error-isolation scope
 - [Phase 31-05]: ToolbarDivider kept mx-0.5 h-4 w-px skeleton; only background utility swapped bg-border → divider-vertical-fade — all 3 consumers (unified-toolbar ×2, comparison-matrix ×1) inherit transparently, no prop / import / margin edits
 - [Phase 31-05]: SectionDivider is server-renderable (mirrors section-header.tsx precedent) and applies my-section (Phase 26 semantic spacing alias) — no new spacing primitives introduced; className override available for future tight/loose placements
+- [Phase 35]: [Phase 35-01]: ChartDefinition name chosen over ChartConfig (shadcn already exports ChartConfig at src/components/ui/chart.tsx:15). Variant extract alias CollectionCurveDefinition. Names locked for Phase 36 consumers.
+- [Phase 35]: [Phase 35-01]: version is a number literal (z.literal(2)) not a string ('v2') — one byte smaller in persisted JSON, trivial numeric compare. Promote to semver string only if Phase 36/37 need it.
+- [Phase 35]: [Phase 35-01]: Pitfall 1 resolved via Option (c) — viewSnapshotSchema.chartState relaxed to z.unknown().optional(); migrateChartState is the ONLY site that validates against chartDefinitionSchema. Keeps single-read-path invariant + one migration point + matches Phase 34 sanitizeSnapshot pattern 1:1.
+- [Phase 35]: [Phase 35-01]: Test harness = inline Node --experimental-strip-types + node:assert/strict. No vitest install. Matches project-wide test-infra-deferral precedent (Phase 25 / 27-06 / 29-05 / 30-05 all deferred CI wiring). Phase 36/37 can graduate to vitest if they grow a real suite.
+- [Phase 35]: [Phase 35-01]: tsconfig allowImportingTsExtensions: true added to reconcile Node native strip-types (requires explicit .ts suffix) with tsc strictness. Compatible with existing moduleResolution: bundler — Next.js build unchanged. Applies to any future node --experimental-strip-types smoke test in this repo.
+- [Phase 35]: [Phase 35-01]: Defaults author v2 shape directly (type: 'collection-curve', version: 2) in defaults.ts — not derived via migration. Defense in depth: tsc fails the build immediately if the discriminator shape is ever renamed again. Applies to the 2 seeded views that carry chartState; Outreach Performance has none and stays untouched.
+- [Phase 35]: [Phase 35-01]: LegacyChartState type kept PRIVATE inside migrate-chart.ts (not exported) per CONTEXT lock. DEFAULT_COLLECTION_CURVE is exported for the smoke test + future consumers. Legacy shape discarded on any unrecoverable fallback; no raw-payload preservation (avoids localStorage bloat).
 
 ### Pending Todos
 
@@ -223,8 +230,8 @@ Progress: [████████████████████] 88/90 p
 
 ## Session Continuity
 
-Last session: 2026-04-18
-Stopped at: Completed 31-05-PLAN.md — DS-29 gradient dividers shipped at the two CONTEXT-locked junctions (KPI↔charts, charts↔table) + ToolbarDivider internal recipe swap. `.divider-horizontal-fade` / `.divider-vertical-fade` declared in @layer utilities; new `SectionDivider` component (src/components/layout/section-divider.tsx) mirrors section-header.tsx precedent; data-display.tsx carries 2 `<SectionDivider />` placements; all 3 ToolbarDivider consumers (unified-toolbar ×2, comparison-matrix ×1) inherit the gradient transparently. All 4 design-system guards + Next.js build pass. Ready for next incomplete plan in phase 31 (31-06, final plan — /tokens Visual Polish specimen).
+Last session: 2026-04-19
+Stopped at: Completed 35-01-PLAN.md — Chart Schema Migration (type-layer) shipped. ChartDefinition discriminated-union (z.discriminatedUnion on literal `type`) + `version: 2` literal replaces flat `ChartViewState` interface. Idempotent lazy-on-read `migrateChartState` wired inside `sanitizeSnapshot` (`src/hooks/use-saved-views.ts:59`) — single call site, single validation point. 5-assertion Node `--experimental-strip-types` smoke test (`migrate-chart.smoke.ts`) locks CHRT-02 contract. 2 seeded default views rewritten to v2 shape; all 4 consumers retyped to `CollectionCurveDefinition`. `npm run smoke:migrate-chart` + `npx tsc --noEmit` + `npm run build` + all 4 `check:*` guards green. `tsconfig.json` gained `allowImportingTsExtensions: true` to reconcile Node strip-types with tsc. Plan ready for next incomplete: 35-02 (validation / human-verify) or the remaining 31-06.
 Resume file: None
 
 ## Performance Metrics
@@ -251,4 +258,5 @@ Resume file: None
 | Phase 31 P03 | ~5 min | 3 tasks | 7 files |
 | Phase 31 P04 | ~2min | 2 tasks | 0 files |
 | Phase 31 P05 | ~8 min | 3 tasks | 4 files |
+| Phase 35 P01 | ~18 min | 2 tasks | 9 files |
 
