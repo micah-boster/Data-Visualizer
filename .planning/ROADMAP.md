@@ -287,4 +287,19 @@ Plans:
 **Status**: ✅ Complete (2026-04-17) — 2/2 plans shipped; all NAV-01→NAV-04 verified (13/13 must-haves in 32-VERIFICATION.md)
 
 ---
+
+### Phase 35: Chart Schema & Migration
+
+**Goal**: Existing saved views survive the transition to a flexible chart type system without data loss
+**Depends on**: Phase 34
+**Effort**: Small (type definitions + migration function, 2-3 files)
+**Requirements**: CHRT-01, CHRT-02
+**Success Criteria** (what must be TRUE):
+  1. All existing saved views (3 defaults + any user-created) load without errors after the schema change
+  2. ChartDefinition type accepts line, scatter, and bar configurations with validated axis and type fields
+  3. Old ChartViewState objects in localStorage are automatically migrated to ChartDefinition on first load
+**Context**: [35-CONTEXT.md](phases/35-chart-schema-migration/35-CONTEXT.md) (gathered 2026-04-18)
+**Plans**: _To be scoped via `/gsd:plan-phase` — Context decisions locked: ChartDefinition is a discriminated union by `type`, migration is lazy-on-read, `chartState` replaced in-place in ViewSnapshot._
+
+---
 *Last updated: 2026-04-18 — Phase 30 closed (5/5 plans shipped, DS-23..28 + A11Y-05 complete, `check:motion` guard live, human-verify approved full motion suite); Phase 29 closed (5/5 plans, 14/14 truths, DS-18..22 CI-guarded); Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
