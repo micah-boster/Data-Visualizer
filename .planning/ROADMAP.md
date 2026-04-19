@@ -350,7 +350,7 @@ Plans:
 **Plans**: 5 plans across 3 waves (Wave 1: schema/types/axis-eligibility + chart-presets slice — parallel; Wave 2: GenericChart renderer + ChartBuilderToolbar/PresetMenu — parallel; Wave 3: ChartPanel dispatcher + data-display wiring + human-verify)
 Plans:
 - [ ] 36-01-PLAN.md — Wave 1 — Extend chartDefinitionSchema with line/scatter/bar variants + narrow type aliases + axis-eligibility helper (from COLUMN_CONFIGS) + extended smoke (CHRT-07, CHRT-08, CHRT-13 schema-half)
-- [ ] 36-02-PLAN.md — Wave 1 — chart-presets slice (types/schema/storage/defaults) + useChartPresets hook + BUILTIN_PRESETS (Collection Curves) + smoke (CHRT-10, CHRT-11, CHRT-12)
+- [x] 36-02-PLAN.md — Wave 1 — chart-presets slice (types/schema/storage/defaults) + useChartPresets hook + BUILTIN_PRESETS (Collection Curves) + smoke (CHRT-10, CHRT-11, CHRT-12)
 - [ ] 36-03-PLAN.md — Wave 2 — GenericChart renderer (line/scatter/bar dispatch via Recharts) + StaleColumnWarning banner + switchChartType/resolveColumnWithFallback helpers + smoke (CHRT-03, CHRT-04, CHRT-05, CHRT-09)
 - [ ] 36-04-PLAN.md — Wave 2 — AxisPicker + ChartBuilderToolbar (icon segmented control + X/Y pickers) + PresetMenu (built-ins + user + save-new) + SavePresetPopover + isSameDefinition (CHRT-07..12)
 - [ ] 36-05-PLAN.md — Wave 3 — ChartPanel dispatcher (preset vs generic) + CollectionCurveChart presetMenu prop + data-display.tsx integration + human-verify checkpoint (CHRT-03, CHRT-04, CHRT-05, CHRT-06, CHRT-09, CHRT-11, CHRT-13)
