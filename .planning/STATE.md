@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-19T21:12:48.573Z"
+last_updated: "2026-04-19T21:45:00.000Z"
 progress:
   total_phases: 37
   completed_phases: 33
   total_plans: 103
-  completed_plans: 96
+  completed_plans: 98
 ---
 
 # Project State
@@ -27,7 +27,7 @@ Plan: 36-04 3/3 tasks complete — Task 1 transitions.ts ships switchChartType +
 Status: Phase 36 Waves 1 + 2 closed. All 5 smoke scripts green (11/11 migrate-chart + 15/15 axis-eligibility + 9/9 chart-presets + 13/13 stale-column + 16/16 transitions). All 5 check:* guards green (tokens/surfaces/components/motion/polish). npm run build green. tsc zero-new-errors; pre-existing Phase-33 axe-core import error noted out-of-scope in deferred-items.md. CHRT-07/08/09/10/11/12 satisfied at the component layer — Plan 36-05 only needs to wire ChartBuilderToolbar + PresetMenu + GenericChart + StaleColumnWarning into ChartPanel to flip every CHRT-* requirement to [x].
 Last activity: 2026-04-19 — Closed 36-04 (builder UI components). Task 3 PresetMenu drafted by first executor agent but commit blocked by API quota; continuation agent verified the file against the plan spec (builtins filter + Lock/Check badges + structuredClone on apply + sonner undo toasts + type-token compliance) and committed unchanged at 7069958. Plan 36-05 unblocked; only outstanding Phase 36 dependency is the integration wiring into data-display.tsx's ChartPanel.
 
-Progress: [████████████████████] 96/103 plans (v4.0 milestone in flight)
+Progress: [████████████████████] 98/103 plans (v4.0 milestone in flight)
 
 ## Shipped Milestones
 
@@ -253,7 +253,7 @@ Progress: [████████████████████] 96/103 
 ## Session Continuity
 
 Last session: 2026-04-19
-Stopped at: Completed 36-02-PLAN.md — Phase 36 Chart Builder Wave 1 CLOSED (both Plan 01 type-layer contracts + Plan 02 chart-presets feature slice shipped). Plan 36-02 landed the ChartPreset entity (id / name / locked / createdAt / definition), non-strict chartPresetSchema + chartPresetsArraySchema, SSR-safe localStorage CRUD (loadChartPresets / persistChartPresets + CHART_PRESETS_STORAGE_KEY = 'bounce-dv-chart-presets'), BUILTIN_PRESETS = [Collection Curves] referencing DEFAULT_COLLECTION_CURVE by reference equality, and the useChartPresets hook mirroring useSavedViews 1:1. Hook structure: empty-init useState for SSR safety, first effect loads + sanitizes user presets then merges BUILTIN_PRESETS ahead, second effect persists stripping locked entries. Two-layer sanitization drops locked:true entries AND entries whose shape fails chartPresetSchema. savePreset deep-copies via structuredClone (Pitfall 4). 9-assertion smoke:chart-presets locks BUILTIN_PRESETS invariants + reference-equality link + malformed-definition rejection + valid line-variant round-trip + storage-key literal. CHRT-10 / CHRT-11 / CHRT-12 satisfied at the data layer (full UI check-off lands in Plans 36-04/05). One auto-fix (Rule 3): flipped `@/` alias imports → relative `../...ts` imports in chart-presets/* so Node's native ESM strip-types resolver could follow the graph — new dual-resolution convention. All 5 check:* guards still green. Commits fb4cc71 + 61ba333 + cbfe80e. Prior session close (same day): 36-01 (parallel Wave 1) extended chartDefinitionSchema with line/scatter/bar variants + axis-eligibility.ts helper. Next on deck: Phase 36 Wave 2 — Plans 03 (stale-column warning), 04 (PresetMenu UI + save modal), 05 (ChartPanel dispatcher + builder toolbar + GenericChart renderer).
+Stopped at: Completed 36-04-PLAN.md — Phase 36 Chart Builder Wave 2 CLOSED (Plans 03 + 04 both shipped; Plan 05 ChartPanel integration remains). Plan 36-04 landed the four builder UI components and two pure helpers — transitions.ts (switchChartType + seedGenericFromPreset honoring the 36-RESEARCH §Pattern 5 carryover rules + CONTEXT-locked preset→generic conversion; reference-equal same-type no-op; registry-derived generic→generic via isColumnEligible per axis), 16-assertion smoke:transitions script, chart-definition-equals.ts (isSameDefinition — discriminator+version-first structural compare; collection-curve per-field + sorted hiddenBatches; line/scatter/bar x/y column refs), AxisPicker (Popover+scrollable list of getEligibleColumns; label+raw-key per option per CONTEXT density rule; stale-value raw-key fallback on trigger label), ChartBuilderToolbar (LineChart/ScatterChart/BarChart3 icon segmented control with aria-pressed + ToolbarDivider + external .text-label X/Y spans + two AxisPickers; switchChartType on type click; {...definition, x/y: next} on axis pick), SavePresetPopover (SaveViewPopover 1:1 minus includeDrill; Plus icon ghost trigger "Save current as preset…"; Enter submits + Esc closes + duplicate-name "Replace?" destructive variant; requestAnimationFrame focus on open + state reset on close), PresetMenu (single Presets ▾ dropdown; BUILTIN_PRESETS with Lock icon then user presets with group-hover Trash2 + sonner undo; footer SavePresetPopover trigger; Pitfall 4 structuredClone on apply; single useMemo activeId pass for ✓ badge; nested @base-ui/react popover composition). Task 3 (PresetMenu) was drafted by first executor agent but commit was blocked by API quota limit; continuation agent (this session) verified the file against every plan spec item and committed unchanged — all must_haves.truths satisfied + structuredClone grep assertion holds + type-token + surface + component + motion + polish guards green + npm run build green + tsc zero-new-errors. Commits 8bfa898 + 61d0ee0 + 7069958. Parallel Wave 2: Plan 36-03 also shipped today (GenericChart renderer + StaleColumnWarning + resolveColumnWithFallback + 13-assertion smoke:charts). CHRT-07/08/09/10/11/12 now satisfied at the component layer — Plan 36-05's only remaining job is wiring the four builder components + GenericChart + StaleColumnWarning into data-display.tsx's ChartPanel. Next on deck: Phase 36 Plan 05 (ChartPanel dispatcher integration).
 Resume file: None
 
 ## Performance Metrics
