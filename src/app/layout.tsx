@@ -36,12 +36,28 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
+        {/*
+          Skip-to-content link — keyboard-only affordance to jump past
+          sidebar + header chrome straight to the main panel.
+          Visible only on focus (sr-only + focus:not-sr-only reveal).
+          Honors AGENTS.md type-token rule: text-body is the canonical tier
+          for short interactive prose.
+        */}
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus-glow bg-surface-raised px-inline py-inline rounded-md text-body"
+        >
+          Skip to content
+        </a>
         <Providers>
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
               <Header />
-              <main className="flex-1 overflow-x-hidden p-2 md:p-3 bg-surface-raised">
+              <main
+                id="main"
+                className="flex-1 overflow-x-hidden p-2 md:p-3 bg-surface-raised"
+              >
                 {children}
               </main>
             </SidebarInset>
