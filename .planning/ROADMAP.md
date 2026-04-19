@@ -8,8 +8,9 @@
 - ✅ **v3.1 Stabilization & Code Quality** — Phases 21-24 (shipped 2026-04-14) — [Archive](milestones/v3.1-ROADMAP.md)
 - ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
 - 🚧 **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (in progress) — [Roadmap](milestones/v4.0-ROADMAP.md)
-- 📋 **v5.0 External Intelligence** — Phases 38-42 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
-- 📋 **v6.0 Proactive Intelligence & Action** — Phases 43-48 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
+- 📋 **v4.1 Feedback-Driven Polish** — Phases 38-40 (planned) — [Roadmap](milestones/v4.1-ROADMAP.md)
+- 📋 **v5.0 External Intelligence** — Phases 41-45 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
+- 📋 **v6.0 Proactive Intelligence & Action** — Phases 46-51 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
 
 ## Phases
 
@@ -106,20 +107,23 @@
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 4/5 | In Progress|  | - |
-| 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |
-| 38. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
-| 39. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
-| 40. Triangulation Views | v5.0 | 0/TBD | Planned | - |
-| 41. Scorecard Reconciliation | v5.0 | 0/TBD | Planned | - |
-| 42. Dynamic Curve Re-Projection | v5.0 | 0/TBD | Planned | - |
-| 43. Weekly Partner Highlights | v6.0 | 0/TBD | Planned* | - |
-| 44. Pattern Alerts | v6.0 | 0/TBD | Planned | - |
-| 45. MBR Pipeline Integration | v6.0 | 0/TBD | Planned | - |
-| 46. Action Connections | v6.0 | 0/TBD | Planned | - |
-| 47. Temporal Intelligence | v6.0 | 0/TBD | Planned | - |
-| 48. NLQ Enhancements | v6.0 | 0/TBD | Planned | - |
+| 37. Metabase SQL Import | v4.0 | 1/3 | In Progress |  | - |
+| 38. Polish + Correctness Pass | v4.1 | 0/TBD | Planned | - |
+| 39. Partner Config Module | v4.1 | 0/TBD | Planned | - |
+| 40. Projected Curves v1 | v4.1 | 0/TBD | Planned | - |
+| 41. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
+| 42. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
+| 43. Triangulation Views | v5.0 | 0/TBD | Planned | - |
+| 44. Scorecard Reconciliation | v5.0 | 0/TBD | Planned | - |
+| 45. Dynamic Curve Re-Projection | v5.0 | 0/TBD | Planned | - |
+| 46. Weekly Partner Highlights | v6.0 | 0/TBD | Planned* | - |
+| 47. Pattern Alerts | v6.0 | 0/TBD | Planned | - |
+| 48. MBR Pipeline Integration | v6.0 | 0/TBD | Planned | - |
+| 49. Action Connections | v6.0 | 0/TBD | Planned | - |
+| 50. Temporal Intelligence | v6.0 | 0/TBD | Planned | - |
+| 51. NLQ Enhancements | v6.0 | 0/TBD | Planned | - |
 
-\* Phase 43 flagged for review — may be deprioritized in favor of deeper MBR integration (Phase 45)
+\* Phase 46 flagged for review — may be deprioritized in favor of deeper MBR integration (Phase 48)
 
 ## Phase Details
 
@@ -370,7 +374,13 @@ Plans:
   2. User can see a preview of matched columns, skipped columns, extracted filters and sort order
   3. Clicking "Apply" creates a ViewSnapshot with correct table columns, filters, and chart config
   4. Imported configuration only references columns in the existing allow-list (no SQL injection)
-**Plans**: _To be scoped via `/gsd:plan-phase` when this phase is ready to start. Plan count and breakdown depend on codebase state and outcomes from prior phases._
+**Context**: [37-CONTEXT.md](phases/37-metabase-sql-import/37-CONTEXT.md) (gathered 2026-04-19)
+**Research**: [37-RESEARCH.md](phases/37-metabase-sql-import/37-RESEARCH.md) (2026-04-19)
+**Plans**: 3 plans across 3 waves (Wave 1: parser + mapper + schema evolution; Wave 2: wizard UI; Wave 3: Apply integration + human-verify)
+Plans:
+- [x] 37-01-PLAN.md — Wave 1 — parseMetabaseSql + mapToSnapshot + chart-inference + ViewSnapshot.sourceQuery additive field + SOURCE_TABLE constant + smoke tests (META-02, META-04, META-05)
+- [ ] 37-02-PLAN.md — Wave 2 — ImportSheet (right-side Sheet, ~60vw), two-step wizard, sectioned preview (Columns / Filters / Sort / Chart) with icon+label signaling, sidebar entry (META-01)
+- [ ] 37-03-PLAN.md — Wave 3 — handleApplyImport in data-display.tsx + SidebarData.onImportSql wiring + drill reset + sourceQuery stamp + sonner toast with Undo + human-verify checkpoint (META-03)
 
 **After Phase 37:** No new phases unlocked. Feeds into overall milestone completion.
 
