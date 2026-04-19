@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-19T02:56:55.672Z"
+last_updated: "2026-04-19T13:48:14.584Z"
 progress:
-  total_phases: 36
+  total_phases: 37
   completed_phases: 33
-  total_plans: 92
-  completed_plans: 91
+  total_plans: 102
+  completed_plans: 93
 ---
 
 # Project State
@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 35 (Chart Schema Migration) — COMPLETE (most recently closed plan: 35-02). Phase 31 (Visual Polish Pass) also closed this session.
-Plan: 35-02 1/1 tasks complete — partial-verification human-verify checkpoint approved. Scenario C (3 defaults from empty localStorage) observed live; Scenarios A (legacy round-trip), B (malformed fallback), D (unknown-variant narrow) deferred to smoke-test proof (5/5 assertions) after browser seeding was silently overwritten by the useSavedViews hydration-then-persist effect. Root cause + E2E-harness nice-to-have captured in 35-02-SUMMARY.md + 35-VERIFICATION.md. CHRT-01 satisfied; CHRT-02 framework satisfied (concrete line/scatter/bar variants land in Phase 36). Phase 31 also complete: 6/6 plans shipped via 31-06 (scripts/check-polish.sh + /tokens Polish tab); DS-29..DS-34 all ratified; 5-guard parity locked (tokens + surfaces + components + motion + polish); /tokens dogfoods 7-tab design-system reference. Commits 0ff822e + dcfdce2.
-Status: Design-system arc (Phases 26-31) fully closed. Phase 35 type-layer migration closed. All 5 guards green + smoke:migrate-chart 5/5 + build 2.9s. Phase 36 (Chart Builder) + Phase 37 (Metabase SQL Import) unblocked at the type layer. Phase 33 (Accessibility Audit) unblocked to audit the final polished state.
-Last activity: 2026-04-19 — Closed 35-02 verification-only plan. `/gsd:verify-phase 31` + `/gsd:verify-phase 35` will produce final milestone-level roll-ups.
+Phase: 36 (Chart Builder) — IN PROGRESS. Plan 36-01 (type-layer contracts) CLOSED. Phase 35 (Chart Schema Migration) remains CLOSED. Phase 31 (Visual Polish Pass) remains CLOSED.
+Plan: 36-01 3/3 tasks complete — chartDefinitionSchema extended with line/scatter/bar variants (each version 1, shared axisRefSchema, nullable x/y); LineChartDefinition / ScatterChartDefinition / BarChartDefinition / GenericChartDefinition narrow aliases published; axis-eligibility.ts ships getEligibleColumns + isColumnEligible as a pure COLUMN_CONFIGS + isNumericType derivation (no hand-maintained lists, 36-CONTEXT lock); smoke:migrate-chart extended 5 → 11 assertions; new smoke:axis-eligibility 15/15 assertions. CHRT-07 + CHRT-08 + CHRT-13 (schema half) satisfied. Commits b0dc219 + 87e6fe3 + 5ba8d81.
+Status: Phase 36 Wave 1 type-layer contracts shipped. All smoke scripts green (11/11 migrate-chart + 15/15 axis-eligibility). tsc clean on the new files; one pre-existing Phase-33 axe-core import error noted out-of-scope in deferred-items.md. Waves 2/3 unblocked — downstream plans can now `import { LineChartDefinition, ScatterChartDefinition, BarChartDefinition, GenericChartDefinition } from '@/lib/views/types'` and `import { getEligibleColumns, isColumnEligible } from '@/lib/columns/axis-eligibility'` without further contract edits.
+Last activity: 2026-04-19 — Closed 36-01 (type-layer contracts). Wave 1 continues with Plan 36-02 (preset catalog, already executing in parallel). Wave 2/3 plans (builder toolbar, GenericChart renderer, ChartPanel dispatcher) unblocked at the contract layer.
 
 Progress: [████████████████████] 92/92 plans (100% — v1.0 milestone)
 
@@ -217,6 +217,15 @@ Progress: [████████████████████] 92/92 p
 - [Phase 35]: [Phase 35-02]: Partial-verification acceptance — Scenario C (3 defaults from empty storage) observed live; Scenarios A, B, D deferred to smoke-test proof after browser seeding was overwritten by the useSavedViews hydration-then-persist effect. 5/5 smoke assertions cover identical logic paths; deferral is scope-preserving, not evidence-weakening. Pattern: when a browser human-verify checkpoint is partially blocked by test infrastructure (hydration, creds, harness absence), live-observe the deterministic slice and accept smoke for seed-dependent slices with explicit root-cause in VERIFICATION.md.
 - [Phase 35]: [Phase 35-02]: Did NOT introduce a test-only bypass of the useSavedViews hydration effect (e.g., window.__DV_TEST_SKIP_PERSIST flag or two-phase hydration) — would pollute the single-read-path + self-healing-write-back invariant Plan 01 was explicitly designed to protect. E2E harness with pre-hydration seed hook (Playwright page.addInitScript / Cypress onBeforeLoad) recorded as v4.x hardening nice-to-have, not Phase 35 blocker.
 - [Phase 35]: [Phase 35-02]: CHRT-02 stays marked `[~]` partial in v4.0-REQUIREMENTS.md — framework (ChartDefinition discriminated-union + chartDefinitionSchema) shipped; concrete line/scatter/bar variants land in Phase 36 as planned. Full check-off deferred to Phase 36 close-out, not Phase 35.
+- [Phase 36]: [Phase 36-01]: axisRefSchema shared across line/scatter/bar variants rather than inlined per-variant — single source of truth for the { column: string } shape; stale column keys handled at the UI layer (Plan 03 StaleColumnWarning), not at the schema layer
+- [Phase 36]: [Phase 36-01]: Narrow aliases LineChartDefinition / ScatterChartDefinition / BarChartDefinition + GenericChartDefinition union published from views/types.ts — downstream builder / GenericChart / preset catalog target a single variant without repeating Extract<>. Pattern continues the CollectionCurveDefinition precedent from Phase 35
+- [Phase 36]: [Phase 36-01]: axis-eligibility.ts derives purely from COLUMN_CONFIGS + isNumericType — NEVER a hand-maintained list (36-CONTEXT lock). Adding a new column to config.ts automatically propagates to every builder toolbar, preset catalog, and axis picker without a second edit. Canonical registry-derivation pattern for Phase 36/37 consumers
+- [Phase 36]: [Phase 36-01]: Pitfall 1 guard proven at the schema layer — a collection-curve body under a type: 'line' discriminator is rejected by discriminatedUnion safeParse (no cross-variant shape leakage). Smoke assertion 10 locks this contract
+- [Phase 36]: [Phase 36-01]: isOrdinal helper kept in axis-eligibility.ts even though unused in v1 rules — reserved for Plan 03 reuse. isColumnEligible returns false for null/undefined/unknown-registry keys so callers can pass raw saved-view values without defensive pre-checks
+- [Phase 36-02]: BUILTIN_PRESETS[0].definition === DEFAULT_COLLECTION_CURVE by reference equality (single source of truth). Built-ins rebuilt from code on every hydration — sanitizeUserPresets drops any localStorage entry with locked:true so poisoned payloads cannot leak fake built-ins through.
+- [Phase 36-02]: chartPresetSchema intentionally non-strict so additive fields (updatedAt, description) land without a schema version bump — mirrors Phase 32-02 drill + Phase 34 listId evolution precedent.
+- [Phase 36-02]: savePreset deep-copies the incoming ChartDefinition via structuredClone (Pitfall 4) — prevents a caller-side reference mutation after save from corrupting the persisted preset. Caller-state isolation without forcing consumers to clone before calling.
+- [Phase 36-02]: Node ESM + Next.js dual-resolution rule: library files reachable by a Node --experimental-strip-types smoke MUST use relative `../` paths with explicit `.ts` suffixes (not `@/` aliases). Applied to chart-presets/* files after a Rule 3 blocking fix; matches the convention already set by src/lib/views/migrate-chart.ts. Next.js moduleResolution:bundler resolves the same relative paths cleanly in-app.
 
 ### Pending Todos
 
@@ -235,7 +244,7 @@ Progress: [████████████████████] 92/92 p
 ## Session Continuity
 
 Last session: 2026-04-19
-Stopped at: Completed 35-02-PLAN.md — Phase 35 Chart Schema & Migration CLOSED (verification-only plan). Partial-verification human-verify checkpoint approved: Scenario C (3 defaults from empty localStorage) observed live and clean; Scenarios A (legacy round-trip), B (malformed fallback), D (unknown-variant narrow) deferred to smoke-test proof (5/5 assertions) after browser seeding was silently overwritten by the useSavedViews hydration-then-persist effect. Root cause, diagnostic gap, and E2E-harness nice-to-have all captured in 35-02-SUMMARY.md + 35-VERIFICATION.md. CHRT-01 satisfied; CHRT-02 framework satisfied — concrete line/scatter/bar variants land in Phase 36 as planned (v4.0-REQUIREMENTS.md CHRT-02 stays `[~]` until Phase 36 close-out). No code changes; 4 planning artifacts written. Prior session close (same day): 31-06-PLAN.md closed Phase 31 Visual Polish Pass with scripts/check-polish.sh + /tokens Polish tab (6 sub-demos) + 5-guard parity achieved. All gates still green (smoke:migrate-chart 5/5, build 2.9s, 5 check:* guards). Next on deck: Phase 33 (Accessibility Audit) to audit the final polished state, or Phase 36 (Chart Builder) feature track.
+Stopped at: Completed 36-01-PLAN.md — Phase 36 Chart Builder type-layer contracts CLOSED. chartDefinitionSchema extended from 1 to 4 variants (collection-curve + line + scatter + bar, each via a shared axisRefSchema with nullable x/y). Narrow type aliases LineChartDefinition / ScatterChartDefinition / BarChartDefinition + GenericChartDefinition union published from views/types.ts. axis-eligibility.ts ships as a pure COLUMN_CONFIGS + isNumericType derivation — getEligibleColumns + isColumnEligible follow the 36-RESEARCH §Pattern 2 rules (Y numeric-only across all three types; X = time/numeric/identity-categorical for line, numeric-only for scatter, categorical-only for bar). Smoke coverage: migrate-chart extended 5 → 11 assertions (adds variant safeParse + Pitfall 1 cross-variant rejection + wrong-version rejection + v1 line idempotency); new axis-eligibility smoke ships 15 assertions exercising per-chart-type X rules + universal Y invariant + null/undefined/unknown-key guards. CHRT-07, CHRT-08, CHRT-13 (schema half) marked complete. Commits b0dc219 + 87e6fe3 + 5ba8d81. No deviations. One pre-existing Phase-33 tsc error (tests/a11y/baseline-capture.spec.ts axe-core import) logged to deferred-items.md — out of scope. Next on deck: Phase 36 Waves 2/3 (builder toolbar, GenericChart renderer, ChartPanel dispatcher) — all unblocked at the contract layer.
 Resume file: None
 
 ## Performance Metrics
@@ -265,4 +274,6 @@ Resume file: None
 | Phase 35 P01 | ~18 min | 2 tasks | 9 files |
 | Phase 31 P06 | ~6 min | 3 tasks | 4 files |
 | Phase 35 P02 | ~25 min (human-verify + partial-deferral) | 1 task | 0 code / 4 planning files |
+| Phase 36 P01 | ~3 min | 3 tasks | 7 files |
+| Phase 36 P02 | ~3 min | 3 tasks | 7 files |
 

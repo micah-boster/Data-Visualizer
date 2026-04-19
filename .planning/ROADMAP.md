@@ -105,7 +105,7 @@
 | 33. Accessibility Audit | v4.0 | 0/5 | Not started | - |
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
-| 36. Chart Builder | v4.0 | 0/TBD | Not started | - |
+| 36. Chart Builder | 2/5 | In Progress|  | - |
 | 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |
 | 38. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
 | 39. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
