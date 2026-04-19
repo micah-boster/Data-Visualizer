@@ -7,6 +7,7 @@
  */
 import assert from 'node:assert/strict';
 import { migrateChartState, DEFAULT_COLLECTION_CURVE } from './migrate-chart.ts';
+import { chartDefinitionSchema } from './schema.ts';
 
 // 1. Legacy fixture round-trips to v2 shape.
 const legacy = {
@@ -58,4 +59,87 @@ assert.deepEqual(
 assert.equal(migrateChartState(undefined), undefined, 'undefined passes through');
 assert.equal(migrateChartState(null), undefined, 'null passes through as undefined');
 
-console.log('✓ migrate-chart smoke test passed (5 assertions)');
+// --- Phase 36 additions ---------------------------------------------------
+
+// 6. Valid line variant parses and narrows on discriminator.
+const lineSafe = chartDefinitionSchema.safeParse({
+  type: 'line',
+  version: 1,
+  x: { column: 'BATCH_AGE_IN_MONTHS' },
+  y: { column: 'TOTAL_COLLECTED_LIFE_TIME' },
+});
+assert.equal(lineSafe.success, true, 'valid line variant parses');
+assert.equal(
+  lineSafe.success && lineSafe.data.type,
+  'line',
+  'line discriminator narrows',
+);
+
+// 7. Valid scatter variant parses.
+const scatterSafe = chartDefinitionSchema.safeParse({
+  type: 'scatter',
+  version: 1,
+  x: { column: 'AVG_EXPERIAN_CA_SCORE' },
+  y: { column: 'TOTAL_COLLECTED_LIFE_TIME' },
+});
+assert.equal(scatterSafe.success, true, 'valid scatter variant parses');
+
+// 8. Valid bar variant parses.
+const barSafe = chartDefinitionSchema.safeParse({
+  type: 'bar',
+  version: 1,
+  x: { column: 'PARTNER_NAME' },
+  y: { column: 'TOTAL_AMOUNT_PLACED' },
+});
+assert.equal(barSafe.success, true, 'valid bar variant parses');
+
+// 9. Null axes allowed (empty-builder state).
+const lineNullAxes = chartDefinitionSchema.safeParse({
+  type: 'line',
+  version: 1,
+  x: null,
+  y: null,
+});
+assert.equal(lineNullAxes.success, true, 'line with null axes parses');
+
+// 10. Pitfall 1 guard — cross-variant shape rejected (collection-curve body
+// under line discriminator requires x/y, which are absent → parse fails).
+const crossVariant = chartDefinitionSchema.safeParse({
+  type: 'line',
+  version: 1,
+  metric: 'recoveryRate',
+  hiddenBatches: [],
+});
+assert.equal(
+  crossVariant.success,
+  false,
+  'collection-curve body under line discriminator is rejected',
+);
+// Belt-and-suspenders: wrong version on line variant also fails.
+const lineWrongVersion = chartDefinitionSchema.safeParse({
+  type: 'line',
+  version: 2,
+  x: null,
+  y: null,
+});
+assert.equal(
+  lineWrongVersion.success,
+  false,
+  'line variant with version:2 is rejected',
+);
+
+// 11. migrateChartState round-trips a v1 line record idempotently.
+const lineV1 = {
+  type: 'line' as const,
+  version: 1 as const,
+  x: { column: 'BATCH_AGE_IN_MONTHS' },
+  y: { column: 'TOTAL_COLLECTED_LIFE_TIME' },
+};
+const roundTrip = migrateChartState(lineV1);
+assert.deepEqual(
+  roundTrip,
+  lineV1,
+  'migrateChartState is idempotent on v1 line records',
+);
+
+console.log('✓ migrate-chart smoke test passed (11 assertions)');
