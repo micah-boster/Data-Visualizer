@@ -72,7 +72,7 @@
 - [x] **Phase 28: Surfaces & Elevation** — Every container uses a named surface — cards float, tables recede, popovers lift (completed 2026-04-18)
 - [x] **Phase 29: Component Patterns** — StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState (completed 2026-04-18)
 - [x] **Phase 30: Micro-Interactions & Motion** — Drill transitions, hover lifts, press feedback, loading reveals, sidebar lockstep (completed 2026-04-18)
-- [ ] **Phase 31: Visual Polish Pass** — Gradient dividers, dark mode highlights, focus glows, border consistency
+- [x] **Phase 31: Visual Polish Pass** — Gradient dividers, dark mode highlights, focus glows, border consistency (completed 2026-04-19)
 
 **Structural (Phase 32):**
 - [x] **Phase 32: URL-Backed Navigation** — Drill state in URL params, browser back button, deep-linking (2/2 plans — URL-backed useDrillDown + saved views carry optional drill state, shipped 2026-04-17)
@@ -82,7 +82,7 @@
 
 **Features (Phases 34-37, carried from v3.5):**
 - [x] **Phase 34: Partner Lists** — Named partner groupings for filtering (completed 2026-04-18)
-- [ ] **Phase 35: Chart Schema & Migration** — ChartDefinition type, backward-compatible view migration
+- [x] **Phase 35: Chart Schema & Migration** — ChartDefinition type, backward-compatible view migration (completed 2026-04-19)
 - [ ] **Phase 36: Chart Builder** — Generic renderer + builder UI, collection curves as preset
 - [ ] **Phase 37: Metabase SQL Import** — Parse SQL, map to app config, preview and apply
 
@@ -100,11 +100,11 @@
 | 28. Surfaces & Elevation | 8/8 | Complete   | 2026-04-18 | - |
 | 29. Component Patterns | 5/5 | Complete    | 2026-04-18 | - |
 | 30. Micro-Interactions & Motion | 4/5 | Complete    | 2026-04-18 | - |
-| 31. Visual Polish Pass | 5/6 | In Progress|  | - |
+| 31. Visual Polish Pass | 6/6 | Complete   | 2026-04-19 | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
-| 35. Chart Schema & Migration | 1/2 | In Progress|  | - |
+| 35. Chart Schema & Migration | 2/2 | Complete   | 2026-04-19 | - |
 | 36. Chart Builder | v4.0 | 0/TBD | Not started | - |
 | 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |
 | 38. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
@@ -259,12 +259,13 @@ Plans:
   8. `/tokens` page gains a Visual Polish tab with live specimens of each treatment (gradient divider, glass highlight, focus glow, border standard, row hover, scrollbar)
 **Plans**: 6 plans across 3 waves (Wave 1: 4 parallel foundation/utility plans; Wave 2: gradient divider consumer layer; Wave 3: enforcement + /tokens aggregator + human-verify)
 Plans:
-- [ ] 31-01-PLAN.md — DS-32 border retune (8% in both modes, --input stays 15%) + DS-30 glass highlight bump (dark --shadow-elevation-raised inset 0.05→0.07) — globals.css token-level only, no consumer edits
-- [ ] 31-02-PLAN.md — DS-31 .focus-glow + .focus-glow-within utilities (`:has(:focus-visible)` per Pitfall 2) + migrate 2 legacy focus sites (filter-combobox, save-view-popover) + add focus-within to ToolbarGroup + saved-view row
-- [ ] 31-03-PLAN.md — DS-34 narrow scrollbar scope: remove global ::-webkit-scrollbar, add .thin-scrollbar utility + 3 scrollbar tokens, opt in 6 named containers (data-table, sidebar, filter-combobox, sort-dialog, query-response, curve-legend; reconcile sidebar no-scrollbar→thin-scrollbar)
-- [ ] 31-04-PLAN.md — DS-33 validate-first row hover retune: in-browser check current --hover-bg vs CONTEXT ~muted/4; no-op or soften (light 8→5, dark 6→4); Phase 30 wiring untouched
-- [ ] 31-05-PLAN.md — DS-29 gradient dividers: .divider-horizontal-fade + .divider-vertical-fade utilities, new SectionDivider component at 2 data-display junctions, ToolbarDivider internal recipe swap (3 consumers inherit) — depends on 31-01 for retuned --border
-- [ ] 31-06-PLAN.md — Enforcement + close-out: scripts/check-polish.sh POSIX guard + npm run check:polish + /tokens 7th "Polish" tab with 6 live specimens + human-verify checkpoint signing off full pass (DS-29..DS-34)
+- [x] 31-01-PLAN.md — DS-32 border retune (8% in both modes, --input stays 15%) + DS-30 glass highlight bump (dark --shadow-elevation-raised inset 0.05→0.07) — globals.css token-level only, no consumer edits
+- [x] 31-02-PLAN.md — DS-31 .focus-glow + .focus-glow-within utilities (`:has(:focus-visible)` per Pitfall 2) + migrate 2 legacy focus sites (filter-combobox, save-view-popover) + add focus-within to ToolbarGroup + saved-view row
+- [x] 31-03-PLAN.md — DS-34 narrow scrollbar scope: remove global ::-webkit-scrollbar, add .thin-scrollbar utility + 3 scrollbar tokens, opt in 6 named containers (data-table, sidebar, filter-combobox, sort-dialog, query-response, curve-legend; reconcile sidebar no-scrollbar→thin-scrollbar)
+- [x] 31-04-PLAN.md — DS-33 validate-first row hover retune: in-browser check current --hover-bg vs CONTEXT ~muted/4; no-op or soften (light 8→5, dark 6→4); Phase 30 wiring untouched
+- [x] 31-05-PLAN.md — DS-29 gradient dividers: .divider-horizontal-fade + .divider-vertical-fade utilities, new SectionDivider component at 2 data-display junctions, ToolbarDivider internal recipe swap (3 consumers inherit) — depends on 31-01 for retuned --border
+- [x] 31-06-PLAN.md — Enforcement + close-out: scripts/check-polish.sh POSIX guard + npm run check:polish + /tokens 7th "Polish" tab with 6 live specimens + human-verify checkpoint signing off full pass (DS-29..DS-34)
+**Status**: ✅ Complete (2026-04-19) — 6/6 plans shipped; DS-29..DS-34 all ratified; `npm run check:polish` guard live; human-verify approved full pass end-to-end (11/11 browser + guard + build checks pass)
 
 **After Phase 31, kick off:**
 - **Phase 33** (Accessibility Audit) — audit the final polished state
@@ -302,8 +303,9 @@ Plans:
 **Research**: [35-RESEARCH.md](phases/35-chart-schema-migration/35-RESEARCH.md) (2026-04-18)
 **Plans**: 2 plans across 2 waves (type-layer migration + smoke test in Wave 1; browser human-verify in Wave 2)
 Plans:
-- [ ] 35-01-PLAN.md — ChartDefinition discriminated union + migrateChartState function + smoke test + defaults.ts v2 rewrite + all 3 consumers retyped in one atomic commit (CHRT-01, CHRT-02)
-- [ ] 35-02-PLAN.md — Human-verify checkpoint: 4 browser scenarios (legacy→v2 round-trip, malformed fallback, defaults from empty storage, unknown-variant narrow)
+- [x] 35-01-PLAN.md — ChartDefinition discriminated union + migrateChartState function + smoke test + defaults.ts v2 rewrite + all 3 consumers retyped in one atomic commit (CHRT-01, CHRT-02) (shipped 2026-04-19)
+- [x] 35-02-PLAN.md — Human-verify checkpoint: 4 browser scenarios (legacy→v2 round-trip, malformed fallback, defaults from empty storage, unknown-variant narrow) (closed 2026-04-19 — partial-verification: Scenario C observed live, A/B/D deferred to 5/5 smoke-test proof after browser seeding was overwritten by the useSavedViews hydration-then-persist effect)
+**Status**: ✅ Complete (2026-04-19) — 2/2 plans shipped; CHRT-01 satisfied; CHRT-02 framework satisfied (line/scatter/bar variants land in Phase 36 as planned, `v4.0-REQUIREMENTS.md` CHRT-02 stays `[~]` until Phase 36 close-out); 35-VERIFICATION.md captures scenario table + root-cause for the browser-seed-vs-hydration collision + E2E-harness nice-to-have breadcrumb.
 
 ---
-*Last updated: 2026-04-18 — Phase 35 planned (2 plans: type-layer migration + human-verify; Pitfall 1 resolved to `z.unknown()` schema relaxation, version: 2 number, inline smoke test harness over vitest); Phase 30 closed (5/5 plans shipped, DS-23..28 + A11Y-05 complete, `check:motion` guard live, human-verify approved full motion suite); Phase 29 closed (5/5 plans, 14/14 truths, DS-18..22 CI-guarded); Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
+*Last updated: 2026-04-19 — Phase 35 CLOSED (2/2 plans; partial-verification human-verify accepted, smoke + live coverage combined for all success criteria); Phase 31 Visual Polish Pass at 7/6 complete with polish guard live; Phase 34 Partner Lists closed 2026-04-18; Phase 30 Motion suite closed 2026-04-18; Phase 29 Component Patterns closed 2026-04-18; Phase 28 Surfaces closed 2026-04-17*

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-19T02:15:02.799Z"
+last_updated: "2026-04-19T02:39:37.065Z"
 progress:
   total_phases: 36
-  completed_phases: 31
+  completed_phases: 34
   total_plans: 92
-  completed_plans: 89
+  completed_plans: 92
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 35 (Chart Schema Migration) — type-layer migration complete alongside Phase 31 visual-polish tail
-Plan: 35-01 2/2 tasks complete — ChartDefinition discriminated-union (type + version) lands with lazy-on-read migration inside sanitizeSnapshot; 5-assertion Node smoke test locks CHRT-02 contract; all 4 consumers retyped; ChartViewState interface removed. Commits 55fc4fe (Task 1 contract), 1f9d316 (Task 2 atomic consumer wiring + defaults rewrite).
-Status: npm run smoke:migrate-chart passes (5 assertions), npx tsc --noEmit zero errors, npm run build green, all 4 check:* guards green. grep -rn ChartViewState src/ returns 3 doc-comment hits (zero type references). Single migrateChartState call site at use-saved-views.ts:59.
-Last activity: 2026-04-19 — Completed 35-01; next on deck is next incomplete plan (35-02 validation/human-verify, or 31-06 visual polish specimen).
+Phase: 35 (Chart Schema Migration) — COMPLETE (most recently closed plan: 35-02). Phase 31 (Visual Polish Pass) also closed this session.
+Plan: 35-02 1/1 tasks complete — partial-verification human-verify checkpoint approved. Scenario C (3 defaults from empty localStorage) observed live; Scenarios A (legacy round-trip), B (malformed fallback), D (unknown-variant narrow) deferred to smoke-test proof (5/5 assertions) after browser seeding was silently overwritten by the useSavedViews hydration-then-persist effect. Root cause + E2E-harness nice-to-have captured in 35-02-SUMMARY.md + 35-VERIFICATION.md. CHRT-01 satisfied; CHRT-02 framework satisfied (concrete line/scatter/bar variants land in Phase 36). Phase 31 also complete: 6/6 plans shipped via 31-06 (scripts/check-polish.sh + /tokens Polish tab); DS-29..DS-34 all ratified; 5-guard parity locked (tokens + surfaces + components + motion + polish); /tokens dogfoods 7-tab design-system reference. Commits 0ff822e + dcfdce2.
+Status: Design-system arc (Phases 26-31) fully closed. Phase 35 type-layer migration closed. All 5 guards green + smoke:migrate-chart 5/5 + build 2.9s. Phase 36 (Chart Builder) + Phase 37 (Metabase SQL Import) unblocked at the type layer. Phase 33 (Accessibility Audit) unblocked to audit the final polished state.
+Last activity: 2026-04-19 — Closed 35-02 verification-only plan. `/gsd:verify-phase 31` + `/gsd:verify-phase 35` will produce final milestone-level roll-ups.
 
-Progress: [████████████████████] 89/92 plans (97% — v1.0 milestone)
+Progress: [████████████████████] 92/92 plans (100% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -214,6 +214,9 @@ Progress: [████████████████████] 89/92 p
 - [Phase 35]: [Phase 35-01]: tsconfig allowImportingTsExtensions: true added to reconcile Node native strip-types (requires explicit .ts suffix) with tsc strictness. Compatible with existing moduleResolution: bundler — Next.js build unchanged. Applies to any future node --experimental-strip-types smoke test in this repo.
 - [Phase 35]: [Phase 35-01]: Defaults author v2 shape directly (type: 'collection-curve', version: 2) in defaults.ts — not derived via migration. Defense in depth: tsc fails the build immediately if the discriminator shape is ever renamed again. Applies to the 2 seeded views that carry chartState; Outreach Performance has none and stays untouched.
 - [Phase 35]: [Phase 35-01]: LegacyChartState type kept PRIVATE inside migrate-chart.ts (not exported) per CONTEXT lock. DEFAULT_COLLECTION_CURVE is exported for the smoke test + future consumers. Legacy shape discarded on any unrecoverable fallback; no raw-payload preservation (avoids localStorage bloat).
+- [Phase 35]: [Phase 35-02]: Partial-verification acceptance — Scenario C (3 defaults from empty storage) observed live; Scenarios A, B, D deferred to smoke-test proof after browser seeding was overwritten by the useSavedViews hydration-then-persist effect. 5/5 smoke assertions cover identical logic paths; deferral is scope-preserving, not evidence-weakening. Pattern: when a browser human-verify checkpoint is partially blocked by test infrastructure (hydration, creds, harness absence), live-observe the deterministic slice and accept smoke for seed-dependent slices with explicit root-cause in VERIFICATION.md.
+- [Phase 35]: [Phase 35-02]: Did NOT introduce a test-only bypass of the useSavedViews hydration effect (e.g., window.__DV_TEST_SKIP_PERSIST flag or two-phase hydration) — would pollute the single-read-path + self-healing-write-back invariant Plan 01 was explicitly designed to protect. E2E harness with pre-hydration seed hook (Playwright page.addInitScript / Cypress onBeforeLoad) recorded as v4.x hardening nice-to-have, not Phase 35 blocker.
+- [Phase 35]: [Phase 35-02]: CHRT-02 stays marked `[~]` partial in v4.0-REQUIREMENTS.md — framework (ChartDefinition discriminated-union + chartDefinitionSchema) shipped; concrete line/scatter/bar variants land in Phase 36 as planned. Full check-off deferred to Phase 36 close-out, not Phase 35.
 
 ### Pending Todos
 
@@ -232,7 +235,7 @@ Progress: [████████████████████] 89/92 p
 ## Session Continuity
 
 Last session: 2026-04-19
-Stopped at: Completed 35-01-PLAN.md — Chart Schema Migration (type-layer) shipped. ChartDefinition discriminated-union (z.discriminatedUnion on literal `type`) + `version: 2` literal replaces flat `ChartViewState` interface. Idempotent lazy-on-read `migrateChartState` wired inside `sanitizeSnapshot` (`src/hooks/use-saved-views.ts:59`) — single call site, single validation point. 5-assertion Node `--experimental-strip-types` smoke test (`migrate-chart.smoke.ts`) locks CHRT-02 contract. 2 seeded default views rewritten to v2 shape; all 4 consumers retyped to `CollectionCurveDefinition`. `npm run smoke:migrate-chart` + `npx tsc --noEmit` + `npm run build` + all 4 `check:*` guards green. `tsconfig.json` gained `allowImportingTsExtensions: true` to reconcile Node strip-types with tsc. Plan ready for next incomplete: 35-02 (validation / human-verify) or the remaining 31-06.
+Stopped at: Completed 35-02-PLAN.md — Phase 35 Chart Schema & Migration CLOSED (verification-only plan). Partial-verification human-verify checkpoint approved: Scenario C (3 defaults from empty localStorage) observed live and clean; Scenarios A (legacy round-trip), B (malformed fallback), D (unknown-variant narrow) deferred to smoke-test proof (5/5 assertions) after browser seeding was silently overwritten by the useSavedViews hydration-then-persist effect. Root cause, diagnostic gap, and E2E-harness nice-to-have all captured in 35-02-SUMMARY.md + 35-VERIFICATION.md. CHRT-01 satisfied; CHRT-02 framework satisfied — concrete line/scatter/bar variants land in Phase 36 as planned (v4.0-REQUIREMENTS.md CHRT-02 stays `[~]` until Phase 36 close-out). No code changes; 4 planning artifacts written. Prior session close (same day): 31-06-PLAN.md closed Phase 31 Visual Polish Pass with scripts/check-polish.sh + /tokens Polish tab (6 sub-demos) + 5-guard parity achieved. All gates still green (smoke:migrate-chart 5/5, build 2.9s, 5 check:* guards). Next on deck: Phase 33 (Accessibility Audit) to audit the final polished state, or Phase 36 (Chart Builder) feature track.
 Resume file: None
 
 ## Performance Metrics
@@ -260,4 +263,6 @@ Resume file: None
 | Phase 31 P04 | ~2min | 2 tasks | 0 files |
 | Phase 31 P05 | ~8 min | 3 tasks | 4 files |
 | Phase 35 P01 | ~18 min | 2 tasks | 9 files |
+| Phase 31 P06 | ~6 min | 3 tasks | 4 files |
+| Phase 35 P02 | ~25 min (human-verify + partial-deferral) | 1 task | 0 code / 4 planning files |
 
