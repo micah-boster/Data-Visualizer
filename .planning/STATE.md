@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-19T13:48:14.584Z"
+last_updated: "2026-04-19T21:12:48.573Z"
 progress:
   total_phases: 37
   completed_phases: 33
-  total_plans: 102
-  completed_plans: 93
+  total_plans: 103
+  completed_plans: 96
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 36 (Chart Builder) — IN PROGRESS. Wave 1 CLOSED (both Plan 36-01 type-layer contracts + Plan 36-02 chart-presets feature slice shipped). Phase 35 (Chart Schema Migration) remains CLOSED. Phase 31 (Visual Polish Pass) remains CLOSED.
-Plan: 36-02 3/3 tasks complete — chart-presets slice (types + schema + storage + BUILTIN_PRESETS) scaffolded; useChartPresets React hook mirrors useSavedViews 1:1 (empty-init useState + hydration effect + persist effect + 7 CRUD methods); built-ins rebuilt from code on every hydration, never persisted; savePreset deep-copies via structuredClone (Pitfall 4); deletePreset returns undefined on missing/locked; renamePreset no-op on locked. Smoke locks 9 invariants including BUILTIN_PRESETS[0].definition === DEFAULT_COLLECTION_CURVE reference equality + valid line-variant round-trip + CHART_PRESETS_STORAGE_KEY literal. CHRT-10 + CHRT-11 + CHRT-12 satisfied at the data/hook layer. Commits fb4cc71 + 61ba333 + cbfe80e.
-Status: Phase 36 Wave 1 fully closed. All smoke scripts green (11/11 migrate-chart + 15/15 axis-eligibility + 9/9 chart-presets). All 5 check:* guards green. tsc clean on the new files; one pre-existing Phase-33 axe-core import error noted out-of-scope in deferred-items.md. Wave 2 unblocked — Plans 36-03/04/05 can now `import { useChartPresets } from '@/hooks/use-chart-presets'` + `import { BUILTIN_PRESETS } from '@/lib/chart-presets/defaults'` without further contract edits.
-Last activity: 2026-04-19 — Closed 36-02 (chart-presets feature slice). Wave 1 of Phase 36 complete. Wave 2 plans (builder toolbar, GenericChart renderer, ChartPanel dispatcher, PresetMenu UI, stale-column warning) unblocked at the contract layer.
+Phase: 36 (Chart Builder) — IN PROGRESS. Wave 1 CLOSED (36-01 type-layer contracts + 36-02 chart-presets feature slice). Wave 2 CLOSED this session — Plan 36-03 (GenericChart renderer + StaleColumnWarning banner + resolveColumnWithFallback helper) + Plan 36-04 (builder UI components: transitions.ts + AxisPicker + ChartBuilderToolbar + isSameDefinition + SavePresetPopover + PresetMenu) both shipped. Plan 36-05 (ChartPanel dispatcher integration) is the only remaining Phase 36 work.
+Plan: 36-04 3/3 tasks complete — Task 1 transitions.ts ships switchChartType + seedGenericFromPreset pure helpers (registry-derivation lock extended: generic→generic carryover delegates to isColumnEligible; reference-equal same-type no-op; reference-equal DEFAULT_COLLECTION_CURVE on preset reset; CONTEXT-locked preset→generic seeding with metric→Y and BATCH_AGE_IN_MONTHS/BATCH/null X defaults) + 16-assertion transitions smoke + AxisPicker (Popover+scrollable eligible-columns list; label+raw-key per-option per CONTEXT density rule; stale-value fallback to raw key as first-surface signal) + ChartBuilderToolbar (icon segmented control with aria-pressed + ToolbarDivider + external .text-label X/Y spans + two AxisPickers; every interaction dispatches onChange). Task 2 isSameDefinition discriminator+version-aware deep-equals + SavePresetPopover mirrors SaveViewPopover 1:1 minus includeDrill (pure Popover-with-button-trigger; @base-ui/react composes nested inside PresetMenu's content). Task 3 PresetMenu single Presets ▾ dropdown — BUILTIN_PRESETS (filtered via p.locked) with Lock icon + ✓ on active; user presets with group-hover:opacity-100 Trash2 + sonner undo toast (restore → deletePreset); footer "Save current as preset…" opens SavePresetPopover → savePreset + undo toast. Pitfall 4 structuredClone on apply locked. Commits 8bfa898 + 61d0ee0 + 7069958. Plan 36-03 also landed parallel commits fcffd67 + c9b2622 + 976db7e.
+Status: Phase 36 Waves 1 + 2 closed. All 5 smoke scripts green (11/11 migrate-chart + 15/15 axis-eligibility + 9/9 chart-presets + 13/13 stale-column + 16/16 transitions). All 5 check:* guards green (tokens/surfaces/components/motion/polish). npm run build green. tsc zero-new-errors; pre-existing Phase-33 axe-core import error noted out-of-scope in deferred-items.md. CHRT-07/08/09/10/11/12 satisfied at the component layer — Plan 36-05 only needs to wire ChartBuilderToolbar + PresetMenu + GenericChart + StaleColumnWarning into ChartPanel to flip every CHRT-* requirement to [x].
+Last activity: 2026-04-19 — Closed 36-04 (builder UI components). Task 3 PresetMenu drafted by first executor agent but commit blocked by API quota; continuation agent verified the file against the plan spec (builtins filter + Lock/Check badges + structuredClone on apply + sonner undo toasts + type-token compliance) and committed unchanged at 7069958. Plan 36-05 unblocked; only outstanding Phase 36 dependency is the integration wiring into data-display.tsx's ChartPanel.
 
-Progress: [████████████████████] 92/92 plans (100% — v1.0 milestone)
+Progress: [████████████████████] 96/103 plans (v4.0 milestone in flight)
 
 ## Shipped Milestones
 
@@ -226,6 +226,15 @@ Progress: [████████████████████] 92/92 p
 - [Phase 36-02]: chartPresetSchema intentionally non-strict so additive fields (updatedAt, description) land without a schema version bump — mirrors Phase 32-02 drill + Phase 34 listId evolution precedent.
 - [Phase 36-02]: savePreset deep-copies the incoming ChartDefinition via structuredClone (Pitfall 4) — prevents a caller-side reference mutation after save from corrupting the persisted preset. Caller-state isolation without forcing consumers to clone before calling.
 - [Phase 36-02]: Node ESM + Next.js dual-resolution rule: library files reachable by a Node --experimental-strip-types smoke MUST use relative `../` paths with explicit `.ts` suffixes (not `@/` aliases). Applied to chart-presets/* files after a Rule 3 blocking fix; matches the convention already set by src/lib/views/migrate-chart.ts. Next.js moduleResolution:bundler resolves the same relative paths cleanly in-app.
+- [Phase 36]: [Phase 36-04]: switchChartType ships reference-equal returns on rules 1 (same-type) + 2 (any → collection-curve reset). Smoke-asserted; React-memo-friendly for ancestor re-render avoidance.
+- [Phase 36]: [Phase 36-04]: seedGenericFromPreset uses PENETRATION_RATE_POSSIBLE_AND_CONFIRMED as Y when preset.metric === 'recoveryRate' (no literal RECOVERY_RATE column in COLUMN_CONFIGS) — plan's explicit Claude-discretion clause. Smoke asserts Y resolves to ANY numeric column, not a specific key — registry-derivation invariant holds.
+- [Phase 36]: [Phase 36-04]: Two-sided deep-copy (structuredClone) lock — useChartPresets.savePreset clones on WRITE (Phase 36-02), PresetMenu.handleApply clones on READ (Phase 36-04). Caller state and preset storage cannot cross-contaminate regardless of which side mutates.
+- [Phase 36]: [Phase 36-04]: isSameDefinition compares discriminator + version FIRST, then per-variant structural equality. Same discriminator + different version returns false — prevents a future collection-curve v3 from falsely matching v2 on PresetMenu's active-row check.
+- [Phase 36]: [Phase 36-04]: AxisPicker trigger falls back to raw column key when the saved value is no longer in getEligibleColumns output — first-surface signal for stale keys. Plan 03's StaleColumnWarning renders the full banner; picker label is the visible hint.
+- [Phase 36]: [Phase 36-04]: SavePresetPopover is a pure Popover-with-button-trigger (not a DropdownMenu MenuItem) — PresetMenu renders the popover at the bottom of its content. @base-ui/react's PopoverRoot composes cleanly inside another Popover's content; no dropdown-menu primitive introduced.
+- [Phase 36-03]: Fallback-render + stale-banner is the canonical pattern for any stored-config drift surface — resolver returns a usable fallback config (not just a stale flag) so the renderer can render something immediately; banner surfaces the requested (missing) vs rendered (fallback) delta; the user's explicit re-pick is what overwrites the stored ref later. Pitfall 3 lock.
+- [Phase 36-03]: Three Pitfall locks concentrated in this plan so downstream Wave-2 integration can plug in without re-discovery: Pitfall 3 (read-only axis resolution — GenericChart NEVER invokes onDefinitionChange), Pitfall 5 (rechartsAxisType helper derives XAxis type from ColumnConfig.type, not hardcoded per variant), Pitfall 6 (one Recharts chart primitive per ChartContainer — each variant branch owns its own container, never a switch inside a shared container).
+- [Phase 36-03]: Unused-but-contractual prop pattern established: when a prop must appear in the public surface per interfaces contract but is deliberately unused inside the component, destructure with _-prefix rename + scoped eslint-disable-next-line. Applied to GenericChart.onDefinitionChange — kept in the props surface for Plan 36-05 ChartPanel passthrough (and to signal intent) while Pitfall 3 enforces zero invocation inside the renderer. Reusable for any future contractual-surface prop.
 
 ### Pending Todos
 
@@ -276,4 +285,7 @@ Resume file: None
 | Phase 35 P02 | ~25 min (human-verify + partial-deferral) | 1 task | 0 code / 4 planning files |
 | Phase 36 P01 | ~3 min | 3 tasks | 7 files |
 | Phase 36 P02 | ~3 min | 3 tasks | 7 files |
+| Phase 33 P01 | ~17 min | 3 tasks | 9 files |
+| Phase 36 P04 | ~25 min | 3 tasks | 8 files |
+| Phase 36 P03 | ~2 min (Task 3 only) | 3 tasks | 5 files |
 
