@@ -10,6 +10,7 @@
     "smoke:migrate-chart": "node --experimental-strip-types src/lib/views/migrate-chart.smoke.ts",
     "check:components": "bash scripts/check-components.sh",
     "check:motion": "bash scripts/check-motion.sh",
+    "check:polish": "bash scripts/check-polish.sh",
     "check:surfaces": "bash scripts/check-surfaces.sh",
     "check:tokens": "bash scripts/check-type-tokens.sh"
   },
