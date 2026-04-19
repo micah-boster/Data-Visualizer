@@ -14,8 +14,8 @@
  * literal). Reference equality is asserted in the smoke test.
  */
 
-import { DEFAULT_COLLECTION_CURVE } from '@/lib/views/migrate-chart';
-import type { ChartPreset } from './types';
+import { DEFAULT_COLLECTION_CURVE } from '../views/migrate-chart.ts';
+import type { ChartPreset } from './types.ts';
 
 /**
  * Code-defined preset catalog. NEVER persisted — rebuilt on every

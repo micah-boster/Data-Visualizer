@@ -15,7 +15,7 @@
  * `locked: true` disables rename + delete in the UI (built-ins only).
  */
 
-import type { ChartDefinition } from '@/lib/views/types';
+import type { ChartDefinition } from '../views/types.ts';
 
 /**
  * A named, persisted chart configuration. Built-ins use the literal

@@ -11,8 +11,8 @@
  * built-ins ahead of user presets happens in the hook, not here.
  */
 
-import type { ChartPreset } from './types';
-import { chartPresetsArraySchema } from './schema';
+import type { ChartPreset } from './types.ts';
+import { chartPresetsArraySchema } from './schema.ts';
 
 export const CHART_PRESETS_STORAGE_KEY = 'bounce-dv-chart-presets';
 

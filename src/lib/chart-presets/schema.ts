@@ -11,7 +11,7 @@
  */
 
 import { z } from 'zod';
-import { chartDefinitionSchema } from '@/lib/views/schema';
+import { chartDefinitionSchema } from '../views/schema.ts';
 
 /** Validates a single ChartPreset entry. */
 export const chartPresetSchema = z.object({
