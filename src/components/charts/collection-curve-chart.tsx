@@ -33,9 +33,15 @@ interface CollectionCurveChartProps {
   chartSnapshotRef?: React.MutableRefObject<(() => CollectionCurveDefinition) | null>;
   /** Ref for restoring chart state (view load flow) */
   chartLoadRef?: React.MutableRefObject<((state: CollectionCurveDefinition) => void) | null>;
+  /**
+   * Rendered alongside the metric-toggle cluster in the DataPanel actions slot.
+   * Keeps the Presets ▾ menu reachable from the preset branch per
+   * 36-RESEARCH Open Q #4.
+   */
+  presetMenu?: React.ReactNode;
 }
 
-export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }: CollectionCurveChartProps) {
+export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, presetMenu }: CollectionCurveChartProps) {
   // Find batch anomalies for the partner whose curves we're displaying.
   // Match by batchName overlap between curves and anomaly data.
   const { partnerAnomalies } = useAnomalyContext();
@@ -199,23 +205,26 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
       title="Collection Curves"
       contentClassName="space-y-2"
       actions={
-        <div className="flex gap-1">
-          <Button
-            variant={metric === "recoveryRate" ? "default" : "outline"}
-            size="sm"
-            className="h-7"
-            onClick={metric === "recoveryRate" ? undefined : toggleMetric}
-          >
-            Recovery Rate %
-          </Button>
-          <Button
-            variant={metric === "amount" ? "default" : "outline"}
-            size="sm"
-            className="h-7"
-            onClick={metric === "amount" ? undefined : toggleMetric}
-          >
-            Dollars Collected
-          </Button>
+        <div className="flex items-center gap-inline">
+          <div className="flex gap-1">
+            <Button
+              variant={metric === "recoveryRate" ? "default" : "outline"}
+              size="sm"
+              className="h-7"
+              onClick={metric === "recoveryRate" ? undefined : toggleMetric}
+            >
+              Recovery Rate %
+            </Button>
+            <Button
+              variant={metric === "amount" ? "default" : "outline"}
+              size="sm"
+              className="h-7"
+              onClick={metric === "amount" ? undefined : toggleMetric}
+            >
+              Dollars Collected
+            </Button>
+          </div>
+          {presetMenu ?? null}
         </div>
       }
     >
@@ -223,7 +232,12 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }:
       <div className="flex gap-4">
         {/* Chart area */}
         <div className="flex-1 flex flex-col" ref={chartWrapperRef}>
-          <ChartContainer config={chartConfig} className="h-[40vh] w-full">
+          <ChartContainer
+            config={chartConfig}
+            className="h-[40vh] w-full"
+            role="img"
+            aria-label={`Collection curves: recovery rate over months on book across ${sortedCurves.length} ${sortedCurves.length === 1 ? 'batch' : 'batches'}. Sibling data table provides the same data in accessible tabular form.`}
+          >
             <LineChart data={pivotedData} margin={{ top: 5, right: 10, bottom: 5, left: 10 }} onMouseMove={handleChartMouseMove} onMouseLeave={handleChartMouseLeave}>
               <CartesianGrid
                 strokeDasharray="3 3"

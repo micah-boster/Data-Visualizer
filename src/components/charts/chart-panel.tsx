@@ -1,0 +1,122 @@
+'use client';
+
+/**
+ * Phase 36 Plan 05 — ChartPanel dispatcher.
+ *
+ * Thin dispatcher that routes between the preset branch (CollectionCurveChart)
+ * and the generic branch (GenericChart + ChartBuilderToolbar). The
+ * ChartBuilderToolbar is hidden on the preset branch by design (CONTEXT lock —
+ * the preset owns its own control surface); it appears only on the generic
+ * branch. PresetMenu is rendered on BOTH branches so the Collection Curves
+ * preset is always reachable from any chart (36-RESEARCH Open Q #4).
+ *
+ * State ownership: ChartPanel does NOT own `definition` — parent
+ * (data-display.tsx) owns it via `useState<ChartDefinition>`. This keeps the
+ * dispatcher a pure props-in / onChange-out shell.
+ *
+ * Pitfall 9 (preset sync): when a preset is applied while already on the
+ * preset branch, the new definition needs to be routed through `chartLoadRef`
+ * so the internal `useCurveChartState` hook re-reads metric / hiddenBatches /
+ * showAverage / showAllBatches. `handlePresetApply` performs the sync before
+ * calling the parent dispatch.
+ */
+
+import type { MutableRefObject, ReactNode } from 'react';
+import { CollectionCurveChart } from './collection-curve-chart';
+import { GenericChart } from './generic-chart';
+import { ChartBuilderToolbar } from './chart-builder-toolbar';
+import { PresetMenu } from './preset-menu';
+import { DataPanel } from '@/components/patterns/data-panel';
+import type {
+  ChartDefinition,
+  CollectionCurveDefinition,
+  GenericChartDefinition,
+} from '@/lib/views/types';
+import type { BatchCurve } from '@/types/partner-stats';
+
+const TITLE_BY_TYPE: Record<GenericChartDefinition['type'], string> = {
+  line: 'Line Chart',
+  scatter: 'Scatter Plot',
+  bar: 'Bar Chart',
+};
+
+export interface ChartPanelProps {
+  /** Parent-owned chart definition (collection-curve preset OR a generic variant). */
+  definition: ChartDefinition;
+  /** Parent-owned dispatcher. ChartPanel forwards toolbar / preset-menu changes through this. */
+  onDefinitionChange: (next: ChartDefinition) => void;
+  /** Row source for the generic renderer — passed through to GenericChart. */
+  rows: Array<Record<string, unknown>>;
+  /** Curve source for the preset renderer — passed through to CollectionCurveChart. */
+  curves?: BatchCurve[];
+  /** Snapshot ref wired by CollectionCurveChart on the preset branch. */
+  chartSnapshotRef?: MutableRefObject<(() => CollectionCurveDefinition) | null>;
+  /** Restore ref wired by CollectionCurveChart on the preset branch. */
+  chartLoadRef?: MutableRefObject<((state: CollectionCurveDefinition) => void) | null>;
+}
+
+export function ChartPanel({
+  definition,
+  onDefinitionChange,
+  rows,
+  curves,
+  chartSnapshotRef,
+  chartLoadRef,
+}: ChartPanelProps): ReactNode {
+  /**
+   * Pitfall 9 — when the user applies a preset via PresetMenu while already on
+   * the preset branch, the outer `definition` updates to the new preset
+   * shape (type: 'collection-curve' with fresh metric / hiddenBatches / etc.),
+   * but the internal `useCurveChartState` hook inside CollectionCurveChart
+   * owns its own state copy and would ignore the prop change. We synchronize
+   * by calling `chartLoadRef.current(next)` BEFORE the parent dispatch — that
+   * pipes the new state directly into the hook.
+   */
+  function handlePresetApply(next: ChartDefinition) {
+    if (next.type === 'collection-curve' && chartLoadRef?.current) {
+      chartLoadRef.current(next);
+    }
+    onDefinitionChange(next);
+  }
+
+  if (definition.type === 'collection-curve') {
+    return (
+      <CollectionCurveChart
+        curves={curves ?? []}
+        chartSnapshotRef={chartSnapshotRef}
+        chartLoadRef={chartLoadRef}
+        presetMenu={
+          <PresetMenu
+            definition={definition}
+            onDefinitionChange={handlePresetApply}
+          />
+        }
+      />
+    );
+  }
+
+  // Generic branch (line / scatter / bar).
+  return (
+    <DataPanel
+      title={TITLE_BY_TYPE[definition.type]}
+      actions={
+        <div className="flex items-center gap-inline">
+          <ChartBuilderToolbar
+            definition={definition}
+            onChange={onDefinitionChange}
+          />
+          <PresetMenu
+            definition={definition}
+            onDefinitionChange={onDefinitionChange}
+          />
+        </div>
+      }
+    >
+      <GenericChart
+        definition={definition}
+        rows={rows}
+        onDefinitionChange={onDefinitionChange}
+      />
+    </DataPanel>
+  );
+}
