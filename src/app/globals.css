@@ -637,6 +637,25 @@
   .thin-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
   }
+
+  /*
+   * Phase 31 DS-29: Center-solid / transparent-ends gradient dividers.
+   * Horizontal — section separators (KPI band ↔ charts ↔ table).
+   * Vertical — ToolbarGroup dividers only.
+   * Everywhere else keeps hard borders per 31-CONTEXT.
+   * Gradient color uses var(--border) (8% after 31-01 retune) so the solid
+   * middle reads as intentionally-faint rather than accidentally-weak.
+   */
+  .divider-horizontal-fade {
+    height: 1px;
+    width: 100%;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+  }
+  .divider-vertical-fade {
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--border), transparent);
+  }
 }
 
 /* Smooth theme transitions for non-layout elements */
