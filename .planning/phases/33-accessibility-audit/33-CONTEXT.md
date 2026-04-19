@@ -67,6 +67,7 @@ Achieve WCAG AA accessibility baseline across the app — axe-core passes with z
 - **`/tokens` reference page a11y** — out of audit scope; fix only if it becomes user-facing.
 - **Full `role="grid"` keyboard model for tables** — deferred unless user research shows need.
 - **WCAG AAA targets** — out of scope; not pursued.
+- **Recharts `accessibilityLayer={true}` keyboard tooltip iteration** — conflicts with CONTEXT lock on "no data-point keyboard nav"; revisit if user requests.
 
 </deferred>
 
