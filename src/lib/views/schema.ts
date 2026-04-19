@@ -13,6 +13,28 @@ const sortingItemSchema = z.object({
   desc: z.boolean(),
 });
 
+/**
+ * Phase 35 — `chartDefinitionSchema` is a discriminated-union of chart variants
+ * keyed on the literal `type` field. Each variant carries its own `version`
+ * literal so the shape can evolve without schema-level breakage.
+ *
+ * First (and currently only) variant: `collection-curve`, version 2. Phase 36
+ * will add `line`, `bar`, and `scatter` variants to the union.
+ */
+const collectionCurveVariantSchema = z.object({
+  type: z.literal('collection-curve'),
+  version: z.literal(2),
+  metric: z.enum(['recoveryRate', 'amount']),
+  hiddenBatches: z.array(z.string()),
+  showAverage: z.boolean(),
+  showAllBatches: z.boolean(),
+});
+
+export const chartDefinitionSchema = z.discriminatedUnion('type', [
+  collectionCurveVariantSchema,
+  // Phase 36 will add line / bar / scatter variants here.
+]);
+
 /** Validates the complete ViewSnapshot shape. */
 export const viewSnapshotSchema = z.object({
   sorting: z.array(sortingItemSchema),
@@ -24,12 +46,9 @@ export const viewSnapshotSchema = z.object({
   chartsExpanded: z.boolean().optional(),
   comparisonVisible: z.boolean().optional(),
   activePreset: z.string().optional(),
-  chartState: z.object({
-    metric: z.enum(['recoveryRate', 'amount']),
-    hiddenBatches: z.array(z.string()),
-    showAverage: z.boolean(),
-    showAllBatches: z.boolean(),
-  }).optional(),
+  // Pitfall-1 guard: permissive at parse time; migrateChartState +
+  // chartDefinitionSchema validate in sanitizeSnapshot. See 35-RESEARCH §Pitfall 1.
+  chartState: z.unknown().optional(),
   drill: z
     .object({
       partner: z.string().optional(),

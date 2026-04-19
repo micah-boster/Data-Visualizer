@@ -7,23 +7,28 @@
  * curated table configurations with one click.
  */
 
+import type { z } from 'zod';
 import type {
   SortingState,
   VisibilityState,
   ColumnSizingState,
 } from '@tanstack/react-table';
+import type { chartDefinitionSchema } from './schema';
 
-/** Chart configuration persisted with a view. */
-export interface ChartViewState {
-  /** Which metric the chart displays */
-  metric: 'recoveryRate' | 'amount';
-  /** Batch names hidden by the user (names, not positional keys) */
-  hiddenBatches: string[];
-  /** Whether the average line is shown */
-  showAverage: boolean;
-  /** Whether all batches are shown (vs default limit of 8) */
-  showAllBatches: boolean;
-}
+/**
+ * Phase 35 — `ChartDefinition` is a discriminated union inferred from
+ * `chartDefinitionSchema`. The legacy `ChartViewState` interface is gone;
+ * its shape now lives ONLY as a private type inside migrate-chart.ts.
+ *
+ * Consumers narrow with `chartState.type === 'collection-curve'`. For
+ * producers/consumers that only ever operate on the collection-curve variant
+ * (e.g. useCurveChartState), use `CollectionCurveDefinition`.
+ */
+export type ChartDefinition = z.infer<typeof chartDefinitionSchema>;
+export type CollectionCurveDefinition = Extract<
+  ChartDefinition,
+  { type: 'collection-curve' }
+>;
 
 /** All table state slices captured in a single snapshot. */
 export interface ViewSnapshot {
@@ -45,8 +50,8 @@ export interface ViewSnapshot {
   comparisonVisible?: boolean;
   /** Active column preset key (e.g. 'finance', 'outreach', 'all') */
   activePreset?: string;
-  /** Chart configuration (metric, hidden batches, toggles) */
-  chartState?: ChartViewState;
+  /** Chart configuration — discriminated union across chart variants. */
+  chartState?: ChartDefinition;
   /** Optional captured drill state (NAV-04). Absent on views saved from root. */
   drill?: {
     partner?: string;
