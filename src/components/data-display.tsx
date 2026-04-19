@@ -35,6 +35,7 @@ import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder'
 import { computeKpis } from '@/lib/computation/compute-kpis';
 import { getPartnerName, getBatchName } from '@/lib/utils';
 import { SectionErrorBoundary } from '@/components/section-error-boundary';
+import { SectionDivider } from '@/components/layout/section-divider';
 import { toast } from 'sonner';
 import type { DrillState } from '@/hooks/use-drill-down';
 import type { SavedView, ChartViewState } from '@/lib/views/types';
@@ -648,7 +649,11 @@ export function DataDisplay() {
                           trending={partnerStats?.trending ?? null}
                         />
                         {partnerStats?.curves && partnerStats.curves.length >= 2 && (
-                          <CollectionCurveChart curves={partnerStats.curves} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                          <>
+                            {/* DS-29 section boundary: KPI band ↔ charts */}
+                            <SectionDivider />
+                            <CollectionCurveChart curves={partnerStats.curves} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                          </>
                         )}
                       </>
                     )}
@@ -671,6 +676,9 @@ export function DataDisplay() {
                 </div>
               )}
             </SectionErrorBoundary>
+
+            {/* DS-29 section boundary: charts ↔ table */}
+            <SectionDivider />
 
             {/* Interactive data table with toolbar */}
             <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
