@@ -108,7 +108,7 @@
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 4/5 | In Progress|  | - |
-| 37. Metabase SQL Import | 1/3 | In Progress|  |  | - |
+| 37. Metabase SQL Import | 2/3 | In Progress|  |  | - |
 | 38. Polish + Correctness Pass | v4.1 | 0/TBD | Planned | - |
 | 39. Partner Config Module | v4.1 | 0/TBD | Planned | - |
 | 40. Projected Curves v1 | v4.1 | 0/TBD | Planned | - |
