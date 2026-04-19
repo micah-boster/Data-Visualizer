@@ -80,6 +80,14 @@ export interface ViewSnapshot {
    * stripped (non-destructive; view still loads with no list activation).
    */
   listId?: string | null;
+  /**
+   * Phase 37 — optional Metabase-import audit. Absent on hand-built
+   * views; present with { sql, importedAt } after a successful import.
+   */
+  sourceQuery?: {
+    sql: string;
+    importedAt: number;
+  };
 }
 
 /** A named, persisted view configuration. */

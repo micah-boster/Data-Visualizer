@@ -101,6 +101,18 @@ export const viewSnapshotSchema = z.object({
   // evolution used for `drill` in Phase 32-02: legacy saved views load with
   // listId: undefined and safeParse succeeds.
   listId: z.string().nullable().optional(),
+  /**
+   * Phase 37 — optional audit field. Captures the original Metabase SQL
+   * that produced this snapshot. Additive-optional evolution: legacy
+   * saved views parse with sourceQuery: undefined. Mirrors Phase 32-02
+   * drill + Phase 34-04 listId precedents (NO schema version bump).
+   */
+  sourceQuery: z
+    .object({
+      sql: z.string(),
+      importedAt: z.number(),
+    })
+    .optional(),
 });
 
 /** Validates a single SavedView entry. */

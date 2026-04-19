@@ -106,6 +106,13 @@ export const DEFAULT_COLUMNS = COLUMN_CONFIGS.map((c) => c.key);
 /** Allow-list for SQL injection prevention */
 export const ALLOWED_COLUMNS = new Set(COLUMN_CONFIGS.map((c) => c.key));
 
+/**
+ * Phase 37 — canonical Snowflake table the app queries. Metabase SQL
+ * import uses this for an informational FROM-table check (warning only;
+ * mismatch does not hard-fail per 37-CONTEXT partial-import policy).
+ */
+export const SOURCE_TABLE = 'AGG_BATCH_PERFORMANCE_SUMMARY';
+
 /** Identity column keys that appear in every preset */
 export const IDENTITY_COLUMNS = COLUMN_CONFIGS
   .filter((c) => c.identity)
