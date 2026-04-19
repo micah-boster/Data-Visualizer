@@ -289,6 +289,25 @@ Plans:
 
 ---
 
+### Phase 33: Accessibility Audit
+
+**Goal**: Achieve WCAG AA accessibility baseline on core user views — axe-core zero critical/serious violations, proper ARIA labels and roles on all interactive elements, full keyboard navigation, and WCAG AA color contrast in both themes
+**Depends on**: Phase 31 (Visual Polish Pass complete — audit the final polished visual state). Independent of Phase 32 (URL-back compat is direction-agnostic).
+**Effort**: Medium (axe-core + Playwright setup is straightforward; fixing findings is unpredictable — scoped to 4 core route families, critical/serious only)
+**Context**: [33-CONTEXT.md](phases/33-accessibility-audit/33-CONTEXT.md) (gathered 2026-04-18)
+**Requirements**: A11Y-01, A11Y-02, A11Y-03, A11Y-04 (A11Y-05 prefers-reduced-motion already shipped in Phase 30-01 — do not re-implement)
+**Success Criteria** (what must be TRUE):
+  1. axe-core returns zero critical or serious violations on core user-facing routes (Dashboard, drill-downs, saved views, settings) in both light and dark themes
+  2. All interactive elements (buttons, inputs, toolbar controls, dialogs, popovers, charts) have appropriate ARIA labels/roles; charts expose concise `aria-label` with sibling data table available for SR users
+  3. Full keyboard navigation works on core flows: Tab through controls, Enter to activate, Escape to close dialogs/popovers, focus trapped in open modals and restored to trigger on close; row-level Tab stops on dense tables (Enter drills in, Escape returns)
+  4. Color contrast meets WCAG AA for all text on all surfaces in both light and dark mode; any failing design token (Phase 26 infra) adjusted at the canonical `globals.css` source rather than per-component overrides
+  5. Regression guardrail live — axe-core run inside Playwright E2E against core routes; blocking CI gate once baseline is green; keyboard-only walkthrough of Dashboard → drill → saved view completes end-to-end without a mouse
+**Plans**: _To be scoped via `/gsd:plan-phase 33`. Expected grouping: (1) CI/baseline (Playwright + axe setup, capture baseline), (2) ARIA labels & roles, (3) Keyboard nav & focus management, (4) Color contrast & token adjustments._
+
+**After Phase 33:** No new phases unlocked (end of design track). Feeds into overall milestone completion.
+
+---
+
 ### Phase 35: Chart Schema & Migration
 
 **Goal**: Existing saved views survive the transition to a flexible chart type system without data loss
