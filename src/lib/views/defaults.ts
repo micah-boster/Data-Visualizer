@@ -74,6 +74,14 @@ export function getDefaultViews(): SavedView[] {
         chartsExpanded: true,
         comparisonVisible: false,
         activePreset: 'finance',
+        chartState: {
+          type: 'collection-curve',
+          version: 2,
+          metric: 'amount',
+          hiddenBatches: [],
+          showAverage: true,
+          showAllBatches: false,
+        },
       },
     },
     {
@@ -160,6 +168,14 @@ export function getDefaultViews(): SavedView[] {
         chartsExpanded: false,
         comparisonVisible: false,
         activePreset: 'finance',
+        chartState: {
+          type: 'collection-curve',
+          version: 2,
+          metric: 'recoveryRate',
+          hiddenBatches: [],
+          showAverage: false,
+          showAllBatches: false,
+        },
       },
     },
   ];

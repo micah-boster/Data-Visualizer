@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
-import type { ChartViewState } from "@/lib/views/types";
+import type { CollectionCurveDefinition } from "@/lib/views/types";
 import {
   LineChart,
   Line,
@@ -30,9 +30,9 @@ import { BarChart3 } from "lucide-react";
 interface CollectionCurveChartProps {
   curves: BatchCurve[];
   /** Ref for capturing current chart state (view save flow) */
-  chartSnapshotRef?: React.MutableRefObject<(() => ChartViewState) | null>;
+  chartSnapshotRef?: React.MutableRefObject<(() => CollectionCurveDefinition) | null>;
   /** Ref for restoring chart state (view load flow) */
-  chartLoadRef?: React.MutableRefObject<((state: ChartViewState) => void) | null>;
+  chartLoadRef?: React.MutableRefObject<((state: CollectionCurveDefinition) => void) | null>;
 }
 
 export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef }: CollectionCurveChartProps) {

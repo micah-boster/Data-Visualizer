@@ -12,6 +12,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { SavedView, ViewSnapshot } from '@/lib/views/types';
 import { loadSavedViews, persistSavedViews } from '@/lib/views/storage';
 import { getDefaultViews } from '@/lib/views/defaults';
+import { migrateChartState } from '@/lib/views/migrate-chart';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
 
 /** Set of all known column keys for schema evolution filtering. */
@@ -51,6 +52,11 @@ function sanitizeSnapshot(
         KNOWN_COLUMNS.has(k),
       ),
     ),
+    // Phase 35 — migrate legacy ChartViewState → ChartDefinition (idempotent).
+    // viewSnapshotSchema.chartState is z.unknown().optional() at parse time, so
+    // legacy records reach here untyped; migrateChartState is the single site
+    // that validates against chartDefinitionSchema.
+    chartState: migrateChartState(snapshot.chartState),
     // Phase 34 — strip unknown listId. Preserves loading behavior for views
     // that reference deleted lists (no crash, no toast, no list activation).
     listId:

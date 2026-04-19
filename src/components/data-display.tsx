@@ -38,7 +38,7 @@ import { SectionErrorBoundary } from '@/components/section-error-boundary';
 import { SectionDivider } from '@/components/layout/section-divider';
 import { toast } from 'sonner';
 import type { DrillState } from '@/hooks/use-drill-down';
-import type { SavedView, ChartViewState } from '@/lib/views/types';
+import type { SavedView, CollectionCurveDefinition } from '@/lib/views/types';
 
 const CollectionCurveChart = dynamic(
   () =>
@@ -382,8 +382,10 @@ export function DataDisplay() {
         router.push(drillQs ? `?${drillQs}` : window.location.pathname, { scroll: false });
       }
 
-      // Restore chart configuration if saved
-      if (snapshot.chartState && chartLoadRef.current) {
+      // Phase 35 — narrow on the discriminator before handing off to the
+      // collection-curve-specific chartLoadRef. Future chart variants (line /
+      // bar / scatter from Phase 36) will get their own refs + narrow sites.
+      if (snapshot.chartState?.type === 'collection-curve' && chartLoadRef.current) {
         chartLoadRef.current(snapshot.chartState);
       }
 
@@ -481,9 +483,12 @@ export function DataDisplay() {
   const tableSnapshotRef = useRef<(() => import('@/lib/views/types').ViewSnapshot) | null>(null);
   const tableLoadViewRef = useRef<((view: SavedView) => void) | null>(null);
 
-  // Refs for chart state snapshot/restore (wired by CollectionCurveChart)
-  const chartSnapshotRef = useRef<(() => ChartViewState) | null>(null);
-  const chartLoadRef = useRef<((state: ChartViewState) => void) | null>(null);
+  // Refs for chart state snapshot/restore (wired by CollectionCurveChart).
+  // Typed as CollectionCurveDefinition (the narrow variant) — snapshot writes
+  // only land on ViewSnapshot.chartState when the running chart is the
+  // collection-curve variant.
+  const chartSnapshotRef = useRef<(() => CollectionCurveDefinition) | null>(null);
+  const chartLoadRef = useRef<((state: CollectionCurveDefinition) => void) | null>(null);
 
   // DS-27: skeleton → content cross-fade with ~150ms overlap window.
   // Tracks two booleans independently so both layers can be rendered during

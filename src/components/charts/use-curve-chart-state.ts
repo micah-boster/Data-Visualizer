@@ -12,6 +12,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import type { BatchCurve, BatchAnomaly } from "@/types/partner-stats";
+import type { CollectionCurveDefinition } from "@/lib/views/types";
 import { BATCH_KEY_PREFIX } from "@/components/charts/pivot-curve-data";
 
 /** Maximum number of batches shown by default (before "Show all" toggle). */
@@ -164,6 +165,52 @@ export function useCurveChartState(curves: BatchCurve[], batchAnomalies?: BatchA
     [anomalyByKey],
   );
 
+  // --- View snapshot/restore ---
+
+  /** Capture current chart state as a serializable object (batch names, not keys). */
+  const getChartSnapshot = useCallback((): CollectionCurveDefinition => {
+    // Convert positional keys (batch_0, batch_1) back to batch names
+    const hiddenNames: string[] = [];
+    hiddenBatches.forEach((key) => {
+      const idx = parseInt(key.replace(BATCH_KEY_PREFIX, ""), 10);
+      const curve = sortedCurves[idx];
+      if (curve) hiddenNames.push(curve.batchName);
+    });
+
+    return {
+      type: 'collection-curve',
+      version: 2,
+      metric,
+      hiddenBatches: hiddenNames,
+      showAverage,
+      showAllBatches,
+    };
+  }, [metric, hiddenBatches, showAverage, showAllBatches, sortedCurves]);
+
+  /** Restore chart state from a saved view snapshot. */
+  const restoreChartState = useCallback(
+    (state: CollectionCurveDefinition) => {
+      setMetric(state.metric);
+      setShowAverage(state.showAverage);
+      setShowAllBatches(state.showAllBatches);
+      setSoloedBatch(null); // clear ephemeral solo
+
+      // Convert batch names back to positional keys
+      const nameToKey = new Map<string, string>();
+      sortedCurves.forEach((curve, i) => {
+        nameToKey.set(curve.batchName, `${BATCH_KEY_PREFIX}${i}`);
+      });
+
+      const hiddenKeys = new Set<string>();
+      for (const name of state.hiddenBatches) {
+        const key = nameToKey.get(name);
+        if (key) hiddenKeys.add(key);
+      }
+      setHiddenBatches(hiddenKeys);
+    },
+    [sortedCurves],
+  );
+
   return {
     // State
     metric,
@@ -190,5 +237,8 @@ export function useCurveChartState(curves: BatchCurve[], batchAnomalies?: BatchA
     isBatchAnomalous,
     getBatchAnomaly,
     getAnomalyLineColor,
+    // View snapshot/restore
+    getChartSnapshot,
+    restoreChartState,
   };
 }
