@@ -331,6 +331,24 @@ export function DataDisplay() {
       .sort();
   }, [data?.data, selectedPartner]);
 
+  // Refs for DataTable to expose snapshot capture and view loading
+  const tableSnapshotRef = useRef<(() => import('@/lib/views/types').ViewSnapshot) | null>(null);
+  const tableLoadViewRef = useRef<((view: SavedView) => void) | null>(null);
+
+  // Refs for chart state snapshot/restore (wired by CollectionCurveChart).
+  // Typed as CollectionCurveDefinition (the narrow variant) — snapshot writes
+  // only land on ViewSnapshot.chartState when the running chart is the
+  // collection-curve variant.
+  const chartSnapshotRef = useRef<(() => CollectionCurveDefinition) | null>(null);
+  const chartLoadRef = useRef<((state: CollectionCurveDefinition) => void) | null>(null);
+
+  // Phase 36-05 — parent-owned chart definition (preset OR generic variant).
+  // Initial value is DEFAULT_COLLECTION_CURVE per CONTEXT lock: "Default chart
+  // for a view with no chartState is the collection-curve preset." View load
+  // hydrates this from snapshot.chartState; view save captures it by branching
+  // on chartDefinition.type (Pitfall 8 — two-snapshot-mechanism resolution).
+  const [chartDefinition, setChartDefinition] = useState<ChartDefinition>(DEFAULT_COLLECTION_CURVE);
+
   // View loading handler — called from sidebar or toolbar
   const handleLoadView = useCallback(
     (view: SavedView) => {
@@ -376,6 +394,17 @@ export function DataDisplay() {
         chartLoadRef.current(snapshot.chartState);
       }
 
+      // Phase 36-05 — hydrate the parent-owned chartDefinition state so
+      // ChartPanel can re-render on the correct branch (preset vs generic).
+      // Absent chartState falls back to DEFAULT_COLLECTION_CURVE (CONTEXT lock).
+      // The chartLoadRef call above (preset-branch-only) still runs to
+      // synchronize the preset's internal useCurveChartState hook.
+      if (snapshot.chartState) {
+        setChartDefinition(snapshot.chartState);
+      } else {
+        setChartDefinition(DEFAULT_COLLECTION_CURVE);
+      }
+
       // Phase 34-04: apply partner-list activation when the view carries a
       // valid listId. Sanitization in useSavedViews has already guaranteed the
       // id is either a known list or undefined — no runtime validation needed
@@ -419,8 +448,18 @@ export function DataDisplay() {
         // Enrich with chart + layout state
         snapshot.chartsExpanded = chartsExpanded;
         snapshot.comparisonVisible = comparisonVisible;
-        if (chartSnapshotRef.current) {
-          snapshot.chartState = chartSnapshotRef.current();
+        // Phase 36-05 Pitfall 8 — two snapshot mechanisms resolved by
+        // branching on chartDefinition.type: the collection-curve preset owns
+        // its own domain-specific state (hiddenBatches / showAverage /
+        // showAllBatches) inside useCurveChartState, so we capture via
+        // chartSnapshotRef on the preset branch; generic variants carry all
+        // their state on chartDefinition itself.
+        if (chartDefinition.type === 'collection-curve') {
+          if (chartSnapshotRef.current) {
+            snapshot.chartState = chartSnapshotRef.current();
+          }
+        } else {
+          snapshot.chartState = chartDefinition;
         }
         // NAV-04: optional drill capture. Only write the field when the user
         // opted in AND we actually have drill state to save.
@@ -437,7 +476,7 @@ export function DataDisplay() {
         });
       }
     },
-    [saveView, chartsExpanded, comparisonVisible, drillState],
+    [saveView, chartsExpanded, comparisonVisible, drillState, chartDefinition],
   );
 
   const handleReplaceView = useCallback(
@@ -446,8 +485,13 @@ export function DataDisplay() {
         const snapshot = tableSnapshotRef.current();
         snapshot.chartsExpanded = chartsExpanded;
         snapshot.comparisonVisible = comparisonVisible;
-        if (chartSnapshotRef.current) {
-          snapshot.chartState = chartSnapshotRef.current();
+        // Phase 36-05 Pitfall 8 — see handleSaveView for rationale.
+        if (chartDefinition.type === 'collection-curve') {
+          if (chartSnapshotRef.current) {
+            snapshot.chartState = chartSnapshotRef.current();
+          }
+        } else {
+          snapshot.chartState = chartDefinition;
         }
         // NAV-04: mirror handleSaveView — capture drill when opted in.
         if (options?.includeDrill && drillState.level !== 'root') {
@@ -463,26 +507,8 @@ export function DataDisplay() {
         });
       }
     },
-    [replaceView, chartsExpanded, comparisonVisible, drillState],
+    [replaceView, chartsExpanded, comparisonVisible, drillState, chartDefinition],
   );
-
-  // Refs for DataTable to expose snapshot capture and view loading
-  const tableSnapshotRef = useRef<(() => import('@/lib/views/types').ViewSnapshot) | null>(null);
-  const tableLoadViewRef = useRef<((view: SavedView) => void) | null>(null);
-
-  // Refs for chart state snapshot/restore (wired by CollectionCurveChart).
-  // Typed as CollectionCurveDefinition (the narrow variant) — snapshot writes
-  // only land on ViewSnapshot.chartState when the running chart is the
-  // collection-curve variant.
-  const chartSnapshotRef = useRef<(() => CollectionCurveDefinition) | null>(null);
-  const chartLoadRef = useRef<((state: CollectionCurveDefinition) => void) | null>(null);
-
-  // Phase 36-05 — parent-owned chart definition (preset OR generic variant).
-  // Initial value is DEFAULT_COLLECTION_CURVE per CONTEXT lock: "Default chart
-  // for a view with no chartState is the collection-curve preset." View load
-  // hydrates this from snapshot.chartState; view save captures it by branching
-  // on chartDefinition.type (Pitfall 8 — two-snapshot-mechanism resolution).
-  const [chartDefinition, setChartDefinition] = useState<ChartDefinition>(DEFAULT_COLLECTION_CURVE);
 
   // DS-27: skeleton → content cross-fade with ~150ms overlap window.
   // Tracks two booleans independently so both layers can be rendered during
@@ -693,13 +719,27 @@ export function DataDisplay() {
                           <>
                             {/* DS-29 section boundary: KPI band ↔ charts */}
                             <SectionDivider />
-                            <CollectionCurveChart curves={partnerStats.curves} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                            <ChartPanel
+                              definition={chartDefinition}
+                              onDefinitionChange={setChartDefinition}
+                              rows={filteredRawData}
+                              curves={partnerStats.curves}
+                              chartSnapshotRef={chartSnapshotRef}
+                              chartLoadRef={chartLoadRef}
+                            />
                           </>
                         )}
                       </>
                     )}
                     {batchCurve && (
-                      <CollectionCurveChart curves={batchCurve} chartSnapshotRef={chartSnapshotRef} chartLoadRef={chartLoadRef} />
+                      <ChartPanel
+                        definition={chartDefinition}
+                        onDefinitionChange={setChartDefinition}
+                        rows={filteredRawData}
+                        curves={batchCurve}
+                        chartSnapshotRef={chartSnapshotRef}
+                        chartLoadRef={chartLoadRef}
+                      />
                     )}
                   </div>
                 </div>
