@@ -1,0 +1,1 @@
+SELECT "PARTNER_NAME", "BATCH" FROM agg_batch_performance_summary WHERE "ACCOUNT_TYPE" = 'Consumer'
