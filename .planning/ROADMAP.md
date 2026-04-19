@@ -104,7 +104,7 @@
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
-| 35. Chart Schema & Migration | v4.0 | 0/TBD | Not started | - |
+| 35. Chart Schema & Migration | v4.0 | 0/2 | Planned     | - |
 | 36. Chart Builder | v4.0 | 0/TBD | Not started | - |
 | 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |
 | 38. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
@@ -299,7 +299,11 @@ Plans:
   2. ChartDefinition type accepts line, scatter, and bar configurations with validated axis and type fields
   3. Old ChartViewState objects in localStorage are automatically migrated to ChartDefinition on first load
 **Context**: [35-CONTEXT.md](phases/35-chart-schema-migration/35-CONTEXT.md) (gathered 2026-04-18)
-**Plans**: _To be scoped via `/gsd:plan-phase` — Context decisions locked: ChartDefinition is a discriminated union by `type`, migration is lazy-on-read, `chartState` replaced in-place in ViewSnapshot._
+**Research**: [35-RESEARCH.md](phases/35-chart-schema-migration/35-RESEARCH.md) (2026-04-18)
+**Plans**: 2 plans across 2 waves (type-layer migration + smoke test in Wave 1; browser human-verify in Wave 2)
+Plans:
+- [ ] 35-01-PLAN.md — ChartDefinition discriminated union + migrateChartState function + smoke test + defaults.ts v2 rewrite + all 3 consumers retyped in one atomic commit (CHRT-01, CHRT-02)
+- [ ] 35-02-PLAN.md — Human-verify checkpoint: 4 browser scenarios (legacy→v2 round-trip, malformed fallback, defaults from empty storage, unknown-variant narrow)
 
 ---
-*Last updated: 2026-04-18 — Phase 30 closed (5/5 plans shipped, DS-23..28 + A11Y-05 complete, `check:motion` guard live, human-verify approved full motion suite); Phase 29 closed (5/5 plans, 14/14 truths, DS-18..22 CI-guarded); Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
+*Last updated: 2026-04-18 — Phase 35 planned (2 plans: type-layer migration + human-verify; Pitfall 1 resolved to `z.unknown()` schema relaxation, version: 2 number, inline smoke test harness over vitest); Phase 30 closed (5/5 plans shipped, DS-23..28 + A11Y-05 complete, `check:motion` guard live, human-verify approved full motion suite); Phase 29 closed (5/5 plans, 14/14 truths, DS-18..22 CI-guarded); Phase 32 detail section added (backfill — phase shipped 2026-04-17); Phase 28 complete: 8 plans across 4 waves (foundation + 3 pilots + 3 sweeps + enforcement)*
