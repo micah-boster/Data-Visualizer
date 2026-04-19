@@ -116,18 +116,24 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
         <div className="thin-scrollbar flex-1 overflow-y-auto px-4">
           <div className="space-y-2">
             {draft.map((sortRule, index) => {
+              const columnConfig = COLUMN_CONFIGS.find((c) => c.key === sortRule.id);
+              const columnLabel = columnConfig?.label ?? sortRule.id;
               return (
                 <div
                   key={`${sortRule.id}-${index}`}
                   className="flex items-center gap-2 rounded-md bg-surface-raised/40 p-2"
                 >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-label-numeric">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-label-numeric"
+                  >
                     {index + 1}
                   </span>
 
                   <select
                     value={sortRule.id}
                     onChange={(e) => changeColumn(index, e.target.value)}
+                    aria-label={`Sort column for rule ${index + 1}`}
                     className="min-w-0 flex-1 rounded-md border border-input bg-surface-base px-2 py-1 text-body"
                   >
                     {COLUMN_CONFIGS.map((col) => (
@@ -146,6 +152,7 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
                     size="xs"
                     onClick={() => toggleDirection(index)}
                     className="shrink-0"
+                    aria-label={`Toggle direction for ${columnLabel}, currently ${sortRule.desc ? 'descending' : 'ascending'}`}
                   >
                     {sortRule.desc ? 'DESC' : 'ASC'}
                   </Button>
@@ -155,23 +162,26 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
                       onClick={() => moveUp(index)}
                       disabled={index === 0}
                       className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      aria-label="Move sort up"
                     >
-                      <ChevronUp className="h-3 w-3" />
+                      <ChevronUp className="h-3 w-3" aria-hidden="true" />
                     </button>
                     <button
                       onClick={() => moveDown(index)}
                       disabled={index === draft.length - 1}
                       className="text-muted-foreground hover:text-foreground disabled:opacity-30"
+                      aria-label="Move sort down"
                     >
-                      <ChevronDown className="h-3 w-3" />
+                      <ChevronDown className="h-3 w-3" aria-hidden="true" />
                     </button>
                   </div>
 
                   <button
                     onClick={() => removeSort(index)}
                     className="shrink-0 text-muted-foreground hover:text-destructive"
+                    aria-label={`Remove sort on ${columnLabel}`}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 </div>
               );

@@ -53,10 +53,22 @@ export function FilterPopover({
         <TooltipTrigger render={<span />}>
           <PopoverTrigger
             render={
-              <Button variant="ghost" size="icon" className="relative h-8 w-8">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-8 w-8"
+                aria-label={
+                  activeCount > 0
+                    ? `Manage filters (${activeCount} active)`
+                    : 'Manage filters'
+                }
+              >
                 <Filter className="h-4 w-4" />
                 {activeCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-label-numeric text-primary-foreground">
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-label-numeric text-primary-foreground"
+                  >
                     {activeCount}
                   </span>
                 )}
@@ -75,6 +87,7 @@ export function FilterPopover({
                 type="button"
                 onClick={onClearAll}
                 className="text-caption text-muted-foreground hover:text-foreground"
+                aria-label="Clear all filters"
               >
                 Clear all
               </button>
@@ -127,8 +140,9 @@ export function FilterPopover({
                   type="button"
                   onClick={() => onFilterChange(f.param, null)}
                   className="ml-0.5 text-muted-foreground hover:text-foreground"
+                  aria-label={`Remove ${f.label} filter`}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-3 w-3" aria-hidden="true" />
                 </button>
               </span>
             ))}

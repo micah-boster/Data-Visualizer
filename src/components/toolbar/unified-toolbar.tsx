@@ -138,7 +138,13 @@ export function UnifiedToolbar({
         <Tooltip>
           <TooltipTrigger
             render={
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onOpenQuery}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={onOpenQuery}
+                aria-label="Ask a question about your data"
+              >
                 <Sparkles className="h-4 w-4" />
               </Button>
             }
@@ -158,6 +164,8 @@ export function UnifiedToolbar({
                 size="icon"
                 className={cn('h-8 w-8', chartsExpanded && 'bg-muted')}
                 onClick={onToggleCharts}
+                aria-label="Toggle charts"
+                aria-pressed={chartsExpanded}
               >
                 <BarChart3 className="h-4 w-4" />
               </Button>
@@ -190,6 +198,7 @@ export function UnifiedToolbar({
                   size="icon"
                   className="h-8 w-8"
                   onClick={onOpenColumnPicker}
+                  aria-label={`Manage columns (${visibleColumnCount} of ${totalColumnCount} visible)`}
                 >
                   <Columns3 className="h-4 w-4" />
                 </Button>
@@ -207,10 +216,18 @@ export function UnifiedToolbar({
                   size="icon"
                   className={cn('h-8 w-8', sorting.length > 0 && 'bg-muted')}
                   onClick={() => setSortOpen(true)}
+                  aria-label={
+                    sorting.length > 0
+                      ? `Manage sort order (${sorting.length} active)`
+                      : 'Manage sort order'
+                  }
                 >
                   <ArrowUpDown className="h-4 w-4" />
                   {sorting.length > 1 && (
-                    <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-label-numeric text-primary-foreground">
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-label-numeric text-primary-foreground"
+                    >
                       {sorting.length}
                     </span>
                   )}
@@ -262,6 +279,7 @@ export function UnifiedToolbar({
                       });
                     });
                   }}
+                  aria-label="Export data to CSV"
                 >
                   <Download className="h-4 w-4" />
                 </Button>

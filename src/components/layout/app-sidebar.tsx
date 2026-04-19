@@ -102,6 +102,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   tooltip="All Partners"
                   isActive={drillState.level === 'root'}
+                  aria-current={drillState.level === 'root' ? 'page' : undefined}
                   onClick={() => navigateToLevel('root')}
                 >
                   <LayoutDashboard className="h-4 w-4" />
@@ -127,14 +128,18 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       tooltip={p.name}
                       isActive={drillState.partner === p.name}
+                      aria-current={drillState.partner === p.name ? 'page' : undefined}
                       onClick={() => drillToPartner(p.name)}
                     >
                       {p.isFlagged ? (
-                        <span className="flex h-4 w-4 items-center justify-center">
+                        <span
+                          aria-hidden="true"
+                          className="flex h-4 w-4 items-center justify-center"
+                        >
                           <span className="h-2 w-2 rounded-full bg-brand-purple" />
                         </span>
                       ) : (
-                        <Users className="h-4 w-4" />
+                        <Users className="h-4 w-4" aria-hidden="true" />
                       )}
                       <span className="truncate">{p.name}</span>
                     </SidebarMenuButton>
@@ -184,9 +189,9 @@ export function AppSidebar() {
                       onClick={() => onLoadView(view)}
                     >
                       {view.isDefault ? (
-                        <Star className="h-4 w-4 text-amber-500" />
+                        <Star className="h-4 w-4 text-amber-500" aria-hidden="true" />
                       ) : (
-                        <Bookmark className="h-4 w-4" />
+                        <Bookmark className="h-4 w-4" aria-hidden="true" />
                       )}
                       <span className="truncate">{view.name}</span>
                     </SidebarMenuButton>
@@ -197,8 +202,9 @@ export function AppSidebar() {
                           onDeleteView(view.id);
                         }}
                         showOnHover
+                        aria-label={`Delete saved view ${view.name}`}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                       </SidebarMenuAction>
                     )}
                   </SidebarMenuItem>

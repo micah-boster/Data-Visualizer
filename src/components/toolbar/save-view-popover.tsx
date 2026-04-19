@@ -68,7 +68,12 @@ export function SaveViewPopover({ onSave, onReplace, hasViewWithName, canInclude
         <TooltipTrigger render={<span />}>
           <PopoverTrigger
             render={
-              <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                aria-label="Save current view"
+              >
                 <Save className="h-4 w-4" />
               </Button>
             }
@@ -94,6 +99,7 @@ export function SaveViewPopover({ onSave, onReplace, hasViewWithName, canInclude
               if (e.key === 'Escape') setOpen(false);
             }}
             placeholder="View name"
+            aria-label="Saved view name"
             className="flex-1 rounded-md border bg-transparent px-2 py-1.5 text-body focus:outline-none focus-glow"
           />
           <Button

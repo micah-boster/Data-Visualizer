@@ -73,8 +73,8 @@ export function PartnerListsSidebarGroup({
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Partner Lists</SidebarGroupLabel>
-      <SidebarGroupAction onClick={onCreateList}>
-        <Plus className="h-4 w-4" />
+      <SidebarGroupAction onClick={onCreateList} aria-label="Create partner list">
+        <Plus className="h-4 w-4" aria-hidden="true" />
         <span className="sr-only">Create partner list</span>
       </SidebarGroupAction>
       <SidebarGroupContent>
@@ -94,9 +94,10 @@ export function PartnerListsSidebarGroup({
                 <SidebarMenuButton
                   tooltip={list.name}
                   isActive={activeListId === list.id}
+                  aria-current={activeListId === list.id ? 'page' : undefined}
                   onClick={() => toggleList(list.id)}
                 >
-                  <List className="h-4 w-4" />
+                  <List className="h-4 w-4" aria-hidden="true" />
                   <span className="truncate">{list.name}</span>
                 </SidebarMenuButton>
                 {/*
@@ -112,9 +113,9 @@ export function PartnerListsSidebarGroup({
                     e.stopPropagation();
                     onEditList(list.id);
                   }}
+                  aria-label={`Edit partner list ${list.name}`}
                 >
-                  <Pencil className="h-3.5 w-3.5" />
-                  <span className="sr-only">Edit list</span>
+                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                 </SidebarMenuAction>
                 <SidebarMenuAction
                   showOnHover
@@ -122,9 +123,9 @@ export function PartnerListsSidebarGroup({
                     e.stopPropagation();
                     handleDelete(list.id);
                   }}
+                  aria-label={`Delete partner list ${list.name}`}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  <span className="sr-only">Delete list</span>
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                 </SidebarMenuAction>
               </SidebarMenuItem>
             ))

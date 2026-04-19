@@ -49,9 +49,17 @@ export function AnomalyToolbarTrigger({ onDrillToPartner }: AnomalyToolbarTrigge
         <TooltipTrigger render={<span />}>
           <PopoverTrigger
             render={
-              <Button variant="ghost" size="icon" className="relative h-8 w-8">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-8 w-8"
+                aria-label={`Show anomalies (${totalFlagged})`}
+              >
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <span className="text-label-numeric absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-white">
+                <span
+                  aria-hidden="true"
+                  className="text-label-numeric absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-white"
+                >
                   {totalFlagged}
                 </span>
               </Button>
