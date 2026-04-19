@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-19T01:49:03.824Z"
+last_updated: "2026-04-19T01:56:32.693Z"
 progress:
   total_phases: 35
   completed_phases: 31
   total_plans: 90
-  completed_plans: 86
+  completed_plans: 87
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 31 (Visual Polish Pass) — in flight alongside v4.0 feature tracks
-Plan: 31-03 3/3 tasks complete — globals.css scope narrowing (d446aaa), 6 named containers opted into thin-scrollbar with sidebar no-scrollbar→thin-scrollbar reconciliation (12e5788), Task 3 verification (build + 4 guards green). DS-34 closed.
-Status: Document/body scroll now uses OS default; themed thin scrollbar is opt-in per named container via .thin-scrollbar utility + 3 --scrollbar-* tokens. Zero consumer regressions. Visual UAT deferred to 31-06 human-verify.
-Last activity: 2026-04-18 — Completed 31-03; next on deck is next incomplete plan in phase 31 (31-04+).
+Plan: 31-04 2/2 tasks complete — DS-33 shipped as no-op (Finding A): --hover-bg unchanged at light 8% / dark 6% per 31-RESEARCH recommendation; final visual call deferred to Phase 31-06 human-verify (511074f).
+Status: Phase 30-03 row-hover wiring (table-body.tsx:48) preserved verbatim; globals.css source untouched. One-hunk Path B retune (5%/4%) documented as fast-follow escape valve if 31-06 flags the tint. DS-33 closed under Finding A.
+Last activity: 2026-04-18 — Completed 31-04; next on deck is next incomplete plan in phase 31 (31-05).
 
-Progress: [████████████████████] 86/90 plans (96% — v1.0 milestone)
+Progress: [████████████████████] 87/90 plans (97% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -201,6 +201,8 @@ Progress: [████████████████████] 86/90 p
 - [Phase 31-03]: DS-34 shipped as scope narrowing + utility extraction — global ::-webkit-scrollbar rules removed so document/body scroll falls back to OS default; themed thin scrollbar is opt-in via .thin-scrollbar on named containers only
 - [Phase 31-03]: Sidebar SidebarContent reconciled from legacy no-scrollbar (opt-out) to thin-scrollbar (opt-in) — the opt-out predated scope narrowing and would have left the sidebar with zero scrollbar affordance after global rules were removed
 - [Phase 31-03]: --scrollbar-track stays transparent mode-agnostic (declared in :root only, inherited by .dark) — only thumb + thumb-hover values differ across themes
+- [Phase 31]: [Phase 31-04]: DS-33 Finding A recorded — current --hover-bg (light 8% / dark 6%) ships unchanged per 31-RESEARCH recommendation. Final visual call deferred to Phase 31-06 human-verify; one-hunk Path B retune (5%/4%) documented in 31-04-PLAN.md Task 2 as the fast-follow escape valve if 31-06 flags the tint.
+- [Phase 31]: [Phase 31-04]: Validate-first no-op pattern proven — when RESEARCH says existing values are likely-correct AND browser validation is gated by missing creds, the correct move is no-op ship with explicit deferral, not speculative retune. Phase 30-03 wiring at table-body.tsx:48 remains the single source of truth for row-hover motion wiring.
 
 ### Pending Todos
 
@@ -218,7 +220,7 @@ Progress: [████████████████████] 86/90 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 31-03-PLAN.md — DS-34 scrollbar scope narrowed. Global ::-webkit-scrollbar removed from @layer base; .thin-scrollbar utility + 3 --scrollbar-* tokens added; 6 named containers (table, sidebar, filter combobox, sort dialog, query response, curve legend) opted in explicitly. SidebarContent reconciled from legacy no-scrollbar (opt-out) to thin-scrollbar (opt-in). All 4 check:* guards + build green. Ready for next incomplete plan in phase 31.
+Stopped at: Completed 31-04-PLAN.md — DS-33 shipped as no-op (Finding A). `--hover-bg` unchanged at light 8% / dark 6% per 31-RESEARCH §DS-33 recommendation; final visual sign-off deferred to Phase 31-06 human-verify sweep. Phase 30-03 wiring at table-body.tsx:48 (transition-colors duration-quick ease-default hover:bg-hover-bg) verified intact. One-hunk Path B retune (5%/4% + rationale comment) documented as fast-follow escape valve. Ready for next incomplete plan in phase 31 (31-05).
 Resume file: None
 
 ## Performance Metrics
@@ -243,4 +245,5 @@ Resume file: None
 | Phase 31 P02 | ~6 min | 3 tasks | 5 files |
 | Phase 34 P04 | ~8 min | 3 tasks | 7 files |
 | Phase 31 P03 | ~5 min | 3 tasks | 7 files |
+| Phase 31 P04 | ~2min | 2 tasks | 0 files |
 
