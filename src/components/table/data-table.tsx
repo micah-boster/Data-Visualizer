@@ -344,7 +344,7 @@ export function DataTable({
         <div
           ref={tableContainerRef}
           data-density="dense"
-          className="relative z-0 flex-1 overflow-auto rounded-lg bg-surface-inset"
+          className="thin-scrollbar relative z-0 flex-1 overflow-auto rounded-lg bg-surface-inset"
           style={{ minHeight: 0 }}
         >
           <table

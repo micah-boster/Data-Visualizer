@@ -91,7 +91,7 @@ export function QueryResponse({
 
   // Streaming or ready state
   return (
-    <div className="mt-2 max-h-[200px] overflow-y-auto rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
+    <div className="thin-scrollbar mt-2 max-h-[200px] overflow-y-auto rounded-lg bg-surface-raised shadow-elevation-raised p-card-padding">
       <p className="text-body text-foreground">
         {text}
         {status === 'streaming' && (

@@ -113,7 +113,7 @@ export function SortDialog({ sorting, onSortingChange, open: controlledOpen, onO
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto px-4">
+        <div className="thin-scrollbar flex-1 overflow-y-auto px-4">
           <div className="space-y-2">
             {draft.map((sortRule, index) => {
               return (

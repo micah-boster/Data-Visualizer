@@ -30,7 +30,7 @@ export function CurveLegend({
   onToggleShowAll,
 }: CurveLegendProps) {
   return (
-    <div className="flex w-[180px] shrink-0 flex-col gap-1 overflow-y-auto text-caption">
+    <div className="thin-scrollbar flex w-[180px] shrink-0 flex-col gap-1 overflow-y-auto text-caption">
       {/* Batch entries */}
       {defaultVisibleKeys.map((key, i) => {
         const isHidden = hiddenBatches.has(key);
