@@ -38,9 +38,11 @@ import { SectionErrorBoundary } from '@/components/section-error-boundary';
 import { SectionDivider } from '@/components/layout/section-divider';
 import { toast } from 'sonner';
 import type { DrillState } from '@/hooks/use-drill-down';
-import type { SavedView, CollectionCurveDefinition, ChartDefinition } from '@/lib/views/types';
+import type { SavedView, CollectionCurveDefinition, ChartDefinition, ViewSnapshot } from '@/lib/views/types';
 import { ChartPanel } from '@/components/charts/chart-panel';
 import { DEFAULT_COLLECTION_CURVE } from '@/lib/views/migrate-chart';
+import { mapToSnapshot } from '@/lib/metabase-import/map-to-snapshot';
+import type { ParseResult } from '@/lib/metabase-import/types';
 
 const CrossPartnerTrajectoryChart = dynamic(
   () =>
@@ -424,6 +426,142 @@ export function DataDisplay() {
     [router, setActiveListId],
   );
 
+  // Phase 37 — Apply path for Metabase SQL Import. Mirrors handleLoadView's
+  // state-restore pipeline, but:
+  //   1. Captures the pre-import ViewSnapshot for the Undo action BEFORE we
+  //      mutate anything.
+  //   2. Forces drill to root (CONTEXT lock + META-03) — drill reset is
+  //      unconditional, not snapshot-driven.
+  //   3. Stamps sourceQuery: { sql, importedAt } on the working view so the
+  //      audit-trail lands if the user later persists via Save View.
+  //   4. Does NOT push into useSavedViews — the imported view is an unsaved
+  //      working view until the user uses the existing Save View flow.
+  const handleApplyImport = useCallback(
+    (result: ParseResult, sourceSql: string) => {
+      // 1. Capture pre-import snapshot + outer layout flags for Undo (same
+      //    ref handleSaveView uses for snapshot capture).
+      const previousSnapshot = tableSnapshotRef.current?.();
+      const previousChartsExpanded = chartsExpanded;
+      const previousComparisonVisible = comparisonVisible;
+      const previousDrill: DrillState = { ...drillState };
+
+      // 2. Build a Partial<ViewSnapshot> from the parsed result, overlay on
+      //    current-view defaults, stamp sourceQuery.
+      const partial = mapToSnapshot(result);
+      const base: ViewSnapshot = previousSnapshot ?? {
+        sorting: [],
+        columnVisibility: {},
+        columnOrder: [],
+        columnFilters: {},
+        dimensionFilters: {},
+        columnSizing: {},
+      };
+
+      const importedSnapshot: ViewSnapshot = {
+        ...base,
+        ...partial,
+        // drill always cleared on import (CONTEXT lock).
+        drill: undefined,
+        // listId explicitly unset — imports do NOT carry a partner list.
+        listId: null,
+        sourceQuery: { sql: sourceSql, importedAt: Date.now() },
+      };
+
+      // 3. Drill reset — lifted from handleLoadView's drill-update block
+      //    (above in this file), without the snapshot.drill branch — imports
+      //    always clear drill params.
+      {
+        const drillParams = new URLSearchParams(window.location.search);
+        drillParams.delete('p');
+        drillParams.delete('b');
+        const drillQs = drillParams.toString();
+        router.push(drillQs ? `?${drillQs}` : window.location.pathname, { scroll: false });
+      }
+
+      // 4. Chart state — the mapper only emits Phase-36 line/scatter/bar
+      //    variants through migrateChartState's gate; the collection-curve
+      //    preset is driven via chartLoadRef (as handleLoadView does).
+      //    Guarding by discriminant keeps the narrow ref type-safe even
+      //    though inferChart never emits 'collection-curve' today.
+      if (importedSnapshot.chartState?.type === 'collection-curve' && chartLoadRef.current) {
+        chartLoadRef.current(importedSnapshot.chartState);
+      }
+
+      // 5. Synthesize a working SavedView and drive through handleLoadView.
+      //    id='working:import' is a sentinel — useSavedViews never persists
+      //    it because we don't call saveView. handleLoadView only READS from
+      //    the SavedView shape.
+      const workingView: SavedView = {
+        id: 'working:import',
+        name: 'Imported View (unsaved)',
+        snapshot: importedSnapshot,
+        createdAt: Date.now(),
+      };
+
+      handleLoadView(workingView);
+
+      // 6. Toast with summary + Undo action.
+      const matchedCols = result.matchedColumns.length;
+      const matchedFlts = result.matchedFilters.length;
+      const skippedTotal =
+        result.skippedColumns.length
+        + result.skippedFilters.length
+        + result.skippedSort.length
+        + result.inferredChart.skipped.length
+        + result.unsupportedConstructs.length;
+      const description = `${matchedCols} column${matchedCols === 1 ? '' : 's'}, ${
+        matchedFlts
+      } filter${matchedFlts === 1 ? '' : 's'}${
+        skippedTotal > 0 ? `, ${skippedTotal} skipped` : ''
+      }`;
+
+      toast('View imported', {
+        description,
+        action: {
+          label: 'Undo',
+          onClick: () => {
+            // Restore via the same handleLoadView pipeline. Rebuild the
+            // pre-import SavedView with the captured snapshot + outer
+            // layout flags + drill.
+            if (!previousSnapshot) return;
+            setChartsExpanded(previousChartsExpanded);
+            setComparisonVisible(previousComparisonVisible);
+            const restoreView: SavedView = {
+              id: 'working:undo-import',
+              name: 'Undo Import',
+              snapshot: {
+                ...previousSnapshot,
+                chartsExpanded: previousChartsExpanded,
+                comparisonVisible: previousComparisonVisible,
+                drill:
+                  previousDrill.level === 'root'
+                    ? undefined
+                    : {
+                        partner: previousDrill.partner ?? undefined,
+                        batch: previousDrill.batch ?? undefined,
+                      },
+              },
+              createdAt: Date.now(),
+            };
+            handleLoadView(restoreView);
+          },
+        },
+        // Longer than save/delete (3s/5s) — import is higher-stakes and the
+        // user may want time to evaluate the imported view before undoing.
+        duration: 8000,
+      });
+    },
+    [
+      router,
+      handleLoadView,
+      chartsExpanded,
+      comparisonVisible,
+      drillState,
+      setChartsExpanded,
+      setComparisonVisible,
+    ],
+  );
+
   const handleDeleteView = useCallback(
     (id: string) => {
       const { deleted } = deleteView(id);
@@ -615,6 +753,7 @@ export function DataDisplay() {
           onLoadView={handleLoadView}
           onDeleteView={handleDeleteView}
           onSaveView={handleSaveView}
+          onImportSql={handleApplyImport}
         />
 
         {skeletonVisible && (
@@ -863,6 +1002,7 @@ function SidebarDataPopulator({
   onLoadView,
   onDeleteView,
   onSaveView,
+  onImportSql,
 }: {
   allData: Record<string, unknown>[];
   /**
@@ -879,6 +1019,7 @@ function SidebarDataPopulator({
   onLoadView: (view: SavedView) => void;
   onDeleteView: (id: string) => void;
   onSaveView: (name: string) => void;
+  onImportSql: (result: ParseResult, sourceSql: string) => void;
 }) {
   const { setSidebarData } = useSidebarData();
   const { partnerAnomalies } = useAnomalyContext();
@@ -930,9 +1071,10 @@ function SidebarDataPopulator({
       onLoadView,
       onDeleteView,
       onSaveView,
+      onImportSql,
       anomalyCount,
     });
-  }, [partners, drillState, drillToPartner, navigateToLevel, views, onLoadView, onDeleteView, onSaveView, anomalyCount, setSidebarData]);
+  }, [partners, drillState, drillToPartner, navigateToLevel, views, onLoadView, onDeleteView, onSaveView, onImportSql, anomalyCount, setSidebarData]);
 
   return null;
 }
