@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-19T01:56:32.693Z"
+last_updated: "2026-04-19T02:08:22.723Z"
 progress:
-  total_phases: 35
+  total_phases: 36
   completed_phases: 31
-  total_plans: 90
-  completed_plans: 87
+  total_plans: 92
+  completed_plans: 88
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 ## Current Position
 
 Phase: 31 (Visual Polish Pass) — in flight alongside v4.0 feature tracks
-Plan: 31-04 2/2 tasks complete — DS-33 shipped as no-op (Finding A): --hover-bg unchanged at light 8% / dark 6% per 31-RESEARCH recommendation; final visual call deferred to Phase 31-06 human-verify (511074f).
-Status: Phase 30-03 row-hover wiring (table-body.tsx:48) preserved verbatim; globals.css source untouched. One-hunk Path B retune (5%/4%) documented as fast-follow escape valve if 31-06 flags the tint. DS-33 closed under Finding A.
-Last activity: 2026-04-18 — Completed 31-04; next on deck is next incomplete plan in phase 31 (31-05).
+Plan: 31-05 3/3 tasks complete — DS-29 gradient dividers shipped at the two CONTEXT-locked junctions. `.divider-horizontal-fade` + `.divider-vertical-fade` declared inside @layer utilities; new `SectionDivider` component placed at KPI↔charts + charts↔table junctions in data-display.tsx; `ToolbarDivider` internal background swapped bg-border → divider-vertical-fade (all 3 consumers inherit transparently). Commits 53c42ba, 456e4ba.
+Status: All 4 design-system guards (check:tokens / check:surfaces / check:components / check:motion) + Next.js build pass. Regression grep confirms only globals.css + toolbar-divider.tsx + section-divider.tsx reference `divider-*-fade` utilities (31-06 adds /tokens specimen as the 4th). Every other border-t / border-b / hr keeps its hard border per CONTEXT lock.
+Last activity: 2026-04-18 — Completed 31-05; next on deck is 31-06 (final plan in phase 31, Visual Polish /tokens specimen).
 
-Progress: [████████████████████] 87/90 plans (97% — v1.0 milestone)
+Progress: [████████████████████] 88/90 plans (98% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -203,6 +203,10 @@ Progress: [████████████████████] 87/90 p
 - [Phase 31-03]: --scrollbar-track stays transparent mode-agnostic (declared in :root only, inherited by .dark) — only thumb + thumb-hover values differ across themes
 - [Phase 31]: [Phase 31-04]: DS-33 Finding A recorded — current --hover-bg (light 8% / dark 6%) ships unchanged per 31-RESEARCH recommendation. Final visual call deferred to Phase 31-06 human-verify; one-hunk Path B retune (5%/4%) documented in 31-04-PLAN.md Task 2 as the fast-follow escape valve if 31-06 flags the tint.
 - [Phase 31]: [Phase 31-04]: Validate-first no-op pattern proven — when RESEARCH says existing values are likely-correct AND browser validation is gated by missing creds, the correct move is no-op ship with explicit deferral, not speculative retune. Phase 30-03 wiring at table-body.tsx:48 remains the single source of truth for row-hover motion wiring.
+- [Phase 31-05]: DS-29 gradient dividers shipped via @layer utilities + SectionDivider wrapper (31-RESEARCH Option 2); gradient consumes var(--border) so 31-01 retune propagates automatically
+- [Phase 31-05]: data-display.tsx KPI↔charts divider nested inside the chart-expand grid and the curves.length >= 2 guard — no stray divider when chart is absent; charts↔table divider sits between the chart SectionErrorBoundary and the PartnerNormsProvider so it co-re-keys on drill changes without entering the error-isolation scope
+- [Phase 31-05]: ToolbarDivider kept mx-0.5 h-4 w-px skeleton; only background utility swapped bg-border → divider-vertical-fade — all 3 consumers (unified-toolbar ×2, comparison-matrix ×1) inherit transparently, no prop / import / margin edits
+- [Phase 31-05]: SectionDivider is server-renderable (mirrors section-header.tsx precedent) and applies my-section (Phase 26 semantic spacing alias) — no new spacing primitives introduced; className override available for future tight/loose placements
 
 ### Pending Todos
 
@@ -220,7 +224,7 @@ Progress: [████████████████████] 87/90 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 31-04-PLAN.md — DS-33 shipped as no-op (Finding A). `--hover-bg` unchanged at light 8% / dark 6% per 31-RESEARCH §DS-33 recommendation; final visual sign-off deferred to Phase 31-06 human-verify sweep. Phase 30-03 wiring at table-body.tsx:48 (transition-colors duration-quick ease-default hover:bg-hover-bg) verified intact. One-hunk Path B retune (5%/4% + rationale comment) documented as fast-follow escape valve. Ready for next incomplete plan in phase 31 (31-05).
+Stopped at: Completed 31-05-PLAN.md — DS-29 gradient dividers shipped at the two CONTEXT-locked junctions (KPI↔charts, charts↔table) + ToolbarDivider internal recipe swap. `.divider-horizontal-fade` / `.divider-vertical-fade` declared in @layer utilities; new `SectionDivider` component (src/components/layout/section-divider.tsx) mirrors section-header.tsx precedent; data-display.tsx carries 2 `<SectionDivider />` placements; all 3 ToolbarDivider consumers (unified-toolbar ×2, comparison-matrix ×1) inherit the gradient transparently. All 4 design-system guards + Next.js build pass. Ready for next incomplete plan in phase 31 (31-06, final plan — /tokens Visual Polish specimen).
 Resume file: None
 
 ## Performance Metrics
@@ -246,4 +250,5 @@ Resume file: None
 | Phase 34 P04 | ~8 min | 3 tasks | 7 files |
 | Phase 31 P03 | ~5 min | 3 tasks | 7 files |
 | Phase 31 P04 | ~2min | 2 tasks | 0 files |
+| Phase 31 P05 | ~8 min | 3 tasks | 4 files |
 
