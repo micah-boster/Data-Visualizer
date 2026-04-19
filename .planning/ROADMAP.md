@@ -9,8 +9,9 @@
 - ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
 - 🚧 **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (in progress) — [Roadmap](milestones/v4.0-ROADMAP.md)
 - 📋 **v4.1 Feedback-Driven Polish** — Phases 38-40 (planned) — [Roadmap](milestones/v4.1-ROADMAP.md)
-- 📋 **v5.0 External Intelligence** — Phases 41-45 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
-- 📋 **v6.0 Proactive Intelligence & Action** — Phases 46-51 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
+- 📋 **v4.5 Hardening** — Phases 41-44 (planned, placeholder) — [Roadmap](milestones/v4.5-ROADMAP.md)
+- 📋 **v5.0 External Intelligence** — Phases 45-49 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
+- 📋 **v6.0 Proactive Intelligence & Action** — Phases 50-55 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
 
 ## Phases
 
@@ -107,23 +108,24 @@
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 4/5 | In Progress|  | - |
-| 37. Metabase SQL Import | v4.0 | 1/3 | In Progress |  | - |
+| 37. Metabase SQL Import | 1/3 | In Progress|  |  | - |
 | 38. Polish + Correctness Pass | v4.1 | 0/TBD | Planned | - |
 | 39. Partner Config Module | v4.1 | 0/TBD | Planned | - |
 | 40. Projected Curves v1 | v4.1 | 0/TBD | Planned | - |
-| 41. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
-| 42. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
-| 43. Triangulation Views | v5.0 | 0/TBD | Planned | - |
-| 44. Scorecard Reconciliation | v5.0 | 0/TBD | Planned | - |
-| 45. Dynamic Curve Re-Projection | v5.0 | 0/TBD | Planned | - |
-| 46. Weekly Partner Highlights | v6.0 | 0/TBD | Planned* | - |
-| 47. Pattern Alerts | v6.0 | 0/TBD | Planned | - |
-| 48. MBR Pipeline Integration | v6.0 | 0/TBD | Planned | - |
-| 49. Action Connections | v6.0 | 0/TBD | Planned | - |
-| 50. Temporal Intelligence | v6.0 | 0/TBD | Planned | - |
-| 51. NLQ Enhancements | v6.0 | 0/TBD | Planned | - |
+| 41-44. v4.5 Hardening (TBD) | v4.5 | 0/TBD | Placeholder | - |
+| 45. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
+| 46. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
+| 47. Triangulation Views | v5.0 | 0/TBD | Planned | - |
+| 48. Scorecard Reconciliation | v5.0 | 0/TBD | Planned | - |
+| 49. Dynamic Curve Re-Projection | v5.0 | 0/TBD | Planned | - |
+| 50. Weekly Partner Highlights | v6.0 | 0/TBD | Planned* | - |
+| 51. Pattern Alerts | v6.0 | 0/TBD | Planned | - |
+| 52. MBR Pipeline Integration | v6.0 | 0/TBD | Planned | - |
+| 53. Action Connections | v6.0 | 0/TBD | Planned | - |
+| 54. Temporal Intelligence | v6.0 | 0/TBD | Planned | - |
+| 55. NLQ Enhancements | v6.0 | 0/TBD | Planned | - |
 
-\* Phase 46 flagged for review — may be deprioritized in favor of deeper MBR integration (Phase 48)
+\* Phase 50 flagged for review — may be deprioritized in favor of deeper MBR integration (Phase 52)
 
 ## Phase Details
 
