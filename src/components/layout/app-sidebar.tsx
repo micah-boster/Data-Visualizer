@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, Bookmark, Trash2, Star, LayoutDashboard } from 'lucide-react';
+import { Users, Bookmark, Trash2, Star, LayoutDashboard, Database } from 'lucide-react';
 import { useSidebarData } from '@/contexts/sidebar-data';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { PartnerListsSidebarGroup } from '@/components/partner-lists/partner-lists-sidebar-group';
 import { CreateListDialog } from '@/components/partner-lists/create-list-dialog';
+import { ImportSheet } from '@/components/metabase-import/import-sheet';
 import { useData } from '@/hooks/use-data';
+import type { ParseResult } from '@/lib/metabase-import/types';
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +26,7 @@ import {
 } from '@/components/ui/sidebar';
 
 export function AppSidebar() {
+  const sidebarData = useSidebarData();
   const {
     partners,
     drillState,
@@ -33,7 +36,22 @@ export function AppSidebar() {
     onLoadView,
     onDeleteView,
     isReady,
-  } = useSidebarData();
+  } = sidebarData;
+
+  // Phase 37 Plan 02: onImportSql is read defensively because Plan 03 (Wave 3)
+  // is what adds it to SidebarDataState. Until Plan 03 ships, onImportSql is
+  // undefined — the sidebar entry is visible but Apply has no effect (the
+  // ImportSheet's Apply button is still disabled on parseError; absent
+  // handler is a dev-time affordance, not a runtime one). Plan 03 will
+  // remove this unsafe cast and add the typed field to SidebarDataState.
+  const onImportSql = (sidebarData as unknown as {
+    onImportSql?: (result: ParseResult, sourceSql: string) => void;
+  }).onImportSql;
+  const handleImport =
+    onImportSql ??
+    (() => {
+      // Plan 03 wires this; intentional no-op pre-wave-3.
+    });
 
   // Partner-lists data comes from the shared provider so the sidebar and
   // data-display read from the same usePartnerLists() call (single source
@@ -46,6 +64,9 @@ export function AppSidebar() {
   // the app reads — query client dedupes the fetch, no extra request.
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editListId, setEditListId] = useState<string | null>(null);
+  // Phase 37 Plan 02: Metabase import Sheet open state owned at the sidebar
+  // level so the menu entry and the Sheet mount live in the same scope.
+  const [importOpen, setImportOpen] = useState(false);
   const { data: queryData } = useData();
   const allRows = queryData?.data ?? [];
 
@@ -212,6 +233,27 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/*
+          Phase 37 — Metabase import entry. Placed after Views to keep the
+          primary partner-navigation affordances at top and tools at bottom.
+          Single-item utility entry — no SidebarGroupLabel.
+        */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Import from Metabase"
+                  onClick={() => setImportOpen(true)}
+                >
+                  <Database className="h-4 w-4" />
+                  <span>Import from Metabase</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter>
@@ -240,6 +282,20 @@ export function AppSidebar() {
         }}
         allRows={allRows}
         editMode={editListId ? { listId: editListId } : null}
+      />
+
+      {/*
+        Phase 37 Plan 02: ImportSheet mounted at the sidebar level (matches
+        CreateListDialog placement). The Sheet primitive portals itself, so
+        its DOM location does not affect overlay position. onImportSql is
+        threaded from useSidebarData — Plan 03 makes it a typed field on
+        SidebarDataState; until then the cast above produces a safe no-op
+        fallback.
+      */}
+      <ImportSheet
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImportSql={handleImport}
       />
     </Sidebar>
   );
