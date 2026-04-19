@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T20:44:16.344Z"
+last_updated: "2026-04-19T01:49:03.824Z"
 progress:
   total_phases: 35
   completed_phases: 31
   total_plans: 90
-  completed_plans: 85
+  completed_plans: 86
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 34 (Partner Lists) — complete (4/4 plans)
-Plan: 34-04 3/3 tasks complete — CreateListDialog wired into AppSidebar (3b9937e), ViewSnapshot.listId additive + sanitizeSnapshot non-destructive (17f6204), in-session Sheet specificity + dual-pane grid fix (a342682). End-to-end human-verify approved on second pass.
-Status: All 5 LIST-* requirements live in product. Additive ViewSnapshot.listId?: string | null mirrors Phase 32-02 .optional() precedent. Auto-capture of active listId onto saved views is an explicit non-goal for v1 — sanitization runs on load only. Sheet width bug + DualPaneTransfer min-content overflow bug caught at first human-verify pass and fixed in same session; approved on second pass.
-Last activity: 2026-04-18 — Completed 34-04 end-to-end; Phase 34 closed. Next on deck: Plan 31-03 (DS-34 scrollbar scope) per open 31 work, OR Plan 31-02 already shipped (focus-glow) — resume by picking the next incomplete plan in the polish pass.
+Phase: 31 (Visual Polish Pass) — in flight alongside v4.0 feature tracks
+Plan: 31-03 3/3 tasks complete — globals.css scope narrowing (d446aaa), 6 named containers opted into thin-scrollbar with sidebar no-scrollbar→thin-scrollbar reconciliation (12e5788), Task 3 verification (build + 4 guards green). DS-34 closed.
+Status: Document/body scroll now uses OS default; themed thin scrollbar is opt-in per named container via .thin-scrollbar utility + 3 --scrollbar-* tokens. Zero consumer regressions. Visual UAT deferred to 31-06 human-verify.
+Last activity: 2026-04-18 — Completed 31-03; next on deck is next incomplete plan in phase 31 (31-04+).
 
-Progress: [████████████████████] 85/90 plans (94% — v1.0 milestone)
+Progress: [████████████████████] 86/90 plans (96% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -198,6 +198,9 @@ Progress: [████████████████████] 85/90 p
 - [Phase 34-04]: Sheet primitive specificity gotcha — shadcn Sheet hardcodes width via data-[side=right]:sm:max-w-sm at higher specificity than plain sm:max-w-2xl. Consumer overrides MUST match the variant selector (data-[side=right]:sm:max-w-2xl) to win. Applies to every future Sheet consumer wanting non-default width. Same pattern will apply to any shadcn primitive that hardcodes styling via data-* variants (Dialog, Drawer, etc.).
 - [Phase 34-04]: Equal-pane grid recipe = grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] — plain 1fr tracks allow min-content to push one track wider when children have long intrinsic widths. minmax(0, 1fr) hard-caps each track at equal widths regardless of content. Canonical symmetric dual-pane recipe; reusable beyond DualPaneTransfer for side-by-side diff views, comparison panels, anywhere "50/50 regardless of content" is the contract.
 - [Phase 34-04]: Human-verify caught TWO visual bugs on first pass that all 4 automated guards missed — guards check tokens / surfaces / components / motion, not layout fidelity. Human-verify exists precisely to catch visual gaps that automation can't. Both bugs fixed in single commit a342682 before second (successful) pass.
+- [Phase 31-03]: DS-34 shipped as scope narrowing + utility extraction — global ::-webkit-scrollbar rules removed so document/body scroll falls back to OS default; themed thin scrollbar is opt-in via .thin-scrollbar on named containers only
+- [Phase 31-03]: Sidebar SidebarContent reconciled from legacy no-scrollbar (opt-out) to thin-scrollbar (opt-in) — the opt-out predated scope narrowing and would have left the sidebar with zero scrollbar affordance after global rules were removed
+- [Phase 31-03]: --scrollbar-track stays transparent mode-agnostic (declared in :root only, inherited by .dark) — only thumb + thumb-hover values differ across themes
 
 ### Pending Todos
 
@@ -215,8 +218,8 @@ Progress: [████████████████████] 85/90 p
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 31-01-PLAN.md — DS-32 border retune (8% across :root + .dark) + DS-30 dark --shadow-elevation-raised inset glass highlight bump (0.05 → 0.07) landed in src/app/globals.css. Two-hunk edit, zero consumer files touched, --input held at 15% as intentional divergence. All 4 check:* guards + build green. Ready for Plan 31-02.
-Resume file: .planning/phases/31-visual-polish-pass/31-02-PLAN.md
+Stopped at: Completed 31-03-PLAN.md — DS-34 scrollbar scope narrowed. Global ::-webkit-scrollbar removed from @layer base; .thin-scrollbar utility + 3 --scrollbar-* tokens added; 6 named containers (table, sidebar, filter combobox, sort dialog, query response, curve legend) opted in explicitly. SidebarContent reconciled from legacy no-scrollbar (opt-out) to thin-scrollbar (opt-in). All 4 check:* guards + build green. Ready for next incomplete plan in phase 31.
+Resume file: None
 
 ## Performance Metrics
 
@@ -239,4 +242,5 @@ Resume file: .planning/phases/31-visual-polish-pass/31-02-PLAN.md
 | 31 | 01 | ~3 min | 3 | 1 | 2026-04-18 |
 | Phase 31 P02 | ~6 min | 3 tasks | 5 files |
 | Phase 34 P04 | ~8 min | 3 tasks | 7 files |
+| Phase 31 P03 | ~5 min | 3 tasks | 7 files |
 
