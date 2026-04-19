@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-18T19:48:27.676Z"
+last_updated: "2026-04-18T20:44:16.344Z"
 progress:
   total_phases: 35
-  completed_phases: 30
+  completed_phases: 31
   total_plans: 90
-  completed_plans: 84
+  completed_plans: 85
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-16)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** Phase 31 (Visual Polish Pass) in progress — token-level retunes landing first
+**Current focus:** Phase 34 (Partner Lists) complete — v4.0 feature tracks now in flight alongside remaining design-polish plans
 
 ## Current Position
 
-Phase: 31 (Visual Polish Pass) — in progress
-Plan: 31-01 3/3 tasks complete — DS-32 --border unified to 8% in :root + .dark (ef83e56) + DS-30 dark --shadow-elevation-raised inset bumped 0.05 → 0.07 (0eec2ea). SUMMARY.md written. Single-file two-hunk edit; zero consumer files touched.
-Status: Plan 31-01 lands both token retunes that unblock downstream 31 work. All 4 check:* guards + Next.js build green on first pass, no auto-fixes. --input intentionally held at 15% as form-control affordance divergence, documented inline in globals.css. Light-mode --shadow-elevation-raised explicitly NOT given a matching inset highlight per CONTEXT lock.
-Last activity: 2026-04-18 — Completed 31-01 end-to-end; two atomic commits (one per task), verification task (no commit). Ready for 31-02.
+Phase: 34 (Partner Lists) — complete (4/4 plans)
+Plan: 34-04 3/3 tasks complete — CreateListDialog wired into AppSidebar (3b9937e), ViewSnapshot.listId additive + sanitizeSnapshot non-destructive (17f6204), in-session Sheet specificity + dual-pane grid fix (a342682). End-to-end human-verify approved on second pass.
+Status: All 5 LIST-* requirements live in product. Additive ViewSnapshot.listId?: string | null mirrors Phase 32-02 .optional() precedent. Auto-capture of active listId onto saved views is an explicit non-goal for v1 — sanitization runs on load only. Sheet width bug + DualPaneTransfer min-content overflow bug caught at first human-verify pass and fixed in same session; approved on second pass.
+Last activity: 2026-04-18 — Completed 34-04 end-to-end; Phase 34 closed. Next on deck: Plan 31-03 (DS-34 scrollbar scope) per open 31 work, OR Plan 31-02 already shipped (focus-glow) — resume by picking the next incomplete plan in the polish pass.
 
-Progress: [████████████████████] 84/90 plans (93% — v1.0 milestone)
+Progress: [████████████████████] 85/90 plans (94% — v1.0 milestone)
 
 ## Shipped Milestones
 
@@ -191,6 +191,13 @@ Progress: [████████████████████] 84/90 p
 - [Phase 31-01]: DS-32 --border unified to 8% in :root and .dark (was 15%/10%); --input held at 15% as intentional form-control divergence, documented inline in globals.css
 - [Phase 31-01]: DS-30 dark --shadow-elevation-raised third-layer inset bumped 0.05 -> 0.07 for glass top-edge highlight on KPI/chart/query cards; light-mode analog declined per CONTEXT lock
 - [Phase 31-01]: Path A (token-level retune) shipped over per-consumer edits — zero consumer files touched; avoids Tailwind shadow-composition pitfall (Pitfall 1)
+- [Phase 34-04]: allRows source = sidebar-level useData() — AppSidebar owns the TanStack Query read (Option B in plan). SidebarDataProvider did not carry raw rows; hoisting the dialog to data-display.tsx would have cross-tree-drilled open state. Inline useData() in AppSidebar wins on minimum coupling for this integration point.
+- [Phase 34-04]: Activate on create lives in CreateListDialog's save handler — dialog itself pulls useActivePartnerList() and calls setActiveListId(created.id) after createList(). Keeps creation flow atomic from the user's perspective; AppSidebar's onCreateList is a plain state setter, not a callback wrapper. Plan 03 file touched (scope bleed acknowledged); pattern for any future creator-dialog that should immediately scope app state.
+- [Phase 34-04]: Auto-capture of active listId onto saved views is an EXPLICIT NON-GOAL for v1 — views do NOT automatically snapshot activeListId on save. Sanitization still runs on load so externally-introduced listIds (manual localStorage edit, future capture UI) are either honored or silently dropped. Locks CONTEXT "views CAN reference a list" without adding UI scope. Reopen as follow-up phase mirroring Phase 32-02's "Include drill state" checkbox pattern in save-view-popover.tsx.
+- [Phase 34-04]: ViewSnapshot.listId?: string | null evolution mirrors Phase 32-02 drill precedent — zod .nullable().optional() means legacy views load as listId: undefined without error. Non-destructive sanitizeSnapshot(snapshot, knownListIds) strips unknown listIds at load time; handleLoadView activates only when snapshot.listId is truthy (undefined = no active-list change, CONTEXT lock).
+- [Phase 34-04]: Sheet primitive specificity gotcha — shadcn Sheet hardcodes width via data-[side=right]:sm:max-w-sm at higher specificity than plain sm:max-w-2xl. Consumer overrides MUST match the variant selector (data-[side=right]:sm:max-w-2xl) to win. Applies to every future Sheet consumer wanting non-default width. Same pattern will apply to any shadcn primitive that hardcodes styling via data-* variants (Dialog, Drawer, etc.).
+- [Phase 34-04]: Equal-pane grid recipe = grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] — plain 1fr tracks allow min-content to push one track wider when children have long intrinsic widths. minmax(0, 1fr) hard-caps each track at equal widths regardless of content. Canonical symmetric dual-pane recipe; reusable beyond DualPaneTransfer for side-by-side diff views, comparison panels, anywhere "50/50 regardless of content" is the contract.
+- [Phase 34-04]: Human-verify caught TWO visual bugs on first pass that all 4 automated guards missed — guards check tokens / surfaces / components / motion, not layout fidelity. Human-verify exists precisely to catch visual gaps that automation can't. Both bugs fixed in single commit a342682 before second (successful) pass.
 
 ### Pending Todos
 
@@ -230,4 +237,6 @@ Resume file: .planning/phases/31-visual-polish-pass/31-02-PLAN.md
 | 34 | 03 | ~3 min | 2 | 3 | 2026-04-18 |
 | 34 | 02 | ~5 min | 3 | 5 | 2026-04-18 |
 | 31 | 01 | ~3 min | 3 | 1 | 2026-04-18 |
+| Phase 31 P02 | ~6 min | 3 tasks | 5 files |
+| Phase 34 P04 | ~8 min | 3 tasks | 7 files |
 

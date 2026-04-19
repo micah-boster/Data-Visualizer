@@ -81,7 +81,7 @@
 - [ ] **Phase 33: Accessibility Audit** — axe-core, ARIA, keyboard nav, contrast, reduced motion
 
 **Features (Phases 34-37, carried from v3.5):**
-- [ ] **Phase 34: Partner Lists** — Named partner groupings for filtering
+- [x] **Phase 34: Partner Lists** — Named partner groupings for filtering (completed 2026-04-18)
 - [ ] **Phase 35: Chart Schema & Migration** — ChartDefinition type, backward-compatible view migration
 - [ ] **Phase 36: Chart Builder** — Generic renderer + builder UI, collection curves as preset
 - [ ] **Phase 37: Metabase SQL Import** — Parse SQL, map to app config, preview and apply
@@ -103,7 +103,7 @@
 | 31. Visual Polish Pass | 1/6 | In Progress|  | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
-| 34. Partner Lists | 3/4 | In Progress|  | - |
+| 34. Partner Lists | 4/4 | Complete   | 2026-04-18 | - |
 | 35. Chart Schema & Migration | v4.0 | 0/TBD | Not started | - |
 | 36. Chart Builder | v4.0 | 0/TBD | Not started | - |
 | 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |
