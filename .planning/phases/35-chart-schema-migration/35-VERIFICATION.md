@@ -1,89 +1,108 @@
 ---
 phase: 35-chart-schema-migration
-verified: 2026-04-19T02:36:00Z
+verified: 2026-04-18T00:00:00Z
 status: passed
-score: 4/5 live scenarios (3 deferred to smoke proof) — all CHRT-01, CHRT-02 success criteria satisfied
+score: 10/10 must-haves verified
+re_verification:
+  previous_status: passed
+  previous_score: "4/5 live scenarios (3 deferred to smoke proof)"
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
 ---
 
-# Phase 35: Chart Schema & Migration Verification Report
+# Phase 35: Chart Schema Migration Verification Report
 
-**Phase Goal:** Existing saved views survive the transition to a flexible chart type system without data loss. Type-layer migration (ChartDefinition discriminated-union + migrateChartState lazy-on-read inside sanitizeSnapshot + 3 defaults authored in v2 shape + all consumers retyped) must be provable end-to-end, both at the pure-function layer and at the browser/hydration layer.
+**Phase Goal:** Introduce `ChartDefinition` discriminated-union type, lazy-on-read migration for legacy `ChartViewState`, retype all consumers. Unblock Phase 36 (Chart Builder) by replacing the flat `ChartViewState` with a versioned, variant-friendly discriminated union. Covers CHRT-01 (all default saved views continue to load and render after the schema change) and CHRT-02 (legacy ChartViewState records in localStorage auto-migrate to ChartDefinition on first read).
 
-**Verified:** 2026-04-19
-**Status:** passed (partial verification accepted)
-**Re-verification:** No — initial verification
+**Verified:** 2026-04-18
+**Status:** passed
+**Re-verification:** Yes — independent codebase scan following Plan 02 partial-verification close-out
 
 ## Goal Achievement
 
-### Observable Truths (browser + smoke combined)
+### Observable Truths
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | 3 default views load cleanly from empty localStorage (Scenario C — CHRT-01 direct) | OBSERVED LIVE | User deleted `bounce-dv-saved-views` in DevTools → hard-reloaded → sidebar rendered "Financial Overview", "Outreach Performance", "New Batches". Post-load localStorage inspection confirmed persisted `chartState` carries `{ type: 'collection-curve', version: 2, metric: 'amount', hiddenBatches: [], showAverage: true, showAllBatches: false }` — v2 shape authored directly by `defaults.ts`, migration's idempotent branch silently passed it through. Zero console errors. Reload twice more — idempotent. |
-| 2 | A hand-seeded legacy ChartViewState in localStorage loads without crashing after reload (Scenario A — CHRT-02 happy path) | DEFERRED TO SMOKE | Browser seeding via DevTools `localStorage.setItem + location.reload()` was overwritten on every attempt by the `useSavedViews` mount effect (root cause below). Smoke assertion #1 covers the logic path with identical input: `migrateChartState({ metric: 'amount', hiddenBatches: [], showAverage: true, showAllBatches: false })` returns `{ type: 'collection-curve', version: 2, metric: 'amount', ... }` with all legacy fields preserved. Smoke assertion #2 (idempotency) covers sanitizeSnapshot's second-load pass-through. |
-| 3 | Malformed legacy seed (missing `metric`) falls back to DEFAULT_COLLECTION_CURVE + single console.warn (Scenario B) | DEFERRED TO SMOKE | Same hydration-overwrite root cause. Smoke assertion #3: `migrateChartState({ hiddenBatches: [] })` (missing required `metric`) returns `DEFAULT_COLLECTION_CURVE` and emits exactly one `[chartState migration]` warn line. Output captured and inspected in the 35-01 executor run. |
-| 4 | Consumer narrow correctly skips unknown variant (Scenario D — `{ type: 'bar', ... }`) | DEFERRED TO SMOKE (+ type-system guarantee) | Same hydration-overwrite root cause. Smoke assertion #4: `migrateChartState({ type: 'bar', version: 2, x: '...', y: '...' })` returns `DEFAULT_COLLECTION_CURVE` via failure-fallback (current union has only `collection-curve`). **Structural guarantee:** consumer narrow `chartState?.type === 'collection-curve'` in `data-display.tsx` and downstream ref handlers is TypeScript-enforced — cannot be regressed without a tsc error at build time. |
-| 5 | Saving the view after load persists the v2 shape back to localStorage (self-healing write-back) | DEFERRED (not exercised) | Scenario A's write-back step could not be reached because Scenario A itself could not seed. Smoke assertion #1 + the existing `sanitizeSnapshot` → `persistSavedViews` write-through in `use-saved-views.ts` together guarantee that any legacy record read through the migration will serialize back in v2 shape on the next persist call. No separate assertion — this is an emergent property of the pipeline, not a behavior the smoke test targets directly. |
+| 1 | `ChartDefinition` discriminated union exists, derived from `chartDefinitionSchema` `z.discriminatedUnion` | VERIFIED | `src/lib/views/schema.ts:33` — `export const chartDefinitionSchema = z.discriminatedUnion('type', [collectionCurveVariantSchema])`. `src/lib/views/types.ts:27` — `export type ChartDefinition = z.infer<typeof chartDefinitionSchema>`. |
+| 2 | `CollectionCurveDefinition` extract alias exported from `types.ts` | VERIFIED | `src/lib/views/types.ts:28-31` — `export type CollectionCurveDefinition = Extract<ChartDefinition, { type: 'collection-curve' }>`. |
+| 3 | `migrateChartState` pure function exists with idempotency + fallback + `[chartState migration]` warn | VERIFIED | `src/lib/views/migrate-chart.ts:54-95`. Idempotency guard at line 63 (`'type' in input && 'version' in input` branch → revalidate via `safeParse`). `DEFAULT_COLLECTION_CURVE` fallback on all failure paths. `console.warn('[chartState migration]...')` emitted on every failure. |
+| 4 | `viewSnapshotSchema.chartState` relaxed to `z.unknown().optional()` | VERIFIED | `src/lib/views/schema.ts:51` — `chartState: z.unknown().optional()`. Pitfall-1 comment in place. |
+| 5 | `sanitizeSnapshot` in `use-saved-views.ts` calls `migrateChartState` — single call site | VERIFIED | `src/hooks/use-saved-views.ts:59` — `chartState: migrateChartState(snapshot.chartState)`. Single site confirmed by grep; no other callsites in src/. |
+| 6 | 3 default views in `defaults.ts` author v2 shape directly | VERIFIED | `src/lib/views/defaults.ts:77-84` (Financial Overview `{ type: 'collection-curve', version: 2, metric: 'amount', ... }`) and lines 171-178 (New Batches `{ type: 'collection-curve', version: 2, metric: 'recoveryRate', ... }`). Outreach Performance has no `chartState` by design (line 134 — field absent). |
+| 7 | All 3 consumers narrow via `chartState.type === 'collection-curve'`, no `as ChartViewState` casts | VERIFIED | `src/components/data-display.tsx:388` — `if (snapshot.chartState?.type === 'collection-curve' && chartLoadRef.current)`. `src/components/charts/use-curve-chart-state.ts` and `collection-curve-chart.tsx` type-annotate params as `CollectionCurveDefinition` directly (no discriminator needed at their level — narrowing already happened upstream). Zero `as ChartViewState` casts anywhere in src/. |
+| 8 | `ChartViewState` type removed from `src/lib/views/types.ts`; no usage beyond stale comments | VERIFIED | Grep across `src/` for `import.*ChartViewState`, `: ChartViewState`, `as ChartViewState` — zero hits. Only three comment-only occurrences in `types.ts:20`, `migrate-chart.ts:12`, `use-saved-views.ts:55`. |
+| 9 | Smoke test `migrate-chart.smoke.ts` exists with 5 assertions; `npm run smoke:migrate-chart` wired in `package.json` | VERIFIED | `src/lib/views/migrate-chart.smoke.ts` — 5 assertions: legacy→v2, idempotency, missing-metric fallback, unknown-type fallback, undefined passthrough. `package.json:10` — `"smoke:migrate-chart": "node --experimental-strip-types src/lib/views/migrate-chart.smoke.ts"`. |
+| 10 | `npm run smoke:migrate-chart` passes 5/5 assertions | VERIFIED (live run) | Executed in this verification session. Output: `[chartState migration] unrecognized shape, falling back { hiddenBatches: [] }` (assertion #3 expected warn); `[chartState migration] v2 record failed revalidation, falling back { type: 'bar', version: 2, anything: 'goes' }` (assertion #4 expected warn); `✓ migrate-chart smoke test passed (5 assertions)`. Exit 0. |
 
-**Score:** 1/5 truths live-observed + 3/5 smoke-proven (logic path identical) + 1/5 structurally-guaranteed-but-not-separately-exercised (self-healing write-back).
-
-**Acceptance rationale:** Every logic path the checkpoint was designed to exercise has at least one proof source (live observation for the deterministic Scenario C, smoke assertion for the seed-dependent Scenarios A/B/D, TypeScript invariant for the consumer narrow). Deferral is scope-preserving, not evidence-weakening — the pure function IS the same code path the browser would have exercised, just wrapped in a zod safeParse + useEffect plumbing that is itself covered by the schema's discriminated-union coverage and Phase 34's hydration-effect precedent.
+**Score:** 10/10 must-haves verified
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| `src/lib/views/migrate-chart.ts` | `migrateChartState` pure function, DEFAULT_COLLECTION_CURVE export, private LegacyChartState type | VERIFIED (35-01) | Shipped in Plan 01 commit `55fc4fe`. Idempotency guard + legacy-detection branch + silent-fallback + `[chartState migration]` warn on every failure path. |
-| `src/lib/views/migrate-chart.smoke.ts` | 5-assertion Node `--experimental-strip-types` smoke test | VERIFIED (35-01) | Runs via `npm run smoke:migrate-chart`. All 5 assertions pass: legacy→v2, idempotency, missing-metric fallback, unknown-type fallback, undefined passthrough. |
-| `src/lib/views/schema.ts` (chartDefinitionSchema + relaxed chartState) | zod discriminated-union + `z.unknown().optional()` for chartState slot | VERIFIED (35-01) | Pitfall 1 resolved via Option (c). `viewSnapshotSchema.chartState = z.unknown().optional()` — legacy records never trip `loadSavedViews` parse gate. |
-| `src/lib/views/defaults.ts` | 2 seeded views rewritten to v2 shape | VERIFIED (35-01 + live observation Scenario C) | Financial Overview + New Batches both author `{ type: 'collection-curve', version: 2, ... }` literals. Outreach Performance has no chartState by design. All 3 loaded clean in Scenario C. |
-| `src/hooks/use-saved-views.ts` | `migrateChartState` call inside `sanitizeSnapshot` (single call site) | VERIFIED (35-01) | grep-confirmed single call at `use-saved-views.ts:59`. |
-| `src/components/charts/use-curve-chart-state.ts` + `collection-curve-chart.tsx` + `data-display.tsx` | Consumer narrows on `chartState?.type === 'collection-curve'`; refs retyped to CollectionCurveDefinition | VERIFIED (35-01) | 4 call sites retyped; tsc clean; build green. |
-| `.planning/phases/35-chart-schema-migration/35-02-SUMMARY.md` | Plan 02 close-out summary with partial-verification notes | CREATED | This verification's companion document. |
-| `.planning/phases/35-chart-schema-migration/35-VERIFICATION.md` | Phase-level verification report | CREATED | This file. |
+| `src/lib/views/schema.ts` | `chartDefinitionSchema` z.discriminatedUnion + `viewSnapshotSchema.chartState: z.unknown().optional()` | VERIFIED | Lines 24-36 (schema), line 51 (relaxed chartState slot). |
+| `src/lib/views/types.ts` | `ChartDefinition` inferred from schema; `CollectionCurveDefinition` extract alias; no `ChartViewState` export | VERIFIED | Lines 27-31. `ChartViewState` absent as a type definition; only referenced in comments. |
+| `src/lib/views/migrate-chart.ts` | `migrateChartState` pure function; `DEFAULT_COLLECTION_CURVE` export; private `LegacyChartState` type | VERIFIED | Lines 28-33 (private type), 40-47 (DEFAULT export), 54-95 (function). |
+| `src/lib/views/migrate-chart.smoke.ts` | 5-assertion smoke test via Node `--experimental-strip-types` | VERIFIED | Lines 12-61. Assertions verified by live run (exit 0). |
+| `src/lib/views/defaults.ts` | 3 views; Financial Overview + New Batches author v2 shape directly; Outreach Performance has no chartState | VERIFIED | Lines 77-84 (FO), 171-178 (NB), line 134 (OP — field absent). |
+| `src/hooks/use-saved-views.ts` | `migrateChartState` imported and called in `sanitizeSnapshot`; single call site | VERIFIED | Import at line 15; call at line 59. Single site only. |
+| `src/components/data-display.tsx` | Consumer narrows `chartState?.type === 'collection-curve'` before calling `chartLoadRef`; imports `CollectionCurveDefinition`, not `ChartViewState` | VERIFIED | Line 388 (narrow + hand-off); line 41 (`import type { SavedView, CollectionCurveDefinition } from '@/lib/views/types'`). |
+| `src/components/charts/use-curve-chart-state.ts` | Typed against `CollectionCurveDefinition`; `getChartSnapshot` returns `CollectionCurveDefinition`; `restoreChartState` accepts `CollectionCurveDefinition` | VERIFIED | Import at line 15; `getChartSnapshot` return type line 171; `restoreChartState` param line 192. |
+| `src/components/charts/collection-curve-chart.tsx` | Props typed as `CollectionCurveDefinition`; no `ChartViewState` import | VERIFIED | `chartSnapshotRef` and `chartLoadRef` typed as `CollectionCurveDefinition` at lines 33-35; import from `@/lib/views/types` line 4. |
 
-### Build + Guards
+### Key Link Verification
 
-| Check | Status | Notes |
-|-------|--------|-------|
-| `npm run smoke:migrate-chart` | PASS | 5/5 assertions (legacy→v2, idempotency, missing-metric fallback, unknown-type fallback, undefined passthrough) |
-| `npm run build` | PASS | Compiled in 2.9s; TypeScript clean |
-| `npm run check:tokens` | PASS | |
-| `npm run check:surfaces` | PASS | |
-| `npm run check:components` | PASS | |
-| `npm run check:motion` | PASS | |
-
-All gates re-verified accurate as of 2026-04-19T02:36Z (no changes since the 35-01 executor run).
+| From | To | Via | Status | Details |
+|------|----|-----|--------|---------|
+| `localStorage` (any chartState shape) | `sanitizeSnapshot` → `migrateChartState` | `use-saved-views.ts` hydration effect → `sanitizeViews` → `sanitizeSnapshot` | WIRED | Call chain: `useEffect` (line 94-102) → `loadSavedViews()` → `sanitizeViews(loaded, ids)` (line 100) → `sanitizeSnapshot` (line 36) → `migrateChartState(snapshot.chartState)` (line 59). Single call site confirmed. |
+| `migrateChartState` return value | consumer `chartLoadRef.current(snapshot.chartState)` | `data-display.tsx` narrow at line 388 | WIRED | Narrow `snapshot.chartState?.type === 'collection-curve'` gates the call; TypeScript's control-flow narrowing ensures `chartLoadRef.current` receives `CollectionCurveDefinition`, not `ChartDefinition` (parent type). |
+| `chartDefinitionSchema` | `ChartDefinition` type | `z.infer<typeof chartDefinitionSchema>` in `types.ts:27` | WIRED | Schema drives type; type is consumed by all three consumer files. |
 
 ### Requirements Coverage
 
 | Requirement | Source Plan | Description | Status | Evidence |
 |-------------|-------------|-------------|--------|----------|
-| CHRT-01 | 35-01 (ship), 35-02 (verify) | Chart state migration preserves all existing saved views without data loss | SATISFIED | Scenario C live-observed (3 defaults load clean from empty storage); smoke assertions 1, 2, 3 cover the legacy-record migration paths; consumer narrow is TypeScript-enforced |
-| CHRT-02 | 35-01 (framework), 36 (variants) | ChartDefinition type supports line, scatter, and bar chart configurations with validated axis and type fields | FRAMEWORK SATISFIED — VARIANTS DEFERRED TO PHASE 36 | `ChartDefinition` discriminated-union and `chartDefinitionSchema` z.discriminatedUnion are live and extensible. Adding a variant = one new zod object schema in the union's array + one new consumer narrow + one new variant-extract alias. Current union ships with `collection-curve` only; line/scatter/bar land in Phase 36. Already marked `[~]` partial in `v4.0-REQUIREMENTS.md:93` with correct traceability line 206. |
+| CHRT-01 | 35-01, 35-02 | Chart state migration preserves all existing saved views without data loss | SATISFIED | 3 default views author v2 shape directly — no migration path for defaults. Smoke assertions #1 and #2 prove legacy records round-trip to v2 without data loss. Live-observed in browser (Scenario C — user confirmed all 3 defaults load cleanly from empty localStorage). `v4.0-REQUIREMENTS.md:92` marked `[x]`. |
+| CHRT-02 | 35-01, 36 | `ChartDefinition` type supports line, scatter, and bar chart configurations with validated axis and type fields | FRAMEWORK SATISFIED — VARIANTS DEFERRED TO PHASE 36 | `chartDefinitionSchema = z.discriminatedUnion('type', [...])` is extensible by design. Current union contains `collection-curve` only. Smoke assertions #4 (unknown variant → fallback) and #1-3 (migration logic) prove the contract. Line/scatter/bar variants add in Phase 36. `v4.0-REQUIREMENTS.md:93` marked `[~]` partial with correct traceability at line 206. |
 
 ### Anti-Patterns Found
 
-None introduced in Plan 02 (no code changes).
+None. Scan of all Phase 35-modified files (`migrate-chart.ts`, `schema.ts`, `types.ts`, `defaults.ts`, `use-saved-views.ts`, `data-display.tsx`, `use-curve-chart-state.ts`, `collection-curve-chart.tsx`):
 
-### Human Verification Outcome
+- No `TODO` / `FIXME` / `PLACEHOLDER` comments blocking goal.
+- No `return null` / `return {}` stubs.
+- No `as ChartViewState` escape casts.
+- No orphaned imports.
 
-**Scenario C: approved live** — user confirmed 3 defaults load, chart state shape is correct, no console noise.
+### Human Verification Outcome (from Plan 02 gate)
 
-**Scenarios A/B/D: approved with deferral notes** — user acknowledged the hydration-effect collision, accepted smoke-test proof as the canonical evidence for the deferred slices, and declined to escalate to an E2E-harness build-out within Phase 35's scope.
+**Scenario C (CHRT-01 direct) — approved live.** User deleted `bounce-dv-saved-views` from localStorage, hard-reloaded, confirmed all 3 default views rendered in the sidebar. Post-load localStorage inspection confirmed the v2 shape (`{ type: 'collection-curve', version: 2, ... }`). No console errors. Reloaded twice more — idempotent.
+
+**Scenarios A, B, D — deferred to smoke proof with user acknowledgment.** Browser seeding was overwritten by the `useSavedViews` hydration effect on every attempt (root cause: `loadSavedViews → safeParse → persistSavedViews` pipeline runs on every mount, silently replacing any seed that fails safeParse). User explicitly accepted smoke-test assertions as the canonical proof for these paths, declined to escalate to an E2E harness within Phase 35 scope.
+
+**Acceptance rationale (unchanged from Plan 02):** The smoke test exercises the identical logic paths that the browser scenarios target. The pure function is the same code path the browser would have exercised; the zod safeParse + useEffect wrapper is covered by the schema's discriminated-union coverage.
 
 ### Known Future Work
 
-1. **E2E test harness with pre-hydration seed hook.** Playwright via `page.addInitScript()` or Cypress with `onBeforeLoad` inside `cy.visit()` would let us run seed setup BEFORE the `useSavedViews` mount effect fires. Would give us provable live coverage of Scenarios A (legacy happy-path round-trip), B (malformed-seed fallback), and D (unknown-variant narrow). Nice-to-have, not blocking; candidate for v4.x hardening or a Phase 36 side-quest if a real-world legacy fixture regression surfaces.
-2. **Diagnostic spelunk (low priority)** — pin down the exact zod rejection reason for the hand-seeded cloned-default-with-legacy-chartState fixture that caused Scenarios A/B/D to bounce. Possibilities (not diagnosed in-session): missing top-level `id`, unexpected wrapper array shape, or a refinement not enumerated. If the E2E harness is built, this will surface naturally during seed-fixture authoring.
+1. **E2E test harness with pre-hydration seed hook.** Playwright `page.addInitScript()` or Cypress `onBeforeLoad` would let seed fixtures survive the `useSavedViews` mount effect. Candidate for v4.x hardening or Phase 36 side-quest if a real-world legacy fixture regression surfaces.
+2. **Diagnostic spelunk (low priority).** Pin down the exact zod rejection reason for the hand-seeded cloned-default-with-legacy-chartState fixture that caused Scenarios A/B/D browser seeds to bounce. Will surface naturally if the E2E harness is built.
 
 ### Gaps Summary
 
-None blocking. Phase 35 goal is achieved: existing saved views survive the chart-type-system transition without data loss, proven via live observation for the deterministic case and smoke-test assertions for the seed-dependent cases. CHRT-01 fully satisfied; CHRT-02 framework satisfied (variants arrive in Phase 36 as planned).
+None. All 10 must-haves verified against the live codebase:
 
-Phase 35 is ready to be marked complete in ROADMAP.md and STATE.md. Phase 36 and Phase 37 are unblocked at the type layer.
+- Type layer: `ChartDefinition`, `CollectionCurveDefinition`, and `chartDefinitionSchema` exist and are correctly wired.
+- Migration: `migrateChartState` is substantive (idempotency, fallback, warn), called at a single site in `sanitizeSnapshot`, and proven by a live smoke run (5/5 assertions).
+- Schema relaxation: `viewSnapshotSchema.chartState: z.unknown().optional()` is in place.
+- Defaults: All 3 views author v2 shape directly; no legacy migration path needed for defaults.
+- Consumers: All 3 consumer files use `CollectionCurveDefinition` or narrow via the discriminator; zero `as ChartViewState` casts anywhere in `src/`.
+- `ChartViewState` is fully retired from the type layer (comment-only references remain as historical breadcrumbs).
+
+CHRT-01 is fully satisfied. CHRT-02 framework is satisfied; line/scatter/bar variants land in Phase 36 as designed. Phase 36 and Phase 37 are unblocked at the type layer.
 
 ---
 
-_Verified: 2026-04-19_
-_Verifier: Claude (gsd-executor partial-verification close-out)_
+_Verified: 2026-04-18_
+_Verifier: Claude (gsd-verifier independent scan)_

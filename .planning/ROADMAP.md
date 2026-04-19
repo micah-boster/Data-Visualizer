@@ -104,7 +104,7 @@
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
 | 33. Accessibility Audit | v4.0 | 0/TBD | Not started | - |
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
-| 35. Chart Schema & Migration | 2/2 | Complete   | 2026-04-19 | - |
+| 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | v4.0 | 0/TBD | Not started | - |
 | 37. Metabase SQL Import | v4.0 | 0/TBD | Not started | - |
 | 38. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
