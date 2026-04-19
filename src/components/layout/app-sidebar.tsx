@@ -8,7 +8,6 @@ import { PartnerListsSidebarGroup } from '@/components/partner-lists/partner-lis
 import { CreateListDialog } from '@/components/partner-lists/create-list-dialog';
 import { ImportSheet } from '@/components/metabase-import/import-sheet';
 import { useData } from '@/hooks/use-data';
-import type { ParseResult } from '@/lib/metabase-import/types';
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +25,7 @@ import {
 } from '@/components/ui/sidebar';
 
 export function AppSidebar() {
-  const sidebarData = useSidebarData();
+  // Phase 37 — Metabase import entry + Sheet mount.
   const {
     partners,
     drillState,
@@ -35,23 +34,9 @@ export function AppSidebar() {
     views,
     onLoadView,
     onDeleteView,
+    onImportSql,
     isReady,
-  } = sidebarData;
-
-  // Phase 37 Plan 02: onImportSql is read defensively because Plan 03 (Wave 3)
-  // is what adds it to SidebarDataState. Until Plan 03 ships, onImportSql is
-  // undefined — the sidebar entry is visible but Apply has no effect (the
-  // ImportSheet's Apply button is still disabled on parseError; absent
-  // handler is a dev-time affordance, not a runtime one). Plan 03 will
-  // remove this unsafe cast and add the typed field to SidebarDataState.
-  const onImportSql = (sidebarData as unknown as {
-    onImportSql?: (result: ParseResult, sourceSql: string) => void;
-  }).onImportSql;
-  const handleImport =
-    onImportSql ??
-    (() => {
-      // Plan 03 wires this; intentional no-op pre-wave-3.
-    });
+  } = useSidebarData();
 
   // Partner-lists data comes from the shared provider so the sidebar and
   // data-display read from the same usePartnerLists() call (single source
@@ -285,17 +270,16 @@ export function AppSidebar() {
       />
 
       {/*
-        Phase 37 Plan 02: ImportSheet mounted at the sidebar level (matches
+        Phase 37 — ImportSheet mounted at the sidebar level (matches
         CreateListDialog placement). The Sheet primitive portals itself, so
-        its DOM location does not affect overlay position. onImportSql is
-        threaded from useSidebarData — Plan 03 makes it a typed field on
-        SidebarDataState; until then the cast above produces a safe no-op
-        fallback.
+        its DOM location does not affect overlay position. onImportSql is a
+        typed field on SidebarDataState as of Plan 03, bound to
+        handleApplyImport in data-display.tsx.
       */}
       <ImportSheet
         open={importOpen}
         onOpenChange={setImportOpen}
-        onImportSql={handleImport}
+        onImportSql={onImportSql}
       />
     </Sidebar>
   );

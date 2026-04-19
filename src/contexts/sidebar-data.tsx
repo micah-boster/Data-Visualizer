@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import type { SavedView } from '@/lib/views/types';
+import type { ParseResult } from '@/lib/metabase-import/types';
 
 export interface SidebarPartner {
   name: string;
@@ -27,6 +28,13 @@ interface SidebarDataState {
   onDeleteView: (id: string) => void;
   /** Save current state as a new view */
   onSaveView: (name: string) => void;
+  /**
+   * Phase 37 — called when the user clicks Apply in the Metabase Import
+   * Sheet. Receives the parsed result plus the original SQL string so the
+   * apply path can stamp sourceQuery with both. DataDisplay binds this to
+   * handleApplyImport; AppSidebar reads it and threads to ImportSheet.
+   */
+  onImportSql: (result: ParseResult, sourceSql: string) => void;
   /** Number of anomalies detected */
   anomalyCount: number;
   /** Whether data has loaded */
@@ -54,6 +62,8 @@ export function SidebarDataProvider({ children }: { children: ReactNode }) {
     onLoadView: () => {},
     onDeleteView: () => {},
     onSaveView: () => {},
+    // Phase 37 Plan 03 — no-op until DataDisplay pushes handleApplyImport in.
+    onImportSql: () => {},
     anomalyCount: 0,
     isReady: false,
   });
