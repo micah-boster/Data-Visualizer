@@ -38,22 +38,9 @@ import { SectionErrorBoundary } from '@/components/section-error-boundary';
 import { SectionDivider } from '@/components/layout/section-divider';
 import { toast } from 'sonner';
 import type { DrillState } from '@/hooks/use-drill-down';
-import type { SavedView, CollectionCurveDefinition } from '@/lib/views/types';
-
-const CollectionCurveChart = dynamic(
-  () =>
-    import('@/components/charts/collection-curve-chart').then(
-      (mod) => mod.CollectionCurveChart,
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-[40vh] w-full">
-        <Skeleton className="h-full w-full rounded-lg" />
-      </div>
-    ),
-  },
-);
+import type { SavedView, CollectionCurveDefinition, ChartDefinition } from '@/lib/views/types';
+import { ChartPanel } from '@/components/charts/chart-panel';
+import { DEFAULT_COLLECTION_CURVE } from '@/lib/views/migrate-chart';
 
 const CrossPartnerTrajectoryChart = dynamic(
   () =>
@@ -490,6 +477,13 @@ export function DataDisplay() {
   const chartSnapshotRef = useRef<(() => CollectionCurveDefinition) | null>(null);
   const chartLoadRef = useRef<((state: CollectionCurveDefinition) => void) | null>(null);
 
+  // Phase 36-05 — parent-owned chart definition (preset OR generic variant).
+  // Initial value is DEFAULT_COLLECTION_CURVE per CONTEXT lock: "Default chart
+  // for a view with no chartState is the collection-curve preset." View load
+  // hydrates this from snapshot.chartState; view save captures it by branching
+  // on chartDefinition.type (Pitfall 8 — two-snapshot-mechanism resolution).
+  const [chartDefinition, setChartDefinition] = useState<ChartDefinition>(DEFAULT_COLLECTION_CURVE);
+
   // DS-27: skeleton → content cross-fade with ~150ms overlap window.
   // Tracks two booleans independently so both layers can be rendered during
   // the overlap. When isLoading flips true → skeleton mounts immediately,
@@ -513,6 +507,48 @@ export function DataDisplay() {
       return () => clearTimeout(t);
     }
   }, [isLoading]);
+
+  // A11Y-03: drill cross-fade focus restoration.
+  // The drill wrapper (line ~612) re-keys on drill identity so React unmounts
+  // + remounts the subtree — after remount, focus lands on <body> (axe
+  // focus-order-semantics violation). This effect restores focus to the
+  // breadcrumb's current segment on every drill transition. Direction-agnostic:
+  // URL back/forward fire the same useSearchParams re-read → same drillState
+  // update → same useEffect. `preventScroll: true` complements Phase 32's
+  // router.push({ scroll: false }) so the restore doesn't nudge the viewport.
+  //
+  // Guard: never steal focus when the user is mid-typing in an input/textarea
+  // (protects Cmd+K search flow + any future textarea surfaces).
+  //
+  // Selector fallback chain:
+  //   1. [data-breadcrumb-current] — attribute Plan 02 Task 2 adds on the
+  //      breadcrumb active segment. Primary target.
+  //   2. [aria-current="page"] inside nav[aria-label="Drill-down breadcrumb"]
+  //      — also added by Plan 02 Task 2. Secondary fallback.
+  // If neither attribute is in the DOM (Plan 02 hasn't landed yet), the effect
+  // silently no-ops; no focus restore, but no error either. Once Plan 02 ships,
+  // the effect activates without any code change here.
+  useEffect(() => {
+    const activeTag =
+      typeof document !== 'undefined' ? document.activeElement?.tagName : null;
+    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;
+
+    const el =
+      document.querySelector<HTMLElement>('[data-breadcrumb-current]') ??
+      document.querySelector<HTMLElement>(
+        'nav[aria-label="Drill-down breadcrumb"] [aria-current="page"]',
+      );
+    if (el) {
+      // The breadcrumb active segment may not natively accept focus
+      // (e.g. <span>); set tabIndex=-1 inline so .focus() works regardless
+      // of Plan 02's markup choices. tabIndex=-1 means programmatic-only
+      // (user cannot Tab to it).
+      if (!el.hasAttribute('tabindex')) {
+        el.setAttribute('tabindex', '-1');
+      }
+      el.focus({ preventScroll: true });
+    }
+  }, [drillState.level, drillState.partner, drillState.batch]);
 
   if (isError) return <ErrorState error={error} onRetry={() => refetch()} />;
   if (!isLoading && (!data || data.data.length === 0)) return <EmptyState variant="no-data" />;

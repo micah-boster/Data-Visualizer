@@ -7,8 +7,12 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
 
-function Sheet({ ...props }: SheetPrimitive.Root.Props) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+function Sheet({ modal = true, ...props }: SheetPrimitive.Root.Props) {
+  // A11Y-03: WAI-ARIA modal dialog — Base UI Dialog default varies by version;
+  // set explicit to lock trap + Escape + restore-focus contract (RESEARCH §
+  // Focus-Management, Don't Hand-Roll table). Consumers may override via
+  // `modal={false}` or `modal="trap-focus"` if a non-modal surface is needed.
+  return <SheetPrimitive.Root data-slot="sheet" modal={modal} {...props} />
 }
 
 function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
