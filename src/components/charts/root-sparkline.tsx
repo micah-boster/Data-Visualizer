@@ -36,5 +36,12 @@ export function RootSparkline() {
     };
   }, [crossPartnerData]);
 
-  return <ChartSparkline data={data} lineKeys={lineKeys} />;
+  // Decorative preview only — sibling data table is the accessible data source
+  // for screen readers. Wrapper marks the full subtree aria-hidden so axe-core
+  // does not flag inner SVG elements and SR users are not read duplicate data.
+  return (
+    <div aria-hidden="true">
+      <ChartSparkline data={data} lineKeys={lineKeys} />
+    </div>
+  );
 }

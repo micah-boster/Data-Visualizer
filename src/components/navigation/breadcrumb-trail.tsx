@@ -61,10 +61,17 @@ export function BreadcrumbTrail({
       {segments.map((seg, i) => (
         <span key={seg.level} className="flex items-center gap-1">
           {i > 0 && (
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronRight
+              aria-hidden="true"
+              className="h-3.5 w-3.5 text-muted-foreground"
+            />
           )}
           {seg.active ? (
-            <span className="text-title text-foreground">
+            <span
+              aria-current="page"
+              data-breadcrumb-current
+              className="text-title text-foreground"
+            >
               {seg.label}
               {seg.count != null ? ` (${seg.count.toLocaleString()})` : ''}
             </span>

@@ -46,10 +46,24 @@ export function DraggableHeader({
     ...(isDragOver ? { borderLeft: '2px solid hsl(var(--primary))' } : {}),
   };
 
+  // aria-sort mapping — TanStack getIsSorted() returns 'asc' | 'desc' | false.
+  // Only emit aria-sort on sortable columns; non-sortable omit the attribute
+  // entirely (per WAI-ARIA spec, "none" is the default and redundant).
+  const canSort = header.column.getCanSort();
+  const sorted = header.column.getIsSorted();
+  const ariaSort: 'ascending' | 'descending' | 'none' | undefined = canSort
+    ? sorted === 'asc'
+      ? 'ascending'
+      : sorted === 'desc'
+        ? 'descending'
+        : 'none'
+    : undefined;
+
   return (
     <th
       colSpan={header.colSpan}
       style={style}
+      aria-sort={ariaSort}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';

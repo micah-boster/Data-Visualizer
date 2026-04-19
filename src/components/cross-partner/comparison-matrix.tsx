@@ -134,9 +134,14 @@ export function PartnerComparisonMatrix() {
           {sortedPartners.length} partners
         </span>
       </div>
-      {viewMode === 'heatmap' && <MatrixHeatmap {...viewProps} />}
-      {viewMode === 'bar' && <MatrixBarRanking {...viewProps} />}
-      {viewMode === 'plain' && <MatrixPlainTable {...viewProps} />}
+      <div
+        role="img"
+        aria-label={`Partner comparison matrix: ${sortedPartners.length} partners across ${MATRIX_METRICS.length} metrics, view mode ${viewMode}. Sibling data table provides the same data in accessible tabular form.`}
+      >
+        {viewMode === 'heatmap' && <MatrixHeatmap {...viewProps} />}
+        {viewMode === 'bar' && <MatrixBarRanking {...viewProps} />}
+        {viewMode === 'plain' && <MatrixPlainTable {...viewProps} />}
+      </div>
     </DataPanel>
   );
 }
