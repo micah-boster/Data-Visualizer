@@ -327,4 +327,22 @@ Plans:
 **Status**: ✅ Complete (2026-04-19) — 2/2 plans shipped; CHRT-01 satisfied; CHRT-02 framework satisfied (line/scatter/bar variants land in Phase 36 as planned, `v4.0-REQUIREMENTS.md` CHRT-02 stays `[~]` until Phase 36 close-out); 35-VERIFICATION.md captures scenario table + root-cause for the browser-seed-vs-hydration collision + E2E-harness nice-to-have breadcrumb.
 
 ---
+
+### Phase 36: Chart Builder (Renderer + UI)
+
+**Goal**: Users can view and configure line, scatter, and bar charts with custom axes, save chart presets, and collection curves remain a built-in preset
+**Depends on**: Phase 35
+**Effort**: Large (generic renderer + builder UI + collection curve backward compat + view integration. ~10-12 files.)
+**Requirements**: CHRT-03 through CHRT-13
+**Success Criteria** (what must be TRUE):
+  1. Line, scatter, and bar charts render correctly with user-selected axes
+  2. Collection curves preset produces visually identical output to the current CollectionCurveChart
+  3. User can select X/Y axes from filtered dropdowns, switch chart types, and see instant re-renders
+  4. User can save/load chart presets and chart config persists with saved views
+**Context**: [36-CONTEXT.md](phases/36-chart-builder/36-CONTEXT.md) (gathered 2026-04-18)
+**Plans**: _To be scoped via `/gsd:plan-phase` when this phase is ready to start. Plan count and breakdown depend on codebase state and outcomes from prior phases._
+
+**After Phase 36:** No new phases unlocked. Feeds into overall milestone completion.
+
+---
 *Last updated: 2026-04-19 — Phase 35 CLOSED (2/2 plans; partial-verification human-verify accepted, smoke + live coverage combined for all success criteria); Phase 31 Visual Polish Pass at 7/6 complete with polish guard live; Phase 34 Partner Lists closed 2026-04-18; Phase 30 Motion suite closed 2026-04-18; Phase 29 Component Patterns closed 2026-04-18; Phase 28 Surfaces closed 2026-04-17*
