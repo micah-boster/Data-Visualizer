@@ -23,12 +23,28 @@ import type { chartDefinitionSchema } from './schema';
  * Consumers narrow with `chartState.type === 'collection-curve'`. For
  * producers/consumers that only ever operate on the collection-curve variant
  * (e.g. useCurveChartState), use `CollectionCurveDefinition`.
+ *
+ * Phase 36 — added the `line`, `scatter`, and `bar` variants. Narrow aliases
+ * below let consumers target a single variant without repeating the Extract<>.
+ * `GenericChartDefinition` is the union of the three Phase 36 variants — used
+ * by the GenericChart renderer and builder toolbar, which never handle the
+ * collection-curve preset.
  */
 export type ChartDefinition = z.infer<typeof chartDefinitionSchema>;
 export type CollectionCurveDefinition = Extract<
   ChartDefinition,
   { type: 'collection-curve' }
 >;
+export type LineChartDefinition = Extract<ChartDefinition, { type: 'line' }>;
+export type ScatterChartDefinition = Extract<
+  ChartDefinition,
+  { type: 'scatter' }
+>;
+export type BarChartDefinition = Extract<ChartDefinition, { type: 'bar' }>;
+export type GenericChartDefinition =
+  | LineChartDefinition
+  | ScatterChartDefinition
+  | BarChartDefinition;
 
 /** All table state slices captured in a single snapshot. */
 export interface ViewSnapshot {

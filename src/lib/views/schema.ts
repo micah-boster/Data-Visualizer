@@ -18,8 +18,8 @@ const sortingItemSchema = z.object({
  * keyed on the literal `type` field. Each variant carries its own `version`
  * literal so the shape can evolve without schema-level breakage.
  *
- * First (and currently only) variant: `collection-curve`, version 2. Phase 36
- * will add `line`, `bar`, and `scatter` variants to the union.
+ * First variant: `collection-curve`, version 2. Phase 36 adds `line`, `scatter`,
+ * and `bar` variants (each version 1) to the union.
  */
 const collectionCurveVariantSchema = z.object({
   type: z.literal('collection-curve'),
@@ -30,9 +30,51 @@ const collectionCurveVariantSchema = z.object({
   showAllBatches: z.boolean(),
 });
 
+/**
+ * Phase 36 — axis reference used by the three generic chart variants.
+ * `column` is a Snowflake column name (uppercase) from COLUMN_CONFIGS. No
+ * regex constraint: saved views may legitimately carry stale keys after a
+ * column rename, and those are handled at the UI layer by Plan 03's
+ * StaleColumnWarning, not at the schema layer.
+ */
+const axisRefSchema = z.object({
+  column: z.string(),
+});
+
+/**
+ * Phase 36 — `line` chart variant. X axis accepts time / numeric / identity-
+ * categorical columns (see axis-eligibility.ts). Y axis is numeric-only.
+ * Literal discriminator `type: z.literal('line')` is critical — any drift to
+ * `z.string()` would break discriminatedUnion narrowing (36-RESEARCH Pitfall 1).
+ */
+const lineChartVariantSchema = z.object({
+  type: z.literal('line'),
+  version: z.literal(1),
+  x: axisRefSchema.nullable(),
+  y: axisRefSchema.nullable(),
+});
+
+/** Phase 36 — `scatter` chart variant. Both axes numeric-only. */
+const scatterChartVariantSchema = z.object({
+  type: z.literal('scatter'),
+  version: z.literal(1),
+  x: axisRefSchema.nullable(),
+  y: axisRefSchema.nullable(),
+});
+
+/** Phase 36 — `bar` chart variant. X categorical-only; Y numeric-only. */
+const barChartVariantSchema = z.object({
+  type: z.literal('bar'),
+  version: z.literal(1),
+  x: axisRefSchema.nullable(),
+  y: axisRefSchema.nullable(),
+});
+
 export const chartDefinitionSchema = z.discriminatedUnion('type', [
   collectionCurveVariantSchema,
-  // Phase 36 will add line / bar / scatter variants here.
+  lineChartVariantSchema,
+  scatterChartVariantSchema,
+  barChartVariantSchema,
 ]);
 
 /** Validates the complete ViewSnapshot shape. */
