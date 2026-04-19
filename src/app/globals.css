@@ -290,6 +290,14 @@
   --selection-bg: color-mix(in oklch, var(--brand-green-bright) 18%, transparent);
   --hover-bg: color-mix(in oklch, var(--neutral-500) 8%, transparent);
 
+  /* === SCROLLBAR (LIGHT) === Phase 31 DS-34.
+     Consumed by .thin-scrollbar utility (opt-in per named scroll container).
+     Document/body scroll stays with OS default — these tokens only drive
+     scoped WebKit + Firefox scrollbar styling inside the .thin-scrollbar class. */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: color-mix(in oklch, var(--neutral-500) 30%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, var(--neutral-500) 45%, transparent);
+
   /* === CHART PALETTE (LIGHT) === 8 categorical hues + diverging triplet */
   --chart-categorical-1: oklch(0.60 0.15 55);   /* warm amber/ochre */
   --chart-categorical-2: oklch(0.62 0.13 175);  /* teal-green (shifted from 150 to not clash with brand-green) */
@@ -408,6 +416,11 @@
   --focus-ring: var(--brand-green-bright);
   --selection-bg: color-mix(in oklch, var(--brand-green-bright) 24%, transparent);
   --hover-bg: color-mix(in oklch, oklch(1 0 0) 6%, transparent);
+
+  /* === SCROLLBAR (DARK) === Phase 31 DS-34.
+     --scrollbar-track stays transparent (mode-agnostic — inherits from :root). */
+  --scrollbar-thumb: color-mix(in oklch, oklch(1 0 0) 20%, transparent);
+  --scrollbar-thumb-hover: color-mix(in oklch, oklch(1 0 0) 35%, transparent);
 
   /* === CHART PALETTE (DARK) === lighter/brighter hues for dark surfaces */
   --chart-categorical-1: oklch(0.72 0.14 55);
@@ -599,6 +612,31 @@
     outline-offset: 2px;
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 30%, transparent);
   }
+
+  /*
+   * Phase 31 DS-34: Thin, always-visible, theme-aware scrollbar.
+   * Scoped opt-in — apply to named scroll containers only.
+   * Document/body scroll stays with OS default per 31-CONTEXT.
+   * Cross-browser: Firefox scrollbar-width/color + WebKit ::-webkit-scrollbar rules coexist.
+   */
+  .thin-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+  .thin-scrollbar::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
 }
 
 /* Smooth theme transitions for non-layout elements */
@@ -632,26 +670,6 @@
   }
 }
 
-/* Subtle scrollbar styling */
-@layer base {
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: oklch(0.7 0 0 / 30%);
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.5 0 0 / 40%);
-  }
-  .dark ::-webkit-scrollbar-thumb {
-    background: oklch(0.5 0 0 / 30%);
-  }
-  .dark ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.6 0 0 / 40%);
-  }
-}
+/* Phase 31 DS-34: Document/body scroll intentionally uses the OS/browser default
+   scrollbar — the previous global ::-webkit-scrollbar rules were removed in favor
+   of the scoped .thin-scrollbar utility (applied opt-in to named scroll containers). */
