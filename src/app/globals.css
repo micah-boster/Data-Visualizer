@@ -136,6 +136,7 @@
      Dark-mode variants use `dark:text-{green,yellow,red}-400`, which axe
      did not flag; no dark overrides needed here. */
   --color-green-700: oklch(0.40 0.11 160);   /* A11Y-04: bumped from Tailwind default #008236 for 4.5:1 AA on bg-green-500/20 */
+  --color-yellow-700: oklch(0.40 0.12 70);   /* A11Y-04: bumped from Tailwind default #a65f00 for 4.5:1 AA on bg-yellow-500/20 */
 }
 
 @theme inline {
