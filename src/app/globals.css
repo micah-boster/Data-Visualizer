@@ -122,6 +122,20 @@
   /* === DENSITY === (component-level dense/sparse, consumed by plan 04) */
   --table-row-height-dense: 32px;
   --table-row-height-sparse: 40px;
+
+  /* === TAILWIND PALETTE OVERRIDES (A11Y-04) ===
+     Phase 33-04 contrast retune. The PercentileCell tier badges consume the
+     Tailwind default palette directly (`bg-green-500/20 text-green-700`,
+     `bg-yellow-500/20 text-yellow-700`, `bg-red-500/20 text-red-700`) — NOT
+     the canonical --state-*-fg tokens. axe-core flagged three light-mode
+     pairs below 4.5:1 AA. Fix at the palette-token source per the plan's
+     "adjust canonical token, not per-component" doctrine: Tailwind v4
+     resolves `text-green-700` against this --color-green-700 value, so this
+     single retune cascades to every consumer automatically.
+
+     Dark-mode variants use `dark:text-{green,yellow,red}-400`, which axe
+     did not flag; no dark overrides needed here. */
+  --color-green-700: oklch(0.40 0.11 160);   /* A11Y-04: bumped from Tailwind default #008236 for 4.5:1 AA on bg-green-500/20 */
 }
 
 @theme inline {
