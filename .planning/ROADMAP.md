@@ -104,7 +104,7 @@
 | 30. Micro-Interactions & Motion | 4/5 | Complete    | 2026-04-18 | - |
 | 31. Visual Polish Pass | 6/6 | Complete    | 2026-04-19 | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
-| 33. Accessibility Audit | 3/5 | In Progress|  | - |
+| 33. Accessibility Audit | 4/5 | In Progress|  | - |
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 4/5 | In Progress|  | - |

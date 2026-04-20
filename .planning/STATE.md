@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-20T02:45:04.885Z"
+last_updated: "2026-04-20T13:25:10.149Z"
 progress:
   total_phases: 37
   completed_phases: 33
   total_plans: 105
-  completed_plans: 101
+  completed_plans: 102
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-16)
 
 ## Current Position
 
-Phase: 33 (Accessibility Audit) Plan 03 CLOSED (keyboard + focus). Phase 33 Wave 2 now closed — next outstanding a11y work is Plan 33-04 (color-contrast retune, 4 serious nodes on dashboard-filtered[light]) + Plan 33-05 (close-out: flip DEFERRED_CATEGORIES = new Set([])). Phase 37 remains IN PROGRESS (Plan 37-03 Apply pipeline wiring landed in commit abeae75 + hotfix 46b1279; Phase 37 effectively closed). Phase 36 status unchanged — Plan 36-05 already landed (ChartPanel integration, commit 03086ff).
-Plan: 33-03 3/3 tasks complete — Task 1 (commit e322e89): row-level keyboard contract on drill-capable `<tr>` via inline useDrillDown read + tabIndex=0 + onKeyDown (Enter → meta-threaded drill handler; Escape → navigateToLevel(parent)) + focus-glow-within class + e.target !== e.currentTarget guard against Enter-double-fire with DrillableCell inner button + virtualized-row in-code note. Task 2 (commit 8f1f322): Base UI Dialog/Sheet modal={true} locked at ui/sheet.tsx single-source wrapper (every Sheet consumer inherits) + explicit modal={true} on query-command-dialog DialogPrimitive.Root + data-display.tsx drill-focus-restoration useEffect keyed on drillState identity with [data-breadcrumb-current] + nav[aria-label][aria-current=page] fallback selector chain, input/textarea guard, inline tabIndex=-1 at focus-time, preventScroll: true. Task 3 (commit 71ba1f2, continuation agent): tests/a11y/keyboard-flow.spec.ts — 2 Playwright tests (Tab→Enter→URL-drill→focus-land→Escape→back; Meta+K dialog open/Escape/focus-return-to-trigger) using locator.focus() over press('Tab')×N for determinism.
-Status: Phase 33 Plan 03 closed; FOCUS_CATEGORIES (focus-order-semantics, scrollable-region-focusable, tabindex, aria-dialog-name, bypass) already BLOCKING in axe-baseline.spec.ts from Plan 02 commit 43ab1eb — no spec edit needed in Plan 03. npm run check:tokens green. npx playwright test keyboard-flow --list parses cleanly (2 tests discovered). A11Y-03 requirement marked complete in v4.0-REQUIREMENTS.md. Three prior-plan SUMMARYs (33-01, 33-02, 33-03) + STATE + ROADMAP committed in this session.
-Last activity: 2026-04-19 — Closed 33-03 (Keyboard + Focus Management) across two context windows. Original executor hit rate-limit after committing Tasks 1+2; continuation agent verified prior commits, finished Task 3 (keyboard-flow.spec.ts), ran check:tokens + playwright --list smoke, created SUMMARY with self-check PASSED, committed untracked 33-01 + 33-02 SUMMARYs that earlier executors had also left uncommitted. Four auto-fix deviations (all Rule 3/Blocking): (1) plan's "remove fixme markers" step was already landed upstream in Plan 02 — no edit required; (2) data-attribute fallback chain on drill focus-restoration selector; (3) inline tabIndex=-1 set at focus-time instead of editing Plan 02 breadcrumb markup; (4) rate-limit mid-plan recovery via continuation agent. Zero scope creep. Pattern proven: per-task atomic commits + orchestrator-driven continuation cleanly recovers from rate-limits mid-plan.
+Phase: 33 (Accessibility Audit) Plan 04 CLOSED (color-contrast retune). Phase 33 Wave 3 now closed — only remaining a11y work is Plan 33-05 close-out (empty DEFERRED_CATEGORIES = new Set([]) + close the scrollable-region-focusable debt on the table scroll wrapper flagged in .planning/phases/33-accessibility-audit/deferred-items.md). Phase 37 effectively closed. Phase 36 unchanged.
+Plan: 33-04 3/3 tasks complete — Task 1 (enumeration, no commit): ran CAPTURE_BASELINE=1 baseline-capture + throwaway enum spec, grouped 40 color-contrast nodes into 3 distinct light-mode (fg, bg, contrastRatio) triples, all three tracing to a single consumer `src/components/cross-partner/percentile-cell.tsx` using Tailwind default palette (bg-green-500/20 text-green-700, bg-yellow-500/20 text-yellow-700, bg-red-500/20 text-red-700) — NOT canonical --state-*-fg tokens. Task 2 (3 atomic commits, RESEARCH Pitfall 2): retuned --color-green-700 oklch(0.40 0.11 160) → commit 2caa931, --color-yellow-700 oklch(0.40 0.12 70) → commit d1efafd, --color-red-700 oklch(0.42 0.18 25) → commit df0d49f in @theme block (Tailwind v4 utility-var override cascades to every consumer, zero per-component edits). Task 3 (commit 79b35b8): removed color-contrast + color-contrast-enhanced from DEFERRED_CATEGORIES in axe-baseline.spec.ts — contrast now routes into the `unexpected` bucket (fails loud on regression).
+Status: Phase 33 Plan 04 closed. baseline.json dropped from serious=82 → serious=3 (only residuals are pre-existing Plan 03 scrollable-region-focusable on dashboard-root/popover — table scroll wrapper in data-table.tsx:374 lacks tabIndex=0; documented in deferred-items.md for Plan 05 close-out). All 5 design-system guards (check:tokens/surfaces/components/motion/polish) green — token retune preserved visual discipline. A11Y-04 requirement complete. color-contrast rules now live-asserted via the `unexpected` bucket.
+Last activity: 2026-04-20 — Closed 33-04 (color-contrast retune) in single context window. Key discovery: the 40 failing nodes weren't on canonical --muted-foreground / --state-*-fg tokens (as RESEARCH anticipated) — they were on hardcoded Tailwind palette classes (text-green-700, text-yellow-700, text-red-700) in PercentileCell tier badges. Scope-preserving fix via Tailwind v4 @theme utility-var override: redefine --color-{green,yellow,red}-700 in globals.css @theme → cascades through every consumer automatically, no per-component edits needed. Four commits total (3 atomic retunes + 1 spec flip). One Rule 3/Blocking deviation (scrollable-region-focusable pre-existing Plan 03 debt surfaced during verification — logged to deferred-items.md, NOT fixed in this plan per files_modified scope lock + stash-test confirmed it predates the Plan 04 retune).
 
-Progress: [████████████████████] 101/105 plans (v4.0 + v4.1 milestones in flight)
+Progress: [████████████████████] 102/105 plans (v4.0 + v4.1 milestones in flight)
 
 ## Shipped Milestones
 
@@ -255,6 +255,8 @@ Progress: [████████████████████] 101/105
 - [Phase 33-03]: keyboard-flow.spec.ts kept as separate file from axe-baseline.spec.ts — static-snapshot (axe) vs runtime-interaction (keyboard) have different execution semantics, failure modes, and ownership. Plan 05 close-out re-evaluates consolidation.
 - [Phase 33-03]: Plan Task 3 "remove fixme markers" step was already landed upstream in Plan 02 commit 43ab1eb (FOCUS_CATEGORIES promoted to BLOCKING via the category-partition refactor). No axe-baseline.spec.ts edit required from Plan 03; historical intent preserved in the Task 3 commit message. Pattern: when plan copy drifts from landed state, verify reality first and document the handling.
 - [Phase 33-03]: Rate-limit mid-plan is safely recoverable via orchestrator-driven continuation when per-task commits are atomic — Tasks 1 + 2 committed before the rate-limit (`e322e89`, `8f1f322`), continuation agent resumed with completed-task-state, executed Task 3, and shipped SUMMARY without duplicated work. GSD per-task atomicity contract proven.
+- [Phase 33]: Plan 33-04: Tailwind v4 @theme --color-{green,yellow,red}-700 palette overrides (oklch L≈0.40, hue preserved) bring PercentileCell tier badges above 4.5:1 AA — 82 color-contrast nodes -> 0 via 3 atomic token commits, zero consumer edits
+- [Phase 33]: Plan 33-04: axe-baseline.spec.ts DEFERRED_CATEGORIES shrunk from 5 rules to 3 — color-contrast + color-contrast-enhanced removed, now routed through the  bucket so any future contrast regression fails loud. Plan 05 empties DEFERRED_CATEGORIES completely
 
 ### Pending Todos
 
@@ -311,4 +313,5 @@ Resume file: None
 | Phase 37 P01 | 8min | 3 tasks | 17 files |
 | Phase 37 P02 | 3min | 3 tasks | 6 files |
 | Phase 33 P03 | ~15min | 3 tasks | 4 files |
+| Phase 33 P04 | 60min | 3 tasks | 3 files |
 
