@@ -4,16 +4,20 @@
  * CATEGORY-GATED STATE (Plan 02 → Plan 04):
  *   Plan 01 shipped with a blanket `test.fixme()` on every test. Plan 02
  *   (ARIA sweep) promoted ARIA_CATEGORIES to BLOCKING. Plan 03 (focus /
- *   keyboard) promotes FOCUS_CATEGORIES to BLOCKING. DEFERRED_CATEGORIES is
- *   now contrast-only (Plan 04 scope). Plan 05 empties it completely.
+ *   keyboard) promoted FOCUS_CATEGORIES to BLOCKING. Plan 04 (contrast
+ *   retune) removes `color-contrast` / `color-contrast-enhanced` from
+ *   DEFERRED_CATEGORIES — the Tailwind palette overrides landed in
+ *   `globals.css` @theme (`--color-{green,yellow,red}-700`) bring every
+ *   PercentileCell tier badge above 4.5:1 AA, so contrast is now live-
+ *   asserted via the `unexpected` bucket (any future contrast regression
+ *   fails the suite loud). Plan 05 empties the deferred set entirely.
  *
- *   After Plan 03:
- *     - ARIA_CATEGORIES critical/serious BLOCK (button-name, link-name,
- *       role-img-alt, aria-required-attr, aria-valid-attr-value, etc.).
- *     - FOCUS_CATEGORIES critical/serious BLOCK (focus-order-semantics,
- *       scrollable-region-focusable, tabindex, aria-dialog-name, bypass).
- *     - DEFERRED_CATEGORIES (color-contrast / color-contrast-enhanced)
- *       tolerated with per-rule summary log — owned by Plan 04.
+ *   After Plan 04:
+ *     - ARIA_CATEGORIES critical/serious BLOCK.
+ *     - FOCUS_CATEGORIES critical/serious BLOCK.
+ *     - `color-contrast` / `color-contrast-enhanced` NO LONGER deferred —
+ *       any node with these rule ids falls into the `unexpected` bucket
+ *       and fails the test. Contrast is green-gated, not fixme-gated.
  *     - Structural rules axe considers moderate-or-lower
  *       (landmark-one-main, page-has-heading-one, region) stay deferred
  *       because they surface on our app shell patterns without user impact;
@@ -85,14 +89,15 @@ const FOCUS_CATEGORIES = new Set([
 ]);
 
 /**
- * Rule ids still tolerated by the suite — Plan 04 owns these.
- * Plan 04: color-contrast, color-contrast-enhanced.
+ * Rule ids still tolerated by the suite.
+ * Plan 04 removed `color-contrast` / `color-contrast-enhanced` from this
+ * set after the globals.css --color-{green,yellow,red}-700 retune zeroed
+ * the PercentileCell tier-badge violations. Contrast now lives in the
+ * `unexpected` bucket — a future contrast regression fails the suite loud.
  * Plan 05 empties this set (including landmark/region) and flips fully
  * blocking.
  */
 const DEFERRED_CATEGORIES = new Set([
-  'color-contrast',
-  'color-contrast-enhanced',
   'landmark-one-main',
   'page-has-heading-one',
   'region',
