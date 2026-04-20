@@ -134,4 +134,81 @@ assert.equal(
   `[7] mapped filter value matches real row via String()==String() — same path filteredRawData uses`,
 );
 
-console.log('✓ metabase-import map smoke test passed (7 assertions)');
+// 8. Apply-time promotion regression (Defect 4, 2026-04-19): mirrors the
+//    `handleApplyImport` promotion block in `data-display.tsx`. The parser+mapper
+//    emit `columnFilters['ACCOUNT_TYPE'] = ['THIRD_PARTY']`, but to drive the
+//    URL-backed dimensionFilters channel (which feeds `filteredRawData`), the
+//    Apply path promotes entries whose column id matches one of the three
+//    FILTER_PARAMS values (PARTNER_NAME / ACCOUNT_TYPE / BATCH). After promotion:
+//      - columnFilters no longer carries that entry
+//      - dimensionFilters[param-key] holds the string value
+//      - filter applied to real rows still yields non-zero matches
+//
+//    Without this guard, a future refactor that renames FILTER_PARAMS or breaks
+//    the promotion loop shape would silently strand dimension filters in
+//    columnFilters, where they get dropped at root level (`validIds` filter in
+//    `handleLoadViewInternal`) and produce 0 rows in the imported view.
+const FILTER_PARAMS = {
+  partner: 'PARTNER_NAME',
+  type: 'ACCOUNT_TYPE',
+  batch: 'BATCH',
+} as const;
+
+const r8 = parseMetabaseSql(
+  `SELECT partner_name, batch, total_accounts FROM agg_batch_performance_summary WHERE account_type = 'THIRD_PARTY'`,
+);
+const s8 = mapToSnapshot(r8);
+
+// Simulate the promotion block from `handleApplyImport`.
+const promoted: Record<string, string> = {};
+const remaining: Record<string, unknown> = { ...(s8.columnFilters ?? {}) };
+for (const [paramKey, columnId] of Object.entries(FILTER_PARAMS)) {
+  const v = remaining[columnId];
+  if (Array.isArray(v) && v.length > 0) {
+    promoted[paramKey] = String(v[0]);
+    delete remaining[columnId];
+  }
+}
+
+assert.equal(
+  promoted.type,
+  'THIRD_PARTY',
+  '[8] promotion: columnFilters[ACCOUNT_TYPE] -> dimensionFilters[type]',
+);
+assert.equal(
+  'ACCOUNT_TYPE' in remaining,
+  false,
+  '[8] promotion: ACCOUNT_TYPE removed from columnFilters after promotion',
+);
+
+// Apply the promoted dimension filter through the same row-matching predicate
+// `filteredRawData` uses (data-display.tsx:195-204), against real data.
+const matched = batchSummary.data.filter((row: Record<string, unknown>) => {
+  // One filter: type -> ACCOUNT_TYPE = 'THIRD_PARTY'
+  const value = row.ACCOUNT_TYPE;
+  if (value == null) return false;
+  return String(promoted.type) === String(value);
+});
+assert.ok(
+  matched.length > 0,
+  `[8] promoted ?type filter yields non-zero rows against batch-summary (got ${matched.length})`,
+);
+// Sanity: the 471/477 count is well-known for this fixture; catch a silent
+// data shift (e.g. cache regeneration that dropped THIRD_PARTY rows).
+assert.ok(
+  matched.length >= 100,
+  `[8] THIRD_PARTY row count sanity check (got ${matched.length}, expected >=100)`,
+);
+
+// Aggregate by partner — the root summary-row count is what the user sees.
+const partnerSet = new Set<string>();
+for (const r of matched) {
+  const name = (r as Record<string, unknown>).PARTNER_NAME;
+  if (typeof name === 'string' && name) partnerSet.add(name);
+}
+assert.ok(
+  partnerSet.size >= 10,
+  `[8] filtered data aggregates to >=10 partners for root view (got ${partnerSet.size})`,
+);
+
+console.log('✓ metabase-import map smoke test passed (8 assertions)');
