@@ -211,12 +211,39 @@ export function DataTable({
 
     // Restore sorting
     setSorting((snapshot.sorting ?? []).filter((s) => validIds.has(s.id)));
-    // Restore column visibility
-    columnManagement.setColumnVisibility(
-      Object.fromEntries(
-        Object.entries(snapshot.columnVisibility).filter(([k]) => validIds.has(k)),
-      ),
+    // Restore column visibility.
+    //
+    // Defect fix (2026-04-19, Phase 37-03): imported views (discriminated by
+    // `snapshot.sourceQuery` — only Metabase SQL Import stamps that field)
+    // carry an EXHAUSTIVE-HIDE intent: any column not listed as `true` in the
+    // snapshot must be hidden, including drill-level-specific columns like
+    // `__BATCH_COUNT` that aren't tracked in DEFAULT_COLUMNS and therefore
+    // aren't present in the imported snapshot at all. TanStack Table defaults
+    // unlisted columns to visible, so without this expansion the root-level
+    // `__BATCH_COUNT` (and any future root-only column) slips through visible
+    // after an import — producing the "showing all columns" bug the user
+    // reported.
+    //
+    // Saved-view semantics are unchanged: without `sourceQuery`, we filter to
+    // the snapshot's keys only (root-only columns like `__BATCH_COUNT` stay
+    // at their TanStack default of visible, which is the existing contract —
+    // save-view capture never touched those keys, so restoring should not
+    // either).
+    const visibilityEntries = Object.entries(snapshot.columnVisibility).filter(
+      ([k]) => validIds.has(k),
     );
+    if (snapshot.sourceQuery) {
+      // Exhaustive expansion: every currently-valid column id gets an explicit
+      // entry. Start from the filtered snapshot keys (so matched columns keep
+      // their `true`), then fill in missing validIds with `false`.
+      const map: Record<string, boolean> = Object.fromEntries(visibilityEntries);
+      for (const id of validIds) {
+        if (!(id in map)) map[id] = false;
+      }
+      columnManagement.setColumnVisibility(map);
+    } else {
+      columnManagement.setColumnVisibility(Object.fromEntries(visibilityEntries));
+    }
     // Restore column order
     columnManagement.setColumnOrder(
       snapshot.columnOrder.filter((k) => validIds.has(k)),
