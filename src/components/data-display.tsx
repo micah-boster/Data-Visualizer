@@ -43,6 +43,7 @@ import { ChartPanel } from '@/components/charts/chart-panel';
 import { DEFAULT_COLLECTION_CURVE } from '@/lib/views/migrate-chart';
 import { mapToSnapshot } from '@/lib/metabase-import/map-to-snapshot';
 import type { ParseResult } from '@/lib/metabase-import/types';
+import { FILTER_PARAMS } from '@/hooks/use-filter-state';
 
 const CrossPartnerTrajectoryChart = dynamic(
   () =>
@@ -457,9 +458,41 @@ export function DataDisplay() {
         columnSizing: {},
       };
 
+      // Defect fix (2026-04-19): promote WHERE-clause filters on the three
+      // dimension-filterable columns (PARTNER_NAME / ACCOUNT_TYPE / BATCH)
+      // out of `columnFilters` and into `dimensionFilters` so handleLoadView's
+      // URL-rewrite loop actually writes `?partner=X&type=Y&batch=Z` — the
+      // single mechanism that drives `filteredRawData` (KPIs, charts, root
+      // summary rows, table). `columnFilters` on those same ids are
+      // additionally dropped at non-partner drill levels (root uses
+      // `rootColumnDefs`, so ACCOUNT_TYPE / BATCH are not in validIds and get
+      // silently filtered out by handleLoadViewInternal), making the filter
+      // vanish entirely before Apply. Dimension filters are the correct
+      // channel — they cascade through `filteredRawData` regardless of drill
+      // level and render as toolbar filter chips via `activeFilters`.
+      // FILTER_PARAMS is the single source of truth for url-param↔column-id.
+      const promotedDimensionFilters: Record<string, string> = {
+        ...(partial.dimensionFilters ?? {}),
+      };
+      const remainingColumnFilters: Record<string, unknown> = {
+        ...(partial.columnFilters ?? {}),
+      };
+      for (const [paramKey, columnId] of Object.entries(FILTER_PARAMS)) {
+        const filterValue = remainingColumnFilters[columnId];
+        if (Array.isArray(filterValue) && filterValue.length > 0) {
+          // Text-equality filters from mapToSnapshot arrive as string[].
+          // The URL param is single-valued; pick the first match (parser only
+          // emits `eq` via columnFilters[columnId] = [value] today).
+          promotedDimensionFilters[paramKey] = String(filterValue[0]);
+          delete remainingColumnFilters[columnId];
+        }
+      }
+
       const importedSnapshot: ViewSnapshot = {
         ...base,
         ...partial,
+        columnFilters: remainingColumnFilters,
+        dimensionFilters: promotedDimensionFilters,
         // drill always cleared on import (CONTEXT lock).
         drill: undefined,
         // listId explicitly unset — imports do NOT carry a partner list.
