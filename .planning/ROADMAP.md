@@ -104,7 +104,7 @@
 | 30. Micro-Interactions & Motion | 4/5 | Complete    | 2026-04-18 | - |
 | 31. Visual Polish Pass | 6/6 | Complete    | 2026-04-19 | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
-| 33. Accessibility Audit | v4.0 | 0/5 | Not started | - |
+| 33. Accessibility Audit | 3/5 | In Progress|  | - |
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 4/5 | In Progress|  | - |
@@ -310,9 +310,9 @@ Plans:
   5. Regression guardrail live — axe-core run inside Playwright E2E against core routes; blocking CI gate once baseline is green; keyboard-only walkthrough of Dashboard → drill → saved view completes end-to-end without a mouse
 **Plans**: 5 plans across 4 waves (Wave 1: baseline harness; Wave 2: ARIA + Keyboard/focus parallel; Wave 3: contrast retune; Wave 4: enforcement flip + /tokens aggregator + human-verify)
 Plans:
-- [ ] 33-01-PLAN.md — Wave 1 — Baseline & CI harness: install @playwright/test + @axe-core/playwright; playwright.config.ts with static-cache webServer; tests/a11y/axe-baseline.spec.ts (4 routes × 2 themes + popover-open); tests/a11y/baseline.json advisory artifact; scripts/check-a11y.sh + npm run check:a11y (A11Y-01 foundation)
-- [ ] 33-02-PLAN.md — Wave 2 — ARIA labels & roles: icon-only button aria-label sweep across toolbar/save-view/anomaly/sort-dialog/sidebar; chart role="img" + aria-label on 4 chart wrappers; aria-pressed on toggles; aria-current="page" on breadcrumb/sidebar active; aria-sort on sortable columns; Dialog/Sheet modal={true} explicit; skip-to-content link (A11Y-02)
-- [ ] 33-03-PLAN.md — Wave 2 — Keyboard nav & focus: row-level Tab+Enter+Escape on table-body drill-capable rows; drill cross-fade focus restoration useEffect → [data-breadcrumb-current]; input-typing guard; Playwright keyboard-flow.spec.ts validates Enter/Escape URL transitions + Cmd+K focus-return (A11Y-03)
+- [x] 33-01-PLAN.md — Wave 1 — Baseline & CI harness: install @playwright/test + @axe-core/playwright; playwright.config.ts with static-cache webServer; tests/a11y/axe-baseline.spec.ts (4 routes × 2 themes + popover-open); tests/a11y/baseline.json advisory artifact; scripts/check-a11y.sh + npm run check:a11y (A11Y-01 foundation) — **SHIPPED 2026-04-19**
+- [x] 33-02-PLAN.md — Wave 2 — ARIA labels & roles: icon-only button aria-label sweep across toolbar/save-view/anomaly/sort-dialog/sidebar; chart role="img" + aria-label on 4 chart wrappers; aria-pressed on toggles; aria-current="page" on breadcrumb/sidebar active; aria-sort on sortable columns; Dialog/Sheet modal={true} explicit; skip-to-content link (A11Y-02) — **SHIPPED 2026-04-19**
+- [x] 33-03-PLAN.md — Wave 2 — Keyboard nav & focus: row-level Tab+Enter+Escape on table-body drill-capable rows; drill cross-fade focus restoration useEffect → [data-breadcrumb-current]; input-typing guard; Playwright keyboard-flow.spec.ts validates Enter/Escape URL transitions + Cmd+K focus-return (A11Y-03) — **SHIPPED 2026-04-19**
 - [ ] 33-04-PLAN.md — Wave 3 — Color contrast & token adjustments: enumerate axe color-contrast failures; retune globals.css tokens in :root / .dark (atomic commits per variable); verify both themes; brand intent preserved; all other guards green (A11Y-04)
 - [ ] 33-05-PLAN.md — Wave 4 — Enforcement flip + close-out: remove all test.fixme() markers (check:a11y BLOCKING); /tokens 7th/8th Accessibility tab with 6 live specimens (focus-glow, aria-label, aria-pressed, modal, skip-to-content, row-keyboard); human-verify keyboard-only walkthrough sign-off; 33-VERIFICATION.md ratifies A11Y-01..04 (A11Y-01, A11Y-02, A11Y-03, A11Y-04)
 
