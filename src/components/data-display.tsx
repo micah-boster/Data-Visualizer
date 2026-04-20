@@ -582,6 +582,21 @@ export function DataDisplay() {
         // Longer than save/delete (3s/5s) — import is higher-stakes and the
         // user may want time to evaluate the imported view before undoing.
         duration: 8000,
+        // Defect fix (2026-04-19, Plan 37-03 round 3 — "can't get the filter
+        // off"): the global Toaster sits at bottom-right. The FilterPopover
+        // content is anchored to the top-right filter button with `align="end"`
+        // so it extends downward and — when an active-filter chip is rendered
+        // — lands its dismiss-X in the bottom-right quadrant. Both surfaces
+        // carry z-50 and Sonner's portal is mounted last, so for the full
+        // 8-second window the toast intercepts pointer events on the chip's
+        // close button AND the combobox dropdowns, making it impossible for
+        // the user to clear the freshly-imported filter through the normal
+        // UI. Pinning THIS toast (and this toast only) to `bottom-left` keeps
+        // the Undo affordance available while getting out of the filter
+        // popover's footprint. Save/Delete toasts continue to use the global
+        // `bottom-right` default — they fire AFTER the user is done with
+        // filters, so no collision.
+        position: 'bottom-left',
       });
     },
     [
