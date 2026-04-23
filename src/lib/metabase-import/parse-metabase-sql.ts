@@ -43,6 +43,14 @@ import type {
 const labelByKey = new Map(COLUMN_CONFIGS.map((c) => [c.key, c.label]));
 
 /**
+ * Phase 37 Defect 5 — column-registry lookup for enum-value validation in
+ * translateLeaf (used by `=` and IN). Only columns with `enumValues` set
+ * participate in this check (today: ACCOUNT_TYPE only). Columns without
+ * enumValues are open enums and pass through verbatim.
+ */
+const configByKey = new Map(COLUMN_CONFIGS.map((c) => [c.key, c]));
+
+/**
  * Drop `[[ ... ]]` optional clauses entirely and replace `{{var}}` with
  * the literal `NULL` so the resulting WHERE clause is still parseable.
  * Filters that end up referencing the NULL sentinel naturally fall into
@@ -333,6 +341,20 @@ function translateLeaf(
         });
         return;
       }
+      // Phase 37 Defect 5 — enum-value validation on = filter. A previous bug
+      // surfaced when users pasted `WHERE account_type = 'Consumer'` (which is
+      // not a real ACCOUNT_TYPE value). Parser cheerfully matched; preview
+      // showed green; Apply yielded zero rows. Routing to skippedFilters with
+      // a valid-values hint lets the preview tell the truth.
+      const cfg = configByKey.get(columnKey);
+      if (cfg?.enumValues && typeof v === 'string' && !cfg.enumValues.includes(v)) {
+        skipped.push({
+          raw: `${cfg.label} = '${v}'`,
+          reason: `Not a valid ${cfg.label} value`,
+          validValues: cfg.enumValues,
+        });
+        return;
+      }
       matched.push({ columnKey, operator: 'eq', value: v });
       return;
     }
@@ -351,6 +373,27 @@ function translateLeaf(
           reason: 'IN list contains non-literal values',
         });
         return;
+      }
+      // Phase 37 Defect 5 — enum-value validation on IN filter. Skip the whole
+      // filter if ANY value is invalid; the storage shape for IN is a single
+      // array, so there's no partial-accept path without silently dropping
+      // values the user explicitly asked for.
+      const cfg = configByKey.get(columnKey);
+      if (cfg?.enumValues) {
+        const invalids = values.filter(
+          (val): val is string =>
+            typeof val === 'string' && !cfg.enumValues!.includes(val),
+        );
+        if (invalids.length > 0) {
+          skipped.push({
+            raw: `${cfg.label} in (${values.map((v) => `'${v}'`).join(', ')})`,
+            reason: `Contains ${invalids.length === 1 ? 'an invalid' : 'invalid'} ${cfg.label} value${
+              invalids.length === 1 ? '' : 's'
+            }: ${invalids.map((v) => `'${v}'`).join(', ')}`,
+            validValues: cfg.enumValues,
+          });
+          return;
+        }
       }
       matched.push({ columnKey, operator: 'in', value: values });
       return;

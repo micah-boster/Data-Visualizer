@@ -24,6 +24,14 @@ export interface SkippedItem {
   raw: string;
   /** One-line human-readable reason, rendered in the preview UI. */
   reason: string;
+  /**
+   * Phase 37 Defect 5 — when a WHERE literal on an enum-typed column (e.g.
+   * ACCOUNT_TYPE) fails the enum-membership check, the parser attaches the
+   * full list of accepted values here so the preview can render a
+   * "Valid: A / B / C" hint below the reason. Unset for every other skip
+   * kind (non-enum type mismatch, unsupported operator, unknown column, etc.).
+   */
+  validValues?: readonly string[];
 }
 
 /** Normalised filter operators we can translate to TanStack columnFilters. */
