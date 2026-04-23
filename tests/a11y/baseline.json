@@ -31,5 +31,5 @@
       ]
     }
   },
-  "note": "Advisory artifact — downstream Plans 02-04 consume this as context. NOT a skip-list. Plan 05 flips suite from advisory to blocking once zeroed."
+  "note": "Historical artifact from the Phase 33-01 baseline sweep. Plans 02-04 closed the ARIA / focus / contrast categories incrementally; Plan 05 (2026-04-20) emptied DEFERRED_CATEGORIES entirely in tests/a11y/axe-baseline.spec.ts and added tabIndex=0 to the dashboard scroll wrapper — `scrollable-region-focusable` now passes. check:a11y is fully blocking: any critical/serious violation on any rule, route, or theme fails the suite."
 }

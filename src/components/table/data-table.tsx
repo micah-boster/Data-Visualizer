@@ -371,6 +371,15 @@ export function DataTable({
         <div
           ref={tableContainerRef}
           data-density="dense"
+          // A11Y-01 (Phase 33-05 close-out): tabIndex=0 makes the scroll
+          // wrapper a keyboard-reachable region so axe-core's
+          // `scrollable-region-focusable` rule passes. Virtualized rows
+          // inside carry their own tabIndex=0 (Plan 33-03), but TanStack
+          // Virtual only mounts the visible window — axe can't always see
+          // focusable descendants, so the wrapper itself must be focusable.
+          // Pre-existing Plan 03 debt flagged in
+          // .planning/phases/33-accessibility-audit/deferred-items.md.
+          tabIndex={0}
           className="thin-scrollbar relative z-0 flex-1 overflow-auto rounded-lg bg-surface-inset"
           style={{ minHeight: 0 }}
         >

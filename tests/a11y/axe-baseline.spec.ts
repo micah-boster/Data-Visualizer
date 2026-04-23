@@ -1,27 +1,33 @@
 /**
  * Phase 33 Accessibility Audit — axe-core baseline suite
  *
- * CATEGORY-GATED STATE (Plan 02 → Plan 04):
+ * CATEGORY-GATED STATE (Plan 02 → Plan 05, close-out):
  *   Plan 01 shipped with a blanket `test.fixme()` on every test. Plan 02
  *   (ARIA sweep) promoted ARIA_CATEGORIES to BLOCKING. Plan 03 (focus /
  *   keyboard) promoted FOCUS_CATEGORIES to BLOCKING. Plan 04 (contrast
- *   retune) removes `color-contrast` / `color-contrast-enhanced` from
- *   DEFERRED_CATEGORIES — the Tailwind palette overrides landed in
- *   `globals.css` @theme (`--color-{green,yellow,red}-700`) bring every
- *   PercentileCell tier badge above 4.5:1 AA, so contrast is now live-
- *   asserted via the `unexpected` bucket (any future contrast regression
- *   fails the suite loud). Plan 05 empties the deferred set entirely.
+ *   retune) removed `color-contrast` / `color-contrast-enhanced` from
+ *   DEFERRED_CATEGORIES. Plan 05 (this plan) closes the residual
+ *   `scrollable-region-focusable` debt on the dashboard table scroll
+ *   wrapper (tabIndex=0 added in src/components/table/data-table.tsx)
+ *   and empties DEFERRED_CATEGORIES entirely — every critical/serious
+ *   axe rule now lives in either the `blocking` bucket (ARIA + FOCUS
+ *   allow-lists) or the `unexpected` bucket (everything else). Any
+ *   critical/serious violation on ANY rule, ANY route, ANY theme fails
+ *   the suite. The guard is the sixth in the 5→6 parity series
+ *   (tokens / surfaces / components / motion / polish / a11y).
  *
- *   After Plan 04:
+ *   After Plan 05:
  *     - ARIA_CATEGORIES critical/serious BLOCK.
- *     - FOCUS_CATEGORIES critical/serious BLOCK.
- *     - `color-contrast` / `color-contrast-enhanced` NO LONGER deferred —
- *       any node with these rule ids falls into the `unexpected` bucket
- *       and fails the test. Contrast is green-gated, not fixme-gated.
- *     - Structural rules axe considers moderate-or-lower
- *       (landmark-one-main, page-has-heading-one, region) stay deferred
- *       because they surface on our app shell patterns without user impact;
- *       Plan 05 close-out re-evaluates.
+ *     - FOCUS_CATEGORIES critical/serious BLOCK (includes
+ *       `scrollable-region-focusable` — dashboard scroll wrapper now
+ *       tabIndex=0).
+ *     - DEFERRED_CATEGORIES = empty. Landmark / heading / region rules
+ *       are classified moderate by axe and would never enter the
+ *       critical/serious filter anyway; keeping the set empty means if
+ *       one ever upgraded to serious it would fail loud.
+ *     - Any critical/serious rule outside ARIA + FOCUS allow-lists is
+ *       routed into `unexpected` and fails the test — no silent
+ *       regression can hide behind a deferred bucket.
  *
  * SCOPE:
  *   - 4 core routes (dashboard root + partner + batch + filtered) × 2 themes
@@ -90,18 +96,14 @@ const FOCUS_CATEGORIES = new Set([
 
 /**
  * Rule ids still tolerated by the suite.
- * Plan 04 removed `color-contrast` / `color-contrast-enhanced` from this
- * set after the globals.css --color-{green,yellow,red}-700 retune zeroed
- * the PercentileCell tier-badge violations. Contrast now lives in the
- * `unexpected` bucket — a future contrast regression fails the suite loud.
- * Plan 05 empties this set (including landmark/region) and flips fully
- * blocking.
+ * Plan 05 close-out: empty. Every critical/serious axe rule routes into
+ * either `blocking` (ARIA + FOCUS allow-lists) or `unexpected` (everything
+ * else — fails loud). Landmark / heading / region rules are classified
+ * moderate by axe and never enter the critical/serious filter anyway;
+ * keeping the set empty means if one ever upgrades to serious it fails
+ * loud instead of silently tolerating.
  */
-const DEFERRED_CATEGORIES = new Set([
-  'landmark-one-main',
-  'page-has-heading-one',
-  'region',
-]);
+const DEFERRED_CATEGORIES = new Set<string>([]);
 
 function partition(violations: Array<{ id: string; impact?: string | null }>) {
   const isCriticalOrSerious = (impact?: string | null) =>
