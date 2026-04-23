@@ -107,4 +107,61 @@ assert.ok(
   '[8] parse error has a message',
 );
 
-console.log('✓ metabase-import parse smoke test passed (8 fixtures / cases)');
+// 9. Phase 37 Defect 5 — invalid enum value on ACCOUNT_TYPE routes to
+//    skippedFilters with a valid-values hint. Paste `account_type = 'Consumer'`
+//    (the real bug that motivated this defect round) and assert:
+//      - no entry in matchedFilters for ACCOUNT_TYPE
+//      - an entry in skippedFilters with reason mentioning "Account Type"
+//      - validValues list contains the three real ACCOUNT_TYPE values
+const r9 = parseMetabaseSql(read('invalid-enum-value.sql'));
+assert.equal(r9.parseError, undefined, '[9] invalid-enum-value: no parse error');
+assert.equal(
+  r9.matchedFilters.filter((f) => f.columnKey === 'ACCOUNT_TYPE').length,
+  0,
+  '[9] ACCOUNT_TYPE filter NOT matched when value is outside enum',
+);
+const enumSkip = r9.skippedFilters.find((s) =>
+  s.reason.includes('Account Type'),
+);
+assert.ok(enumSkip, '[9] skippedFilters contains an Account Type enum-miss entry');
+assert.ok(
+  enumSkip!.validValues && enumSkip!.validValues.length === 3,
+  '[9] validValues list has 3 Account Type entries',
+);
+assert.ok(
+  enumSkip!.validValues!.includes('THIRD_PARTY'),
+  '[9] validValues contains real ACCOUNT_TYPE value',
+);
+assert.ok(
+  enumSkip!.raw.includes('Consumer'),
+  '[9] skip raw preserves the offending literal for the preview label',
+);
+
+// 10. IN with an invalid enum value — whole filter skipped (no partial-accept).
+const r10 = parseMetabaseSql(
+  `SELECT partner_name FROM agg_batch_performance_summary WHERE account_type IN ('THIRD_PARTY', 'Consumer')`,
+);
+assert.equal(
+  r10.matchedFilters.filter((f) => f.columnKey === 'ACCOUNT_TYPE').length,
+  0,
+  '[10] ACCOUNT_TYPE IN filter skipped when any value is outside enum',
+);
+const inSkip = r10.skippedFilters.find((s) => s.reason.includes('Account Type'));
+assert.ok(inSkip, '[10] IN with invalid enum lands in skippedFilters');
+assert.ok(
+  inSkip!.validValues && inSkip!.validValues.includes('THIRD_PARTY'),
+  '[10] IN skip carries validValues hint too',
+);
+
+// 11. Valid enum value passes through (regression guard — makes sure the new
+//     validation path doesn't reject values it should accept).
+const r11 = parseMetabaseSql(
+  `SELECT partner_name FROM agg_batch_performance_summary WHERE account_type = 'THIRD_PARTY'`,
+);
+assert.equal(
+  r11.matchedFilters.filter((f) => f.columnKey === 'ACCOUNT_TYPE').length,
+  1,
+  '[11] valid ACCOUNT_TYPE value still matches',
+);
+
+console.log('✓ metabase-import parse smoke test passed (11 fixtures / cases)');

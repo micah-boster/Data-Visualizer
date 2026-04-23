@@ -45,15 +45,19 @@ assert.ok(
   '[1] at least one unmatched column is explicitly hidden',
 );
 
-// 2. eq on text column -> string[] filter shape.
+// 2. eq on text column -> string[] filter shape. Uses a REAL ACCOUNT_TYPE
+//    enum value ('THIRD_PARTY') so that Phase 37 Defect 5's enum validation
+//    (added to parse-metabase-sql.ts translateLeaf) does NOT reject it. The
+//    prior fixture used 'Consumer' — now guaranteed to skip; see assertion
+//    [9] below which locks the invalid-value path.
 const r2 = parseMetabaseSql(
-  `SELECT partner_name FROM agg_batch_performance_summary WHERE account_type = 'Consumer'`,
+  `SELECT partner_name FROM agg_batch_performance_summary WHERE account_type = 'THIRD_PARTY'`,
 );
 const s2 = mapToSnapshot(r2);
 assert.deepEqual(
   s2.columnFilters?.['ACCOUNT_TYPE'],
-  ['Consumer'],
-  '[2] text eq -> [value] checklist shape',
+  ['THIRD_PARTY'],
+  '[2] text eq -> [value] checklist shape (with valid enum value)',
 );
 
 // 3. between on numeric column -> { min, max } shape.
@@ -211,4 +215,42 @@ assert.ok(
   `[8] filtered data aggregates to >=10 partners for root view (got ${partnerSet.size})`,
 );
 
-console.log('✓ metabase-import map smoke test passed (8 assertions)');
+// 9. Phase 37 Defect 5 regression (2026-04-23): `WHERE account_type = 'Consumer'`
+//    produces an empty dimensionFilters post-promotion AND the invalid filter
+//    is present in result.skippedFilters with a validValues hint. This locks
+//    the defect-5 behaviour end-to-end: the parser rejects the bad value at
+//    extract time, the mapper never sees it in matchedFilters, and the apply
+//    pipeline's promotion loop produces no `?type=` URL param (so Apply yields
+//    a non-filtered view rather than a zero-row table).
+const r9 = parseMetabaseSql(
+  `SELECT partner_name FROM agg_batch_performance_summary WHERE account_type = 'Consumer'`,
+);
+const s9 = mapToSnapshot(r9);
+assert.equal(
+  s9.columnFilters?.['ACCOUNT_TYPE'],
+  undefined,
+  '[9] invalid enum value produces NO columnFilters entry for ACCOUNT_TYPE',
+);
+assert.ok(
+  r9.skippedFilters.some(
+    (s) => s.reason.includes('Account Type') && s.validValues,
+  ),
+  '[9] invalid enum value is in result.skippedFilters with validValues hint',
+);
+// Simulate the apply-time dimension-filter promotion (same block as [8]):
+const promoted9: Record<string, string> = {};
+const remaining9: Record<string, unknown> = { ...(s9.columnFilters ?? {}) };
+for (const [paramKey, columnId] of Object.entries(FILTER_PARAMS)) {
+  const v = remaining9[columnId];
+  if (Array.isArray(v) && v.length > 0) {
+    promoted9[paramKey] = String(v[0]);
+    delete remaining9[columnId];
+  }
+}
+assert.equal(
+  promoted9.type,
+  undefined,
+  '[9] promotion: no ?type= URL param produced (Apply cannot set invalid enum)',
+);
+
+console.log('✓ metabase-import map smoke test passed (9 assertions)');
