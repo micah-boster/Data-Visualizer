@@ -9,9 +9,10 @@
 - ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
 - 🚧 **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (in progress) — [Roadmap](milestones/v4.0-ROADMAP.md)
 - 📋 **v4.1 Feedback-Driven Polish** — Phases 38-40 (planned) — [Roadmap](milestones/v4.1-ROADMAP.md)
-- 📋 **v4.5 Hardening** — Phases 41-44 (planned, placeholder) — [Roadmap](milestones/v4.5-ROADMAP.md)
+- 📋 **v4.5 Correctness & Security Foundation** — Phases 41-42 (planned; 43-44 reserved slack) — [Roadmap](milestones/v4.5-ROADMAP.md)
 - 📋 **v5.0 External Intelligence** — Phases 45-49 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
-- 📋 **v6.0 Proactive Intelligence & Action** — Phases 50-55 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
+- 📋 **v5.5 Real-Use Hardening** — Phases 50-51 (planned) — [Roadmap](milestones/v5.5-ROADMAP.md)
+- 📋 **v6.0 Proactive Intelligence & Action** — Phases 52-57 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
 
 ## Phases
 
@@ -80,7 +81,7 @@
 - [x] **Phase 32: URL-Backed Navigation** — Drill state in URL params, browser back button, deep-linking (2/2 plans — URL-backed useDrillDown + saved views carry optional drill state, shipped 2026-04-17)
 
 **Quality (Phase 33):**
-- [ ] **Phase 33: Accessibility Audit** — axe-core, ARIA, keyboard nav, contrast, reduced motion
+- [x] **Phase 33: Accessibility Audit** — axe-core, ARIA, keyboard nav, contrast, reduced motion (5/5 plans — 6-guard parity portfolio complete, A11Y-01..04 shipped, check:a11y BLOCKING in CI, shipped 2026-04-23)
 
 **Features (Phases 34-37, carried from v3.5):**
 - [x] **Phase 34: Partner Lists** — Named partner groupings for filtering (completed 2026-04-18)
@@ -104,7 +105,7 @@
 | 30. Micro-Interactions & Motion | 4/5 | Complete    | 2026-04-18 | - |
 | 31. Visual Polish Pass | 6/6 | Complete    | 2026-04-19 | - |
 | 32. URL-Backed Navigation | v4.0 | 2/2 | Complete | 2026-04-17 |
-| 33. Accessibility Audit | 4/5 | In Progress|  | - |
+| 33. Accessibility Audit | 5/5 | Complete   | 2026-04-23 | - |
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 4/5 | In Progress|  | - |
@@ -112,20 +113,24 @@
 | 38. Polish + Correctness Pass | v4.1 | 0/TBD | Planned | - |
 | 39. Partner Config Module | v4.1 | 0/TBD | Planned | - |
 | 40. Projected Curves v1 | v4.1 | 0/TBD | Planned | - |
-| 41-44. v4.5 Hardening (TBD) | v4.5 | 0/TBD | Placeholder | - |
+| 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
+| 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
+| 43-44. (reserved — insert-phase slack) | — | — | — | - |
 | 45. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
 | 46. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
 | 47. Triangulation Views | v5.0 | 0/TBD | Planned | - |
 | 48. Scorecard Reconciliation | v5.0 | 0/TBD | Planned | - |
 | 49. Dynamic Curve Re-Projection | v5.0 | 0/TBD | Planned | - |
-| 50. Weekly Partner Highlights | v6.0 | 0/TBD | Planned* | - |
-| 51. Pattern Alerts | v6.0 | 0/TBD | Planned | - |
-| 52. MBR Pipeline Integration | v6.0 | 0/TBD | Planned | - |
-| 53. Action Connections | v6.0 | 0/TBD | Planned | - |
-| 54. Temporal Intelligence | v6.0 | 0/TBD | Planned | - |
-| 55. NLQ Enhancements | v6.0 | 0/TBD | Planned | - |
+| 50. Behavioral QA from Usage | v5.5 | 0/TBD | Planned | - |
+| 51. Tech Debt Sweep | v5.5 | 0/TBD | Planned | - |
+| 52. Weekly Partner Highlights | v6.0 | 0/TBD | Planned* | - |
+| 53. Pattern Alerts | v6.0 | 0/TBD | Planned | - |
+| 54. MBR Pipeline Integration | v6.0 | 0/TBD | Planned | - |
+| 55. Action Connections | v6.0 | 0/TBD | Planned | - |
+| 56. Temporal Intelligence | v6.0 | 0/TBD | Planned | - |
+| 57. NLQ Enhancements | v6.0 | 0/TBD | Planned | - |
 
-\* Phase 50 flagged for review — may be deprioritized in favor of deeper MBR integration (Phase 52)
+\* Phase 52 flagged for review — may be deprioritized in favor of deeper MBR integration (Phase 54)
 
 ## Phase Details
 
@@ -313,8 +318,8 @@ Plans:
 - [x] 33-01-PLAN.md — Wave 1 — Baseline & CI harness: install @playwright/test + @axe-core/playwright; playwright.config.ts with static-cache webServer; tests/a11y/axe-baseline.spec.ts (4 routes × 2 themes + popover-open); tests/a11y/baseline.json advisory artifact; scripts/check-a11y.sh + npm run check:a11y (A11Y-01 foundation) — **SHIPPED 2026-04-19**
 - [x] 33-02-PLAN.md — Wave 2 — ARIA labels & roles: icon-only button aria-label sweep across toolbar/save-view/anomaly/sort-dialog/sidebar; chart role="img" + aria-label on 4 chart wrappers; aria-pressed on toggles; aria-current="page" on breadcrumb/sidebar active; aria-sort on sortable columns; Dialog/Sheet modal={true} explicit; skip-to-content link (A11Y-02) — **SHIPPED 2026-04-19**
 - [x] 33-03-PLAN.md — Wave 2 — Keyboard nav & focus: row-level Tab+Enter+Escape on table-body drill-capable rows; drill cross-fade focus restoration useEffect → [data-breadcrumb-current]; input-typing guard; Playwright keyboard-flow.spec.ts validates Enter/Escape URL transitions + Cmd+K focus-return (A11Y-03) — **SHIPPED 2026-04-19**
-- [ ] 33-04-PLAN.md — Wave 3 — Color contrast & token adjustments: enumerate axe color-contrast failures; retune globals.css tokens in :root / .dark (atomic commits per variable); verify both themes; brand intent preserved; all other guards green (A11Y-04)
-- [ ] 33-05-PLAN.md — Wave 4 — Enforcement flip + close-out: remove all test.fixme() markers (check:a11y BLOCKING); /tokens 7th/8th Accessibility tab with 6 live specimens (focus-glow, aria-label, aria-pressed, modal, skip-to-content, row-keyboard); human-verify keyboard-only walkthrough sign-off; 33-VERIFICATION.md ratifies A11Y-01..04 (A11Y-01, A11Y-02, A11Y-03, A11Y-04)
+- [x] 33-04-PLAN.md — Wave 3 — Color contrast & token adjustments: enumerate axe color-contrast failures; retune globals.css tokens in :root / .dark (atomic commits per variable); verify both themes; brand intent preserved; all other guards green (A11Y-04) — **SHIPPED 2026-04-20**
+- [x] 33-05-PLAN.md — Wave 4 — Enforcement flip + close-out: DEFERRED_CATEGORIES drained to empty set (check:a11y BLOCKING — 6th guard in parity portfolio); scrollable-region-focusable debt closed on dashboard scroll wrapper (tabIndex=0 + role=region); /tokens 8th Accessibility tab with A11ySpecimen (6 live demos: focus-glow, aria-label icon button, aria-pressed toggle, Base UI modal Dialog, skip-to-content, row-level keyboard); human-verify keyboard-only walkthrough signed off; A11Y-01..04 all Complete (A11Y-01, A11Y-02, A11Y-03, A11Y-04) — **SHIPPED 2026-04-23**
 
 **After Phase 33:** No new phases unlocked (end of design track). Feeds into overall milestone completion.
 
