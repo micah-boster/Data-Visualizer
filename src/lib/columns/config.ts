@@ -13,14 +13,43 @@ export interface ColumnConfig {
   defaultVisible: boolean;
   nullDisplay: string;   // Always em dash
   identity: boolean;     // True for columns that appear in every preset
+  /**
+   * Phase 37 Defect 5 (2026-04-23) — closed enum of valid string values for
+   * this column. When set, the Metabase SQL Import parser validates WHERE
+   * literals against this list (case-sensitive exact match) and routes
+   * mismatches into `skippedFilters` with a valid-values hint so the preview
+   * can tell the truth (instead of matching zero rows after Apply).
+   *
+   * Scope: ONLY columns whose values form a stable, small, closed enum.
+   * Open or high-churn dimensions (PARTNER_NAME ~34 values, BATCH 477+
+   * monthly-growing values) are intentionally left without enumValues —
+   * hard-coding them would create a maintenance burden where adding new
+   * partner/batch data would require a registry update.
+   */
+  enumValues?: readonly string[];
 }
+
+/**
+ * Phase 37 Defect 5 — ACCOUNT_TYPE enum, sourced from distinct values in
+ * `src/lib/static-cache/batch-summary.json` (3 values across 477 rows, as of
+ * 2026-04-23). These values come from the Snowflake ETL and change roughly
+ * never — safe to hard-code. If the upstream ETL ever adds a new ACCOUNT_TYPE,
+ * a smoke assertion (`map-to-snapshot.smoke.ts`) will still pass for existing
+ * values, but a new value would surface as an amber-skipped filter in the
+ * import preview until this list is extended.
+ */
+export const ACCOUNT_TYPE_VALUES = [
+  'THIRD_PARTY',
+  'PRE_CHARGE_OFF_FIRST_PARTY',
+  'PRE_CHARGE_OFF_THIRD_PARTY',
+] as const;
 
 export const COLUMN_CONFIGS: ColumnConfig[] = [
   // --- Identity columns (appear in every preset) ---
   { key: 'PARTNER_NAME', label: 'Partner', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'LENDER_ID', label: 'Lender ID', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'BATCH', label: 'Batch', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
-  { key: 'ACCOUNT_TYPE', label: 'Account Type', type: 'text', defaultVisible: false, nullDisplay: '\u2014', identity: false },
+  { key: 'ACCOUNT_TYPE', label: 'Account Type', type: 'text', defaultVisible: false, nullDisplay: '\u2014', identity: false, enumValues: ACCOUNT_TYPE_VALUES },
   { key: 'BATCH_AGE_IN_MONTHS', label: 'Batch Age (Mo)', type: 'number', defaultVisible: true, nullDisplay: '\u2014', identity: true },
 
   // --- Account counts ---
