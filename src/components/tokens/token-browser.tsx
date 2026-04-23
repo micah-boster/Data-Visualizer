@@ -8,17 +8,21 @@ import { MotionDemo } from './motion-demo';
 import { ColorSwatch } from './color-swatch';
 import { ComponentPatternsSpecimen } from './component-patterns-specimen';
 import { VisualPolishSpecimen } from './visual-polish-specimen';
+import { A11ySpecimen } from './a11y-specimen';
 
 /**
  * Main tabbed token browser used by the /tokens page.
  *
- * Tabs (7): Spacing / Typography / Surfaces & Shadows / Motion / Colors /
- *            Component Patterns / Visual Polish.
+ * Tabs (8): Spacing / Typography / Surfaces & Shadows / Motion / Colors /
+ *            Component Patterns / Visual Polish / Accessibility.
  * Surfaces & Shadows is a merged tab that renders surface swatches, shadow samples,
  * and radius samples together. Component Patterns (Phase 29) aggregates the
  * StatCard, DataPanel, EmptyState, and ToolbarDivider specimens. Visual Polish
  * (Phase 31) aggregates the six DS-29..DS-34 treatments (gradient divider, glass
- * highlight, focus glow, border standard, row hover, scrollbar).
+ * highlight, focus glow, border standard, row hover, scrollbar). Accessibility
+ * (Phase 33-05) aggregates the six a11y primitives shipped across Plans 02-04
+ * (focus glow reuse, icon-button aria-label, aria-pressed toggle, modal dialog
+ * focus trap, skip-to-content link, row-level keyboard).
  *
  * Tabs primitive: `@base-ui/react/tabs` (no shadcn Tabs in this repo).
  * Plan 26-05 notes: no `src/components/ui/tabs.tsx` existed at plan time, so Base UI
@@ -81,6 +85,12 @@ export function TokenBrowser() {
             >
               Visual Polish
             </Tabs.Tab>
+            <Tabs.Tab
+              value="accessibility"
+              className="text-label px-[var(--spacing-3)] py-[var(--spacing-2)] rounded-sm text-muted-foreground data-[selected]:text-foreground data-[selected]:bg-surface-raised data-[selected]:shadow-xs transition-colors duration-quick ease-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Accessibility
+            </Tabs.Tab>
           </Tabs.List>
 
           <Tabs.Panel value="spacing" className="focus-visible:outline-none">
@@ -114,6 +124,9 @@ export function TokenBrowser() {
           </Tabs.Panel>
           <Tabs.Panel value="polish" className="focus-visible:outline-none">
             <VisualPolishSpecimen />
+          </Tabs.Panel>
+          <Tabs.Panel value="accessibility" className="focus-visible:outline-none">
+            <A11ySpecimen />
           </Tabs.Panel>
         </Tabs.Root>
       </div>
