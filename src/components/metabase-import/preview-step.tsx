@@ -157,6 +157,7 @@ export function PreviewStep({ result, onBack, onApply }: PreviewStepProps) {
                   variant="skipped"
                   label={s.raw}
                   reason={s.reason}
+                  validValues={s.validValues}
                 />
               ))}
             </PreviewSection>

@@ -26,9 +26,16 @@ export interface PreviewRowProps {
   label: string;
   /** One-line secondary text — shown when present (typically for skipped / error). */
   reason?: string;
+  /**
+   * Phase 37 Defect 5 — accepted values for an enum-typed column, shown as a
+   * third hint line on skipped filter rows whose literal failed
+   * enum-membership. Rendered in a monospace-hinted label token with ` / `
+   * separators so scan-and-copy stays easy.
+   */
+  validValues?: readonly string[];
 }
 
-export function PreviewRow({ variant, label, reason }: PreviewRowProps) {
+export function PreviewRow({ variant, label, reason, validValues }: PreviewRowProps) {
   const Icon =
     variant === 'matched'
       ? CheckCircle2
@@ -48,6 +55,11 @@ export function PreviewRow({ variant, label, reason }: PreviewRowProps) {
         <div className="text-body truncate">{label}</div>
         {reason && (
           <div className="text-caption text-muted-foreground">{reason}</div>
+        )}
+        {validValues && validValues.length > 0 && (
+          <div className="text-caption text-muted-foreground">
+            Valid: {validValues.join(' / ')}
+          </div>
         )}
       </div>
     </li>
