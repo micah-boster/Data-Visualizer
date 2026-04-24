@@ -107,7 +107,7 @@ export function DraggableHeader({
               on drill/filter change (per-cell Tooltip mounts are costly) and
               drag pointer events can conflict with hover-open Tooltips. */}
           <span
-            className="truncate max-w-[180px]"
+            className="truncate min-w-0 max-w-[180px]"
             title={
               typeof header.column.columnDef.header === 'string'
                 ? header.column.columnDef.header
