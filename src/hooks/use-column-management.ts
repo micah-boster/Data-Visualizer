@@ -62,7 +62,9 @@ export function useColumnManagement(
 
   const toggleColumn = useCallback(
     (key: string) => {
-      if (identitySet.has(key)) return; // Identity columns cannot be toggled
+      // POL-03 (Phase 38): identity-column toggle lock removed. Identity
+      // columns retain their role elsewhere (preset defaults, widths, filter
+      // enable) but are now user-hideable from the column picker.
       setColumnVisibility((prev) => ({
         ...prev,
         [key]: !prev[key],
@@ -78,10 +80,10 @@ export function useColumnManagement(
       if (!group) return;
       setColumnVisibility((prev) => {
         const next = { ...prev };
+        // POL-03 (Phase 38): group toggle now applies uniformly to all
+        // columns in the group, including identity columns.
         for (const col of group.columns) {
-          if (!identitySet.has(col)) {
-            next[col] = visible;
-          }
+          next[col] = visible;
         }
         return next;
       });

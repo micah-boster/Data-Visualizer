@@ -57,9 +57,7 @@ function DraggableColumnRow({
         onDrop?.(columnKey);
       }}
       onDragEnd={() => onDragEnd?.()}
-      className={`group/row flex items-center gap-2 px-3 py-1 pl-6 text-body hover:bg-muted/30 ${
-        isIdentity ? 'opacity-60' : ''
-      }${isDragging ? ' opacity-40' : ''}${isDragOver ? ' border-t-2 border-primary' : ''}`}
+      className={`group/row flex items-center gap-2 px-3 py-1 pl-6 text-body hover:bg-muted/30${isDragging ? ' opacity-40' : ''}${isDragOver ? ' border-t-2 border-primary' : ''}`}
     >
       {!isIdentity && (
         <span
@@ -72,10 +70,7 @@ function DraggableColumnRow({
       <label className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer">
         <Checkbox
           checked={isVisible}
-          disabled={isIdentity}
-          onCheckedChange={() => {
-            if (!isIdentity) onToggle();
-          }}
+          onCheckedChange={() => onToggle()}
           className="shrink-0"
         />
         <span className="truncate">{label}</span>
