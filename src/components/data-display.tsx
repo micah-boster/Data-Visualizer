@@ -921,7 +921,11 @@ export function DataDisplay() {
                           kpis={partnerStats?.kpis ?? null}
                           trending={partnerStats?.trending ?? null}
                         />
-                        {partnerStats?.curves && partnerStats.curves.length >= 2 && (
+                        {/* Phase 38 CHT-01: render ASAP with whatever data exists
+                            — the prior `>= 2` minimum-age gate hid charts for
+                            partners with a single new batch. `>= 1` means the
+                            chart renders even from day one of a new vintage. */}
+                        {partnerStats?.curves && partnerStats.curves.length >= 1 && (
                           <>
                             {/* DS-29 section boundary: KPI band ↔ charts */}
                             <SectionDivider />
@@ -957,7 +961,10 @@ export function DataDisplay() {
                   <RootSparkline />
                 </div>
               )}
-              {!chartsExpanded && drillState.level === 'partner' && partnerStats?.curves && partnerStats.curves.length >= 2 && (
+              {/* Phase 38 CHT-01: sparkline preview mirrors the chart gate —
+                  drop `>= 2` to `>= 1` so single-batch partners also get a
+                  condensed preview when charts are collapsed. */}
+              {!chartsExpanded && drillState.level === 'partner' && partnerStats?.curves && partnerStats.curves.length >= 1 && (
                 <div className="shrink-0 px-2 pt-2">
                   <PartnerSparkline curves={partnerStats.curves} />
                 </div>

@@ -17,7 +17,7 @@ import { useAnomalyContext } from "@/contexts/anomaly-provider";
 import { COLLECTION_MONTHS } from "@/lib/computation/reshape-curves";
 import {
   pivotCurveData,
-  addAverageSeries,
+  type PivotedPoint,
 } from "@/components/charts/pivot-curve-data";
 import { useCurveChartState } from "@/components/charts/use-curve-chart-state";
 import { CurveTooltip, CHART_COLORS } from "@/components/charts/curve-tooltip";
@@ -90,20 +90,49 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
     if (chartLoadRef) chartLoadRef.current = restoreChartState;
   }, [chartSnapshotRef, chartLoadRef, getChartSnapshot, restoreChartState]);
 
-  // Pivot data for Recharts flat format
+  // Phase 38 CHT-01: derive the user-visible subset of curves. visibleBatchKeys
+  // is positional ("batch_0", "batch_1", ...) against sortedCurves index order.
+  // maxAge, the partner-average, and the pivot-month clipping ALL key off this
+  // subset so the x-axis domain + avg line stay inside currently-displayed
+  // vintages and don't overshoot into empty future-age whitespace.
+  const visibleCurves = useMemo(() => {
+    const visibleSet = new Set(visibleBatchKeys);
+    return sortedCurves.filter((_, i) => visibleSet.has(`batch_${i}`));
+  }, [sortedCurves, visibleBatchKeys]);
+
+  // Limit x-axis ticks to the oldest CURRENTLY-DISPLAYED batch's age so the
+  // chart doesn't stretch into empty space on the right.
+  const maxAge = Math.max(...visibleCurves.map((c) => c.ageInMonths), 1);
+  const collectionMonthsTicks = COLLECTION_MONTHS.filter((m) => m <= maxAge);
+
+  // Pivot data for Recharts flat format. Pivot is keyed to ALL sortedCurves
+  // so Line components (rendered from sortedCurves.map) can continue to toggle
+  // via the `hide` prop and keep stable `batch_${i}` references.
   const { data: pivotedRaw, keyMap } = useMemo(
     () => pivotCurveData(sortedCurves, metric),
     [sortedCurves, metric],
   );
 
-  // Optionally add average series
-  const pivotedData = useMemo(
-    () =>
-      showAverage
-        ? addAverageSeries(pivotedRaw, sortedCurves)
-        : pivotedRaw,
-    [pivotedRaw, showAverage, sortedCurves],
-  );
+  // Optionally add the partner-average series scoped to the currently-visible
+  // batch keys only, then clip the dataset to maxAge so the avg line stops at
+  // the oldest visible vintage (no phantom tail past visible data).
+  const pivotedData = useMemo(() => {
+    const withAvg = showAverage
+      ? pivotedRaw.map<PivotedPoint>((point) => {
+          let sum = 0;
+          let count = 0;
+          for (const key of visibleBatchKeys) {
+            const val = point[key];
+            if (val !== undefined) {
+              sum += val;
+              count += 1;
+            }
+          }
+          return { ...point, __avg__: count > 0 ? sum / count : undefined };
+        })
+      : pivotedRaw;
+    return withAvg.filter((p) => p.month <= maxAge);
+  }, [pivotedRaw, showAverage, visibleBatchKeys, maxAge]);
 
   // Build ChartConfig for shadcn ChartContainer
   const chartConfig = useMemo(() => {
@@ -197,11 +226,6 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
       </DataPanel>
     );
   }
-
-  // Limit x-axis ticks to the oldest batch's age so the chart doesn't
-  // stretch into empty space on the right.
-  const maxAge = Math.max(...sortedCurves.map((c) => c.ageInMonths), 1);
-  const collectionMonthsTicks = COLLECTION_MONTHS.filter((m) => m <= maxAge);
 
   // Metric-toggle cluster drives the UI-04 view switch. Toggling between
   // Recovery Rate % and Dollars Collected updates the chart data, Y-axis
