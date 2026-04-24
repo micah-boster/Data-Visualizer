@@ -35,7 +35,9 @@ Verification: walk through every column in root-columns.ts and account-config.ts
 
 Captured during v4.5 "Hardening" milestone planning as a seed example of the class of minor bugs systematic QA will surface. Representative case for:
 
-- **Phase 39 (Security & Data Correctness Review)** — a real data-correctness bug to use as a test case for the review methodology
-- **Phase 41 (Behavioral QA)** — first concrete entry in `docs/QA-SCRIPT.md` when that living checklist is created
+- **v4.5 Phase 41 — Data Correctness Audit** — the canonical seed bug (DCR-01). The fix shape (per-column aggregation strategy on column definitions + formatter reuse) becomes the pattern the rest of the audit tests against.
+- **v5.5 Phase 50 — Behavioral QA from Usage** — first concrete entry in `docs/QA-SCRIPT.md` when that living checklist is created from real MBR-prep workflows
+
+**Phase-number note:** Milestone structure as of 2026-04-21: v4.1 = 38-40, v4.5 = 41-42 (43-44 reserved slack), v5.0 = 45-49, v5.5 = 50-51, v6.0 = 52-57. v4.5 was originally reserved at 41-44 as a placeholder; it was retooled on 2026-04-21 into a tight correctness+security foundation (41-42), with behavioral QA and tech-debt sweep moving to the new v5.5 milestone.
 
 **Do NOT fix now.** Wait until phase 37 ships and v4.5 kicks off. Fixing inline would bloat phase 37's scope and skip the systematic audit this bug was meant to seed.

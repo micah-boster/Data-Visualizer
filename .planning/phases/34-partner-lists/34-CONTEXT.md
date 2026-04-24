@@ -64,7 +64,7 @@ Users can create, manage, and apply named partner groupings to focus the table a
 <deferred>
 ## Deferred Ideas
 
-- **PRODUCT_TYPE and REVENUE_BAND attribute filters** — not in `src/lib/columns/config.ts` today. Requires upstream data-pipeline work (Snowflake column additions or derived-band product decision on what the bucket boundaries should be). Candidates to pair with Phase 38 (Scorecard Ingestion) or a dedicated attribute-enrichment phase. Filter UI built in Phase 34 should accept additional attributes additively.
+- **PRODUCT_TYPE and REVENUE_BAND attribute filters** — not in `src/lib/columns/config.ts` today. PRODUCT_TYPE is addressed directly by v4.1 Phase 39 (Partner Config Module), which introduces per-partner `productType` config consumed by `PartnerListFilters`. REVENUE_BAND remains deferred (requires upstream data-pipeline work or a derived-band product decision on bucket boundaries). Filter UI built in Phase 34 should accept additional attributes additively.
 
 </deferred>
 
