@@ -1,9 +1,9 @@
 ---
-status: complete
+status: resolved
 phase: 27-typography-and-information-hierarchy
 source: [27-01-SUMMARY.md, 27-02-SUMMARY.md, 27-03-SUMMARY.md, 27-04-SUMMARY.md, 27-05-SUMMARY.md, 27-06-SUMMARY.md]
 started: 2026-04-17T22:48:16Z
-updated: 2026-04-17T22:48:16Z
+updated: 2026-04-23T00:00:00Z
 ---
 
 ## Current Test
@@ -18,9 +18,8 @@ result: pass
 
 ### 2. /tokens — Numeric variants in-situ demo
 expected: On /tokens, a demo shows (a) a KPI-style card with uppercase overline label, a large display-numeric value, and a small colored delta, and (b) a three-row block of right-aligned numbers like 1,234,567.89 / 987,654.32 / 4,321.10 that visibly line up at the decimal point (tabular alignment, JetBrains Mono).
-result: issue
-observed: "In (b), the numbers are left-aligned and the decimals don't line up. Leading-space padding in the source is collapsed by HTML; without text-right, tabular-nums can't align decimals across rows of different widths."
-diagnosis: "src/components/tokens/type-specimen.tsx:210-212 — three rows use className='text-body-numeric' with leading whitespace in text content ('  987,654.32'). HTML collapses leading spaces so rows render at the container's left edge. tabular-nums requires right-alignment (or a fixed right edge) to visually align decimal points across varying-width numbers. Fix: add 'text-right' to each row (or to the parent container). Point of the demo is tabular alignment, so text-right is correct."
+result: pass
+resolved_by: 27-07 (commit 593a313) — text-right applied to parent inset container, cosmetic leading spaces dropped from rows 2/3
 
 ### 3. KPI summary cards — tabular alignment + state colors
 expected: On the main page, the KPI cards at the top show large numeric values in JetBrains Mono with tabular (column-aligned) digits. Each card's trend delta (e.g. ▲ 4.2%) is green for positive and red for negative using the success/error token colors — and those greens/reds match the greens/reds used elsewhere (table trend arrows).
@@ -67,8 +66,8 @@ note: |
 ## Summary
 
 total: 10
-passed: 9 (1 by code inspection — Test 10)
-issues: 1
+passed: 10 (1 by code inspection — Test 10; Test 2 resolved by 27-07)
+issues: 0
 pending: 0
 skipped: 0
 deferred: 1 (Test 10 — live re-verification pending ACCOUNT_TYPE filter fix)
@@ -76,6 +75,8 @@ deferred: 1 (Test 10 — live re-verification pending ACCOUNT_TYPE filter fix)
 ## Gaps
 
 ### Gap #1: /tokens numeric-variants demo — rows left-aligned, decimals don't align
+status: resolved
+resolved_by: 27-07 (commit 593a313, 2026-04-17)
 source_test: 2
 surface: /tokens — Numeric variants (in-situ) section, three-row inset block
 file: src/components/tokens/type-specimen.tsx:209-213
