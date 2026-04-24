@@ -177,8 +177,16 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
       const mouseY = event.clientY - rect.top;
       const chartHeight = rect.height;
 
-      // Collect all visible line values at this data point
-      const entries = visibleBatchKeys
+      // Phase 38 CHT-02: include the partner-average series in proximity
+      // candidates when it's visible, so hovering near the avg line surfaces
+      // its tooltip entry alongside batch lines. __avg__ is not in
+      // visibleBatchKeys (that set tracks user-selected batch curves only).
+      const keysForProximity = showAverage
+        ? [...visibleBatchKeys, "__avg__"]
+        : visibleBatchKeys;
+
+      // Collect all visible line values at this data point.
+      const entries = keysForProximity
         .map((key) => ({ key, value: dataPoint[key] as number | undefined }))
         .filter((e): e is { key: string; value: number } => e.value != null);
 
@@ -205,7 +213,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
       }
       setHoveredLineKey(closest.key);
     },
-    [visibleBatchKeys, pivotedData],
+    [visibleBatchKeys, pivotedData, showAverage],
   );
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
