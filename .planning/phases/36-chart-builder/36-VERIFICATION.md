@@ -1,8 +1,9 @@
 ---
 phase: 36-chart-builder
 verified: 2026-04-23T00:00:00Z
-status: human_needed
-score: 11/11 requirements accounted for (automated), 4/4 Success Criteria satisfied at code layer (visual parity + interactive flows require human UAT)
+status: passed
+human_uat_signoff: "2026-04-23 — user formally signed off CHRT-06/09/11/13 (\"i formally sign off / verify / bless / approve\")"
+score: 11/11 requirements satisfied (automated evidence + human UAT sign-off); 4/4 Success Criteria satisfied
 re_verification: null
 requirement_coverage:
   CHRT-03:
@@ -15,7 +16,7 @@ requirement_coverage:
     status: satisfied
     evidence: "src/components/charts/generic-chart.tsx:44,450-527 — BarChart variant with <Cell> per-bar color cycling for single-series; barChartVariantSchema carries series field (src/lib/views/schema.ts:82-89)"
   CHRT-06:
-    status: satisfied_needs_human_uat
+    status: satisfied
     evidence: "src/components/charts/collection-curve-chart.tsx:349 lines (unchanged renderer core, extended with chartTypeSelector + presetMenu actions slots); ChartPanel dispatches to CollectionCurveChart when definition.type === 'collection-curve'. Visual parity preserved at code level, cannot prove pixel-identical output via grep."
   CHRT-07:
     status: satisfied
@@ -30,13 +31,13 @@ requirement_coverage:
     status: satisfied
     evidence: "src/hooks/use-chart-presets.ts:77-93 — savePreset deep-copies definition via structuredClone. SavePresetPopover composes inside PresetMenu (save-preset-popover.tsx + preset-menu.tsx). Dup-name flow with Enter/Replace recipe."
   CHRT-11:
-    status: satisfied_needs_human_uat
+    status: satisfied
     evidence: "src/components/charts/preset-menu.tsx:187 lines — Presets ▾ dropdown; one-click apply via handleApply dispatches structuredClone(preset.definition). ChartPanel.handlePresetApply routes through chartLoadRef for collection-curve branch (Pitfall 9 sync). Interactive flow (built-in + user apply + delete with sonner undo + back-to-preset from generic) requires human UAT."
   CHRT-12:
     status: satisfied
     evidence: "src/lib/chart-presets/defaults.ts:25-33 — BUILTIN_PRESETS = [{ id: 'builtin:collection-curves', locked: true, definition: DEFAULT_COLLECTION_CURVE }]. Reference-equality link smoke-asserted (chart-presets.smoke.ts 9 assertions pass). PresetMenu renders built-ins with Lock icon above user presets."
   CHRT-13:
-    status: satisfied_needs_human_uat
+    status: satisfied
     evidence: "src/components/data-display.tsx:372 chartDefinition state; lines 415-425 hydrate on view load from snapshot.chartState; lines 662-667 capture on view save branching on chartDefinition.type (Pitfall 8 two-snapshot resolution). Schema-level round-trip proven via smoke:migrate-chart (11 assertions). End-to-end save/reload cycle requires human UAT."
 must_haves_verified:
   count: 26
