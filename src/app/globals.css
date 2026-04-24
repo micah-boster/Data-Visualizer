@@ -713,11 +713,16 @@
    Caps the expanded chart container so the table is usable on every
    viewport. The original CHT-04 plan gated this to @media max-height:900px,
    but at 1080p+ monitors the chart grew to its intrinsic content height
-   (~640px) and squeezed the table to ~280px. clamp(300px, 48vh, 560px)
-   keeps the chart generous on tall monitors, half-viewport on mid screens,
-   and ≥300px on shorter laptops. Per 38-RESEARCH Pitfall 8 the cap lives
-   on the INNER chart container (`overflow-hidden > shrink-0`), never the
-   grid row, to avoid a grid ↔ child fight that clips mid-expand. */
+   (~640px) and squeezed the table to ~280px.
+
+   The cap wraps a compound region: at root it holds the cross-partner chart;
+   at partner-drill it holds the KPI strip + Collection Curves chart; at
+   batch-drill it holds the batch curve panel. 560px was tight enough at
+   partner-drill that the chart SVG's bottom (x-axis labels) clipped under
+   the `overflow: hidden` parent. clamp(360px, 60vh, 680px) gives enough
+   headroom for KPI+chart at partner view while still leaving the table
+   useful. Per 38-RESEARCH Pitfall 8 the cap lives on the INNER chart
+   container (`overflow-hidden > shrink-0`), never the grid row. */
 .chart-laptop-cap {
-  max-height: clamp(300px, 48vh, 560px);
+  max-height: clamp(360px, 60vh, 680px);
 }
