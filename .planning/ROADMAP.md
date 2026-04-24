@@ -86,7 +86,7 @@
 **Features (Phases 34-37, carried from v3.5):**
 - [x] **Phase 34: Partner Lists** — Named partner groupings for filtering (completed 2026-04-18)
 - [x] **Phase 35: Chart Schema & Migration** — ChartDefinition type, backward-compatible view migration (completed 2026-04-19)
-- [ ] **Phase 36: Chart Builder** — Generic renderer + builder UI, collection curves as preset
+- [x] **Phase 36: Chart Builder** — Generic renderer + builder UI, collection curves as preset (completed 2026-04-24)
 - [x] **Phase 37: Metabase SQL Import** — Parse SQL, map to app config, preview and apply (3/3 plans — parser/mapper foundation + wizard UI + apply pipeline with 5-round defect closure, shipped 2026-04-23)
 
 ## Progress
@@ -108,7 +108,7 @@
 | 33. Accessibility Audit | 5/5 | Complete    | 2026-04-23 | - |
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
-| 36. Chart Builder | 4/5 | In Progress|  | - |
+| 36. Chart Builder | 5/5 | Complete   | 2026-04-24 | - |
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
 | 38. Polish + Correctness Pass | v4.1 | 0/TBD | Planned | - |
 | 39. Partner Config Module | v4.1 | 0/TBD | Planned | - |
