@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v4.1
 milestone_name: Feedback-Driven Polish
-status: not_started
-last_updated: "2026-04-23T00:00:00.000Z"
+status: in_progress
+last_updated: "2026-04-24T04:44:53.583Z"
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 15
+  completed_plans: 2
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 38 (Polish + Correctness Pass) NOT STARTED — v4.1 activated 2026-04-23 after v4.0 shipped. Full v4.1 scope defined in [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md): Phase 38 bundles 18 feedback items (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01); Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) run in parallel after Phase 38.
-Plan: Not yet scoped. Next step: `/gsd:discuss-phase 38` to capture implementation decisions, then `/gsd:plan-phase 38` for the ~4-5 plan groupings (branding/sidebar, columns + formatting, chart correctness + KPI, filters + layout, Metabase Import polish).
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 not yet started. No Phase 38 plans, context, or research exist yet.
-Last activity: 2026-04-23 — v4.1 milestone activated: top-level ROADMAP.md gains Phase 38/39/40 detail sections; PROJECT.md Current Milestone flipped to v4.1; STATE.md reset for new milestone. v4.0 marked ✅ shipped. Prior session (2026-04-23): Phase 37 closed via continuation agent after 5 defect rounds on 37-03 human-verify gate; Phase 27 UAT close-out via 27-07-PLAN.md retroactively brought counters to 105/105.
+Phase: 38 (Polish + Correctness Pass) IN PROGRESS — v4.1 activated 2026-04-23 after v4.0 shipped. Full v4.1 scope defined in [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md): Phase 38 bundles 18 feedback items (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01); Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) run in parallel after Phase 38.
+Plan: Phase 38 has 5 plans scoped; 2 complete (38-01 sidebar branding, 38-02 columns + formatting). Next: 38-03 (chart correctness + KPI polish), 38-04 (KPI cascade — in-flight parallel wave), 38-05 (filters/layout + Metabase Import).
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 in progress — 38-01 (POL-01/POL-02) and 38-02 (POL-03/POL-04/POL-05/POL-06) shipped 2026-04-24.
+Last activity: 2026-04-24 — 38-02 (columns + formatting polish) completed: identity-column toggle lock removed, formatPercentage band rule (2 below 10 / 1 at/above 10), heatmap tooltip, header truncation with title attribute. 4 requirements closed (POL-03..06). 4 atomic commits. Smoke test covers POL-04 contract.
 
-Progress: [░░░░░░░░░░░░░░░░░░░░] 0/TBD plans (v4.1 not yet planned)
+Progress: [██░░░░░░░░░░░░░░░░░░] 2/15 plans (v4.1 Phase 38 underway)
 
 ## Shipped Milestones
 
@@ -274,6 +274,9 @@ Progress: [░░░░░░░░░░░░░░░░░░░░] 0/TBD p
 - [Phase 37-03]: 5-defect-round closure under single plan scope — Rounds 1 (dim promotion) + 2a (exhaustive hide) + 2b (fixture-to-data) + 3 (toast geometry) + 4 (non-repro smoke) + 5 (enum validation) all landed as atomic per-defect commits under 37-03 rather than spilling into a Phase 38 plan. Human-verify gate stayed open until every user-reported defect was reproducible-then-green in the live app. Pattern proves the human-verify checkpoint is the appropriate boundary for 'scope within plan' defect closure — Tasks 1-2 shipped as written, human-verify surfaced the gaps that automated guards couldn't catch.
 - [Phase 27-07]: Tabular-alignment demo recipe locked: text-right on parent container + tabular-nums baked into text-body-numeric + plain numeric text content. Leading whitespace in text nodes is dead code (HTML collapses it) — dropped for source clarity.
 - [Phase 27-07]: Retroactive SUMMARY close-out pattern: when a fix+plan land together in a single commit during a UAT close-out session (593a313), author the formal SUMMARY later via the standard execute-plan flow so STATE/ROADMAP progress counters stay accurate. Phase 27 now has 7/7 plans with matching SUMMARY files.
+- [Phase 38]: POL-03 identitySet retained as data flag for preset/width/filter semantics (Pitfall 9); removed only as toggle-guard
+- [Phase 38]: POL-04 formatPercentage signature changed from decimals: number = 1 to decimals?: number — band-based default (2 below 10, 1 at/above 10); existing explicit callers preserved
+- [Phase 38]: POL-06 native title attribute chosen over Tooltip primitive for column headers — cheaper on re-render, no drag/hover pointer conflict; labels derived from typeof header === 'string' with column.id fallback
 
 ### Pending Todos
 
@@ -334,4 +337,5 @@ Resume file: None
 | Phase 33 P05 | ~75min (inc. human-verify) | 3 tasks | 6 files |
 | Phase 37 P03 | ~4 days elapsed (3 plan tasks + 5 defect rounds) | 3 tasks + 5 rounds | 14 files + 2 new | 2026-04-23 |
 | Phase 27 P07 | <2 min | 1 tasks | 1 files |
+| Phase 38 P02 | 18min | 4 tasks | 5 files |
 
