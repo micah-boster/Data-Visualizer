@@ -1,14 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v4.1
+milestone: v1.0
 milestone_name: Feedback-Driven Polish
-status: in_progress
-last_updated: "2026-04-24T04:44:53.583Z"
+status: unknown
+last_updated: "2026-04-24T04:47:44.850Z"
 progress:
-  total_phases: 3
-  completed_phases: 0
-  total_plans: 15
-  completed_plans: 2
+  total_phases: 38
+  completed_phases: 37
+  total_plans: 110
+  completed_plans: 109
+# v4.1 progress — phase 38: 4/5 plans complete (38-01..04). Phase 38 not counted into completed_phases until 38-05 ships.
 ---
 
 # Project State
@@ -23,11 +24,11 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 ## Current Position
 
 Phase: 38 (Polish + Correctness Pass) IN PROGRESS — v4.1 activated 2026-04-23 after v4.0 shipped. Full v4.1 scope defined in [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md): Phase 38 bundles 18 feedback items (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01); Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) run in parallel after Phase 38.
-Plan: Phase 38 has 5 plans scoped; 2 complete (38-01 sidebar branding, 38-02 columns + formatting). Next: 38-03 (chart correctness + KPI polish), 38-04 (KPI cascade — in-flight parallel wave), 38-05 (filters/layout + Metabase Import).
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 in progress — 38-01 (POL-01/POL-02) and 38-02 (POL-03/POL-04/POL-05/POL-06) shipped 2026-04-24.
-Last activity: 2026-04-24 — 38-02 (columns + formatting polish) completed: identity-column toggle lock removed, formatPercentage band rule (2 below 10 / 1 at/above 10), heatmap tooltip, header truncation with title attribute. 4 requirements closed (POL-03..06). 4 atomic commits. Smoke test covers POL-04 contract.
+Plan: Phase 38 has 5 plans scoped; 4 complete (38-01 sidebar branding, 38-02 columns + formatting, 38-03 chart correctness, 38-04 KPI cascade). Next: 38-05 (filters/layout + Metabase Import).
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 in progress — 38-01 (POL-01/POL-02), 38-02 (POL-03/POL-04/POL-05/POL-06), 38-03 (CHT-01..04), 38-04 (KPI cascade) shipped 2026-04-24.
+Last activity: 2026-04-24 — 38-01 (sidebar branding + collapsible Partners) completed: Bounce arc SVG inlined into sidebar header with currentColor theming (POL-01); Partners SidebarGroup gains chevron toggle + grid-rows collapse + `partners-list-collapsed` localStorage key with inverted default (POL-02). 2 atomic commits. Dev-server HTML render verified on :3001.
 
-Progress: [██░░░░░░░░░░░░░░░░░░] 2/15 plans (v4.1 Phase 38 underway)
+Progress: [█████░░░░░░░░░░░░░░░] 4/15 plans (v4.1 Phase 38 underway)
 
 ## Shipped Milestones
 
@@ -277,6 +278,18 @@ Progress: [██░░░░░░░░░░░░░░░░░░] 2/15 pl
 - [Phase 38]: POL-03 identitySet retained as data flag for preset/width/filter semantics (Pitfall 9); removed only as toggle-guard
 - [Phase 38]: POL-04 formatPercentage signature changed from decimals: number = 1 to decimals?: number — band-based default (2 below 10, 1 at/above 10); existing explicit callers preserved
 - [Phase 38]: POL-06 native title attribute chosen over Tooltip primitive for column headers — cheaper on re-render, no drag/hover pointer conflict; labels derived from typeof header === 'string' with column.id fallback
+- [Phase 38]: [Phase 38-01]: Inlined bounce-mark.svg path directly into AppSidebar; next/image does not propagate currentColor into SVG fills. Inline <svg> with fill="currentColor" is the only path to theme-adaptive rendering — canonical for future brand-mark additions.
+- [Phase 38]: [Phase 38-01]: New localStorage key `partners-list-collapsed` with INVERTED default vs charts-expanded — null (first visit) = collapsed; storage 'true' = collapsed; 'false' = expanded. Locks CONTEXT requirement that first-load should not overwhelm with a long partner list.
+- [Phase 38]: [Phase 38-01]: shadcn Sidebar in this repo uses Base UI useRender (NOT Radix asChild). Correct override is `<SidebarGroupLabel render={<button ... />} />`, not `<SidebarGroupLabel asChild><button/></SidebarGroupLabel>`. Canonical for any future shadcn-Sidebar primitive swap.
+- [Phase 38-04]: selectCascadeTier exported from compute-kpis.ts as single source of truth — cascade.smoke.ts and KpiSummaryCards RATE_CARDS catalog both consume the same pure helper; four tiers hard-coded in one place
+- [Phase 38-04]: TrendingData.suppressDelta computed on ALL return paths including early-returns (rows.length < 3) — KpiSummaryCards can make per-card decisions without falling back to legacy insufficientHistory shortcut; table-footer cells still read the deprecated boolean so it's retained
+- [Phase 38-04]: 3mo rate denominator matched to horizon (placed3mo accumulator gated on ageMonths >= 3) rather than totalPlaced — aligns with how the 3-mo numerator is computed; unlike 6mo/12mo where Snowflake backfills zero collection for young batches, the explicit 3mo gate needs an explicit matching denominator
+- [Phase 38-04]: DEFAULT_TREND_EXPLANATION = 'vs 3-batch rolling avg' lives in stat-card.tsx as a module constant; callers inherit it via default trendLabel prop. Phase 40 projected-curve baseline overrides per-card via the prop; no caller-side edits needed for the default path
+- [Phase 38-04]: Legacy-days age-coercion inlined in both compute-kpis.ts and compute-trending.ts with matching TODO comments for Plan 05 shared extraction — Phase 38 Plan 05 already owns the FLT-01 age filter so the shared helper lands naturally there
+- [Phase 38]: [Phase 38-03]: Visible-scope chart derivation — visibleCurves memo drives maxAge + clip + avg-series; avg-series computed inline in CollectionCurveChart (not addAverageSeries) to keep pivot-curve-data.ts stable for future callers
+- [Phase 38]: [Phase 38-03]: Render-ASAP gate — curves.length >= 2 dropped to >= 1 on BOTH expanded chart branch and collapsed-sparkline branch; single-batch partners render the chart from day one
+- [Phase 38]: [Phase 38-03]: Laptop-viewport cap recipe — named-class pair (chart-laptop-cap + table-laptop-floor) in globals.css @media (max-height: 900px); applied to inner chart container only (Pitfall 8), never the grid-rows-[1fr] row
+- [Phase 38]: [Phase 38-03]: Partner-average proximity key — [...visibleBatchKeys, '__avg__'] is the proximity-candidate list; __avg__ stays OUT of visibleBatchKeys since that set tracks user-toggled batch curves only
 
 ### Pending Todos
 
@@ -338,4 +351,7 @@ Resume file: None
 | Phase 37 P03 | ~4 days elapsed (3 plan tasks + 5 defect rounds) | 3 tasks + 5 rounds | 14 files + 2 new | 2026-04-23 |
 | Phase 27 P07 | <2 min | 1 tasks | 1 files |
 | Phase 38 P02 | 18min | 4 tasks | 5 files |
+| Phase 38 P01 | 22min | 3 tasks | 2 files |
+| Phase 38 P03 | 7 min | 3 tasks | 5 files |
+| Phase 38 P04 | ~7 min | 4 + auto-approved checkpoint tasks | 7 modified / 3 created files |
 
