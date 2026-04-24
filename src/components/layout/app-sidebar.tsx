@@ -61,8 +61,28 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg">
+              {/*
+                POL-01: Bounce arc mark inlined from public/bounce-mark.svg so
+                fill="currentColor" inherits text-primary-foreground in both
+                light and dark modes. next/image does NOT propagate
+                currentColor into SVG fills — inline <svg> is required.
+                viewBox 313x145 (~2.16:1); h-5 gives ~20px mark height inside
+                the existing 32px square slot without clipping the title.
+              */}
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <span className="text-title">B</span>
+                <svg
+                  viewBox="0 0 313 145"
+                  aria-hidden="true"
+                  className="h-5 w-auto"
+                  fill="currentColor"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M313 18.0004C242.86 18.0004 186 74.8605 186 145.001H168C168 103.579 134.421 70.0007 93 70.0007C51.5787 70.0007 18 103.579 18 145.001H0C0 93.6382 41.6375 52.0007 93 52.0007C128.371 52.0007 159.13 71.7471 174.855 100.817C193.541 42.3425 248.326 0.000366211 313 0.000366211V18.0004Z"
+                  />
+                </svg>
               </div>
               <div className="grid flex-1 text-left leading-tight">
                 <span className="truncate text-title">Bounce</span>
