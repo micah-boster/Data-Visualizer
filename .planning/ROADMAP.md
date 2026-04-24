@@ -106,7 +106,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 5/5 | Complete    | 2026-04-24 | - |
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
-| 38. Polish + Correctness Pass | v4.1 | 0/5 | Not Started | - |
+| 38. Polish + Correctness Pass | 1/5 | In Progress|  | - |
 | 39. Partner Config Module | v4.1 | 0/TBD | Not Started | - |
 | 40. Projected Curves v1 | v4.1 | 0/TBD | Not Started | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
@@ -146,7 +146,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 
 ### Phase 38: Polish + Correctness Pass
 
-**Goal**: Close 18 small-but-high-friction issues in one batched phase — branding, sidebar UX, column lock, number formatting, header truncation, chart correctness (axis + avg truncation + hover + legend scroll), KPI clarity (graduated age-aware cascade + delta labels + commitment rate + rolling-avg suppression), filter fixes (date range, tooltips, partner dedup), laptop layout, and Metabase Import chart-type override
+**Goal**: Close 17 small-but-high-friction issues in one batched phase — branding, sidebar UX, column lock, number formatting, header truncation, chart correctness (axis + avg truncation + hover + legend scroll), KPI clarity (graduated age-aware cascade + delta labels + rolling-avg suppression), filter fixes (date range, tooltips, partner dedup), laptop layout, and Metabase Import chart-type override. KPI-03 (matching-horizon commitment rate) deferred to Phase 41 pending new Snowflake column.
 **Depends on**: v4.0 complete (design system, surface tokens, StatCard pattern). MBI-01 also depends on Phase 36 (Chart Builder) for the `ChartBuilderToolbar` segmented control that MBI-01 mirrors.
 **Effort**: Medium (many small edits, mostly 1-file each; chart/table layout fix may need browser iteration)
 **Requirements**: POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01
@@ -163,7 +163,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
   10. Chart and table remain simultaneously usable on laptop-height viewports when chart is expanded
   11. KPI cards render a graduated cascade based on max batch age in scope: `< 3mo` → "Rate since inception" only; `3-6mo` → "3mo + since inception"; `6-12mo` → "3mo + 6mo"; `≥ 12mo` → "6mo + 12mo"; non-applicable cards are not rendered
   12. KPI delta labels explicitly state the comparison baseline
-  13. 6mo and 12mo rate cards display the matching-horizon commitment rate as a secondary line (only when the card itself is shown per the cascade)
+  13. ~~6mo and 12mo rate cards display the matching-horizon commitment rate as a secondary line (only when the card itself is shown per the cascade)~~ *Deferred to Phase 41 — requires new Snowflake column (`ACCOUNTS_WITH_PLANS_AT_{6,12}_MONTH`); see `.planning/phases/38-polish-correctness-pass/38-CONTEXT.md`.*
   14. Rolling-average deltas are suppressed when the cohort is too young to support a meaningful rolling avg at the card's horizon — no "vs N/A" or misleading 0% deltas
   15. Batch filter is replaced with a date-range filter
   16. Each filter has an inline help tooltip
