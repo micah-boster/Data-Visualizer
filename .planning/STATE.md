@@ -3,13 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-24T04:47:44.850Z"
+last_updated: "2026-04-24T05:07:47.680Z"
 progress:
-  total_phases: 38
-  completed_phases: 37
+  total_phases: 40
+  completed_phases: 38
   total_plans: 110
-  completed_plans: 109
-# v4.1 progress — phase 38: 4/5 plans complete (38-01..04). Phase 38 not counted into completed_phases until 38-05 ships.
+  completed_plans: 110
 ---
 
 # Project State
@@ -19,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-23)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** v4.1 Feedback-Driven Polish — activating Phase 38 (polish + correctness pass) discussion
+**Current focus:** v4.1 Feedback-Driven Polish — Phase 38 COMPLETE; Phase 39 (Partner Config Module) + Phase 40 (Projected Curves v1) queued next
 
 ## Current Position
 
-Phase: 38 (Polish + Correctness Pass) IN PROGRESS — v4.1 activated 2026-04-23 after v4.0 shipped. Full v4.1 scope defined in [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md): Phase 38 bundles 18 feedback items (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01); Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) run in parallel after Phase 38.
-Plan: Phase 38 has 5 plans scoped; 4 complete (38-01 sidebar branding, 38-02 columns + formatting, 38-03 chart correctness, 38-04 KPI cascade). Next: 38-05 (filters/layout + Metabase Import).
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 in progress — 38-01 (POL-01/POL-02), 38-02 (POL-03/POL-04/POL-05/POL-06), 38-03 (CHT-01..04), 38-04 (KPI cascade) shipped 2026-04-24.
-Last activity: 2026-04-24 — 38-03 (chart correctness + laptop layout) completed: visible-scope x-axis + avg-series clip to currently-displayed vintages (CHT-01), partner-avg joins proximity hover (CHT-02), curve legend gains max-h-[40vh] scroll (CHT-03), @media (max-height: 900px) laptop caps via chart-laptop-cap + table-laptop-floor (CHT-04), render-ASAP gate (drop `curves.length >= 2` on both expanded chart and collapsed sparkline branches). 4 requirements closed. 3 atomic commits + smoke test for maxAge derivation.
+Phase: 38 (Polish + Correctness Pass) COMPLETE 2026-04-24 — all 5 plans shipped. Full v4.1 scope defined in [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md): Phase 38 bundles 18 feedback items (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01) — all closed. Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) run in parallel next.
+Plan: Phase 38 5/5 plans complete (38-01 sidebar branding, 38-02 columns + formatting, 38-03 chart correctness, 38-04 KPI cascade, 38-05 filters + Metabase Import).
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24 — all 5 plans shipped in a single-day sprint.
+Last activity: 2026-04-24 — 38-05 (filters + Metabase Import) completed: FLT-01 date-range preset chips (3mo / 6mo / 12mo / All) with saved-view migration + sonner toast + coerceAgeMonths shared helper + ?age= URL param + ViewSnapshot.batchAgeFilter additive-optional field; FLT-02 inline tooltips on each filter label; FLT-03 PARTNER_NAME column auto-hide when active partner list has 1 partner (respects user manual toggle via lastAppliedHidePartnerRef); MBI-01 Metabase Import Preview chart-type override segmented control + AxisPicker x2 + inferenceReason helper text + pure mergeOverride helper. 4 requirements closed (FLT-01/02/03, MBI-01). 4 atomic commits + 3 smoke tests.
 
-Progress: [█████░░░░░░░░░░░░░░░] 4/15 plans (v4.1 Phase 38 underway)
+Progress: [███████████████████░] 5/5 Phase 38 plans (v4.1 Phase 38 COMPLETE)
 
 ## Shipped Milestones
 
@@ -290,6 +289,11 @@ Progress: [█████░░░░░░░░░░░░░░░] 4/15 pl
 - [Phase 38]: [Phase 38-03]: Render-ASAP gate — curves.length >= 2 dropped to >= 1 on BOTH expanded chart branch and collapsed-sparkline branch; single-batch partners render the chart from day one
 - [Phase 38]: [Phase 38-03]: Laptop-viewport cap recipe — named-class pair (chart-laptop-cap + table-laptop-floor) in globals.css @media (max-height: 900px); applied to inner chart container only (Pitfall 8), never the grid-rows-[1fr] row
 - [Phase 38]: [Phase 38-03]: Partner-average proximity key — [...visibleBatchKeys, '__avg__'] is the proximity-candidate list; __avg__ stays OUT of visibleBatchKeys since that set tracks user-toggled batch curves only
+- [Phase 38-05]: Pure-helper inline-copy smoke-test pattern for tests of hooks that import next/navigation — matches visible-curves.smoke.ts precedent; TS signatures catch drift on both sides
+- [Phase 38-05]: FLT-01 ?age= URL param is standalone (NOT in FILTER_PARAMS) because it's a value-range predicate, not column-equality; keeps FILTER_PARAMS as the single source of truth for column-equality URL mappings
+- [Phase 38-05]: Legacy-batch-filter toast fires on handleLoadView (user-initiated) only, not sanitizeSnapshot (also runs on hydration); hasLegacyBatchFilter pure export provides explicit detection so sanitizer signature stays stable
+- [Phase 38-05]: FLT-03 auto-hide uses lastAppliedHidePartnerRef transition-tracking rather than a state machine — effect only re-applies on flag transitions, so user's subsequent manual toggle via column picker (POL-03 unlocked identity cols) survives the auto-hide
+- [Phase 38-05]: MBI-01 uses a local 4-button segmented control inside preview-step.tsx (line/scatter/bar/none) rather than reusing ChartTypeSegmentedControl — the shared component carries a 'collection-curve' option Import never produces and would need a 'none' option that leaks Import semantics into the chart-builder
 
 ### Pending Todos
 
@@ -307,8 +311,8 @@ Progress: [█████░░░░░░░░░░░░░░░] 4/15 pl
 
 ## Session Continuity
 
-Last session: 2026-04-23
-Stopped at: Completed 27-07-PLAN.md (retroactive close-out of Phase 27 UAT Gap #1 — `text-right` + leading-whitespace cleanup on `/tokens` numeric-variants three-row inset). Fix itself landed 2026-04-17 in commit 593a313 as part of the UAT close-out session (that commit shipped 27-07-PLAN.md + 27-UAT.md + side-task doc + the one-line-plus-whitespace code fix together); SUMMARY authored 2026-04-23 via the standard execute-plan flow to bring STATE/ROADMAP progress counters to 105/105 plans and give Phase 27 a 7/7 SUMMARY parity. `npm run build` verified clean post-fact (Next.js 16.2.3 Turbopack, TypeScript clean in 3.3s, 5 static pages generated). Prior session (2026-04-23): Closed 37-03 via continuation agent after Micah typed "approved" on the 5-scenario human-verify checkpoint (Scenarios A/B/C/D/E all green in-browser); continuation agent verified all 12 defect-round commits exist, wrote 37-03-SUMMARY.md, updated STATE + ROADMAP + v4.0-REQUIREMENTS. Phase 37 fully plan-complete (3/3). Only remaining v4.0 plan: Phase 36-05 (ChartPanel dispatcher + data-display wiring + human-verify).
+Last session: 2026-04-24
+Stopped at: Completed 38-05-PLAN.md (FLT-01 date-range preset chips + saved-view migration, FLT-02 filter tooltips, FLT-03 PARTNER_NAME auto-hide, MBI-01 Metabase Import chart-type override). Phase 38 now 5/5 plans complete — all 18 v4.1 feedback items closed (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01). 4 atomic commits (ba7ea92, fd94c8f, 7db7193, 68cf359) + 3 smoke tests (use-filter-state.smoke.ts, use-saved-views.smoke.ts, override.smoke.ts) all printing OK. `tsc --noEmit` clean on all touched files; `check:tokens` clean. Pre-existing `npm run build` Tailwind v4 / Turbopack CSS issue unchanged (documented in deferred-items.md). Phase 39 (Partner Config Module) and Phase 40 (Projected Curves v1) queued next — both already have RESEARCH + CONTEXT docs landed in parallel prep commits (a0ac669 / abf53a4).
 Resume file: None
 
 ## Performance Metrics
@@ -354,4 +358,5 @@ Resume file: None
 | Phase 38 P01 | 22min | 3 tasks | 2 files |
 | Phase 38 P03 | 7 min | 3 tasks | 5 files |
 | Phase 38 P04 | ~7 min | 4 + auto-approved checkpoint tasks | 7 modified / 3 created files |
+| Phase 38 P05 | 12 min | 4 + auto-approved checkpoint tasks | 4 created / 10 modified files |
 

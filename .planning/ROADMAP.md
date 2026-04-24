@@ -8,7 +8,7 @@
 - ✅ **v3.1 Stabilization & Code Quality** — Phases 21-24 (shipped 2026-04-14) — [Archive](milestones/v3.1-ROADMAP.md)
 - ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
 - ✅ **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (shipped 2026-04-24) — [Archive](milestones/v4.0-ROADMAP.md)
-- 🚧 **v4.1 Feedback-Driven Polish** — Phases 38-40 (in progress) — [Roadmap](milestones/v4.1-ROADMAP.md)
+- 🚧 **v4.1 Feedback-Driven Polish** — Phases 38-40 (Phase 38 complete 2026-04-24; 39 + 40 queued) — [Roadmap](milestones/v4.1-ROADMAP.md)
 - 📋 **v4.5 Correctness & Security Foundation** — Phases 41-42 (planned; 43-44 reserved slack) — [Roadmap](milestones/v4.5-ROADMAP.md)
 - 📋 **v5.0 External Intelligence** — Phases 45-49 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
 - 📋 **v5.5 Real-Use Hardening** — Phases 50-51 (planned) — [Roadmap](milestones/v5.5-ROADMAP.md)
@@ -106,7 +106,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 5/5 | Complete    | 2026-04-24 | - |
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
-| 38. Polish + Correctness Pass | 4/5 | In Progress|  | - |
+| 38. Polish + Correctness Pass | 5/5 | Complete   | 2026-04-24 | - |
 | 39. Partner Config Module | v4.1 | 0/TBD | Not Started | - |
 | 40. Projected Curves v1 | v4.1 | 0/TBD | Not Started | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
@@ -140,7 +140,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 **Milestone Goal:** Close the 14 first-week feedback items, enforce `(partner, product)` as the canonical unit of analysis (no cross-product blending), and ship a first-pass projected-curve line the team can benchmark against. Full detail: [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md).
 
 **Phases:**
-- [ ] **Phase 38: Polish + Correctness Pass** — 18 feedback items: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness, KPI cascade, filter fixes, laptop layout, Metabase Import chart-type override
+- [x] **Phase 38: Polish + Correctness Pass** — 18 feedback items: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness, KPI cascade, filter fixes, laptop layout, Metabase Import chart-type override (completed 2026-04-24)
 - [ ] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks)
 - [ ] **Phase 40: Projected Curves v1** — Historical-average-based projection line + optional "vs projected curve" KPI baseline
 
@@ -174,7 +174,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 - [x] 38-02-PLAN.md — Columns + Formatting + Headers (POL-03 identity unlock, POL-04 percentage rule, POL-05 heatmap tooltip, POL-06 header truncation) — Wave 1 ✅ 2026-04-24
 - [x] 38-03-PLAN.md — Chart Correctness + Laptop Layout (CHT-01 visible-scope clip, CHT-02 avg in hover, CHT-03 legend scroll, CHT-04 ≤900px caps) — Wave 1 ✅ 2026-04-24
 - [x] 38-04-PLAN.md — KPI Clarity + KPI-03 Deferral Doc (KPI-01 cascade, KPI-02 delta copy, KPI-04 suppression; KPI-03 doc-only defer to Phase 41) — Wave 1 ✅ 2026-04-24
-- [ ] 38-05-PLAN.md — Filters + Metabase Import Override (FLT-01 date-range chips + migration, FLT-02 tooltips, FLT-03 PARTNER_NAME auto-hide, MBI-01 chart-type override) — Wave 2 (depends on 38-03: shared data-display.tsx surface)
+- [x] 38-05-PLAN.md — Filters + Metabase Import Override (FLT-01 date-range chips + migration, FLT-02 tooltips, FLT-03 PARTNER_NAME auto-hide, MBI-01 chart-type override) — Wave 2 ✅ 2026-04-24
 
 **After Phase 38, kick off simultaneously:**
 - **Phase 39** (Partner Config) — independent, foundational feature
