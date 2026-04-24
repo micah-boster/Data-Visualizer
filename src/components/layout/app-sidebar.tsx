@@ -1,7 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { Users, Bookmark, Trash2, Star, LayoutDashboard, Database } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import {
+  Users,
+  Bookmark,
+  Trash2,
+  Star,
+  LayoutDashboard,
+  Database,
+  ChevronRight,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useSidebarData } from '@/contexts/sidebar-data';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { PartnerListsSidebarGroup } from '@/components/partner-lists/partner-lists-sidebar-group';
@@ -54,6 +63,22 @@ export function AppSidebar() {
   const [importOpen, setImportOpen] = useState(false);
   const { data: queryData } = useData();
   const allRows = queryData?.data ?? [];
+
+  // POL-02: Partners group collapse/expand. Mirrors the charts-expanded
+  // pattern in data-display.tsx (SSR-safe localStorage initializer) but
+  // INVERTS the default — first-ever visit (null in storage) renders
+  // collapsed. Key semantics: storage 'true' = collapsed, 'false' = expanded.
+  const [partnersExpanded, setPartnersExpanded] = useState(() => {
+    if (typeof window === 'undefined') return false; // SSR: collapsed default
+    return localStorage.getItem('partners-list-collapsed') === 'false';
+  });
+  const togglePartners = useCallback(() => {
+    setPartnersExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem('partners-list-collapsed', String(!next));
+      return next;
+    });
+  }, []);
 
   return (
     <Sidebar collapsible="icon">
@@ -113,67 +138,107 @@ export function AppSidebar() {
 
         {/* Partner navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>
-            Partners
+          {/*
+            POL-02: SidebarGroupLabel renders as the collapse/expand toggle.
+            A real <button> is required (not a <div onClick>) so keyboard and
+            screen-reader users can reach it. aria-expanded + aria-controls
+            wire it to the content region below.
+            SidebarGroupLabel is a Base UI useRender component — pass the
+            target element via `render={<button ... />}` (NOT Radix's asChild).
+          */}
+          <SidebarGroupLabel
+            render={
+              <button
+                type="button"
+                onClick={togglePartners}
+                aria-expanded={partnersExpanded}
+                aria-controls="partners-list-region"
+              />
+            }
+            className="w-full cursor-pointer"
+          >
+            <ChevronRight
+              aria-hidden="true"
+              className={cn(
+                'mr-1 h-3.5 w-3.5 transition-transform duration-quick ease-default',
+                partnersExpanded && 'rotate-90',
+              )}
+            />
+            <span>Partners</span>
             {isReady && partners.length > 0 && (
               <span className="ml-auto text-label-numeric text-muted-foreground">
                 {partners.length}
               </span>
             )}
           </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {/* All Partners (root) */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="All Partners"
-                  isActive={drillState.level === 'root'}
-                  aria-current={drillState.level === 'root' ? 'page' : undefined}
-                  onClick={() => navigateToLevel('root')}
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  <span>All Partners</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Loading skeleton */}
-              {!isReady && (
-                <>
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <SidebarMenuItem key={i}>
-                      <SidebarMenuSkeleton showIcon index={i} />
-                    </SidebarMenuItem>
-                  ))}
-                </>
-              )}
-
-              {/* Partner list */}
-              {isReady &&
-                partners.map((p) => (
-                  <SidebarMenuItem key={p.name}>
+          {/*
+            POL-02: Collapsible content region. grid-rows 0fr↔1fr with inner
+            overflow-hidden is the established collapse recipe in this
+            codebase (see data-display.tsx:902-910 charts-expanded).
+          */}
+          <div
+            id="partners-list-region"
+            className={cn(
+              'grid transition-[grid-template-rows] duration-normal ease-default',
+              partnersExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+            )}
+          >
+            <div className="overflow-hidden">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {/* All Partners (root) */}
+                  <SidebarMenuItem>
                     <SidebarMenuButton
-                      tooltip={p.name}
-                      isActive={drillState.partner === p.name}
-                      aria-current={drillState.partner === p.name ? 'page' : undefined}
-                      onClick={() => drillToPartner(p.name)}
+                      tooltip="All Partners"
+                      isActive={drillState.level === 'root'}
+                      aria-current={drillState.level === 'root' ? 'page' : undefined}
+                      onClick={() => navigateToLevel('root')}
                     >
-                      {p.isFlagged ? (
-                        <span
-                          aria-hidden="true"
-                          className="flex h-4 w-4 items-center justify-center"
-                        >
-                          <span className="h-2 w-2 rounded-full bg-brand-purple" />
-                        </span>
-                      ) : (
-                        <Users className="h-4 w-4" aria-hidden="true" />
-                      )}
-                      <span className="truncate">{p.name}</span>
+                      <LayoutDashboard className="h-4 w-4" />
+                      <span>All Partners</span>
                     </SidebarMenuButton>
-                    <SidebarMenuBadge>{p.batchCount}</SidebarMenuBadge>
                   </SidebarMenuItem>
-                ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
+
+                  {/* Loading skeleton */}
+                  {!isReady && (
+                    <>
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <SidebarMenuItem key={i}>
+                          <SidebarMenuSkeleton showIcon index={i} />
+                        </SidebarMenuItem>
+                      ))}
+                    </>
+                  )}
+
+                  {/* Partner list */}
+                  {isReady &&
+                    partners.map((p) => (
+                      <SidebarMenuItem key={p.name}>
+                        <SidebarMenuButton
+                          tooltip={p.name}
+                          isActive={drillState.partner === p.name}
+                          aria-current={drillState.partner === p.name ? 'page' : undefined}
+                          onClick={() => drillToPartner(p.name)}
+                        >
+                          {p.isFlagged ? (
+                            <span
+                              aria-hidden="true"
+                              className="flex h-4 w-4 items-center justify-center"
+                            >
+                              <span className="h-2 w-2 rounded-full bg-brand-purple" />
+                            </span>
+                          ) : (
+                            <Users className="h-4 w-4" aria-hidden="true" />
+                          )}
+                          <span className="truncate">{p.name}</span>
+                        </SidebarMenuButton>
+                        <SidebarMenuBadge>{p.batchCount}</SidebarMenuBadge>
+                      </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </div>
+          </div>
         </SidebarGroup>
 
         {/* Saved views */}
