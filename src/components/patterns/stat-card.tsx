@@ -98,6 +98,12 @@ export interface StatCardProps {
    * expand, or rows that open panels. Static container cards leave this false.
    */
   interactive?: boolean;
+  /**
+   * Trend-line explanation copy shown after the delta percentage
+   * (e.g., "vs 3-batch rolling avg"). Defaults to the KPI-02 locked string;
+   * override when the baseline isn't the 3-batch rolling average.
+   */
+  trendLabel?: string;
   /** Escape hatch for callers that need to nudge chassis classes. */
   className?: string;
 }
@@ -113,7 +119,14 @@ const CARD_BASE =
 const CARD_INTERACTIVE_TRANSITION = 'hover-lift';
 const CARD_STATIC_TRANSITION = 'transition-colors duration-quick ease-default';
 
-const TREND_EXPLANATION = 'vs rolling avg of prior batches';
+/**
+ * Default trend-line explanation copy (Phase 38 KPI-02).
+ *
+ * Locked string — every rolling-avg-baseline card MUST read exactly this.
+ * Consumers that use a different baseline (e.g., "vs projected curve" once
+ * Phase 40 PRJ-04 lands) override via the `trendLabel` prop.
+ */
+const DEFAULT_TREND_EXPLANATION = 'vs 3-batch rolling avg';
 
 function trendColorClass(trend: StatCardTrend): string {
   if (trend.direction === 'flat') return 'text-muted-foreground';
@@ -165,7 +178,13 @@ function LabelRow({
   );
 }
 
-function TrendLine({ trend }: { trend: StatCardTrend }) {
+function TrendLine({
+  trend,
+  trendLabel,
+}: {
+  trend: StatCardTrend;
+  trendLabel?: string;
+}) {
   const colorClass = trendColorClass(trend);
   const arrow = trendArrow(trend.direction);
   const delta = formatDelta(trend);
@@ -180,7 +199,7 @@ function TrendLine({ trend }: { trend: StatCardTrend }) {
       <span aria-hidden>{arrow}</span>
       {delta ? <span>{delta}</span> : null}
       <span className="text-caption text-muted-foreground ml-1">
-        {TREND_EXPLANATION}
+        {trendLabel ?? DEFAULT_TREND_EXPLANATION}
       </span>
     </div>
   );
@@ -217,6 +236,7 @@ export function StatCard(props: StatCardProps) {
     stale,
     comparison,
     interactive = false,
+    trendLabel,
     className,
   } = props;
 
@@ -288,14 +308,18 @@ export function StatCard(props: StatCardProps) {
         <div className="mt-2 grid grid-cols-2 divide-x divide-border">
           <div className="pr-3">
             <div className="text-display-numeric">{value}</div>
-            {trend ? <TrendLine trend={trend} /> : null}
+            {trend ? (
+              <TrendLine trend={trend} trendLabel={trendLabel} />
+            ) : null}
           </div>
           <div className="pl-3">
             <div className="text-display-numeric">{comparison.value}</div>
             <div className="text-caption text-muted-foreground mt-1">
               {comparison.label}
             </div>
-            {comparison.trend ? <TrendLine trend={comparison.trend} /> : null}
+            {comparison.trend ? (
+              <TrendLine trend={comparison.trend} trendLabel={trendLabel} />
+            ) : null}
           </div>
         </div>
       </div>
@@ -312,7 +336,7 @@ export function StatCard(props: StatCardProps) {
       {insufficientData ? (
         <InsufficientTrendLine batchCount={batchCount} />
       ) : trend ? (
-        <TrendLine trend={trend} />
+        <TrendLine trend={trend} trendLabel={trendLabel} />
       ) : null}
     </div>
   );
