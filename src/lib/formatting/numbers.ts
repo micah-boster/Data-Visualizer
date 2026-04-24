@@ -31,27 +31,35 @@ export function formatCurrency(value: number): string {
 }
 
 /**
- * Format as percentage with configurable decimal places.
+ * Format a proportion as a percentage string.
  *
  * Data from Snowflake is in 0-1 range (e.g. 0.55 = 55%), so we multiply
  * by 100 for display.
  *
- * Very small positive values show as "<0.1%" (or appropriate threshold).
- * Very small negative values show as ">-0.1%".
+ * POL-04 rule (Phase 38): when `decimals` is not supplied, auto-pick:
+ *   - |value * 100| < 10  → 2 decimals (e.g., 9.72%)
+ *   - |value * 100| >= 10 → 1 decimal  (e.g., 10.3%)
+ *
+ * Pass an explicit `decimals` to override (e.g., charts that want
+ * whole-number axis ticks).
+ *
+ * Very small positive values show as "<0.01%" (or appropriate threshold).
+ * Very small negative values show as ">-0.01%".
  */
-export function formatPercentage(value: number, decimals: number = 1): string {
+export function formatPercentage(value: number, decimals?: number): string {
   const v = toNum(value) * 100;
-  const threshold = Math.pow(10, -decimals);
+  const effectiveDecimals = decimals ?? (Math.abs(v) < 10 ? 2 : 1);
+  const threshold = Math.pow(10, -effectiveDecimals);
 
   if (v > 0 && v < threshold) {
-    return `<${threshold.toFixed(decimals)}%`;
+    return `<${threshold.toFixed(effectiveDecimals)}%`;
   }
 
   if (v < 0 && v > -threshold) {
-    return `>-${threshold.toFixed(decimals)}%`;
+    return `>-${threshold.toFixed(effectiveDecimals)}%`;
   }
 
-  return `${v.toFixed(decimals)}%`;
+  return `${v.toFixed(effectiveDecimals)}%`;
 }
 
 /** Format as integer with comma separators: 1,234,567 */
