@@ -101,7 +101,19 @@ export function DraggableHeader({
               <GripVertical className="h-3.5 w-3.5" />
             </span>
           )}
-          <span className="line-clamp-2 break-words leading-tight">
+          {/* POL-06 (Phase 38): truncate long labels with ellipsis; full
+              label revealed via native title attribute on hover. Native title
+              preferred over Tooltip primitive per RESEARCH: headers re-render
+              on drill/filter change (per-cell Tooltip mounts are costly) and
+              drag pointer events can conflict with hover-open Tooltips. */}
+          <span
+            className="truncate max-w-[180px]"
+            title={
+              typeof header.column.columnDef.header === 'string'
+                ? header.column.columnDef.header
+                : header.column.id
+            }
+          >
             {flexRender(header.column.columnDef.header, header.getContext())}
           </span>
           {header.column.getCanSort() && (
