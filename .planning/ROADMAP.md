@@ -87,7 +87,7 @@
 - [x] **Phase 34: Partner Lists** — Named partner groupings for filtering (completed 2026-04-18)
 - [x] **Phase 35: Chart Schema & Migration** — ChartDefinition type, backward-compatible view migration (completed 2026-04-19)
 - [ ] **Phase 36: Chart Builder** — Generic renderer + builder UI, collection curves as preset
-- [ ] **Phase 37: Metabase SQL Import** — Parse SQL, map to app config, preview and apply
+- [x] **Phase 37: Metabase SQL Import** — Parse SQL, map to app config, preview and apply (3/3 plans — parser/mapper foundation + wizard UI + apply pipeline with 5-round defect closure, shipped 2026-04-23)
 
 ## Progress
 
@@ -109,7 +109,7 @@
 | 34. Partner Lists | 4/4 | Complete    | 2026-04-19 | - |
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 4/5 | In Progress|  | - |
-| 37. Metabase SQL Import | 2/3 | In Progress|  |  | - |
+| 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-23 | - |
 | 38. Polish + Correctness Pass | v4.1 | 0/TBD | Planned | - |
 | 39. Partner Config Module | v4.1 | 0/TBD | Planned | - |
 | 40. Projected Curves v1 | v4.1 | 0/TBD | Planned | - |
@@ -385,11 +385,12 @@ Plans:
 **Research**: [37-RESEARCH.md](phases/37-metabase-sql-import/37-RESEARCH.md) (2026-04-19)
 **Plans**: 3 plans across 3 waves (Wave 1: parser + mapper + schema evolution; Wave 2: wizard UI; Wave 3: Apply integration + human-verify)
 Plans:
-- [x] 37-01-PLAN.md — Wave 1 — parseMetabaseSql + mapToSnapshot + chart-inference + ViewSnapshot.sourceQuery additive field + SOURCE_TABLE constant + smoke tests (META-02, META-04, META-05)
-- [ ] 37-02-PLAN.md — Wave 2 — ImportSheet (right-side Sheet, ~60vw), two-step wizard, sectioned preview (Columns / Filters / Sort / Chart) with icon+label signaling, sidebar entry (META-01)
-- [ ] 37-03-PLAN.md — Wave 3 — handleApplyImport in data-display.tsx + SidebarData.onImportSql wiring + drill reset + sourceQuery stamp + sonner toast with Undo + human-verify checkpoint (META-03)
+- [x] 37-01-PLAN.md — Wave 1 — parseMetabaseSql + mapToSnapshot + chart-inference + ViewSnapshot.sourceQuery additive field + SOURCE_TABLE constant + smoke tests (META-02, META-04, META-05) (shipped 2026-04-19)
+- [x] 37-02-PLAN.md — Wave 2 — ImportSheet (right-side Sheet, ~60vw), two-step wizard, sectioned preview (Columns / Filters / Sort / Chart) with icon+label signaling, sidebar entry (META-01) (shipped 2026-04-19)
+- [x] 37-03-PLAN.md — Wave 3 — handleApplyImport in data-display.tsx + SidebarData.onImportSql wiring + drill reset + sourceQuery stamp + sonner toast with Undo + enum-aware parser (Round 5) + dim-filter promotion (Round 1) + exhaustive-hide (Round 2a) + toast-popover geometry fix (Round 3) + human-verify sign-off on 5 scenarios (META-03) (shipped 2026-04-23 after 5 defect rounds)
+**Status**: ✅ Complete (2026-04-23) — 3/3 plans shipped; all META-01..05 requirements Complete in v4.0-REQUIREMENTS.md; META-03 closure required 5 defect rounds via human-verify gate (dim-filter promotion, imported-view visibility exhaustiveness, fixture-to-data integrity, toast-popover geometry, non-repro smoke lock-in, enum-aware parser); 6 smokes green (metabase-import 11, metabase-map 8, migrate-chart, axis-eligibility, chart-presets, plus new Playwright 37-03-import-toast-nonblocking).
 
 **After Phase 37:** No new phases unlocked. Feeds into overall milestone completion.
 
 ---
-*Last updated: 2026-04-19 — Phase 35 CLOSED (2/2 plans; partial-verification human-verify accepted, smoke + live coverage combined for all success criteria); Phase 31 Visual Polish Pass at 7/6 complete with polish guard live; Phase 34 Partner Lists closed 2026-04-18; Phase 30 Motion suite closed 2026-04-18; Phase 29 Component Patterns closed 2026-04-18; Phase 28 Surfaces closed 2026-04-17*
+*Last updated: 2026-04-23 — Phase 37 CLOSED (3/3 plans; 5-round defect closure on 37-03 human-verify gate; all META-01..05 requirements Complete); Phase 33 Accessibility closed 2026-04-23 (5/5 plans; 6-guard parity portfolio live + BLOCKING); Phase 35 CLOSED (2/2 plans); Phase 34 Partner Lists closed 2026-04-18; Phase 30 Motion suite closed 2026-04-18; Phase 29 Component Patterns closed 2026-04-18; Phase 28 Surfaces closed 2026-04-17*
