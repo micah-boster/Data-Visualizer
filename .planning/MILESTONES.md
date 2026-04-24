@@ -95,20 +95,35 @@ Phase 25 discussion context (Partner Lists) was preserved and moved to Phase 34.
 ---
 
 
-## v4.0 Design System & Daily-Driver UX (In Progress)
+## v4.0 Design System & Daily-Driver UX (Shipped: 2026-04-24)
 
-**Phases:** 13 (25-37) | **Plans:** TBD | **Status:** Ready to plan Phase 25
-**Requirements:** 67 total across code health, design system, URL navigation, accessibility, and carried features
+**Phases:** 13 (25-37) | **Plans:** 105 | **LOC:** ~25,875 TypeScript
+**Timeline:** 12 days (2026-04-12 → 2026-04-24) | **Commits:** ~281
+**Requirements:** 67/67 complete (all phases closed, audit verdict: tech_debt → all gaps resolved via Phase 36 UAT closure 2026-04-23)
 
-**Goal:** Make the existing features feel like a polished, intentional product. Code health first, then design token system, then visual polish, then build deferred features on the new foundation.
+**Key accomplishments:**
+1. Design token system end-to-end — spacing/type/elevation/motion/surface tokens owning presentation with 6 CI-enforced guards (check:tokens/surfaces/components/motion/polish/a11y) preventing regression
+2. Component pattern library (StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState) with legacy components deleted and CI grep guards blocking re-introduction
+3. Full motion suite (drill cross-fade, chart expand/collapse, hover lifts, button scales, skeleton→content, sidebar lockstep) with `prefers-reduced-motion` honored globally
+4. Visual polish pass (gradient dividers, dark-mode glass highlights, focus glows, border opacity standard, row hover retune, thin scrollbars) with /tokens page dogfooding every primitive across 8 tabs
+5. WCAG AA accessibility baseline — axe-core + Playwright blocking CI gate, ARIA sweep, keyboard nav with row-level Tab+Enter+Escape on drill-capable rows, contrast retune at token source
+6. URL-backed navigation (`?p=&b=` drill state, browser back/forward, optional drill in saved views) fully decoupled from design track
+7. Flexible chart builder — ChartDefinition discriminated union (line/scatter/bar), ChartBuilderToolbar with segmented control + axis pickers, chart presets (built-in + user-saved), backward-compat migration for existing saved views
+8. Metabase SQL Import wizard — paste SQL, preview matched/skipped columns and filters, Apply with drill reset and Undo toast, enum-aware parser, allow-list column mapping (closed after 5 defect rounds via human-verify gate)
 
-**Phase breakdown:**
-- Phases 25-31: Design foundation (code health, tokens, typography, surfaces, patterns, motion, polish)
-- Phase 32: URL-backed navigation (structural, independent track)
-- Phase 33: Accessibility audit
-- Phases 34-37: Features (Partner Lists, Chart Schema, Chart Builder, Metabase Import)
+**Key decisions:**
+- v3.5 absorbed into v4.0 before any work — design foundation before features avoids retrofit debt
+- Chart Renderer + Builder merged into single Phase 36 for tighter feedback loop
+- Accessibility audit placed after visual polish (Phase 33) to audit the final state, not a moving target
+- A11Y-05 (prefers-reduced-motion) shipped early in Phase 30-01 to avoid Phase 33 retrofit
+- 6-guard parity portfolio (tokens/surfaces/components/motion/polish/a11y) — each phase lands with a grep guard wired into CI
+- Metabase MBI-01 (chart-type override) routed forward to v4.1 Phase 38 — heuristic + override covers ~90% of value at ~10% of scope vs literal pass-through (MBI-02/MBI-03 deferred)
 
-**Key decision:** Visuals before features. Every feature built after the design system exists inherits consistency automatically, avoiding retrofit debt.
+**Known gaps (carried to v4.1):**
+- 14 first-week daily-use feedback items (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03) → v4.1 Phase 38
+- Metabase Import chart-type override (MBI-01) → v4.1 Phase 38
+- Cross-product blending at partner level (no `(partner, product)` unit enforcement yet) → v4.1 Phase 39
+- No projected-curve benchmark line → v4.1 Phase 40
 
 ---
 
