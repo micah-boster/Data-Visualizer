@@ -66,7 +66,7 @@ Surface abnormal account and batch performance data so the partnerships team can
 
 ### Out of Scope
 
-- Dynamic curve re-projection based on actuals — v5.0 (Phase 42)
+- Target-anchored dynamic curve re-projection with confidence bands — v5.0 (Phase 49; v4.1 Phase 40 ships a simpler historical-average projection)
 - Partner scorecard ingestion & competitive intelligence — v5.0
 - Contractual target tracking & triangulation views — v5.0
 - MBR pipeline integration — v6.0

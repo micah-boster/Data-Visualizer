@@ -11,11 +11,12 @@ Each version builds on the last:
 - **v2**: Does the data find me? → Yes
 - **v3**: Can I see everything in one place? → Yes
 - **v4**: Do I enjoy using this? → Yes
-- **v5**: Can I ask questions in plain English? → Yes
+- **v5**: Do I see the full picture? → Yes
+- **v6**: Does the tool work for me? → Yes
 
 ---
 
-## v1 — Foundation
+## v1 — Foundation (SHIPPED)
 **Theme:** Replace Metabase with something you actually want to use
 
 Interactive table, filters, saved views, export, drill-down. The goal is: open it, find what you need, save the view, come back tomorrow. If the team stops opening Metabase, v1 succeeded.
@@ -29,7 +30,7 @@ Interactive table, filters, saved views, export, drill-down. The goal is: open i
 
 ---
 
-## v2 — Intelligence
+## v2 — Intelligence (SHIPPED)
 **Theme:** The tool tells you where to look
 
 - Anomaly highlighting — cells/rows light up when metrics cross thresholds (red/yellow/green)
@@ -44,49 +45,78 @@ Interactive table, filters, saved views, export, drill-down. The goal is: open i
 
 ---
 
-## v3 — Multi-Source & Scale
-**Theme:** Everything in one place
+## v3 — Cross-Partner Comparison & AI Query (SHIPPED)
+**Theme:** See the whole portfolio, ask it questions
 
-- Additional Snowflake tables — `master_accounts`, `master_outbound_interactions`, payment data
-- Cross-table joins — "show me accounts with high balance but low engagement"
-- User authentication — personal views, role-based access as team grows
-- Scheduled snapshots — daily data captures for true historical comparison
-- Embedded in workflow — Slack notifications for threshold breaches, weekly digest emails
+- Deterministic anomaly detection — z-scores with polarity awareness
+- Claude natural language query — search bar with streaming responses
+- Cross-partner percentile rankings and portfolio outlier flags
+- Trajectory overlay charts with reference lines
+- Partner comparison matrix (heatmap, bar ranking, plain table)
 
 ### Milestone criteria
 - Team no longer queries Snowflake directly or uses Claude+Snowflake for ad hoc lookups
-- All key data sources accessible from one tool
+- Cross-partner comparison replaces manual spreadsheet ranking
 
 ---
 
-## v4 — Visual Polish & Dashboards
+## v4 — Design System & Daily-Driver UX (IN PROGRESS)
 **Theme:** Looks like a product, not a prototype
 
-- Dashboard builder — drag/drop widget layout (KPIs, charts, tables as widgets)
-- Saved dashboards — each person arranges their own command center
-- Design system polish — consistent spacing, typography, transitions, dark mode
-- Sparklines in table cells — mini-trends at a glance
-- URL state sync — share a link that reproduces exact view
-- Shared views via Vercel KV — team members share saved views with each other
+- Design token system — spacing (4px grid), typography scale, elevation shadows, motion tokens, named surfaces
+- Surface vocabulary — cards float, tables recede, popovers lift, header has presence
+- Component patterns — StatCard, DataPanel, SectionHeader, ToolbarGroup, EmptyState
+- Micro-interactions — drill transitions, hover lifts, press feedback, loading reveals
+- Visual polish — gradient dividers, dark mode glass highlights, focus glows, border consistency
+- URL-backed navigation — browser back button, deep-linking, shareable URLs
+- Accessibility — WCAG AA, keyboard nav, screen readers, reduced motion
+- Flexible charts — user-selectable axes, line/scatter/bar types, collection curves as preset
+- Partner Lists — named partner groupings for filtering
+- Metabase SQL import — paste SQL, preview mapping, apply as saved view
 
 ### Milestone criteria
 - Someone outside partnerships sees it and asks "can we use this too?"
-- Each team member has a personalized dashboard they use daily
+- The UI feels fast, quiet, and confident — every interaction is intentional
+- New features inherit design consistency without per-feature visual decisions
 
 ---
 
-## v5 — AI Layer
-**Theme:** Ask questions, get answers
+## v5 — External Intelligence (PLANNED)
+**Theme:** See the full picture — your data, their data, the targets
 
-- Natural language query — "which partners had the biggest collection rate drop last month?"
-- AI-powered anomaly narratives — Claude explains why something looks off, not just that it does
-- Suggested explorations — "Partner X's batch 2024-Q3 is underperforming vs peers, want to drill in?"
-- Query history — save and replay AI-generated views alongside manual saved views
+The tool stops being an internal-only dashboard and becomes a competitive intelligence platform. Three external data sources come in — partner scorecards, contractual targets, and the comparison views that triangulate all three.
+
+- Scorecard ingestion — upload PDF/Excel/CSV/email, Claude extracts structured metrics, per-partner schema learning, human-in-the-loop confirmation
+- Contractual target management — manual entry + contract PDF extraction, versioned with date ranges
+- Triangulation views — internal vs. scorecard vs. target side-by-side, divergence highlighting, target traffic-lights
+- Scorecard reconciliation — drift detection, partner reliability scoring, alignment history
+- Dynamic curve re-projection — "at current pace" vs. "to hit target" vs. "partner-reported trajectory" overlays
 
 ### Milestone criteria
-- Non-technical team members can get answers without knowing the schema
-- AI suggestions surface insights the team wouldn't have found manually
+- MBR prep starts in this tool — data is pre-triangulated before the conversation
+- Partner conversations shift from "here are our numbers" to "here's how our numbers, your numbers, and the targets all compare"
+- The team catches scorecard discrepancies before partners raise them
+
+---
+
+## v6 — Proactive Intelligence & Action (PLANNED)
+**Theme:** The tool works for you
+
+The tool stops waiting to be opened. It generates briefings, alerts on patterns, feeds directly into MBR deck generation, and connects every insight to a downstream action.
+
+- Weekly partner highlights — auto-generated summaries delivered to Notion
+- Pattern alerts — consecutive declines, divergence widening, peer-group outlier emergence — delivered to Slack
+- MBR pipeline integration — one-click from partner view to staged deck content with narrative talking points
+- Action connections — "Flag in Slack", "Create Notion task", "Add to MBR agenda" from any data point
+- Temporal intelligence — vintage comparison, cohort trending, forecasting, leading indicator discovery
+- NLQ enhancements — follow-up suggestions, clickable references, multi-source + temporal queries
+
+### Milestone criteria
+- The team gets actionable intelligence without opening the tool
+- MBR prep takes minutes instead of hours — data package is pre-built
+- Every insight has a one-click path to action (Slack, Notion, MBR)
 
 ---
 
 *Created: 2026-04-10*
+*Updated: 2026-04-16 — v3 updated to match actual shipped scope, v4 refined, v5/v6 added*

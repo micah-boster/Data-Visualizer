@@ -83,3 +83,122 @@
 
 ---
 
+
+## v3.5 Flexible Charts & Metabase Import (Absorbed into v4.0)
+
+**Phases:** 25-29 (planned, never started) | **Status:** Absorbed into v4.0 on 2026-04-16
+
+v3.5 was planned with 5 phases: Partner Lists, Chart Schema, Chart Renderer, Chart Builder UI, Metabase SQL Import. Before any work started, the decision was made to invest in design foundation first. All v3.5 scope was absorbed into v4.0 as Phases 34-37 (after the design system phases).
+
+Phase 25 discussion context (Partner Lists) was preserved and moved to Phase 34.
+
+---
+
+
+## v4.0 Design System & Daily-Driver UX (In Progress)
+
+**Phases:** 13 (25-37) | **Plans:** TBD | **Status:** Ready to plan Phase 25
+**Requirements:** 67 total across code health, design system, URL navigation, accessibility, and carried features
+
+**Goal:** Make the existing features feel like a polished, intentional product. Code health first, then design token system, then visual polish, then build deferred features on the new foundation.
+
+**Phase breakdown:**
+- Phases 25-31: Design foundation (code health, tokens, typography, surfaces, patterns, motion, polish)
+- Phase 32: URL-backed navigation (structural, independent track)
+- Phase 33: Accessibility audit
+- Phases 34-37: Features (Partner Lists, Chart Schema, Chart Builder, Metabase Import)
+
+**Key decision:** Visuals before features. Every feature built after the design system exists inherits consistency automatically, avoiding retrofit debt.
+
+---
+
+
+## v4.1 Feedback-Driven Polish (Planned)
+
+**Phases:** 3 (38-40) | **Plans:** TBD | **Status:** Planned, follows v4.0
+**Requirements:** 27 total across branding, chart correctness, KPI clarity, filters, partner config, and projected curves
+
+**Goal:** Close the first-week daily-use feedback list from v4.0 and ship the two foundational features (Partner Config + Projected Curves v1) that unlock downstream v5.0 work. The app should feel like a daily-driver after this milestone.
+
+**Phase breakdown:**
+- Phase 38: Polish + Correctness Pass (logo, collapsible sidebar, column unlock, number formatting, chart avg truncation, tooltip hover, legend scroll, KPI horizon gating + delta labels + commitment rate, date-range filter, filter tooltips, partner-column dedup, laptop layout)
+- Phase 39: Partner Config Module (product type + named segments per partner, Partner Lists extension, segment-aware charts/KPIs)
+- Phase 40: Projected Curves v1 (historical-average projection overlay + "vs projected" KPI delta option)
+
+**Key decision:** Ship a simpler static projection in v4.1 rather than waiting for v5.0's target-anchored dynamic projection — the team needs something to benchmark against now, and the v5.0 version extends this foundation.
+
+---
+
+
+## v4.5 Correctness & Security Foundation (Planned)
+
+**Phases:** 2 (41-42) | **Plans:** TBD | **Status:** Planned, follows v4.1, precedes v5.0
+**Requirements:** 12 total across data correctness and ingestion-surface security
+
+**Goal:** Tight, structural hardening pass before v5.0 — verified metrics (so triangulation doesn't amplify silent bugs) and a documented threat model for v5.0's file-upload + Claude-extraction surface. Scope deliberately narrow: only the audits whose value degrades when deferred.
+
+**Phase breakdown:**
+- Phase 41: Data Correctness Audit (seed bug fix + breadth-first metric verification + scope-rollup consistency + regression fixtures + aggregation contract docs)
+- Phase 42: Ingestion-Surface Security Review (credential handling + client-side exposure + SQL injection surface + forward threat model for v5.0 Phase 45)
+
+**Key decision:** Behavioral QA and tech-debt sweep moved to v5.5 (post-v5.0) — those audits improve with post-usage observation, while correctness and security architecture degrade when deferred. Split by the direction the work ages.
+
+**Phases 43-44 reserved as insert-phase slack** (useful for urgent work discovered during v5.0; keeps v5.0 phase numbers stable).
+
+---
+
+
+## v5.0 External Intelligence (Planned)
+
+**Phases:** 5 (45-49) | **Plans:** TBD | **Status:** Planned, follows v4.5
+**Requirements:** 32 total across scorecard ingestion, contractual targets, triangulation views, reconciliation, and dynamic curves
+
+**Goal:** Transform the tool from an internal-only dashboard into a competitive intelligence platform. Ingest partner scorecards (PDF/Excel/CSV/email), manage contractual targets, and triangulate all three data sources in a single view.
+
+**Phase breakdown:**
+- Phase 45: Scorecard Ingestion Pipeline (multi-format, per-partner schema learning, human-in-the-loop)
+- Phase 46: Contractual Target Management (manual entry + contract PDF extraction, versioned)
+- Phase 47: Triangulation Views (internal vs. scorecard vs. target, divergence highlighting, traffic-lights)
+- Phase 48: Scorecard Reconciliation & History (drift detection, partner reliability scoring)
+- Phase 49: Dynamic Curve Re-Projection (target-aware projections with confidence bands — extends v4.1 Phase 40)
+
+**Key decision:** Human reviews every scorecard extraction in v5.0. Graduate to auto-ingest with exception handling in v6.0+ once per-partner schemas are proven.
+
+---
+
+
+## v5.5 Real-Use Hardening (Planned)
+
+**Phases:** 2 (50-51) | **Plans:** TBD | **Status:** Planned, follows v5.0, precedes v6.0
+**Requirements:** 12 total across behavioral QA and tech-debt sweep
+
+**Goal:** Post-v5.0 hardening that improves when deferred — behavioral QA built from observed MBR-prep workflows, and a tech-debt sweep informed by v5.0's actual code additions. Complements v4.5's pre-v5.0 structural audits.
+
+**Phase breakdown:**
+- Phase 50: Behavioral QA from Usage (living `docs/QA-SCRIPT.md` grounded in real use + v5.0 feature regression battery + keyboard/mouse/browser/size parity)
+- Phase 51: Tech Debt Sweep (close `docs/KNOWN-ISSUES.md` backlog + consolidate v5.0 computation-layer duplication + TanStack v9 migration + dependency upgrades + dead-code retirement + hot-path perf)
+
+**Key decision:** Splitting hardening across v4.5 (load-bearing for v5.0) and v5.5 (informed by v5.0) lets each piece land at its most effective moment. Audits whose value degrades when deferred (correctness, security architecture) stay in v4.5; audits whose value grows with observation (behavioral QA, code consolidation) land in v5.5.
+
+---
+
+
+## v6.0 Proactive Intelligence & Action (Planned)
+
+**Phases:** 6 (52-57) | **Plans:** TBD | **Status:** Planned, follows v5.5
+**Requirements:** 35 total across weekly highlights, pattern alerts, MBR integration, action connections, temporal intelligence, and NLQ enhancements
+
+**Goal:** The tool pushes intelligence to the team and connects insights to downstream action. Auto-generated briefings, pattern-based alerts to Slack, one-click MBR prep, and action connections to Notion.
+
+**Phase breakdown:**
+- Phase 52: Weekly Partner Highlights (flagged for review — may be subsumed by Phase 54)
+- Phase 53: Pattern Alerts (consecutive declines, divergence widening, peer-group outliers → Slack)
+- Phase 54: MBR Pipeline Integration (one-click data staging → existing MBR pipeline skill)
+- Phase 55: Action Connections (Flag in Slack, Create Notion task, Add to MBR agenda)
+- Phase 56: Temporal Intelligence (vintage comparison, cohort trending, forecasting, leading indicators)
+- Phase 57: NLQ Enhancements (follow-up suggestions, clickable references, multi-source + temporal queries)
+
+**Key decision:** Alerts to Slack, briefings to Notion, MBR deeply integrated. HubSpot action connections deferred to v6.5+ based on usage patterns.
+
+---
+
