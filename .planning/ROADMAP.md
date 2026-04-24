@@ -99,7 +99,7 @@
 | 21-24 | v3.1 | 8/8 | Complete | 2026-04-14 |
 | 25. Code Health & Bug Fixes | v4.0 | 4/4 | Complete | 2026-04-16 |
 | 26. Design Tokens | v4.0 | 5/5 | Complete | 2026-04-17 |
-| 27. Typography & Hierarchy | 6/6 | Complete    | 2026-04-17 | - |
+| 27. Typography & Hierarchy | 7/7 | Complete   | 2026-04-24 | - |
 | 28. Surfaces & Elevation | 8/8 | Complete   | 2026-04-18 | - |
 | 29. Component Patterns | 5/5 | Complete    | 2026-04-18 | - |
 | 30. Micro-Interactions & Motion | 4/5 | Complete    | 2026-04-18 | - |
@@ -167,14 +167,15 @@
   2. All numeric displays use tabular figures (tabular-nums) — table cells, KPI values, chart axes
   3. KPI card labels use overline style (uppercase, tracked, smaller) distinct from body text
   4. Section headers (Charts, Table, Comparison) have consistent heading treatment with optional action slots
-**Plans**: 6 plans
+**Plans**: 7 plans
 Plans:
-- [ ] 27-01-PLAN.md — Foundation: migration table + SectionHeader component + pilot migration (anomaly-detail.tsx)
-- [ ] 27-02-PLAN.md — Sweep: KPI summary, charts, cross-partner matrix, chart tooltip (axis NumericTick adoption)
-- [ ] 27-03-PLAN.md — Sweep: table surfaces + state-color expansion in trend-indicator
-- [ ] 27-04-PLAN.md — Sweep: toolbar, popovers, filters, column picker, saved views
-- [ ] 27-05-PLAN.md — Sweep: sidebar, breadcrumb, query UI, anomaly panels, empty/error/loading states
-- [ ] 27-06-PLAN.md — Enforcement: grep-in-CI guard + /tokens page SectionHeader + numeric-variant demos
+- [x] 27-01-PLAN.md — Foundation: migration table + SectionHeader component + pilot migration (anomaly-detail.tsx) (shipped 2026-04-17)
+- [x] 27-02-PLAN.md — Sweep: KPI summary, charts, cross-partner matrix, chart tooltip (axis NumericTick adoption) (shipped 2026-04-17)
+- [x] 27-03-PLAN.md — Sweep: table surfaces + state-color expansion in trend-indicator (shipped 2026-04-17)
+- [x] 27-04-PLAN.md — Sweep: toolbar, popovers, filters, column picker, saved views (shipped 2026-04-17)
+- [x] 27-05-PLAN.md — Sweep: sidebar, breadcrumb, query UI, anomaly panels, empty/error/loading states (shipped 2026-04-17)
+- [x] 27-06-PLAN.md — Enforcement: grep-in-CI guard + /tokens page SectionHeader + numeric-variant demos (shipped 2026-04-17)
+- [x] 27-07-PLAN.md — UAT Gap #1 close-out: right-align /tokens numeric-variants three-row inset so tabular-nums visibly aligns decimal points (shipped 2026-04-17, SUMMARY 2026-04-23)
 
 ---
 

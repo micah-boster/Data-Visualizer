@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Design System & Daily-Driver UX
 status: unknown
-last_updated: "2026-04-24T02:05:59.453Z"
+last_updated: "2026-04-24T02:17:54.038Z"
 progress:
   total_phases: 37
-  completed_phases: 36
+  completed_phases: 37
   total_plans: 105
-  completed_plans: 104
+  completed_plans: 105
 ---
 
 # Project State
@@ -33,7 +33,7 @@ Plan: 37-03 complete — Tasks 1-2 landed 2026-04-19 (commits 821ba22 typed onIm
 Status: Phase 37 closed. All 5 Phase 37 requirements Complete in v4.0-REQUIREMENTS.md: META-01 ✓ (Plan 02), META-02 ✓ (Plan 01), META-03 ✓ (this plan + Round 5), META-04 ✓ (Plan 01), META-05 ✓ (Plan 01). 6 smoke suites green (metabase-import 11, metabase-map 8, migrate-chart, axis-eligibility, chart-presets, new Playwright 37-03-import-toast-nonblocking). All 5 check:* guards green + check:a11y BLOCKING. tsc clean modulo pre-existing Phase-33 axe-core error (out-of-scope).
 Last activity: 2026-04-23 — Closed 37-03 via continuation agent after Micah typed "approved" on the 5-scenario human-verify checkpoint (Scenarios A/B/C/D/E all green in-browser). Continuation agent verified all 12 defect-round commits exist, wrote 37-03-SUMMARY.md (self-check PASSED), updating STATE + ROADMAP + v4.0-REQUIREMENTS (META-03 Complete). Architectural decisions locked for future work: (1) Dim-filterable columns require promotion at Apply time via FILTER_PARAMS; (2) Enum validation must live in parseMetabaseSql not mapToSnapshot because PreviewStep renders ParseResult directly; (3) Only closed enums (ACCOUNT_TYPE) get enumValues in registry — PARTNER_NAME/BATCH stay open; (4) Per-toast Sonner position override for geometric overlap with persistent popovers; (5) Imported snapshots need exhaustive-hide gated on sourceQuery presence to prevent root-default leak.
 
-Progress: [████████████████████] 104/105 plans (v4.0 design track closed, Phase 37 closed, Phase 36 Plan 36-05 remaining)
+Progress: [████████████████████] 105/105 plans (v4.0 design track closed, Phase 37 closed, Phase 27 UAT-gap close-out via 27-07 landed, Phase 36 Plan 36-05 remaining)
 
 ## Shipped Milestones
 
@@ -277,6 +277,8 @@ Progress: [████████████████████] 104/105
 - [Phase 37-03]: Evidence-backed non-repro lock-in pattern — when a user-reported defect traces clean end-to-end through instrumented console.log / playwright-headless inspection, add a smoke assertion that locks in the verified state rather than close as non-repro. Round 4's apply-time dim-promotion regression smoke turns the verified-clean state into a smoke-gated guarantee. Reusable for any future 'works on my machine' moment: instrument the pipeline, confirm clean, lock in with smoke.
 - [Phase 37-03]: Session-ephemeral sourceQuery is canonical audit metadata — imported ViewSnapshot stamps BOTH sourceQuery: { sql, importedAt } AND derived columnFilters/dimensionFilters/sorting. Raw SQL never re-executes at load time; Save View persists the entire snapshot including sourceQuery via the existing tableSnapshotRef path. Audit-trail vs state-restore are separate concerns.
 - [Phase 37-03]: 5-defect-round closure under single plan scope — Rounds 1 (dim promotion) + 2a (exhaustive hide) + 2b (fixture-to-data) + 3 (toast geometry) + 4 (non-repro smoke) + 5 (enum validation) all landed as atomic per-defect commits under 37-03 rather than spilling into a Phase 38 plan. Human-verify gate stayed open until every user-reported defect was reproducible-then-green in the live app. Pattern proves the human-verify checkpoint is the appropriate boundary for 'scope within plan' defect closure — Tasks 1-2 shipped as written, human-verify surfaced the gaps that automated guards couldn't catch.
+- [Phase 27-07]: Tabular-alignment demo recipe locked: text-right on parent container + tabular-nums baked into text-body-numeric + plain numeric text content. Leading whitespace in text nodes is dead code (HTML collapses it) — dropped for source clarity.
+- [Phase 27-07]: Retroactive SUMMARY close-out pattern: when a fix+plan land together in a single commit during a UAT close-out session (593a313), author the formal SUMMARY later via the standard execute-plan flow so STATE/ROADMAP progress counters stay accurate. Phase 27 now has 7/7 plans with matching SUMMARY files.
 
 ### Pending Todos
 
@@ -295,7 +297,7 @@ Progress: [████████████████████] 104/105
 ## Session Continuity
 
 Last session: 2026-04-23
-Stopped at: Completed 37-03-PLAN.md (apply pipeline + 5-round defect closure) via continuation agent after human-verify approval on all 5 scenarios (A happy path / B Undo / C parse error / D partial-import banner / E invalid enum value — added in Round 5e). Tasks 1-2 landed 2026-04-19 (821ba22 typed onImportSql, abeae75 handleApplyImport); Task 3 human-verify checkpoint took 5 rounds of user-reported defects across 4 days to close: Round 1 dim-filter promotion (46b1279), Round 2a exhaustive-hide (a55f596), Round 2b Scenario A fixture correction + smoke (2cf981f), Round 3 toast position (fe5f992), Round 4 non-repro smoke lock-in (de53d92), Round 5 enum-aware parser (48f88a8 → 244a063 → 292ce57 → 5937cd3 → 7fb74d7 — 5-step landing). Micah typed "approved" after final round; continuation agent spawned to close the plan. Continuation agent verified all 12 commits exist, wrote 37-03-SUMMARY.md (self-check PASSED — all 13 files + 12 commits verified), updated STATE + ROADMAP + v4.0-REQUIREMENTS (META-03 flipped from Partial to Complete, all 5 META requirements now Complete). Phase 37 fully plan-complete (3/3). v4.0 design track + Phase 37 feature track closed. Only remaining v4.0 plan: Phase 36-05 (ChartPanel dispatcher + data-display wiring + human-verify).
+Stopped at: Completed 27-07-PLAN.md (retroactive close-out of Phase 27 UAT Gap #1 — `text-right` + leading-whitespace cleanup on `/tokens` numeric-variants three-row inset). Fix itself landed 2026-04-17 in commit 593a313 as part of the UAT close-out session (that commit shipped 27-07-PLAN.md + 27-UAT.md + side-task doc + the one-line-plus-whitespace code fix together); SUMMARY authored 2026-04-23 via the standard execute-plan flow to bring STATE/ROADMAP progress counters to 105/105 plans and give Phase 27 a 7/7 SUMMARY parity. `npm run build` verified clean post-fact (Next.js 16.2.3 Turbopack, TypeScript clean in 3.3s, 5 static pages generated). Prior session (2026-04-23): Closed 37-03 via continuation agent after Micah typed "approved" on the 5-scenario human-verify checkpoint (Scenarios A/B/C/D/E all green in-browser); continuation agent verified all 12 defect-round commits exist, wrote 37-03-SUMMARY.md, updated STATE + ROADMAP + v4.0-REQUIREMENTS. Phase 37 fully plan-complete (3/3). Only remaining v4.0 plan: Phase 36-05 (ChartPanel dispatcher + data-display wiring + human-verify).
 Resume file: None
 
 ## Performance Metrics
@@ -336,4 +338,5 @@ Resume file: None
 | Phase 33 P04 | 60min | 3 tasks | 3 files |
 | Phase 33 P05 | ~75min (inc. human-verify) | 3 tasks | 6 files |
 | Phase 37 P03 | ~4 days elapsed (3 plan tasks + 5 defect rounds) | 3 tasks + 5 rounds | 14 files + 2 new | 2026-04-23 |
+| Phase 27 P07 | <2 min | 1 tasks | 1 files |
 
