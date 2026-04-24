@@ -37,9 +37,13 @@ Close 18 first-week feedback items against v4.0 in one batched phase — brandin
 
 ### Branding + sidebar (POL-01, POL-02)
 
-- **Logo asset**: User (Micah) will drop `public/bounce-logo.svg` (and optionally `public/bounce-logo-dark.svg`) before execution. Plan assumes the filename. Implementation is a one-line swap of the `"B"` span at `src/components/layout/app-sidebar.tsx:65` for an `<Image />` or inline SVG.
-- **Mark form**: Icon mark only (not full wordmark). Same footprint as current "B" block so surrounding layout is preserved.
-- **Dark variant**: Planner decides at execution time based on what the dropped SVG looks like — prefer single SVG with `fill="currentColor"` if monochrome; two SVGs with theme-class swap if multicolor.
+- **Logo asset**: Landed. Two SVGs saved to `public/`:
+  - `public/bounce-mark.svg` — `fill="currentColor"` variant (theme-adaptive; inherits surrounding text color). Canonical choice for the sidebar mark.
+  - `public/bounce-mark-brand.svg` — brand-green `#03542C` fixed-fill. Reserved for places that want explicit branded color (e.g., splash, marketing surfaces).
+  - Both are single-path, mark-only (the arc/wave shape), 313×145 viewBox (~2.16:1 aspect ratio — wider than tall, fits alongside sidebar title). Source: Micah's `~/Downloads/symbol_brand.svg` + `symbol_secondary.svg`, derived from the Google Drive brand folder.
+- **Mark form**: Icon mark only (the arc symbol). Wider than the current `"B"` block (2.16:1 vs ~1:1), so the planner needs to confirm sidebar header layout accommodates a ~20–24px-tall mark (target width ~48–52px) without clipping the app title. If layout is tight, reduce mark size; do NOT swap back to wordmark.
+- **Dark variant**: Use `bounce-mark.svg` (currentColor) and let the sidebar's existing foreground token drive color. No separate dark file needed — theme adaptation is free via CSS inheritance.
+- **Swap site**: `src/components/layout/app-sidebar.tsx:65` — replace the `<span className="text-title">B</span>` with either an inline SVG (cleanest for currentColor) or a `<Image />` / `<img>` referencing `/bounce-mark.svg`. Inline is preferred so CSS color inherits; `<Image />` from `next/image` doesn't propagate currentColor to SVG fills.
 - **POL-02 collapsed state**: Partners list pre-collapsed on first-ever load; user's expand/collapse choice thereafter persists in localStorage. Matches the existing `charts-expanded` pattern.
 
 ### Claude's Discretion
