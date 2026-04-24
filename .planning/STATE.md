@@ -1,39 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Design System & Daily-Driver UX
-status: unknown
-last_updated: "2026-04-24T02:17:54.038Z"
+milestone: v4.1
+milestone_name: Feedback-Driven Polish
+status: not_started
+last_updated: "2026-04-23T00:00:00.000Z"
 progress:
-  total_phases: 37
-  completed_phases: 37
-  total_plans: 105
-  completed_plans: 105
+  total_phases: 3
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-16)
+See: .planning/PROJECT.md (updated 2026-04-23)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** Phase 34 (Partner Lists) complete — v4.0 feature tracks now in flight alongside remaining design-polish plans
+**Current focus:** v4.1 Feedback-Driven Polish — activating Phase 38 (polish + correctness pass) discussion
 
 ## Current Position
 
-Phase: 37 (Metabase SQL Import) CLOSED — Plan 03 close-out landed 2026-04-23 after 5 defect rounds. All 3 plans complete: 37-01 parser + mapper + chart-inference foundation, 37-02 wizard UI (sidebar entry + ImportSheet), 37-03 apply pipeline + human-verify closure. Phase 33 also CLOSED (2026-04-23). Phase 36 (Chart Builder) still in-progress — Plan 36-05 ChartPanel dispatcher + data-display wiring remains.
-Plan: 37-03 complete — Tasks 1-2 landed 2026-04-19 (commits 821ba22 typed onImportSql + abeae75 handleApplyImport apply pipeline); Task 3 human-verify checkpoint closed 2026-04-23 after 5 defect rounds:
-- Round 1 (46b1279): dim-filter promotion — columnFilters on FILTER_PARAMS keys (ACCOUNT_TYPE/PARTNER_NAME/BATCH) route to dimensionFilters at Apply time.
-- Round 2a (a55f596): exhaustive-hide — DataTable.handleLoadViewInternal coerces missing column keys to false when snapshot.sourceQuery is present.
-- Round 2b (2cf981f): Scenario A fixture corrected from 'Consumer' (Metabase-demo-data value, 0 rows in shipped cache) to 'THIRD_PARTY' (471/477 rows match) + smoke integrity assertion.
-- Round 3 (fe5f992): import toast moved to position: 'bottom-left' so FilterPopover stays clickable during 8s Undo window.
-- Round 4 (de53d92): non-repro lock-in — apply-time dim-promotion regression smoke assertion after evidence-backed trace proved Scenario A clean.
-- Round 5 (5 commits 48f88a8 → 7fb74d7): enum-aware parser — ColumnConfig.enumValues on ACCOUNT_TYPE, parseMetabaseSql validates WHERE literals against registry, PreviewStep renders validValues hint, 3 new parse-smoke + invalid-enum fixture + Scenario E in plan doc.
-Status: Phase 37 closed. All 5 Phase 37 requirements Complete in v4.0-REQUIREMENTS.md: META-01 ✓ (Plan 02), META-02 ✓ (Plan 01), META-03 ✓ (this plan + Round 5), META-04 ✓ (Plan 01), META-05 ✓ (Plan 01). 6 smoke suites green (metabase-import 11, metabase-map 8, migrate-chart, axis-eligibility, chart-presets, new Playwright 37-03-import-toast-nonblocking). All 5 check:* guards green + check:a11y BLOCKING. tsc clean modulo pre-existing Phase-33 axe-core error (out-of-scope).
-Last activity: 2026-04-23 — Closed 37-03 via continuation agent after Micah typed "approved" on the 5-scenario human-verify checkpoint (Scenarios A/B/C/D/E all green in-browser). Continuation agent verified all 12 defect-round commits exist, wrote 37-03-SUMMARY.md (self-check PASSED), updating STATE + ROADMAP + v4.0-REQUIREMENTS (META-03 Complete). Architectural decisions locked for future work: (1) Dim-filterable columns require promotion at Apply time via FILTER_PARAMS; (2) Enum validation must live in parseMetabaseSql not mapToSnapshot because PreviewStep renders ParseResult directly; (3) Only closed enums (ACCOUNT_TYPE) get enumValues in registry — PARTNER_NAME/BATCH stay open; (4) Per-toast Sonner position override for geometric overlap with persistent popovers; (5) Imported snapshots need exhaustive-hide gated on sourceQuery presence to prevent root-default leak.
+Phase: 38 (Polish + Correctness Pass) NOT STARTED — v4.1 activated 2026-04-23 after v4.0 shipped. Full v4.1 scope defined in [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md): Phase 38 bundles 18 feedback items (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01); Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) run in parallel after Phase 38.
+Plan: Not yet scoped. Next step: `/gsd:discuss-phase 38` to capture implementation decisions, then `/gsd:plan-phase 38` for the ~4-5 plan groupings (branding/sidebar, columns + formatting, chart correctness + KPI, filters + layout, Metabase Import polish).
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 not yet started. No Phase 38 plans, context, or research exist yet.
+Last activity: 2026-04-23 — v4.1 milestone activated: top-level ROADMAP.md gains Phase 38/39/40 detail sections; PROJECT.md Current Milestone flipped to v4.1; STATE.md reset for new milestone. v4.0 marked ✅ shipped. Prior session (2026-04-23): Phase 37 closed via continuation agent after 5 defect rounds on 37-03 human-verify gate; Phase 27 UAT close-out via 27-07-PLAN.md retroactively brought counters to 105/105.
 
-Progress: [████████████████████] 105/105 plans (v4.0 design track closed, Phase 37 closed, Phase 27 UAT-gap close-out via 27-07 landed, Phase 36 Plan 36-05 remaining)
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0/TBD plans (v4.1 not yet planned)
 
 ## Shipped Milestones
 
@@ -43,6 +37,7 @@ Progress: [████████████████████] 105/105
 | v2.0 Within-Partner Comparison | 10-14 | 9 | 2026-04-12 |
 | v3.0 Intelligence & Cross-Partner Comparison | 15-20 | 9 | 2026-04-14 |
 | v3.1 Stabilization & Code Quality | 21-24 | 8 | 2026-04-14 |
+| v4.0 Design System & Daily-Driver UX | 25-37 | 105 | 2026-04-24 |
 
 ## Accumulated Context
 

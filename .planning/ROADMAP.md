@@ -7,8 +7,8 @@
 - ✅ **v3.0 Intelligence & Cross-Partner Comparison** — Phases 15-20 (shipped 2026-04-14) — [Archive](milestones/v3.0-ROADMAP.md)
 - ✅ **v3.1 Stabilization & Code Quality** — Phases 21-24 (shipped 2026-04-14) — [Archive](milestones/v3.1-ROADMAP.md)
 - ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
-- 🚧 **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (in progress) — [Roadmap](milestones/v4.0-ROADMAP.md)
-- 📋 **v4.1 Feedback-Driven Polish** — Phases 38-40 (planned) — [Roadmap](milestones/v4.1-ROADMAP.md)
+- ✅ **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (shipped 2026-04-24) — [Archive](milestones/v4.0-ROADMAP.md)
+- 🚧 **v4.1 Feedback-Driven Polish** — Phases 38-40 (in progress) — [Roadmap](milestones/v4.1-ROADMAP.md)
 - 📋 **v4.5 Correctness & Security Foundation** — Phases 41-42 (planned; 43-44 reserved slack) — [Roadmap](milestones/v4.5-ROADMAP.md)
 - 📋 **v5.0 External Intelligence** — Phases 45-49 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
 - 📋 **v5.5 Real-Use Hardening** — Phases 50-51 (planned) — [Roadmap](milestones/v5.5-ROADMAP.md)
@@ -64,7 +64,7 @@
 
 </details>
 
-### 🚧 v4.0 Design System & Daily-Driver UX (In Progress)
+### ✅ v4.0 Design System & Daily-Driver UX (Shipped 2026-04-24)
 
 **Milestone Goal:** Invest in design foundation, fix code health, then build deferred features on the polished base. The app should feel like a product, not a prototype.
 
@@ -110,9 +110,9 @@
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 5/5 | Complete    | 2026-04-24 | - |
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
-| 38. Polish + Correctness Pass | v4.1 | 0/TBD | Planned | - |
-| 39. Partner Config Module | v4.1 | 0/TBD | Planned | - |
-| 40. Projected Curves v1 | v4.1 | 0/TBD | Planned | - |
+| 38. Polish + Correctness Pass | v4.1 | 0/TBD | Not Started | - |
+| 39. Partner Config Module | v4.1 | 0/TBD | Not Started | - |
+| 40. Projected Curves v1 | v4.1 | 0/TBD | Not Started | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
 | 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
 | 43-44. (reserved — insert-phase slack) | — | — | — | - |
@@ -394,4 +394,84 @@ Plans:
 **After Phase 37:** No new phases unlocked within v4.0. Metabase Import follow-up feedback ("will it pull in the graph type too?") routed to v4.1 Phase 38 as **MBI-01** — chart-type override control in the Preview step, mirroring Phase 36's `ChartBuilderToolbar` segmented control. Literal Metabase chart-type pass-through (MBI-02 via card JSON paste) + URL paste with network fetch (MBI-03) deferred to Future Requirements — heuristic + override covers ~90% of the value at ~10% of the scope.
 
 ---
-*Last updated: 2026-04-23 — Phase 37 CLOSED (3/3 plans; 5-round defect closure on 37-03 human-verify gate; all META-01..05 requirements Complete); MBI-01 Metabase Import chart-type override added to v4.1 Phase 38 (bumping scope 17→18 items); Phase 33 Accessibility closed 2026-04-23 (5/5 plans; 6-guard parity portfolio live + BLOCKING); Phase 35 CLOSED (2/2 plans); Phase 34 Partner Lists closed 2026-04-18; Phase 30 Motion suite closed 2026-04-18; Phase 29 Component Patterns closed 2026-04-18; Phase 28 Surfaces closed 2026-04-17*
+
+### 🚧 v4.1 Feedback-Driven Polish (In Progress)
+
+**Milestone Goal:** Close the 14 first-week feedback items, enforce `(partner, product)` as the canonical unit of analysis (no cross-product blending), and ship a first-pass projected-curve line the team can benchmark against. Full detail: [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md).
+
+**Phases:**
+- [ ] **Phase 38: Polish + Correctness Pass** — 18 feedback items: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness, KPI cascade, filter fixes, laptop layout, Metabase Import chart-type override
+- [ ] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks)
+- [ ] **Phase 40: Projected Curves v1** — Historical-average-based projection line + optional "vs projected curve" KPI baseline
+
+### Phase 38: Polish + Correctness Pass
+
+**Goal**: Close 18 small-but-high-friction issues in one batched phase — branding, sidebar UX, column lock, number formatting, header truncation, chart correctness (axis + avg truncation + hover + legend scroll), KPI clarity (graduated age-aware cascade + delta labels + commitment rate + rolling-avg suppression), filter fixes (date range, tooltips, partner dedup), laptop layout, and Metabase Import chart-type override
+**Depends on**: v4.0 complete (design system, surface tokens, StatCard pattern). MBI-01 also depends on Phase 36 (Chart Builder) for the `ChartBuilderToolbar` segmented control that MBI-01 mirrors.
+**Effort**: Medium (many small edits, mostly 1-file each; chart/table layout fix may need browser iteration)
+**Requirements**: POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01
+**Success Criteria** (what must be TRUE):
+  1. Bounce logo replaces the "B" letter-mark in the sidebar
+  2. Partner list in sidebar is collapsible and pre-collapsed
+  3. All columns in the column picker are toggleable (no more locked identity columns)
+  4. `formatPercentage` applies the 2-decimal-under-10 / 1-decimal-at-10+ rule everywhere percentages render
+  5. Heatmap toggle has an explanatory tooltip
+  6. Column headers truncate cleanly with ellipsis at a readable max-width, full label on hover, stable header-row height across columns (no mid-word cuts, no weird multi-line wraps)
+  7. Chart x-axis domain AND average-series line both clip to the max age of currently-displayed vintages — no empty whitespace past actual data; chart renders ASAP with whatever data exists (no minimum-age gate)
+  8. Partner-average line is included in chart proximity hover tooltips
+  9. Curve legend scrolls instead of overflowing off-screen when "show all" is selected
+  10. Chart and table remain simultaneously usable on laptop-height viewports when chart is expanded
+  11. KPI cards render a graduated cascade based on max batch age in scope: `< 3mo` → "Rate since inception" only; `3-6mo` → "3mo + since inception"; `6-12mo` → "3mo + 6mo"; `≥ 12mo` → "6mo + 12mo"; non-applicable cards are not rendered
+  12. KPI delta labels explicitly state the comparison baseline
+  13. 6mo and 12mo rate cards display the matching-horizon commitment rate as a secondary line (only when the card itself is shown per the cascade)
+  14. Rolling-average deltas are suppressed when the cohort is too young to support a meaningful rolling avg at the card's horizon — no "vs N/A" or misleading 0% deltas
+  15. Batch filter is replaced with a date-range filter
+  16. Each filter has an inline help tooltip
+  17. PARTNER_NAME column auto-hides in the main table when sidebar is scoped to a single partner
+  18. Metabase Import Preview step exposes a chart-type override control (defaults to the Phase 37 heuristic; user can pick line / scatter / bar / none before Apply, and pick axes when heuristic leaves them ambiguous), with helper text showing the inference reason
+**Plans**: _To be scoped via `/gsd:plan-phase` when this phase is ready to start. Likely 4-5 plans grouping: branding/sidebar (POL-01, POL-02), columns + formatting (POL-03, POL-04, POL-05), chart correctness + KPI (CHT-01..04, KPI-01..03), filters + layout (FLT-01..03), and Metabase Import polish (MBI-01)._
+
+**After Phase 38, kick off simultaneously:**
+- **Phase 39** (Partner Config) — independent, foundational feature
+- **Phase 40** (Projected Curves v1) — independent of 39, but stronger when 39 is done
+
+---
+
+### Phase 39: Partner Config Module
+
+**Goal**: Enforce `(partner, product)` as the canonical unit of analysis across the app — no cross-product blending for a single partner, ever — and add a per-pair segment config in localStorage for sub-cohort analysis (Snap EN/ES, Happy Money banks within a single product)
+**Depends on**: Phase 34 (Partner Lists, for `PartnerListFilters` extension). Independent of Phase 38 and 40.
+**Effort**: Medium-Large (sidebar restructure, selection-state rewrite, segment config schema, Setup UI, filter/list extension, segment-aware computation layer, chart/KPI plumbing)
+**Requirements**: PCFG-01 through PCFG-07
+**Success Criteria** (what must be TRUE):
+  1. Product type is derived from Snowflake `ACCOUNT_TYPE` (no config record, not editable); canonical unit of analysis is the `(PARTNER_NAME, ACCOUNT_TYPE)` pair
+  2. Sidebar partner list shows one row per `(partner, product)` pair derived from data — single-product partners look unchanged, multi-product partners split into N rows
+  3. Partner selection state carries both `partner` and `product`; all downstream scoping (KPIs, charts, table, drill-downs, filters, Partner Lists) keys off the pair
+  4. No UI path produces a cross-product blended view for a single partner — blending is blocked at the selection layer, not a user-controllable toggle
+  5. Each `(partner, product)` pair has an editable segment list persisted in localStorage; Partner Setup UI reachable from the sidebar partner context menu edits only segments (product type is data-derived)
+  6. `PartnerListFilters` extended with `PRODUCT_TYPE` (auto-derived from data) and `SEGMENT` (from config) attribute filters; pre-populated Partner Lists auto-maintain one list per distinct product-type value
+  7. Charts and KPIs gain an optional "split by segment" mode; pairs without segments fall back to the pair-rolled-up view (segment-level zero-regression; pair-level splitting is NOT opt-in, it's enforced)
+**Plans**: _To be scoped via `/gsd:plan-phase` when this phase is ready to start. Likely 3-4 plans grouping: sidebar + selection-state restructure (the enforced-splitting core), segment config schema + storage + Setup UI, filter/list extension, chart/KPI segment dimension._
+
+**After Phase 39:** Enables Phase 40's PRJ-05 (segment-aware projections) and v5.0 Phase 49 Dynamic Curve Re-Projection to operate at segment granularity.
+
+---
+
+### Phase 40: Projected Curves v1
+
+**Goal**: A first-pass projected collection-curve line (historical-average-based) that the team can benchmark against, and an optional KPI delta baseline ("vs projected curve") that replaces the opaque "vs rolling avg"
+**Depends on**: Phase 36 (Chart Builder — projections overlay on the generic chart renderer). Phase 39 is optional (enables PRJ-05 segment-aware projections). Independent of Phase 38.
+**Effort**: Medium (projection computation + chart overlay + KPI baseline wiring)
+**Requirements**: PRJ-01 through PRJ-05
+**Success Criteria** (what must be TRUE):
+  1. Collection curve chart renders a projected-trajectory line alongside actual batch curves
+  2. Projection extends from the last actual data point to the max-age of the displayed vintages (same truncation contract as CHT-01)
+  3. Projection line is visually distinct (dashed, subdued color, labeled "Projected")
+  4. KPI cards gain a selectable "vs projected curve" baseline option
+  5. When a partner has segments configured (from Phase 39), projections compute per segment when segment split is active
+**Plans**: _To be scoped via `/gsd:plan-phase` when this phase is ready to start. Likely 2-3 plans: projection-computation helper, chart overlay rendering, KPI-delta baseline option._
+
+**After Phase 40:** Feeds into v5.0 Phase 49 Dynamic Curve Re-Projection, which extends this with target-anchored, partner-reported, and confidence-band variants.
+
+---
+*Last updated: 2026-04-23 — v4.1 activated: Phases 38-40 detail sections added, v4.0 milestone flipped to ✅ shipped 2026-04-24. Prior: Phase 37 CLOSED (3/3 plans; 5-round defect closure on 37-03 human-verify gate; all META-01..05 requirements Complete); MBI-01 Metabase Import chart-type override added to v4.1 Phase 38 (bumping scope 17→18 items); Phase 33 Accessibility closed 2026-04-23 (5/5 plans; 6-guard parity portfolio live + BLOCKING); Phase 35 CLOSED (2/2 plans); Phase 34 Partner Lists closed 2026-04-18; Phase 30 Motion suite closed 2026-04-18; Phase 29 Component Patterns closed 2026-04-18; Phase 28 Surfaces closed 2026-04-17*

@@ -39,30 +39,22 @@ Surface abnormal account and batch performance data so the partnerships team can
 - ✓ Partner comparison matrix (heatmap, bar ranking, plain table) — v3.0
 - ✓ All v3.0 integration bugs resolved, codebase production-grade — v3.1
 - ✓ Component patterns (StatCard, DataPanel, SectionHeader, ToolbarGroup/Divider, EmptyState) with CI-guarded enforcement — v4.0 Phase 29
+- ✓ v4.0 Design System & Daily-Driver UX shipped end-to-end (Phases 25-37: tokens, typography, surfaces, component patterns, motion, visual polish, URL navigation, accessibility, Partner Lists, Chart Schema/Builder, Metabase SQL Import) — v4.0 (2026-04-24)
 
-### Current Milestone: v4.0 Design System & Daily-Driver UX
+### Current Milestone: v4.1 Feedback-Driven Polish
 
-**Goal:** Invest in design foundation (tokens, surfaces, typography, motion), fix code health issues, then build deferred features (Partner Lists, Chart Builder, Metabase Import) on the polished base. Absorbs v3.5 scope.
+**Goal:** Close the 14 first-week feedback items against v4.0, enforce `(partner, product)` as the canonical unit of analysis (no cross-product blending), and ship a first-pass projected-curve line the team can benchmark against. Make the app feel like a tool the team reaches for first — not one that needs workarounds.
 
 **Target features:**
-- Design token system: spacing, typography, elevation, motion, surfaces
-- Surface & elevation vocabulary applied to every container
-- Micro-interactions and visual polish pass
-- URL-backed drill-down navigation (browser back button, deep-linking)
-- Accessibility audit (WCAG AA, keyboard nav, screen readers)
-- Partner Lists (carried from v3.5)
-- Custom chart builder (carried from v3.5)
-- Metabase SQL import (carried from v3.5)
+- Polish + correctness pass: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness (axis + avg + hover + legend scroll), KPI cascade, filter fixes (date range, tooltips, partner dedup), laptop layout, Metabase Import chart-type override
+- Partner Config module: product-type derived from `ACCOUNT_TYPE` (no blending), per-`(partner, product)` segment config in localStorage, Setup UI, segment-aware charts/KPIs
+- Projected Curves v1: historical-average-based projection overlay + optional "vs projected curve" KPI baseline
 
 ### Active
 
-- [ ] Code health fixes (6 known issues: KI-07, KI-12, KI-13, KI-14, KI-16, KI-22)
-- [ ] Design token system (spacing, typography, elevation, motion, surfaces)
-- [ ] Surface & elevation applied to all components
-- [ ] Micro-interactions & visual polish
-- [ ] URL-backed navigation
-- [ ] Accessibility audit
-- [ ] Partner Lists, Chart Builder, Metabase SQL Import
+- [ ] Phase 38 — Polish + Correctness Pass (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01)
+- [ ] Phase 39 — Partner Config Module (PCFG-01..07)
+- [ ] Phase 40 — Projected Curves v1 (PRJ-01..05)
 
 ### Out of Scope
 
@@ -82,7 +74,7 @@ Surface abnormal account and batch performance data so the partnerships team can
 - Text-to-SQL generation — dataset fits in context, SQL injection risk
 - Full chat/conversation interface — point queries, not conversations
 - AI-generated charts — existing Recharts charts are excellent
-- Metabase query import — moved to v4.0 Active
+- Metabase query import — shipped in v4.0 Phase 37 (follow-up chart-type override in v4.1 Phase 38 as MBI-01)
 
 ## Context
 
@@ -129,4 +121,4 @@ Surface abnormal account and batch performance data so the partnerships team can
 | Known issues documented comprehensively | Production-grade codebase snapshot | ✓ Good — 22 issues catalogued |
 
 ---
-*Last updated: 2026-04-18 after Phase 29 — Component patterns shipped + CI-guarded*
+*Last updated: 2026-04-23 — v4.1 activated. v4.0 shipped 2026-04-24 (Phases 25-37: design system + URL nav + a11y + Partner Lists + Chart Builder + Metabase Import). Current scope is Phases 38-40 (polish + correctness, partner config, projected curves v1).*
