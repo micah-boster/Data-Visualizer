@@ -66,6 +66,14 @@ interface DataTableProps {
   /** Phase 38 FLT-01 — date-range bucket for the preset chip group. */
   age: AgeBucket;
   onAgeChange: (value: AgeBucket) => void;
+  /**
+   * Phase 38 FLT-03 — auto-hide override for the PARTNER_NAME column. True
+   * when the active partner list is scoped to exactly one partner, at which
+   * point the column is redundant (every row carries the same partner name).
+   * Applied as a one-shot effect when the flag transitions — the user's
+   * subsequent manual toggle through the column picker wins (POL-03).
+   */
+  hidePartnerColumn?: boolean;
   canIncludeDrill?: boolean;
   snapshotRef: React.MutableRefObject<(() => ViewSnapshot) | null>;
   loadViewRef: React.MutableRefObject<((view: SavedView) => void) | null>;
@@ -106,6 +114,7 @@ export function DataTable({
   selectedType,
   age,
   onAgeChange,
+  hidePartnerColumn = false,
   canIncludeDrill,
   snapshotRef,
   loadViewRef,
@@ -147,6 +156,28 @@ export function DataTable({
   const columnManagement = useColumnManagement(
     (preset: string) => setActivePresetRef.current?.(preset),
   );
+
+  // Phase 38 FLT-03: when the sidebar is scoped to a single partner, the
+  // PARTNER_NAME column is redundant (every row carries the same name). Fire a
+  // ONE-SHOT auto-hide when the `hidePartnerColumn` flag flips — the user's
+  // subsequent manual toggle via the column picker wins (POL-03 unlocked
+  // identity columns; toggleColumn calls markCustomPreset). Tracking the last
+  // applied value in a ref avoids thrashing visibility on every unrelated
+  // re-render (isRoot toggling, drillState changes, etc.).
+  const lastAppliedHidePartnerRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (lastAppliedHidePartnerRef.current === hidePartnerColumn) return;
+    lastAppliedHidePartnerRef.current = hidePartnerColumn;
+    columnManagement.setColumnVisibility((prev) => ({
+      ...prev,
+      // When flag transitions true -> hide; when false -> restore to visible.
+      PARTNER_NAME: hidePartnerColumn ? false : true,
+    }));
+    // Intentionally only depend on hidePartnerColumn — setColumnVisibility is
+    // a stable setter (React setState), and re-running on every columnManagement
+    // identity change would undo user toggles. Locally disable exhaustive-deps.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidePartnerColumn]);
 
   // Build percentile columns for root-level table
   const percentileColumns = useMemo(

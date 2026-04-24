@@ -1070,6 +1070,17 @@ export function DataDisplay() {
                     selectedType={selectedType}
                     age={age}
                     onAgeChange={setAge}
+                    // Phase 38 FLT-03: when the active partner list has exactly
+                    // 1 partner, the PARTNER_NAME column is redundant (every
+                    // row is the same partner). Pass the derivation down so
+                    // data-table.tsx can apply a one-shot auto-hide on mount /
+                    // activeList change, while still respecting manual toggles
+                    // through the column picker (POL-03).
+                    hidePartnerColumn={
+                      drillState.level === 'root' &&
+                      activeList !== null &&
+                      activeList.partnerIds.length === 1
+                    }
                     // NAV-04: gate the 'Include drill state' checkbox
                     canIncludeDrill={drillState.level !== 'root'}
                     // Refs for snapshot/load
@@ -1246,6 +1257,7 @@ function CrossPartnerDataTable({
   selectedType,
   age,
   onAgeChange,
+  hidePartnerColumn,
   canIncludeDrill,
   // Refs
   snapshotRef,
@@ -1283,6 +1295,8 @@ function CrossPartnerDataTable({
   /** Phase 38 FLT-01 — date-range bucket for the preset chip group. */
   age: import('@/hooks/use-filter-state').AgeBucket;
   onAgeChange: (value: import('@/hooks/use-filter-state').AgeBucket) => void;
+  /** Phase 38 FLT-03 — hide PARTNER_NAME col when sidebar scoped to 1 partner. */
+  hidePartnerColumn: boolean;
   canIncludeDrill?: boolean;
   snapshotRef: React.MutableRefObject<(() => import('@/lib/views/types').ViewSnapshot) | null>;
   loadViewRef: React.MutableRefObject<((view: SavedView) => void) | null>;
@@ -1376,6 +1390,7 @@ function CrossPartnerDataTable({
       selectedType={selectedType}
       age={age}
       onAgeChange={onAgeChange}
+      hidePartnerColumn={hidePartnerColumn}
       canIncludeDrill={canIncludeDrill}
       snapshotRef={snapshotRef}
       loadViewRef={loadViewRef}
