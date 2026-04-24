@@ -126,3 +126,34 @@ export function inferChart(
 
   return { chartType, x, y, skipped: [] };
 }
+
+/**
+ * Phase 38 MBI-01 — human-readable rationale for the Preview's chart-type
+ * override control. Maps the result of `inferChart` into a one-line hint
+ * displayed beside the segmented control.
+ *
+ * Three inference rules map to three default reasons; a more specific
+ * skipped[0].reason wins when the inference fell through.
+ */
+export function inferenceReason(result: {
+  inferredChart: ChartInferenceResult;
+}): string {
+  const inferred = result.inferredChart;
+  if (!inferred) return 'No chart inferred — pick one to override.';
+
+  switch (inferred.chartType) {
+    case 'bar':
+      return 'Inferred from GROUP BY + aggregate.';
+    case 'line':
+      return 'Inferred from date X-axis + numeric Y.';
+    case 'scatter':
+      return 'Inferred from two numeric columns.';
+    case null: {
+      // Surface the more specific upstream reason when present.
+      const first = inferred.skipped?.[0]?.reason;
+      return first
+        ? `No chart inferred — ${first}.`
+        : 'No chart inferred — pick one to override.';
+    }
+  }
+}

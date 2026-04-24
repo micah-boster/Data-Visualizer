@@ -1,10 +1,14 @@
 'use client';
 
-import { XCircle, AlertTriangle } from 'lucide-react';
+import { XCircle, AlertTriangle, LineChart, ScatterChart, BarChart3, MinusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SheetFooter } from '@/components/ui/sheet';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import type { ParseResult, MatchedFilter } from '@/lib/metabase-import/types';
+import { inferenceReason } from '@/lib/metabase-import/chart-inference';
+import type { OverrideChartType } from '@/lib/metabase-import/merge-override';
+import { AxisPicker } from '@/components/charts/axis-picker';
+import { cn } from '@/lib/utils';
 import { PreviewSection } from './preview-section';
 import { PreviewRow } from './preview-row';
 
@@ -18,6 +22,12 @@ import { PreviewRow } from './preview-row';
  *
  * This component is a dumb renderer over ParseResult (from Plan 01). All
  * translation happens in `parseMetabaseSql` — no AST logic here.
+ *
+ * Phase 38 MBI-01: the Chart section now exposes a chart-type override
+ * segmented control (line / scatter / bar / none) plus X and Y axis pickers
+ * and an inference-reason helper line. State lives in the parent
+ * (ImportSheet) so `onImportSql` can merge overrides into the ParseResult
+ * at Apply time via `mergeOverride`.
  *
  * Accessibility:
  *   - Parse-error card uses `role="alert"` (assertive SR announcement)
@@ -43,15 +53,23 @@ function formatFilterLabel(f: MatchedFilter): string {
   }
 }
 
-function chartSummary(chart: ParseResult['inferredChart']): string {
-  if (!chart.chartType) return 'No chart inferred';
-  const parts: string[] = [
-    `${chart.chartType[0].toUpperCase()}${chart.chartType.slice(1)} chart`,
-  ];
-  if (chart.x) parts.push(`X: ${LABEL_BY_KEY.get(chart.x) ?? chart.x}`);
-  if (chart.y) parts.push(`Y: ${LABEL_BY_KEY.get(chart.y) ?? chart.y}`);
-  return parts.join(' — ');
-}
+/**
+ * Phase 38 MBI-01 — segmented chart-type control scoped to the Metabase Import
+ * preview. Distinct from `ChartTypeSegmentedControl` (which carries a
+ * 'collection-curve' option not relevant to SQL-imported views). Local to the
+ * import surface; reusing the builder's control would require a cross-phase
+ * 'none' option.
+ */
+const OVERRIDE_TYPE_OPTIONS: ReadonlyArray<{
+  value: 'line' | 'scatter' | 'bar' | 'none';
+  Icon: typeof LineChart;
+  label: string;
+}> = [
+  { value: 'line', Icon: LineChart, label: 'Line' },
+  { value: 'scatter', Icon: ScatterChart, label: 'Scatter' },
+  { value: 'bar', Icon: BarChart3, label: 'Bar' },
+  { value: 'none', Icon: MinusCircle, label: 'None' },
+];
 
 export interface PreviewStepProps {
   /** Parser output — rendered as-is; no further translation here. */
@@ -60,10 +78,34 @@ export interface PreviewStepProps {
   onBack: () => void;
   /** Commit the import — disabled when a parse error is present. */
   onApply: () => void;
+  /** Phase 38 MBI-01 — hoisted override state (owned by ImportSheet). */
+  overrideType: OverrideChartType;
+  overrideX: string | null;
+  overrideY: string | null;
+  onOverrideTypeChange: (next: OverrideChartType) => void;
+  onOverrideXChange: (next: string | null) => void;
+  onOverrideYChange: (next: string | null) => void;
 }
 
-export function PreviewStep({ result, onBack, onApply }: PreviewStepProps) {
+export function PreviewStep({
+  result,
+  onBack,
+  onApply,
+  overrideType,
+  overrideX,
+  overrideY,
+  onOverrideTypeChange,
+  onOverrideXChange,
+  onOverrideYChange,
+}: PreviewStepProps) {
   const hasError = result.parseError !== undefined;
+
+  // Phase 38 MBI-01: effective chart-type — override wins over inference.
+  // `null` (no override picked yet) falls through to the inferred value (or
+  // 'none' when inference didn't find one). Drives both the segmented
+  // control's pressed state and the AxisPicker visibility.
+  const activeType: 'line' | 'scatter' | 'bar' | 'none' =
+    overrideType ?? result.inferredChart.chartType ?? 'none';
 
   return (
     <>
@@ -187,24 +229,89 @@ export function PreviewStep({ result, onBack, onApply }: PreviewStepProps) {
               ))}
             </PreviewSection>
 
-            <PreviewSection
-              title="Chart"
-              matchedCount={result.inferredChart.chartType ? 1 : 0}
-              skippedCount={result.inferredChart.skipped.length}
-              emptyLabel="No chart inferred"
-            >
-              {result.inferredChart.chartType && (
-                <PreviewRow variant="matched" label={chartSummary(result.inferredChart)} />
-              )}
-              {result.inferredChart.skipped.map((s, i) => (
-                <PreviewRow
-                  key={`chart-s-${i}`}
-                  variant="skipped"
-                  label="Chart inference"
-                  reason={s.reason}
-                />
-              ))}
-            </PreviewSection>
+            {/* Phase 38 MBI-01: Chart section now exposes a user-overridable
+                segmented control + axis pickers + inference rationale. */}
+            <section className="border-t py-4">
+              <header className="flex items-baseline justify-between gap-2 mb-2">
+                <h3 className="text-title">Chart</h3>
+                <span className="text-caption text-muted-foreground">
+                  {inferenceReason(result)}
+                </span>
+              </header>
+              <div className="flex flex-col gap-2">
+                <div
+                  className="flex items-center gap-1"
+                  role="group"
+                  aria-label="Chart type"
+                >
+                  {OVERRIDE_TYPE_OPTIONS.map(({ value, Icon, label }) => {
+                    const pressed = activeType === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-pressed={pressed}
+                        aria-label={label}
+                        onClick={() => onOverrideTypeChange(value)}
+                        className={cn(
+                          'inline-flex items-center gap-1 rounded-md px-2 py-1 text-caption transition-colors',
+                          pressed
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-foreground hover:bg-muted/80',
+                        )}
+                      >
+                        <Icon className="h-3.5 w-3.5" aria-hidden />
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Axis pickers visible only when a concrete chart type is
+                    active (everything except 'none'). When no inference exists
+                    and no override picked yet, activeType === 'none' so no
+                    pickers render. */}
+                {activeType !== 'none' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-caption text-muted-foreground">X:</span>
+                    <AxisPicker
+                      chartType={activeType}
+                      axis="x"
+                      value={
+                        (overrideX ?? result.inferredChart.x) != null
+                          ? { column: (overrideX ?? result.inferredChart.x) as string }
+                          : null
+                      }
+                      onChange={(next) => onOverrideXChange(next?.column ?? null)}
+                      placeholder="Pick X column"
+                    />
+                    <span className="text-caption text-muted-foreground ml-2">Y:</span>
+                    <AxisPicker
+                      chartType={activeType}
+                      axis="y"
+                      value={
+                        (overrideY ?? result.inferredChart.y) != null
+                          ? { column: (overrideY ?? result.inferredChart.y) as string }
+                          : null
+                      }
+                      onChange={(next) => onOverrideYChange(next?.column ?? null)}
+                      placeholder="Pick Y column"
+                    />
+                  </div>
+                )}
+                {result.inferredChart.skipped.length > 0 && (
+                  <ul className="mt-1 flex flex-col">
+                    {result.inferredChart.skipped.map((s, i) => (
+                      <PreviewRow
+                        key={`chart-s-${i}`}
+                        variant="skipped"
+                        label="Chart inference"
+                        reason={s.reason}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
           </>
         )}
       </div>
