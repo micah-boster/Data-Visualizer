@@ -33,7 +33,7 @@ import { useSavedViews } from '@/hooks/use-saved-views';
 import { useFilterState } from '@/hooks/use-filter-state';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
 import { computeKpis } from '@/lib/computation/compute-kpis';
-import { getPartnerName, getBatchName } from '@/lib/utils';
+import { getPartnerName, getBatchName, coerceAgeMonths } from '@/lib/utils';
 import { SectionErrorBoundary } from '@/components/section-error-boundary';
 import { SectionDivider } from '@/components/layout/section-divider';
 import { toast } from 'sonner';
@@ -158,12 +158,18 @@ export function DataDisplay() {
   } = useSavedViews(knownListIds);
 
   // Lifted state: dimension filters (URL-backed)
+  // Phase 38 FLT-01: `age` (AgeBucket) + `setAge` added for the date-range
+  // preset chip group. Separate from dimension filters because age is a
+  // value-range predicate, not column-equality — handled inline below in
+  // filteredRawData (still upstream of aggregation = Phase 25 contract).
   const {
     columnFilters: dimensionFilters,
     setFilter,
     clearAll: clearAllDimension,
     activeFilters,
     searchParams,
+    age,
+    setAge,
   } = useFilterState(data?.data);
 
   // Active partner list (Phase 34 — LIST-03). Flows through the same
@@ -205,14 +211,28 @@ export function DataDisplay() {
       );
     }
 
-    // 2. Active partner list (Phase 34 — LIST-03)
+    // 2. Phase 38 FLT-01: age-bucket predicate — keep rows whose
+    //    BATCH_AGE_IN_MONTHS is <= the selected cap. Applied AFTER the
+    //    dimension filters and BEFORE the active-list scope so the
+    //    filter-before-aggregate contract continues to hold (Phase 25).
+    //    `coerceAgeMonths` falls back days->months for any legacy cached
+    //    rows (values > 365). `age === null` means "All" (no-op).
+    if (age !== null) {
+      const cap = age;
+      out = out.filter(
+        (row) =>
+          coerceAgeMonths((row as Record<string, unknown>).BATCH_AGE_IN_MONTHS) <= cap,
+      );
+    }
+
+    // 3. Active partner list (Phase 34 — LIST-03)
     if (activeList && activeList.partnerIds.length > 0) {
       const allow = new Set(activeList.partnerIds);
       out = out.filter((row) => allow.has(getPartnerName(row) ?? ''));
     }
 
     return out;
-  }, [data?.data, dimensionFilters, activeList]);
+  }, [data?.data, dimensionFilters, age, activeList]);
 
   // Partner stats sourced from filteredRawData so root-level dimension filters
   // (e.g. ACCOUNT_TYPE) cascade into partner drill-down aggregates.

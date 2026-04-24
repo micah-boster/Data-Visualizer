@@ -12,8 +12,12 @@ interface FilterBarProps {
 }
 
 /**
- * Horizontal bar rendering three filter comboboxes: partner, account type, batch.
- * Batch options cascade based on selected partner.
+ * Horizontal bar rendering the partner + account-type filter comboboxes.
+ *
+ * Phase 38 FLT-01: the batch combobox was removed. The toolbar's FilterPopover
+ * now owns a date-range preset chip group (BATCH_AGE_IN_MONTHS <= cap) that
+ * replaces the structurally-broken batch combobox. This standalone FilterBar
+ * is unused as of Phase 27 (toolbar-unification) but kept as a reference.
  */
 export function FilterBar({ data, columnFilters, onFilterChange }: FilterBarProps) {
   // Current selected values derived from columnFilters
@@ -24,11 +28,6 @@ export function FilterBar({ data, columnFilters, onFilterChange }: FilterBarProp
 
   const selectedType = useMemo(() => {
     const f = columnFilters.find((cf) => cf.id === FILTER_PARAMS.type);
-    return f ? String(f.value) : null;
-  }, [columnFilters]);
-
-  const selectedBatch = useMemo(() => {
-    const f = columnFilters.find((cf) => cf.id === FILTER_PARAMS.batch);
     return f ? String(f.value) : null;
   }, [columnFilters]);
 
@@ -50,16 +49,6 @@ export function FilterBar({ data, columnFilters, onFilterChange }: FilterBarProp
     [data]
   );
 
-  // Batch options: scoped to selected partner when active (locked decision)
-  const batchOptions = useMemo(() => {
-    const rows = selectedPartner
-      ? data.filter((r) => String(r.PARTNER_NAME ?? '') === selectedPartner)
-      : data;
-    return [...new Set(rows.map((r) => String(r.BATCH ?? '')))]
-      .filter(Boolean)
-      .sort();
-  }, [data, selectedPartner]);
-
   return (
     <div className="flex items-center gap-3 px-2 py-2">
       <FilterCombobox
@@ -75,13 +64,6 @@ export function FilterBar({ data, columnFilters, onFilterChange }: FilterBarProp
         options={typeOptions}
         value={selectedType}
         onValueChange={(val) => onFilterChange('type', val)}
-      />
-      <FilterCombobox
-        label="Batch"
-        placeholder="All batches"
-        options={batchOptions}
-        value={selectedBatch}
-        onValueChange={(val) => onFilterChange('batch', val)}
       />
     </div>
   );

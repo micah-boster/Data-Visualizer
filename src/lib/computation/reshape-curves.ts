@@ -1,5 +1,5 @@
 import type { BatchCurve, CurvePoint } from '@/types/partner-stats';
-import { getBatchName } from '@/lib/utils';
+import { getBatchName, coerceAgeMonths } from '@/lib/utils';
 
 /** The 20 collection month milestones tracked in Snowflake. */
 export const COLLECTION_MONTHS = [
@@ -20,10 +20,11 @@ export function reshapeCurves(
     const batchName = getBatchName(row);
     const totalPlaced = Number(row.TOTAL_AMOUNT_PLACED) || 0;
 
-    const rawAge = Number(row.BATCH_AGE_IN_MONTHS) || 0;
-    // Values > 365 are legacy cached data stored as days — convert to months.
-    // Live Snowflake returns actual months (e.g. 7, 33).
-    const ageInMonths = rawAge > 365 ? Math.floor(rawAge / 30) : rawAge;
+    // Phase 38 FLT-01: extracted into `coerceAgeMonths` (@/lib/utils) so the
+    // new age-bucket filter in data-display.tsx can reuse the same days->months
+    // fallback. Behavior unchanged: values > 365 (legacy cached days) are
+    // floored to months; live Snowflake months pass through as-is.
+    const ageInMonths = coerceAgeMonths(row.BATCH_AGE_IN_MONTHS);
 
     const points: CurvePoint[] = [];
 
