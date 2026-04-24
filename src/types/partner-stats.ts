@@ -58,9 +58,30 @@ export interface BatchTrend {
   baselineCount: number;
 }
 
+/**
+ * Per-horizon rolling-avg suppression flags (Phase 38 KPI-04).
+ *
+ * `true` means the corresponding KPI card should render VALUE ONLY (no delta
+ * indicator). Suppress when fewer than 3 PRIOR batches (excluding the latest)
+ * have reached the card's horizon. `rateSinceInception` suppresses only when
+ * there are zero prior batches.
+ */
+export interface SuppressDeltaFlags {
+  rate3mo: boolean;
+  rate6mo: boolean;
+  rate12mo: boolean;
+  rateSinceInception: boolean;
+}
+
 export interface TrendingData {
   trends: BatchTrend[];
+  /**
+   * @deprecated Use `suppressDelta.{horizon}` for per-horizon decisions (KPI-04).
+   * Retained for legacy callers that still treat trending as a single boolean
+   * (e.g., `definitions.ts` table-footer trend cells).
+   */
   insufficientHistory: boolean;
+  suppressDelta: SuppressDeltaFlags;
   batchCount: number;
 }
 

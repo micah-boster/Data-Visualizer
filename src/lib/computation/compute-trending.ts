@@ -1,4 +1,8 @@
-import type { BatchTrend, TrendingData } from '@/types/partner-stats';
+import type {
+  BatchTrend,
+  SuppressDeltaFlags,
+  TrendingData,
+} from '@/types/partner-stats';
 
 /** Metrics to compute trending for. */
 export const TRENDING_METRICS = [
@@ -13,6 +17,54 @@ export const TRENDING_METRICS = [
 const THRESHOLD = 0.05;
 
 /**
+ * Legacy-days → months age coercion. Mirrors `reshape-curves.ts:23` and
+ * `compute-kpis.ts`. Applied to raw `BATCH_AGE_IN_MONTHS` so suppression
+ * decisions are correct against static-cache rows stored in days.
+ *
+ * TODO(Phase 38 Plan 05): consolidate into a shared helper.
+ */
+function coerceAgeMonths(raw: unknown): number {
+  const n = Number(raw) || 0;
+  return n > 365 ? Math.floor(n / 30) : n;
+}
+
+/** Minimal shape `computeSuppression` needs from each batch. */
+export interface SuppressionInput {
+  ageInMonths: number;
+}
+
+/**
+ * Per-horizon rolling-avg suppression (Phase 38 KPI-04).
+ *
+ * Rule per CONTEXT lock: rolling-avg delta for an Xmo rate card requires ≥3
+ * PRIOR batches (all batches except the latest, sorted by age descending) that
+ * have reached X months of age. `rateSinceInception` suppresses only when
+ * there are zero prior batches.
+ *
+ * Pure function over a minimal `{ ageInMonths: number }` shape — decoupled
+ * from Snowflake row keys so unit tests can synthesise inputs cheaply.
+ */
+export function computeSuppression(
+  batches: SuppressionInput[],
+): SuppressDeltaFlags {
+  // Sort by age descending — latest (youngest) batch is the smallest age.
+  // "Prior" per compute-trending.ts:40 precedent = all except the latest.
+  const sorted = [...batches].sort((a, b) => b.ageInMonths - a.ageInMonths);
+  // Latest batch = youngest age ⇒ last entry after descending sort.
+  const priorBatches = sorted.slice(0, -1);
+
+  const reached = (h: number) =>
+    priorBatches.filter((b) => b.ageInMonths >= h).length;
+
+  return {
+    rate3mo: reached(3) < 3,
+    rate6mo: reached(6) < 3,
+    rate12mo: reached(12) < 3,
+    rateSinceInception: priorBatches.length === 0,
+  };
+}
+
+/**
  * Compute batch-over-batch trending for the latest batch.
  *
  * Compares each metric's current value to the rolling average of
@@ -23,9 +75,21 @@ const THRESHOLD = 0.05;
 export function computeTrending(
   rows: Record<string, unknown>[],
 ): TrendingData {
+  // Per-horizon suppression computed once from raw rows; reused on every
+  // return path (including early-returns) so KpiSummaryCards can make
+  // per-card decisions regardless of legacy insufficientHistory shortcuts.
+  const suppressDelta = computeSuppression(
+    rows.map((r) => ({ ageInMonths: coerceAgeMonths(r.BATCH_AGE_IN_MONTHS) })),
+  );
+
   // Need at least 3 batches to compute meaningful trends (2 baseline + 1 current)
   if (rows.length < 3) {
-    return { trends: [], insufficientHistory: true, batchCount: rows.length };
+    return {
+      trends: [],
+      insufficientHistory: true,
+      suppressDelta,
+      batchCount: rows.length,
+    };
   }
 
   // Sort by BATCH name (string sort is fine -- batch names contain dates like MAR_26)
@@ -43,7 +107,12 @@ export function computeTrending(
   );
 
   if (priorRows.length < 2) {
-    return { trends: [], insufficientHistory: true, batchCount: rows.length };
+    return {
+      trends: [],
+      insufficientHistory: true,
+      suppressDelta,
+      batchCount: rows.length,
+    };
   }
 
   const trends: BatchTrend[] = [];
@@ -91,5 +160,10 @@ export function computeTrending(
     });
   }
 
-  return { trends, insufficientHistory: false, batchCount: rows.length };
+  return {
+    trends,
+    insufficientHistory: false,
+    suppressDelta,
+    batchCount: rows.length,
+  };
 }
