@@ -129,7 +129,10 @@ assert.equal(
   'line → bar carries numeric Y (Y is numeric across all chart types)',
 );
 
-// ---------- 7. Generic line → scatter with both axes numeric-eligible carries unchanged ----------
+// ---------- 7. Generic line → scatter honors per-chart X eligibility ----------
+// Phase 36.x curation: line X allowlist (BATCH_AGE_IN_MONTHS, BATCH) does NOT
+// intersect the scatter X allowlist (headline metrics). So line → scatter
+// MUST clear X. Y is a headline metric eligible on both, so it carries.
 const lineBothNumeric: LineChartDefinition = {
   type: 'line',
   version: 1,
@@ -140,14 +143,14 @@ const lineToScatter = switchChartType(lineBothNumeric, 'scatter') as ChartDefini
   type: 'scatter';
 };
 assert.equal(
-  lineToScatter.x?.column,
-  'BATCH_AGE_IN_MONTHS',
-  'line → scatter carries numeric X unchanged',
+  lineToScatter.x,
+  null,
+  'line → scatter clears X (BATCH_AGE_IN_MONTHS not in scatter allowlist)',
 );
 assert.equal(
   lineToScatter.y?.column,
   'TOTAL_COLLECTED_LIFE_TIME',
-  'line → scatter carries numeric Y unchanged',
+  'line → scatter carries headline-metric Y unchanged',
 );
 
 // ---------- 8. Freshness: generic → generic returns a NEW object, not the input ----------

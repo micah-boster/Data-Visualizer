@@ -21,7 +21,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export interface StaleColumnWarningProps {
-  axis: 'X' | 'Y';
+  axis: 'X' | 'Y' | 'Series';
   missing: string;
   fallback: string;
 }
@@ -31,11 +31,14 @@ export function StaleColumnWarning({
   missing,
   fallback,
 }: StaleColumnWarningProps) {
+  // Phase 36.x — X/Y stay as "X-axis column …" phrasing; Series stays as
+  // "Series column …" (no "-axis" suffix) so the banner reads naturally.
+  const prefix = axis === 'Series' ? 'Series column ' : `${axis}-axis column `;
   return (
     <Alert className="mb-stack">
       <AlertTriangle className="h-4 w-4" />
       <AlertDescription>
-        <span className="text-title">{axis}-axis column </span>
+        <span className="text-title">{prefix}</span>
         <code className="text-label-numeric rounded bg-muted px-1">
           {missing}
         </code>

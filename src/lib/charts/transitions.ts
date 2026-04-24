@@ -74,11 +74,20 @@ export function seedGenericFromPreset(
       break;
   }
 
+  // Phase 36.x — all three generic variants seed `series: { column: 'BATCH' }`:
+  //   - line + bar: splits rows into color-coded groups (one line/bar cluster
+  //     per batch when data has multiple rows per X; mostly decorative with
+  //     this dataset's one-row-per-batch shape but still useful when X is a
+  //     non-batch dimension).
+  //   - scatter: colors and labels each point by batch value. Distinct
+  //     semantic from line/bar grouping — the toolbar labels the picker
+  //     "Color" (not "Series") on scatter to match.
   return {
     type: nextType,
     version: 1,
     x,
     y: { column: yColumn },
+    series: { column: 'BATCH' },
   } as ChartDefinition;
 }
 
@@ -124,10 +133,23 @@ export function switchChartType(
       ? { column: generic.y.column }
       : null;
 
+  // Phase 36.x — series carries between all three generic variants.
+  // Eligibility is chart-type invariant (any categorical column). On scatter
+  // the field drives point coloring + labeling instead of group splitting,
+  // but the stored value has the same shape.
+  const currentSeries =
+    'series' in generic && generic.series ? generic.series : null;
+  const nextSeries =
+    currentSeries &&
+    isColumnEligible(nextType, 'series', currentSeries.column)
+      ? { column: currentSeries.column }
+      : null;
+
   return {
     type: nextType,
     version: 1,
     x: nextX,
     y: nextY,
+    series: nextSeries,
   } as ChartDefinition;
 }

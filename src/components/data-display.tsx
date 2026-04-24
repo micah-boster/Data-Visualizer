@@ -218,6 +218,25 @@ export function DataDisplay() {
   // (e.g. ACCOUNT_TYPE) cascade into partner drill-down aggregates.
   const partnerStats = usePartnerStats(drillState.partner, filteredRawData);
 
+  // Phase 36.x — row-level slices for the generic chart panel. The preset
+  // (CollectionCurveChart) consumes the pre-shaped `curves` array; the generic
+  // branch (GenericChart) plots raw rows and must see the same partner/batch
+  // subset the rest of the drill-down view uses. Without these narrowed sets
+  // the multi-series line chart would plot every partner's batches even when
+  // the user is drilled into one partner.
+  const partnerRows = useMemo(() => {
+    if (!drillState.partner) return filteredRawData;
+    return filteredRawData.filter(
+      (r) => String(r.PARTNER_NAME ?? '') === drillState.partner,
+    );
+  }, [filteredRawData, drillState.partner]);
+  const batchRows = useMemo(() => {
+    if (!drillState.partner || !drillState.batch) return partnerRows;
+    return partnerRows.filter(
+      (r) => String(r.BATCH ?? '') === drillState.batch,
+    );
+  }, [partnerRows, drillState.partner, drillState.batch]);
+
   // Sync freshness state to context so header can display it
   useEffect(() => {
     if (data?.meta?.fetchedAt) {
@@ -909,7 +928,7 @@ export function DataDisplay() {
                             <ChartPanel
                               definition={chartDefinition}
                               onDefinitionChange={setChartDefinition}
-                              rows={filteredRawData}
+                              rows={partnerRows}
                               curves={partnerStats.curves}
                               chartSnapshotRef={chartSnapshotRef}
                               chartLoadRef={chartLoadRef}
@@ -922,7 +941,7 @@ export function DataDisplay() {
                       <ChartPanel
                         definition={chartDefinition}
                         onDefinitionChange={setChartDefinition}
-                        rows={filteredRawData}
+                        rows={batchRows}
                         curves={batchCurve}
                         chartSnapshotRef={chartSnapshotRef}
                         chartLoadRef={chartLoadRef}

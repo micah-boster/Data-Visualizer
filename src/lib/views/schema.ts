@@ -46,28 +46,45 @@ const axisRefSchema = z.object({
  * categorical columns (see axis-eligibility.ts). Y axis is numeric-only.
  * Literal discriminator `type: z.literal('line')` is critical — any drift to
  * `z.string()` would break discriminatedUnion narrowing (36-RESEARCH Pitfall 1).
+ *
+ * Phase 36.x — optional `series` field groups rows by a categorical column
+ * (e.g. BATCH) and renders one line per series value, color-coded. When
+ * null/undefined the chart renders a single line through all rows. Additive-
+ * optional evolution: pre-series saved views parse cleanly.
  */
 const lineChartVariantSchema = z.object({
   type: z.literal('line'),
   version: z.literal(1),
   x: axisRefSchema.nullable(),
   y: axisRefSchema.nullable(),
+  series: axisRefSchema.nullable().optional(),
 });
 
-/** Phase 36 — `scatter` chart variant. Both axes numeric-only. */
+/**
+ * Phase 36 — `scatter` chart variant. Both axes numeric-only.
+ * Phase 36.x — optional `series` groups points into color-coded clusters with
+ * a legend, AND drives per-point labels (below each dot) when the point count
+ * is low enough to render them without overlap.
+ */
 const scatterChartVariantSchema = z.object({
   type: z.literal('scatter'),
   version: z.literal(1),
   x: axisRefSchema.nullable(),
   y: axisRefSchema.nullable(),
+  series: axisRefSchema.nullable().optional(),
 });
 
-/** Phase 36 — `bar` chart variant. X categorical-only; Y numeric-only. */
+/**
+ * Phase 36 — `bar` chart variant. X categorical-only; Y numeric-only.
+ * Phase 36.x — optional `series` field groups rows by a second categorical
+ * column and renders grouped bars (one per series value per X tick).
+ */
 const barChartVariantSchema = z.object({
   type: z.literal('bar'),
   version: z.literal(1),
   x: axisRefSchema.nullable(),
   y: axisRefSchema.nullable(),
+  series: axisRefSchema.nullable().optional(),
 });
 
 export const chartDefinitionSchema = z.discriminatedUnion('type', [

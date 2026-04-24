@@ -43,16 +43,21 @@ import {
   Scatter,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
+  LabelList,
 } from 'recharts';
 
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { NumericTick } from './numeric-tick';
 import { StaleColumnWarning } from './stale-column-warning';
+import { CHART_COLORS } from './curve-tooltip';
+import { GenericChartLegend } from './generic-chart-legend';
+import { ScatterTooltip } from './scatter-tooltip';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { resolveColumnWithFallback } from '@/lib/charts/stale-column';
 import type { ColumnConfig } from '@/lib/columns/config';
@@ -60,7 +65,14 @@ import type {
   ChartDefinition,
   GenericChartDefinition,
 } from '@/lib/views/types';
-import { isNumericType } from '@/lib/formatting/numbers';
+import {
+  isNumericType,
+  getFormatter,
+  formatAbbreviatedCurrency,
+  formatPercentage,
+  formatCount,
+  formatNumber,
+} from '@/lib/formatting/numbers';
 
 export interface GenericChartProps {
   definition: GenericChartDefinition;
@@ -86,6 +98,41 @@ function rechartsAxisType(col: ColumnConfig): 'category' | 'number' {
   // `date` and any future additive type fall through to number (continuous axis).
   return 'number';
 }
+
+/**
+ * Phase 36.x — axis tick formatter (compact). Currency uses abbreviated
+ * $1.2M / $450K form; percentage shows whole numbers (55%); count/number
+ * use comma-separated integers. Text columns return identity (Recharts'
+ * default category tick handles strings).
+ */
+function axisFormatter(col: ColumnConfig): ((v: number) => string) | undefined {
+  switch (col.type) {
+    case 'currency':
+      return formatAbbreviatedCurrency;
+    case 'percentage':
+      return (v) => formatPercentage(v, 0);
+    case 'count':
+      return formatCount;
+    case 'number':
+      return formatNumber;
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Phase 36.x — full-precision formatter used in the tooltip where space is
+ * plentiful. Currency becomes "$1,234.56", percentage "55.0%", etc.
+ */
+function tooltipFormatter(col: ColumnConfig): (v: number) => string {
+  return getFormatter(col.type);
+}
+
+const AXIS_LABEL_STYLE = {
+  fill: 'var(--muted-foreground)',
+  fontSize: 11,
+  fontFamily: 'var(--font-sans), ui-sans-serif, system-ui',
+} as const;
 
 export function GenericChart({
   definition,
@@ -135,9 +182,6 @@ export function GenericChart({
   const yCol = yResolved.config;
 
   // --- Stale-column banners ---------------------------------------------------
-  // Collected into an array so a plan with BOTH axes stale renders two banners,
-  // stacked, above the chart. `requested` is guaranteed non-null on stale === true
-  // because null-requested returns resolved === null above and is handled above.
   const banners: ReactElement[] = [];
   if (xResolved.stale && xResolved.requested) {
     banners.push(
@@ -160,106 +204,419 @@ export function GenericChart({
     );
   }
 
-  // --- ChartConfig (single series keyed on Y) ---------------------------------
-  const chartConfig: ChartConfig = {
-    [yCol.key]: {
+  // --- Series / color (Phase 36.x) -------------------------------------------
+  // All three generic variants accept an optional `series` ref. Semantics:
+  //   - line + bar: pivot rows by the series column → one wide record per X,
+  //     one Y key per distinct series value. Renders one <Line>/<Bar> each.
+  //   - scatter:    groups rows by series for per-point coloring + labeling.
+  //     No wide pivot — each group keeps its own row subset (scatter variant
+  //     consumes scatterGroups below).
+  const seriesRef =
+    'series' in definition ? definition.series ?? null : null;
+  const seriesResolved =
+    seriesRef !== null
+      ? resolveColumnWithFallback(definition.type, 'series', seriesRef)
+      : null;
+  const seriesCol = seriesResolved?.config ?? null;
+  if (seriesResolved?.stale && seriesResolved.requested) {
+    banners.push(
+      <StaleColumnWarning
+        key="series-stale"
+        axis="Series"
+        missing={seriesResolved.requested}
+        fallback={seriesResolved.config.key}
+      />,
+    );
+  }
+
+  const { pivoted, seriesKeys } = pivotForSeries(rows, xCol.key, yCol.key, seriesCol?.key ?? null);
+
+  // --- ChartConfig — single entry (no series) or N entries (one per series) --
+  const chartConfig: ChartConfig = {};
+  if (seriesCol && seriesKeys.length > 0) {
+    seriesKeys.forEach((key, i) => {
+      chartConfig[key] = {
+        label: key,
+        color: CHART_COLORS[i % CHART_COLORS.length],
+      };
+    });
+  } else {
+    chartConfig[yCol.key] = {
       label: yCol.label,
       color: 'var(--chart-1)',
-    },
-  };
+    };
+  }
 
   const xType = rechartsAxisType(xCol);
-  const chartClassName = 'h-[40vh] w-full';
-  const chartMargin = { top: 5, right: 10, bottom: 5, left: 10 };
+  const chartClassName = 'h-[40vh] min-w-0 flex-1';
+  // Extra bottom/left room for axis titles; top for Y title above.
+  const chartMargin = { top: 10, right: 10, bottom: 30, left: 20 };
+  const hasMultiSeries = seriesCol !== null && seriesKeys.length > 0;
+  const xFormat = axisFormatter(xCol);
+  const yFormat = axisFormatter(yCol);
+  const xTooltipFmt = tooltipFormatter(xCol);
+  const yTooltipFmt = tooltipFormatter(yCol);
+  const xAxisLabel = {
+    value: xCol.label,
+    position: 'insideBottom' as const,
+    offset: -15,
+    style: AXIS_LABEL_STYLE,
+  };
+  const yAxisLabel = {
+    value: yCol.label,
+    angle: -90,
+    position: 'insideLeft' as const,
+    offset: 5,
+    style: { ...AXIS_LABEL_STYLE, textAnchor: 'middle' as const },
+  };
 
   // --- Variant dispatch (Pitfall 6 — one primitive per ChartContainer) --------
   if (definition.type === 'line') {
     return (
       <>
         {banners}
-        <ChartContainer config={chartConfig} className={chartClassName}>
-          <LineChart data={rows} margin={chartMargin}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis
-              type={xType}
-              dataKey={xCol.key}
-              tick={xType === 'number' ? <NumericTick /> : undefined}
+        <div className="flex gap-2">
+          <ChartContainer config={chartConfig} className={chartClassName}>
+            <LineChart data={pivoted} margin={chartMargin}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis
+                type={xType}
+                dataKey={xCol.key}
+                tick={
+                  xType === 'number' ? <NumericTick format={xFormat} /> : undefined
+                }
+                label={xAxisLabel}
+              />
+              <YAxis
+                type="number"
+                tick={<NumericTick anchor="end" dy={4} format={yFormat} />}
+                width={65}
+                label={yAxisLabel}
+              />
+              <Tooltip
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) =>
+                      xType === 'number'
+                        ? `${xCol.label}: ${xTooltipFmt(Number(value))}`
+                        : `${xCol.label}: ${String(value)}`
+                    }
+                    formatter={(value, name, item) => (
+                      <TooltipRow
+                        color={
+                          (item as { color?: string; fill?: string }).color ??
+                          (item as { color?: string; fill?: string }).fill ??
+                          'var(--chart-1)'
+                        }
+                        name={String(name)}
+                        value={yTooltipFmt(Number(value))}
+                      />
+                    )}
+                  />
+                }
+              />
+              {hasMultiSeries ? (
+                seriesKeys.map((key, i) => (
+                  <Line
+                    key={key}
+                    type="monotone"
+                    dataKey={key}
+                    name={key}
+                    stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                    strokeWidth={2}
+                    // Phase 36.x — dots stay on for multi-series so single-
+                    // point series (common when the row-level data has one
+                    // row per series value, e.g. agg_batch_performance_summary
+                    // giving one row per batch) still render visibly.
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 5 }}
+                    connectNulls
+                  />
+                ))
+              ) : (
+                <Line
+                  type="monotone"
+                  dataKey={yCol.key}
+                  stroke="var(--chart-1)"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              )}
+            </LineChart>
+          </ChartContainer>
+          {hasMultiSeries && (
+            <GenericChartLegend
+              seriesKeys={seriesKeys}
+              colors={CHART_COLORS}
             />
-            <YAxis
-              type="number"
-              dataKey={yCol.key}
-              tick={<NumericTick anchor="end" dy={4} />}
-              width={55}
-            />
-            <Tooltip content={<ChartTooltipContent />} />
-            <Line
-              type="monotone"
-              dataKey={yCol.key}
-              stroke="var(--chart-1)"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        </ChartContainer>
+          )}
+        </div>
       </>
     );
   }
 
   if (definition.type === 'scatter') {
-    // Scatter's own convention in Recharts 3.x: data bound on the <Scatter>
-    // primitive (not the <ScatterChart>). Both axes numeric for this variant;
-    // `xType` should resolve to 'number' because axis-eligibility restricts
-    // scatter-X to numeric columns, but we still derive it through the helper
-    // so a future ordinal extension passes through without a second edit.
+    // Phase 36.x — scatter groups rows by the `series` column (when set) for
+    // per-point coloring + labeling. Unlike line/bar where series pivots into
+    // wide rows, each scatter group keeps its own row subset and renders as a
+    // separate <Scatter> primitive.
+    const scatterGroups: Array<{
+      key: string;
+      rows: Array<Record<string, unknown>>;
+    }> = [];
+    if (seriesCol) {
+      const groupMap = new Map<string, Array<Record<string, unknown>>>();
+      for (const row of rows) {
+        const raw = row[seriesCol.key];
+        if (raw === null || raw === undefined) continue;
+        const sv = String(raw);
+        const bucket = groupMap.get(sv);
+        if (bucket) {
+          bucket.push(row);
+        } else {
+          const fresh = [row];
+          groupMap.set(sv, fresh);
+          scatterGroups.push({ key: sv, rows: fresh });
+        }
+      }
+    }
+    const scatterHasSeries = seriesCol !== null && scatterGroups.length > 0;
+
     return (
       <>
         {banners}
-        <ChartContainer config={chartConfig} className={chartClassName}>
-          <ScatterChart margin={chartMargin}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-            <XAxis
-              type={xType}
-              dataKey={xCol.key}
-              tick={xType === 'number' ? <NumericTick /> : undefined}
+        <div className="flex gap-2">
+          <ChartContainer config={chartConfig} className={chartClassName}>
+            <ScatterChart margin={chartMargin}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis
+                type={xType}
+                dataKey={xCol.key}
+                tick={
+                  xType === 'number' ? <NumericTick format={xFormat} /> : undefined
+                }
+                label={xAxisLabel}
+              />
+              <YAxis
+                type="number"
+                dataKey={yCol.key}
+                tick={<NumericTick anchor="end" dy={4} format={yFormat} />}
+                width={65}
+                label={yAxisLabel}
+              />
+              <Tooltip
+                content={
+                  <ScatterTooltip
+                    xCol={xCol}
+                    yCol={yCol}
+                    xFormat={xTooltipFmt}
+                    yFormat={yTooltipFmt}
+                    seriesCol={seriesCol}
+                  />
+                }
+              />
+              {scatterHasSeries ? (
+                scatterGroups.map((group, i) => (
+                  <Scatter
+                    key={group.key}
+                    name={group.key}
+                    data={group.rows}
+                    dataKey={yCol.key}
+                    fill={CHART_COLORS[i % CHART_COLORS.length]}
+                  />
+                ))
+              ) : (
+                <Scatter data={rows} dataKey={yCol.key} fill="var(--chart-1)" />
+              )}
+            </ScatterChart>
+          </ChartContainer>
+          {scatterHasSeries && (
+            <GenericChartLegend
+              seriesKeys={scatterGroups.map((g) => g.key)}
+              colors={CHART_COLORS}
             />
-            <YAxis
-              type="number"
-              dataKey={yCol.key}
-              tick={<NumericTick anchor="end" dy={4} />}
-              width={55}
-            />
-            <Tooltip content={<ChartTooltipContent />} />
-            <Scatter data={rows} dataKey={yCol.key} fill="var(--chart-1)" />
-          </ScatterChart>
-        </ChartContainer>
+          )}
+        </div>
       </>
     );
   }
 
-  // definition.type === 'bar' — X is always categorical for bar charts by
-  // axis-eligibility rule, so `xType` should be 'category' and the tick prop
-  // is omitted (Recharts default renders cleanly for categorical labels).
+  // definition.type === 'bar'
   return (
     <>
       {banners}
-      <ChartContainer config={chartConfig} className={chartClassName}>
-        <BarChart data={rows} margin={chartMargin}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis
-            type={xType}
-            dataKey={xCol.key}
-            tick={xType === 'number' ? <NumericTick /> : undefined}
+      <div className="flex gap-2">
+        <ChartContainer config={chartConfig} className={chartClassName}>
+          <BarChart data={pivoted} margin={chartMargin}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <XAxis
+              type={xType}
+              dataKey={xCol.key}
+              tick={
+                xType === 'number' ? <NumericTick format={xFormat} /> : undefined
+              }
+              label={xAxisLabel}
+            />
+            <YAxis
+              type="number"
+              tick={<NumericTick anchor="end" dy={4} format={yFormat} />}
+              width={65}
+              label={yAxisLabel}
+            />
+            <Tooltip
+              content={
+                <ChartTooltipContent
+                  labelFormatter={(value) =>
+                    xType === 'number'
+                      ? `${xCol.label}: ${xTooltipFmt(Number(value))}`
+                      : `${xCol.label}: ${String(value)}`
+                  }
+                  formatter={(value, name, item) => (
+                    <TooltipRow
+                      color={
+                        (item as { color?: string; fill?: string }).color ??
+                        (item as { color?: string; fill?: string }).fill ??
+                        'var(--chart-1)'
+                      }
+                      name={String(name)}
+                      value={yTooltipFmt(Number(value))}
+                    />
+                  )}
+                />
+              }
+            />
+            {hasMultiSeries ? (
+              seriesKeys.map((key, i) => (
+                <Bar
+                  key={key}
+                  dataKey={key}
+                  name={key}
+                  fill={CHART_COLORS[i % CHART_COLORS.length]}
+                />
+              ))
+            ) : (
+              <Bar dataKey={yCol.key}>
+                {/* Phase 36.x — per-bar coloring cycles CHART_COLORS so each
+                    category reads distinctly instead of the whole chart
+                    rendering in one flat color. */}
+                {pivoted.map((_, i) => (
+                  <Cell
+                    key={`cell-${i}`}
+                    fill={CHART_COLORS[i % CHART_COLORS.length]}
+                  />
+                ))}
+                {/* Value label on top of each bar. Limited to single-series
+                    because grouped-bar labels overlap badly. */}
+                <LabelList
+                  dataKey={yCol.key}
+                  position="top"
+                  formatter={(v) => {
+                    if (v === undefined || v === null) return '';
+                    const n = Number(v);
+                    if (Number.isNaN(n)) return '';
+                    return yFormat ? yFormat(n) : yTooltipFmt(n);
+                  }}
+                  style={{
+                    fontSize: 10,
+                    fontVariantNumeric: 'tabular-nums lining-nums',
+                    fill: 'var(--muted-foreground)',
+                  }}
+                />
+              </Bar>
+            )}
+          </BarChart>
+        </ChartContainer>
+        {hasMultiSeries && (
+          <GenericChartLegend
+            seriesKeys={seriesKeys}
+            colors={CHART_COLORS}
           />
-          <YAxis
-            type="number"
-            dataKey={yCol.key}
-            tick={<NumericTick anchor="end" dy={4} />}
-            width={55}
-          />
-          <Tooltip content={<ChartTooltipContent />} />
-          <Bar dataKey={yCol.key} fill="var(--chart-1)" />
-        </BarChart>
-      </ChartContainer>
+        )}
+      </div>
     </>
   );
+}
+
+/**
+ * Phase 36.x — structured tooltip row used inside shadcn's ChartTooltipContent
+ * for line + bar charts. shadcn calls `formatter(value, name, item)` and
+ * renders the return value in place of the default row content — a returned
+ * tuple `[value, name]` would concatenate without spacing. This component
+ * emits a proper flex row: color swatch · name · value, matching the default
+ * shadcn layout (indicator dot, name left, value right) but with the type-
+ * aware formatted value the default can't produce.
+ */
+function TooltipRow({
+  color,
+  name,
+  value,
+}: {
+  color: string;
+  name: string;
+  value: string;
+}) {
+  return (
+    <div className="flex w-full items-center gap-2">
+      <span
+        aria-hidden
+        className="h-2 w-2 shrink-0 rounded-sm"
+        style={{ backgroundColor: color }}
+      />
+      <span className="text-body-numeric shrink-0">{value}</span>
+      <span className="text-caption text-muted-foreground flex-1 truncate">
+        {name}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Phase 36.x — pivot row-level data for multi-series rendering.
+ *
+ * When `seriesKey` is null, returns rows unchanged and no series keys. When
+ * seriesKey is set, groups rows by X and creates one wide record per X value
+ * with Y keyed by each distinct series value. Rows with null/undefined series
+ * are ignored (prevents an unlabeled bucket polluting the legend).
+ *
+ * Order of seriesKeys is first-seen order from `rows` so the color palette is
+ * stable across renders as long as the underlying dataset order is stable.
+ */
+function pivotForSeries(
+  rows: Array<Record<string, unknown>>,
+  xKey: string,
+  yKey: string,
+  seriesKey: string | null,
+): {
+  pivoted: Array<Record<string, unknown>>;
+  seriesKeys: string[];
+} {
+  if (seriesKey === null) {
+    return { pivoted: rows, seriesKeys: [] };
+  }
+
+  const buckets = new Map<unknown, Record<string, unknown>>();
+  const seriesKeys: string[] = [];
+  const seenSeries = new Set<string>();
+
+  for (const row of rows) {
+    const xVal = row[xKey];
+    const sRaw = row[seriesKey];
+    if (sRaw === null || sRaw === undefined) continue;
+    const sVal = String(sRaw);
+    if (!seenSeries.has(sVal)) {
+      seenSeries.add(sVal);
+      seriesKeys.push(sVal);
+    }
+    let bucket = buckets.get(xVal);
+    if (!bucket) {
+      bucket = { [xKey]: xVal };
+      buckets.set(xVal, bucket);
+    }
+    bucket[sVal] = row[yKey];
+  }
+
+  return {
+    pivoted: Array.from(buckets.values()),
+    seriesKeys,
+  };
 }

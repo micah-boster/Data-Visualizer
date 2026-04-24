@@ -25,8 +25,10 @@ import type { MutableRefObject, ReactNode } from 'react';
 import { CollectionCurveChart } from './collection-curve-chart';
 import { GenericChart } from './generic-chart';
 import { ChartBuilderToolbar } from './chart-builder-toolbar';
+import { ChartTypeSegmentedControl } from './chart-type-segmented-control';
 import { PresetMenu } from './preset-menu';
 import { DataPanel } from '@/components/patterns/data-panel';
+import { switchChartType } from '@/lib/charts/transitions';
 import type {
   ChartDefinition,
   CollectionCurveDefinition,
@@ -79,12 +81,25 @@ export function ChartPanel({
     onDefinitionChange(next);
   }
 
+  // Unified chart-type selector — rendered on BOTH branches (Phase 36.x).
+  // On the preset branch it appears in CollectionCurveChart's actions slot so
+  // the user can switch to a generic chart without opening the Presets menu.
+  function handleTypeClick(nextType: ChartDefinition['type']) {
+    onDefinitionChange(switchChartType(definition, nextType));
+  }
+
   if (definition.type === 'collection-curve') {
     return (
       <CollectionCurveChart
         curves={curves ?? []}
         chartSnapshotRef={chartSnapshotRef}
         chartLoadRef={chartLoadRef}
+        chartTypeSelector={
+          <ChartTypeSegmentedControl
+            activeType={definition.type}
+            onTypeClick={handleTypeClick}
+          />
+        }
         presetMenu={
           <PresetMenu
             definition={definition}

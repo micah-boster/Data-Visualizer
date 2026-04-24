@@ -22,6 +22,13 @@ interface NumericTickProps {
   dy?: number;
   /** Text anchor — `middle` for X axes, `end` for Y axes. */
   anchor?: 'start' | 'middle' | 'end';
+  /**
+   * Phase 36.x — optional formatter applied to `payload.value` before render.
+   * Used by GenericChart to display currency / percentage / count-typed axes
+   * in a compact human-readable form ($1.2M, 55.0%, 1,234). When omitted the
+   * raw payload value renders (preserves existing call sites).
+   */
+  format?: (value: number) => string;
 }
 
 export function NumericTick({
@@ -30,8 +37,14 @@ export function NumericTick({
   payload,
   dy = 10,
   anchor = 'middle',
+  format,
 }: NumericTickProps) {
   if (x == null || y == null || !payload) return null;
+  const raw = payload.value;
+  const display =
+    format && raw !== undefined && raw !== null
+      ? format(Number(raw))
+      : raw;
   return (
     <text
       x={x}
@@ -45,7 +58,7 @@ export function NumericTick({
         fill: 'var(--muted-foreground)',
       }}
     >
-      {payload.value}
+      {display}
     </text>
   );
 }

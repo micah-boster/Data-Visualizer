@@ -29,7 +29,7 @@ import type { ColumnConfig } from '@/lib/columns/config';
 
 interface AxisPickerProps {
   chartType: 'line' | 'scatter' | 'bar';
-  axis: 'x' | 'y';
+  axis: 'x' | 'y' | 'series';
   value: { column: string } | null;
   onChange: (next: { column: string } | null) => void;
   placeholder?: string;

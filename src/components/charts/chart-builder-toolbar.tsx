@@ -1,12 +1,12 @@
 'use client';
 
 /**
- * Phase 36 Plan 04 — inline chart builder toolbar.
+ * Phase 36 Plan 04 — inline chart builder toolbar (generic branch).
  *
- * Renders a line / scatter / bar icon segmented control + X/Y axis pickers.
- * Hidden by Plan 36-05 whenever the collection-curve preset is active
- * (CONTEXT.md:27 — preset keeps its own controls). Props accept only the
- * generic variants; the preset→generic conversion is owned by switchChartType.
+ * Composes the shared ChartTypeSegmentedControl (Phase 36.x — also rendered on
+ * the preset branch inside ChartPanel) with X/Y axis pickers. Only mounted on
+ * the generic branch; the preset branch renders the segmented control on its
+ * own next to CollectionCurveChart's metric-toggle cluster.
  *
  * Pure props-in / onChange-out: the toolbar never owns chart state — parent
  * receives a new ChartDefinition on every interaction and decides what to do
@@ -14,16 +14,15 @@
  *
  * Layout recipe (Phase 26 semantic gap tokens + Phase 27 type tokens):
  *   - Outer row: flex items-center gap-inline.
- *   - Segmented control: icon Buttons inside a flex wrapper.
+ *   - Segmented control delegated to ChartTypeSegmentedControl.
  *   - ToolbarDivider between the segmented control and the X picker.
  *   - External `.text-label` X/Y labels sit next to their pickers — the
  *     picker's own placeholder is plain "Pick column" (no `X:`/`Y:` prefix).
  */
 
-import { LineChart, ScatterChart, BarChart3 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { ToolbarDivider } from '@/components/patterns/toolbar-divider';
 import { AxisPicker } from './axis-picker';
+import { ChartTypeSegmentedControl } from './chart-type-segmented-control';
 import { switchChartType } from '@/lib/charts/transitions';
 import type {
   ChartDefinition,
@@ -46,23 +45,11 @@ interface ChartBuilderToolbarProps {
   onChange: (next: ChartDefinition) => void;
 }
 
-type GenericType = GenericChartDefinition['type'];
-
-const TYPE_OPTIONS: ReadonlyArray<{
-  type: GenericType;
-  Icon: typeof LineChart;
-  label: string;
-}> = [
-  { type: 'line', Icon: LineChart, label: 'Line chart' },
-  { type: 'scatter', Icon: ScatterChart, label: 'Scatter chart' },
-  { type: 'bar', Icon: BarChart3, label: 'Bar chart' },
-];
-
 export function ChartBuilderToolbar({
   definition,
   onChange,
 }: ChartBuilderToolbarProps) {
-  function handleTypeClick(nextType: GenericType) {
+  function handleTypeClick(nextType: ChartDefinition['type']) {
     onChange(switchChartType(definition, nextType));
   }
 
@@ -74,27 +61,26 @@ export function ChartBuilderToolbar({
     onChange({ ...definition, y: next } as ChartDefinition);
   }
 
+  function handleSeriesChange(next: { column: string } | null) {
+    onChange({ ...definition, series: next } as ChartDefinition);
+  }
+
+  // Phase 36.x — all three generic variants expose a series picker, but the
+  // label differs to reflect each chart's semantics:
+  //   - line / bar: "Series" — splits rows into color-coded groups.
+  //   - scatter:   "Label"  — identifies each point by this column (shown
+  //     on hover via the tooltip; also drives per-point color).
+  const currentSeries =
+    'series' in definition && definition.series ? definition.series : null;
+  const seriesPickerLabel =
+    definition.type === 'scatter' ? 'Label' : 'Series';
+
   return (
     <div className="flex items-center gap-inline">
-      {/* Segmented control — icon-only; aria-pressed carries the active state. */}
-      <div className="flex items-center" role="group" aria-label="Chart type">
-        {TYPE_OPTIONS.map(({ type, Icon, label }) => {
-          const active = definition.type === type;
-          return (
-            <Button
-              key={type}
-              type="button"
-              variant={active ? 'default' : 'ghost'}
-              size="icon-sm"
-              aria-label={label}
-              aria-pressed={active}
-              onClick={() => handleTypeClick(type)}
-            >
-              <Icon className="h-3.5 w-3.5" />
-            </Button>
-          );
-        })}
-      </div>
+      <ChartTypeSegmentedControl
+        activeType={definition.type}
+        onTypeClick={handleTypeClick}
+      />
 
       <ToolbarDivider />
 
@@ -114,6 +100,15 @@ export function ChartBuilderToolbar({
         value={definition.y}
         onChange={handleYChange}
         placeholder="Pick column"
+      />
+
+      <span className="text-label text-muted-foreground">{seriesPickerLabel}</span>
+      <AxisPicker
+        chartType={definition.type}
+        axis="series"
+        value={currentSeries}
+        onChange={handleSeriesChange}
+        placeholder="None"
       />
     </div>
   );

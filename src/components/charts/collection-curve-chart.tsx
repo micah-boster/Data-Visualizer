@@ -34,6 +34,13 @@ interface CollectionCurveChartProps {
   /** Ref for restoring chart state (view load flow) */
   chartLoadRef?: React.MutableRefObject<((state: CollectionCurveDefinition) => void) | null>;
   /**
+   * Phase 36.x — rendered at the front of the DataPanel actions slot so the
+   * chart-type segmented control (curves/line/scatter/bar) is visible even on
+   * the preset branch. Lets users swap to a generic chart without opening the
+   * Presets menu.
+   */
+  chartTypeSelector?: React.ReactNode;
+  /**
    * Rendered alongside the metric-toggle cluster in the DataPanel actions slot.
    * Keeps the Presets ▾ menu reachable from the preset branch per
    * 36-RESEARCH Open Q #4.
@@ -41,7 +48,7 @@ interface CollectionCurveChartProps {
   presetMenu?: React.ReactNode;
 }
 
-export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, presetMenu }: CollectionCurveChartProps) {
+export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, chartTypeSelector, presetMenu }: CollectionCurveChartProps) {
   // Find batch anomalies for the partner whose curves we're displaying.
   // Match by batchName overlap between curves and anomaly data.
   const { partnerAnomalies } = useAnomalyContext();
@@ -206,6 +213,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, p
       contentClassName="space-y-2"
       actions={
         <div className="flex items-center gap-inline">
+          {chartTypeSelector ?? null}
           <div className="flex gap-1">
             <Button
               variant={metric === "recoveryRate" ? "default" : "outline"}
