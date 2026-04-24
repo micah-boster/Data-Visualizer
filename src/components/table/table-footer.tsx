@@ -39,7 +39,15 @@ function formatAggregate(value: number | null, type: string, label: string): str
 
 export function TableFooter({ table }: TableFooterProps) {
   const rows = table.getRowModel().rows;
-  const visibleColumns = table.getVisibleLeafColumns();
+  // Iterate in header order so pinning offsets line up with thead/tbody.
+  // `getVisibleLeafColumns()` returns columns in definition order, which
+  // does NOT match the visual order produced by `getHeaderGroups()` when
+  // column pinning is active — the `__anomaly_status` pinned column would
+  // land at its definition index instead of leftmost, shifting every
+  // footer cell's pinning offset by one.
+  const headerGroups = table.getHeaderGroups();
+  const lastHeaderGroup = headerGroups[headerGroups.length - 1];
+  const visibleColumns = (lastHeaderGroup?.headers ?? []).map((h) => h.column);
 
   const aggregates = useMemo(
     () => computeAggregates(rows, visibleColumns),

@@ -709,18 +709,15 @@
    scrollbar — the previous global ::-webkit-scrollbar rules were removed in favor
    of the scoped .thin-scrollbar utility (applied opt-in to named scroll containers). */
 
-/* Phase 38 CHT-04 — laptop-height viewport caps.
-   Applies ONLY when viewport height ≤ 900px; desktop behavior unchanged.
-   Mechanism: cap the expanded chart container so the table stays visible
-   (min-height floor) and can scroll internally via its existing TanStack
-   Virtual wiring. Per 38-RESEARCH Pitfall 8 the cap must live on the INNER
-   chart container (the `overflow-hidden > shrink-0` div), never the grid
-   row, to avoid a grid ↔ child fight that clips mid-expand. */
-@media (max-height: 900px) {
-  .chart-laptop-cap {
-    max-height: 48vh;
-  }
-  .table-laptop-floor {
-    min-height: 320px;
-  }
+/* Phase 38 CHT-04 — chart + table viewport sizing.
+   Caps the expanded chart container so the table is usable on every
+   viewport. The original CHT-04 plan gated this to @media max-height:900px,
+   but at 1080p+ monitors the chart grew to its intrinsic content height
+   (~640px) and squeezed the table to ~280px. clamp(300px, 48vh, 560px)
+   keeps the chart generous on tall monitors, half-viewport on mid screens,
+   and ≥300px on shorter laptops. Per 38-RESEARCH Pitfall 8 the cap lives
+   on the INNER chart container (`overflow-hidden > shrink-0`), never the
+   grid row, to avoid a grid ↔ child fight that clips mid-expand. */
+.chart-laptop-cap {
+  max-height: clamp(300px, 48vh, 560px);
 }

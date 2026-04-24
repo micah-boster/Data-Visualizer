@@ -60,6 +60,9 @@ export function buildRootColumnDefs(): ColumnDef<Record<string, unknown>>[] {
 
       return getCellRenderer(col.type, col.key, value);
     },
+    meta: {
+      type: col.type,
+    },
   }));
   return [anomalyStatusColumn, ...dataColumns];
 }
