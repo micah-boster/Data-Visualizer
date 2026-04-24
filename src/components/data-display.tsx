@@ -360,18 +360,10 @@ export function DataDisplay() {
     const f = dimensionFilters.find((cf) => cf.id === 'ACCOUNT_TYPE');
     return f ? String(f.value) : null;
   }, [dimensionFilters]);
-  const selectedBatch = useMemo(() => {
-    const f = dimensionFilters.find((cf) => cf.id === 'BATCH');
-    return f ? String(f.value) : null;
-  }, [dimensionFilters]);
-  const batchOptions = useMemo(() => {
-    const rows = selectedPartner
-      ? (data?.data ?? []).filter((r) => String(r.PARTNER_NAME ?? '') === selectedPartner)
-      : (data?.data ?? []);
-    return [...new Set(rows.map((r) => String(r.BATCH ?? '')))]
-      .filter(Boolean)
-      .sort();
-  }, [data?.data, selectedPartner]);
+  // Phase 38 FLT-01: `selectedBatch` / `batchOptions` derivations dropped.
+  // The batch combobox was replaced by a date-range preset chip group (age +
+  // setAge from useFilterState). The filter chip rendering and predicate both
+  // live upstream — no per-derivation needed in this orchestrator.
 
   // Refs for DataTable to expose snapshot capture and view loading
   const tableSnapshotRef = useRef<(() => import('@/lib/views/types').ViewSnapshot) | null>(null);
@@ -396,6 +388,15 @@ export function DataDisplay() {
     (view: SavedView) => {
       const { snapshot } = view;
 
+      // Phase 38 FLT-01: detect legacy batch-equality filter BEFORE
+      // sanitizeSnapshot strips it elsewhere — we want to fire the toast
+      // only on user-initiated loads (this callback), not on hydration.
+      const hadLegacyBatch =
+        !!(snapshot.dimensionFilters &&
+          typeof snapshot.dimensionFilters === 'object' &&
+          'batch' in snapshot.dimensionFilters &&
+          (snapshot.dimensionFilters as Record<string, string>).batch);
+
       // Restore chart state
       if (snapshot.chartsExpanded !== undefined) {
         setChartsExpanded(snapshot.chartsExpanded);
@@ -405,14 +406,35 @@ export function DataDisplay() {
         setComparisonVisible(snapshot.comparisonVisible);
       }
 
-      // Restore dimension filters via URL
+      // Restore dimension filters via URL.
+      // Phase 38 FLT-01: skip any legacy `batch` entry — the field is removed
+      // from the URL space. Combined with the toast below, this strips the
+      // stale filter cleanly without crashing the old saved view.
       const params = new URLSearchParams();
       for (const [key, value] of Object.entries(snapshot.dimensionFilters)) {
+        if (key === 'batch') continue;
         if (value) params.set(key, value);
+      }
+      // Phase 38 FLT-01: restore the age bucket from the snapshot (if any).
+      // `null | undefined` = All (drop the param); 3|6|12 = preset chip.
+      if (snapshot.batchAgeFilter === 3 || snapshot.batchAgeFilter === 6 || snapshot.batchAgeFilter === 12) {
+        params.set('age', String(snapshot.batchAgeFilter));
       }
       const qs = params.toString();
       // Use window.history to avoid full re-render
       window.history.replaceState(null, '', qs ? `?${qs}` : window.location.pathname);
+
+      // Phase 38 FLT-01: sonner toast on user-initiated load when the saved
+      // view carried the legacy batch-equality filter. Hydration path reuses
+      // sanitizeSnapshot but never calls handleLoadView, so this fires only
+      // when the user clicks Load on a legacy view.
+      if (hadLegacyBatch) {
+        toast('Batch filter removed', {
+          description:
+            'This view was saved with the old batch filter. Re-save with a date range to restore filtering.',
+          duration: 5000,
+        });
+      }
 
       // NAV-04: Drill URL update runs separately from the dimension-filter
       // history.replaceState above. router.push ensures useSearchParams re-reads
@@ -1044,10 +1066,10 @@ export function DataDisplay() {
                     // Filter options
                     partnerOptions={partnerOptions}
                     typeOptions={typeOptions}
-                    batchOptions={batchOptions}
                     selectedPartner={selectedPartner}
                     selectedType={selectedType}
-                    selectedBatch={selectedBatch}
+                    age={age}
+                    onAgeChange={setAge}
                     // NAV-04: gate the 'Include drill state' checkbox
                     canIncludeDrill={drillState.level !== 'root'}
                     // Refs for snapshot/load
@@ -1220,10 +1242,10 @@ function CrossPartnerDataTable({
   // Filter options
   partnerOptions,
   typeOptions,
-  batchOptions,
   selectedPartner,
   selectedType,
-  selectedBatch,
+  age,
+  onAgeChange,
   canIncludeDrill,
   // Refs
   snapshotRef,
@@ -1256,10 +1278,11 @@ function CrossPartnerDataTable({
   onOpenQuery: () => void;
   partnerOptions: string[];
   typeOptions: string[];
-  batchOptions: string[];
   selectedPartner: string | null;
   selectedType: string | null;
-  selectedBatch: string | null;
+  /** Phase 38 FLT-01 — date-range bucket for the preset chip group. */
+  age: import('@/hooks/use-filter-state').AgeBucket;
+  onAgeChange: (value: import('@/hooks/use-filter-state').AgeBucket) => void;
   canIncludeDrill?: boolean;
   snapshotRef: React.MutableRefObject<(() => import('@/lib/views/types').ViewSnapshot) | null>;
   loadViewRef: React.MutableRefObject<((view: SavedView) => void) | null>;
@@ -1349,10 +1372,10 @@ function CrossPartnerDataTable({
       onOpenQuery={onOpenQuery}
       partnerOptions={partnerOptions}
       typeOptions={typeOptions}
-      batchOptions={batchOptions}
       selectedPartner={selectedPartner}
       selectedType={selectedType}
-      selectedBatch={selectedBatch}
+      age={age}
+      onAgeChange={onAgeChange}
       canIncludeDrill={canIncludeDrill}
       snapshotRef={snapshotRef}
       loadViewRef={loadViewRef}

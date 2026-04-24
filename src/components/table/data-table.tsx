@@ -28,7 +28,7 @@ import type { ColumnDef, ColumnFiltersState } from '@tanstack/react-table';
 import type { TrendingData, CrossPartnerData } from '@/types/partner-stats';
 import { useAnomalyContext } from '@/contexts/anomaly-provider';
 import { buildPercentileColumns } from '@/lib/columns/percentile-columns';
-import type { ActiveFilter } from '@/hooks/use-filter-state';
+import type { ActiveFilter, AgeBucket } from '@/hooks/use-filter-state';
 
 interface DataTableProps {
   data: Record<string, unknown>[];
@@ -61,10 +61,11 @@ interface DataTableProps {
   onOpenQuery: () => void;
   partnerOptions: string[];
   typeOptions: string[];
-  batchOptions: string[];
   selectedPartner: string | null;
   selectedType: string | null;
-  selectedBatch: string | null;
+  /** Phase 38 FLT-01 — date-range bucket for the preset chip group. */
+  age: AgeBucket;
+  onAgeChange: (value: AgeBucket) => void;
   canIncludeDrill?: boolean;
   snapshotRef: React.MutableRefObject<(() => ViewSnapshot) | null>;
   loadViewRef: React.MutableRefObject<((view: SavedView) => void) | null>;
@@ -101,10 +102,10 @@ export function DataTable({
   onOpenQuery,
   partnerOptions,
   typeOptions,
-  batchOptions,
   selectedPartner,
   selectedType,
-  selectedBatch,
+  age,
+  onAgeChange,
   canIncludeDrill,
   snapshotRef,
   loadViewRef,
@@ -195,15 +196,21 @@ export function DataTable({
       columnVisibility: columnManagement.columnVisibility,
       columnOrder: columnManagement.columnOrder,
       columnFilters: { ...columnFilterState },
+      // Phase 38 FLT-01: `batch` removed from dimensionFilters (the combobox
+      // was replaced by a date-range preset chip group). Saved views that were
+      // captured before FLT-01 may still carry a `batch` field in storage;
+      // those are stripped on load by sanitizeSnapshot + a sonner toast.
       dimensionFilters: {
         partner: searchParams.get('partner') ?? '',
         type: searchParams.get('type') ?? '',
-        batch: searchParams.get('batch') ?? '',
       },
       columnSizing: table.getState().columnSizing,
       activePreset,
+      // Phase 38 FLT-01 — persist the active age bucket alongside the view
+      // so load can restore the preset selection.
+      batchAgeFilter: age,
     };
-  }, [sorting, columnManagement.columnVisibility, columnManagement.columnOrder, columnFilterState, searchParams, table, activePreset]);
+  }, [sorting, columnManagement.columnVisibility, columnManagement.columnOrder, columnFilterState, searchParams, table, activePreset, age]);
 
   const handleLoadViewInternal = useCallback((view: SavedView) => {
     const { snapshot } = view;
@@ -344,10 +351,10 @@ export function DataTable({
         filterData={data}
         partnerOptions={partnerOptions}
         typeOptions={typeOptions}
-        batchOptions={batchOptions}
         selectedPartner={selectedPartner}
         selectedType={selectedType}
-        selectedBatch={selectedBatch}
+        age={age}
+        onAgeChange={onAgeChange}
         onFilterChange={(param, value) => setFilter(param, value)}
         activeFilters={activeFilters}
         onClearAllFilters={clearAll}

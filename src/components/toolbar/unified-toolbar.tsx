@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import type { Table, SortingState } from '@tanstack/react-table';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
-import type { ActiveFilter } from '@/hooks/use-filter-state';
+import type { ActiveFilter, AgeBucket } from '@/hooks/use-filter-state';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -53,10 +53,11 @@ interface UnifiedToolbarProps {
   filterData: Record<string, unknown>[];
   partnerOptions: string[];
   typeOptions: string[];
-  batchOptions: string[];
   selectedPartner: string | null;
   selectedType: string | null;
-  selectedBatch: string | null;
+  /** Phase 38 FLT-01 — date-range bucket for the preset chip group. */
+  age: AgeBucket;
+  onAgeChange: (value: AgeBucket) => void;
   onFilterChange: (param: string, value: string | null) => void;
   activeFilters: ActiveFilter[];
   onClearAllFilters: () => void;
@@ -99,10 +100,10 @@ export function UnifiedToolbar({
   filterData,
   partnerOptions,
   typeOptions,
-  batchOptions,
   selectedPartner,
   selectedType,
-  selectedBatch,
+  age,
+  onAgeChange,
   onFilterChange,
   activeFilters,
   onClearAllFilters,
@@ -244,10 +245,10 @@ export function UnifiedToolbar({
             data={filterData}
             partnerOptions={partnerOptions}
             typeOptions={typeOptions}
-            batchOptions={batchOptions}
             selectedPartner={selectedPartner}
             selectedType={selectedType}
-            selectedBatch={selectedBatch}
+            age={age}
+            onAgeChange={onAgeChange}
             onFilterChange={onFilterChange}
             activeFilters={activeFilters}
             onClearAll={onClearAllFilters}

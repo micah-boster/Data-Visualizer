@@ -19,6 +19,33 @@ import { COLUMN_CONFIGS } from '@/lib/columns/config';
 const KNOWN_COLUMNS = new Set(COLUMN_CONFIGS.map((c) => c.key));
 
 /**
+ * Phase 38 FLT-01 — detect a legacy batch-equality filter on a raw snapshot.
+ *
+ * Legacy snapshots (saved before the date-range preset shipped) stamped the
+ * batch combobox value onto `dimensionFilters.batch` (URL-param channel). The
+ * combobox was structurally broken — pre-aggregated rows never matched a
+ * specific batch name cleanly — and the new date-range preset replaces it.
+ *
+ * This is a PURE DETECTION helper (exported for the FLT-01 smoke test). The
+ * mutation that actually strips the field lives in `sanitizeSnapshot` below;
+ * the migration toast fires only when detection returns true AND the caller
+ * is on a user-initiated load path (handleLoadView), not hydration.
+ */
+export function hasLegacyBatchFilter(snapshot: ViewSnapshot): boolean {
+  const dim = snapshot.dimensionFilters;
+  if (dim && typeof dim === 'object' && 'batch' in dim && dim.batch) {
+    return true;
+  }
+  // Column-equality on the BATCH column id was never written by the app, but
+  // a manually-edited localStorage payload could carry one — strip defensively.
+  const col = snapshot.columnFilters;
+  if (col && typeof col === 'object' && 'BATCH' in col && col.BATCH != null) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Strip unknown column keys from a view snapshot.
  * Handles schema evolution when columns are added or removed.
  *
@@ -28,11 +55,29 @@ const KNOWN_COLUMNS = new Set(COLUMN_CONFIGS.map((c) => c.key));
  * need list-awareness can pass an empty set (conservative default — strips
  * all listIds), but the default caller passes the real known-list-ids from
  * usePartnerLists.
+ *
+ * Phase 38 FLT-01: also strips the legacy `dimensionFilters.batch` entry
+ * (and any defensive `columnFilters.BATCH` entry). The toast notifying the
+ * user is emitted by `handleLoadView` in data-display.tsx via
+ * `hasLegacyBatchFilter(snapshot)` BEFORE calling this sanitizer, so the
+ * signature of `sanitizeSnapshot` stays stable (same ViewSnapshot->ViewSnapshot)
+ * and the toast only fires on user-initiated loads (not hydration).
  */
-function sanitizeSnapshot(
+export function sanitizeSnapshot(
   snapshot: ViewSnapshot,
   knownListIds: Set<string>,
 ): ViewSnapshot {
+  // Phase 38 FLT-01: prune legacy batch dimension/column filters.
+  const dim = snapshot.dimensionFilters;
+  const prunedDimensionFilters =
+    dim && typeof dim === 'object' && 'batch' in dim
+      ? Object.fromEntries(Object.entries(dim).filter(([k]) => k !== 'batch'))
+      : (dim ?? {});
+  const col = snapshot.columnFilters ?? {};
+  const prunedColumnFiltersBase = Object.fromEntries(
+    Object.entries(col).filter(([k]) => k !== 'BATCH'),
+  );
+
   return {
     ...snapshot,
     sorting: (snapshot.sorting ?? []).filter((s) => KNOWN_COLUMNS.has(s.id)),
@@ -43,10 +88,11 @@ function sanitizeSnapshot(
     ),
     columnOrder: snapshot.columnOrder.filter((k) => KNOWN_COLUMNS.has(k)),
     columnFilters: Object.fromEntries(
-      Object.entries(snapshot.columnFilters ?? {}).filter(([k]) =>
+      Object.entries(prunedColumnFiltersBase).filter(([k]) =>
         KNOWN_COLUMNS.has(k),
       ),
     ),
+    dimensionFilters: prunedDimensionFilters as Record<string, string>,
     columnSizing: Object.fromEntries(
       Object.entries(snapshot.columnSizing ?? {}).filter(([k]) =>
         KNOWN_COLUMNS.has(k),

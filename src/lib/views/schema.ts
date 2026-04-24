@@ -130,6 +130,17 @@ export const viewSnapshotSchema = z.object({
       importedAt: z.number(),
     })
     .optional(),
+  /**
+   * Phase 38 FLT-01 — date-range preset bucket ('Last 3mo' / 'Last 6mo' /
+   * 'Last 12mo' / 'All'). z.union over literal numbers + null matches the
+   * TypeScript type `3 | 6 | 12 | null` precisely — a permissive z.number()
+   * would let '5' through and break the chip-pressed state. Additive-
+   * optional evolution: pre-Phase-38 saved views safeParse with
+   * `batchAgeFilter: undefined`.
+   */
+  batchAgeFilter: z
+    .union([z.literal(3), z.literal(6), z.literal(12), z.null()])
+    .optional(),
 });
 
 /** Validates a single SavedView entry. */

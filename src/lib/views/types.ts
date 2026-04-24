@@ -88,6 +88,19 @@ export interface ViewSnapshot {
     sql: string;
     importedAt: number;
   };
+  /**
+   * Phase 38 FLT-01 — date-range preset bucket. `3 | 6 | 12` caps
+   * BATCH_AGE_IN_MONTHS; `null | undefined` means "All" (no cap). Additive-
+   * optional evolution (mirrors drill / listId / sourceQuery precedent): pre-
+   * Phase-38 saved views load with `batchAgeFilter: undefined` and no schema
+   * changes are required.
+   *
+   * Legacy saved views that carried a column-equality `batch` dimension filter
+   * are migrated on load by `sanitizeSnapshot`: the stale field is stripped
+   * and `legacyFiltersDropped` is flagged so the data-display toast fires on
+   * user-initiated load only (not hydration).
+   */
+  batchAgeFilter?: 3 | 6 | 12 | null;
 }
 
 /** A named, persisted view configuration. */
