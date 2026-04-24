@@ -39,7 +39,7 @@ function AnomalyCell({
   return (
     <Popover>
       <PopoverTrigger>
-        <AnomalyBadge severity={severity} onClick={() => {}} />
+        <AnomalyBadge severity={severity} />
       </PopoverTrigger>
       <PopoverContent side="right" sideOffset={8} className="w-80">
         <AnomalyDetail anomaly={anomaly} norms={norms} entityName={entityName} />
