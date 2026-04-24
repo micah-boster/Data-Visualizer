@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Users,
   Bookmark,
@@ -64,14 +64,22 @@ export function AppSidebar() {
   const { data: queryData } = useData();
   const allRows = queryData?.data ?? [];
 
-  // POL-02: Partners group collapse/expand. Mirrors the charts-expanded
-  // pattern in data-display.tsx (SSR-safe localStorage initializer) but
-  // INVERTS the default — first-ever visit (null in storage) renders
-  // collapsed. Key semantics: storage 'true' = collapsed, 'false' = expanded.
-  const [partnersExpanded, setPartnersExpanded] = useState(() => {
-    if (typeof window === 'undefined') return false; // SSR: collapsed default
-    return localStorage.getItem('partners-list-collapsed') === 'false';
-  });
+  // POL-02: Partners group collapse/expand. Hydration-safe: useState
+  // initializes to `false` on BOTH server and first client render so the
+  // initial DOM matches. An effect then syncs from localStorage after
+  // mount. Reading localStorage inside the useState initializer (even
+  // behind `typeof window !== 'undefined'`) is NOT safe here — it runs
+  // synchronously on the first client render before hydration commits,
+  // producing an aria-expanded / grid-rows className mismatch vs the
+  // server HTML when the user has a saved 'false' (= expanded) value.
+  // Key semantics: storage 'true' = collapsed, 'false' = expanded.
+  const [partnersExpanded, setPartnersExpanded] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem('partners-list-collapsed') === 'false') {
+      setPartnersExpanded(true);
+    }
+  }, []);
   const togglePartners = useCallback(() => {
     setPartnersExpanded((prev) => {
       const next = !prev;
