@@ -35,13 +35,19 @@ export function computeAggregates(
     }
 
     if (colType === 'percentage') {
-      // Average of non-null values
+      // Average of non-null values. Accept numeric strings too — partner-level
+      // rows from Snowflake / static cache arrive as strings (cell renderers
+      // coerce via Number(val) for display), so a strict `typeof === 'number'`
+      // check would produce null aggregates at partner level even though the
+      // data is valid. Coerce once here.
       let sum = 0;
       let count = 0;
       for (const row of rows) {
-        const val = row.getValue(colId);
-        if (val != null && typeof val === 'number') {
-          sum += val;
+        const raw = row.getValue(colId);
+        if (raw == null || raw === '') continue;
+        const num = Number(raw);
+        if (Number.isFinite(num)) {
+          sum += num;
           count++;
         }
       }
@@ -52,13 +58,16 @@ export function computeAggregates(
       continue;
     }
 
-    // currency, count, number -> sum
+    // currency, count, number -> sum. Accept numeric strings (see percentage
+    // branch above for rationale).
     let sum = 0;
     let hasValue = false;
     for (const row of rows) {
-      const val = row.getValue(colId);
-      if (val != null && typeof val === 'number') {
-        sum += val;
+      const raw = row.getValue(colId);
+      if (raw == null || raw === '') continue;
+      const num = Number(raw);
+      if (Number.isFinite(num)) {
+        sum += num;
         hasValue = true;
       }
     }
