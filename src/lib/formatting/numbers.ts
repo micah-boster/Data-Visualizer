@@ -33,14 +33,14 @@ export function formatCurrency(value: number): string {
 /**
  * Format as percentage with configurable decimal places.
  *
- * IMPORTANT: Data is in 0-100 range (NOT 0-1), so we do NOT use
- * Intl.NumberFormat with style: 'percent' (which multiplies by 100).
+ * Data from Snowflake is in 0-1 range (e.g. 0.55 = 55%), so we multiply
+ * by 100 for display.
  *
  * Very small positive values show as "<0.1%" (or appropriate threshold).
  * Very small negative values show as ">-0.1%".
  */
 export function formatPercentage(value: number, decimals: number = 1): string {
-  const v = toNum(value);
+  const v = toNum(value) * 100;
   const threshold = Math.pow(10, -decimals);
 
   if (v > 0 && v < threshold) {

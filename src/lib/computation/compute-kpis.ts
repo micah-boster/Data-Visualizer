@@ -43,11 +43,11 @@ export function computeKpis(
   const weightedPenetrationRate =
     weightDenominator > 0 ? weightedPenSum / weightDenominator : 0;
 
-  // Collection rates as % of total placed
+  // Collection rates as ratio of total placed (0-1 range, formatter handles * 100)
   const collectionRate6mo =
-    totalPlaced > 0 ? (sumCollection6 / totalPlaced) * 100 : 0;
+    totalPlaced > 0 ? sumCollection6 / totalPlaced : 0;
   const collectionRate12mo =
-    totalPlaced > 0 ? (sumCollection12 / totalPlaced) * 100 : 0;
+    totalPlaced > 0 ? sumCollection12 / totalPlaced : 0;
 
   return {
     totalBatches,

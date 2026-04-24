@@ -20,9 +20,10 @@ export function reshapeCurves(
     const batchName = getBatchName(row);
     const totalPlaced = Number(row.TOTAL_AMOUNT_PLACED) || 0;
 
-    // BATCH_AGE_IN_MONTHS is actually days in Snowflake -- convert to months
     const rawAge = Number(row.BATCH_AGE_IN_MONTHS) || 0;
-    const ageInMonths = Math.floor(rawAge / 30);
+    // Values > 365 are legacy cached data stored as days — convert to months.
+    // Live Snowflake returns actual months (e.g. 7, 33).
+    const ageInMonths = rawAge > 365 ? Math.floor(rawAge / 30) : rawAge;
 
     const points: CurvePoint[] = [];
 
