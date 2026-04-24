@@ -106,7 +106,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 5/5 | Complete    | 2026-04-24 | - |
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
-| 38. Polish + Correctness Pass | v4.1 | 0/TBD | Not Started | - |
+| 38. Polish + Correctness Pass | v4.1 | 0/5 | Not Started | - |
 | 39. Partner Config Module | v4.1 | 0/TBD | Not Started | - |
 | 40. Projected Curves v1 | v4.1 | 0/TBD | Not Started | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
@@ -169,7 +169,12 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
   16. Each filter has an inline help tooltip
   17. PARTNER_NAME column auto-hides in the main table when sidebar is scoped to a single partner
   18. Metabase Import Preview step exposes a chart-type override control (defaults to the Phase 37 heuristic; user can pick line / scatter / bar / none before Apply, and pick axes when heuristic leaves them ambiguous), with helper text showing the inference reason
-**Plans**: _To be scoped via `/gsd:plan-phase` when this phase is ready to start. Likely 4-5 plans grouping: branding/sidebar (POL-01, POL-02), columns + formatting (POL-03, POL-04, POL-05), chart correctness + KPI (CHT-01..04, KPI-01..03), filters + layout (FLT-01..03), and Metabase Import polish (MBI-01)._
+**Plans**: 5 plans (2 waves)
+- [ ] 38-01-PLAN.md — Branding + Sidebar (POL-01 brand mark, POL-02 partners collapse) — Wave 1
+- [ ] 38-02-PLAN.md — Columns + Formatting + Headers (POL-03 identity unlock, POL-04 percentage rule, POL-05 heatmap tooltip, POL-06 header truncation) — Wave 1
+- [ ] 38-03-PLAN.md — Chart Correctness + Laptop Layout (CHT-01 visible-scope clip, CHT-02 avg in hover, CHT-03 legend scroll, CHT-04 ≤900px caps) — Wave 1
+- [ ] 38-04-PLAN.md — KPI Clarity + KPI-03 Deferral Doc (KPI-01 cascade, KPI-02 delta copy, KPI-04 suppression; KPI-03 doc-only defer to Phase 41) — Wave 1
+- [ ] 38-05-PLAN.md — Filters + Metabase Import Override (FLT-01 date-range chips + migration, FLT-02 tooltips, FLT-03 PARTNER_NAME auto-hide, MBI-01 chart-type override) — Wave 2 (depends on 38-03: shared data-display.tsx surface)
 
 **After Phase 38, kick off simultaneously:**
 - **Phase 39** (Partner Config) — independent, foundational feature
