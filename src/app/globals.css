@@ -708,3 +708,19 @@
 /* Phase 31 DS-34: Document/body scroll intentionally uses the OS/browser default
    scrollbar — the previous global ::-webkit-scrollbar rules were removed in favor
    of the scoped .thin-scrollbar utility (applied opt-in to named scroll containers). */
+
+/* Phase 38 CHT-04 — laptop-height viewport caps.
+   Applies ONLY when viewport height ≤ 900px; desktop behavior unchanged.
+   Mechanism: cap the expanded chart container so the table stays visible
+   (min-height floor) and can scroll internally via its existing TanStack
+   Virtual wiring. Per 38-RESEARCH Pitfall 8 the cap must live on the INNER
+   chart container (the `overflow-hidden > shrink-0` div), never the grid
+   row, to avoid a grid ↔ child fight that clips mid-expand. */
+@media (max-height: 900px) {
+  .chart-laptop-cap {
+    max-height: 48vh;
+  }
+  .table-laptop-floor {
+    min-height: 320px;
+  }
+}

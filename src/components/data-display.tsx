@@ -908,7 +908,14 @@ export function DataDisplay() {
                 data-charts-expanded={chartsExpanded}
               >
                 <div className="overflow-hidden">
-                  <div className="shrink-0 px-2 pt-2 space-y-2">
+                  {/* Phase 38 CHT-04: chart-laptop-cap (globals.css @media
+                      max-height: 900px) caps the INNER chart container at
+                      48vh. Applied here per 38-RESEARCH Pitfall 8 — never on
+                      the grid row (would fight `grid-rows-[1fr]`). The
+                      outer `overflow-hidden` already handles any clipping
+                      for viewports too short to contain the KPI band + chart
+                      at full height. */}
+                  <div className="chart-laptop-cap shrink-0 px-2 pt-2 space-y-2">
                     {drillState.level === 'root' && (
                       <>
                         <CrossPartnerTrajectoryChart />
@@ -977,7 +984,11 @@ export function DataDisplay() {
             {/* Interactive data table with toolbar */}
             <PartnerNormsProvider norms={partnerStats?.norms ?? null}>
               <SectionErrorBoundary resetKeys={[data]}>
-              <div className="min-h-0 flex-1 flex flex-col">
+              {/* Phase 38 CHT-04: table-laptop-floor (globals.css @media
+                  max-height: 900px) keeps the table visible on laptop-height
+                  viewports once the chart container hits its 48vh cap. Table
+                  scrolls internally via existing TanStack Virtual. */}
+              <div className="table-laptop-floor min-h-0 flex-1 flex flex-col">
                 {drillState.level === 'batch' && isAccountLoading ? (
                   <LoadingState />
                 ) : (
