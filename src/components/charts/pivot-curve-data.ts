@@ -88,28 +88,32 @@ export function pivotCurveData(
 /**
  * Add a partner average reference series (`__avg__`) to pivoted data.
  *
- * For each month, computes the mean of all batch values present at that month.
- * Months where no batch has data get `undefined` (line gap, not zero).
+ * For each month, computes the mean of the batch values present at that month
+ * across the provided `keys` subset. Months where no batch has data get
+ * `undefined` (line gap, not zero).
+ *
+ * The `keys` parameter is an explicit list of sanitized batch keys (e.g.
+ * `['batch_0', 'batch_3']`) rather than a curves array so callers can scope
+ * the average to a possibly-non-contiguous user-visible subset (Phase 38
+ * CHT-01). Passing `sortedCurves.map((_, i) => `batch_${i}`)` reproduces the
+ * previous full-width behavior.
  *
  * Returns a new array -- does not mutate the input.
  *
  * @param data - Pivoted data from pivotCurveData
- * @param curves - Original curves (used to determine batch count for key generation)
+ * @param keys - Sanitized batch keys to include in the average
  * @returns New pivoted data array with __avg__ key added to each point
  */
 export function addAverageSeries(
   data: PivotedPoint[],
-  curves: BatchCurve[],
+  keys: readonly string[],
 ): PivotedPoint[] {
-  const batchCount = curves.length;
-
   return data.map((point) => {
     const newPoint: PivotedPoint = { ...point };
 
     let sum = 0;
     let count = 0;
-    for (let i = 0; i < batchCount; i++) {
-      const key = `${BATCH_KEY_PREFIX}${i}`;
+    for (const key of keys) {
       const val = point[key];
       if (val !== undefined) {
         sum += val;

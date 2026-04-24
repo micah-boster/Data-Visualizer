@@ -172,8 +172,8 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 **Plans**: 5 plans (2 waves)
 - [x] 38-01-PLAN.md — Branding + Sidebar (POL-01 brand mark, POL-02 partners collapse) — Wave 1 ✅ 2026-04-24
 - [x] 38-02-PLAN.md — Columns + Formatting + Headers (POL-03 identity unlock, POL-04 percentage rule, POL-05 heatmap tooltip, POL-06 header truncation) — Wave 1 ✅ 2026-04-24
-- [ ] 38-03-PLAN.md — Chart Correctness + Laptop Layout (CHT-01 visible-scope clip, CHT-02 avg in hover, CHT-03 legend scroll, CHT-04 ≤900px caps) — Wave 1
-- [ ] 38-04-PLAN.md — KPI Clarity + KPI-03 Deferral Doc (KPI-01 cascade, KPI-02 delta copy, KPI-04 suppression; KPI-03 doc-only defer to Phase 41) — Wave 1
+- [x] 38-03-PLAN.md — Chart Correctness + Laptop Layout (CHT-01 visible-scope clip, CHT-02 avg in hover, CHT-03 legend scroll, CHT-04 ≤900px caps) — Wave 1 ✅ 2026-04-24
+- [x] 38-04-PLAN.md — KPI Clarity + KPI-03 Deferral Doc (KPI-01 cascade, KPI-02 delta copy, KPI-04 suppression; KPI-03 doc-only defer to Phase 41) — Wave 1 ✅ 2026-04-24
 - [ ] 38-05-PLAN.md — Filters + Metabase Import Override (FLT-01 date-range chips + migration, FLT-02 tooltips, FLT-03 PARTNER_NAME auto-hide, MBI-01 chart-type override) — Wave 2 (depends on 38-03: shared data-display.tsx surface)
 
 **After Phase 38, kick off simultaneously:**
