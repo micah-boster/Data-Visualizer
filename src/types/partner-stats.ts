@@ -23,8 +23,27 @@ export interface KpiAggregates {
   totalBatches: number;
   totalAccounts: number;
   weightedPenetrationRate: number;
+  /**
+   * Max `BATCH_AGE_IN_MONTHS` across rows in the current scope (after
+   * filter-before-aggregate pipeline, per Phase 25 contract). Drives the
+   * KPI-01 cascade tier selection in `KpiSummaryCards`.
+   */
+  maxBatchAgeMonths: number;
+  /**
+   * Collection rate over batches with age ≥ 3 months, using the 3-month
+   * collection horizon (`sum(COLLECTION_AFTER_3_MONTH) / sum(placed-3mo-eligible)`).
+   * 0 when no batches have reached 3 months; cascade-tier logic hides the card
+   * in that case.
+   */
+  collectionRate3mo: number;
   collectionRate6mo: number;
   collectionRate12mo: number;
+  /**
+   * Collection rate over ALL placed accounts regardless of age
+   * (`sum(TOTAL_COLLECTED_LIFE_TIME) / sum(TOTAL_AMOUNT_PLACED)`).
+   * Always populated; shown by cascade-tier selector for `< 6mo` cohorts.
+   */
+  collectionRateSinceInception: number;
   totalCollected: number;
   totalPlaced: number;
 }
