@@ -709,10 +709,20 @@
    scrollbar — the previous global ::-webkit-scrollbar rules were removed in favor
    of the scoped .thin-scrollbar utility (applied opt-in to named scroll containers). */
 
-/* Phase 38 CHT-04 — chart sizing now lives on each ChartContainer's
-   own className (clamp-capped vh height per chart). The previous
-   `.chart-laptop-cap` rule on the wrapping panel is removed: it created
-   dead space when the chart was shorter than the cap, leaving the table
-   sibling shorter than necessary. With the inner clamps the chart panel
-   is content-sized and the table-laptop-floor's `flex-1` claims all
-   remaining vertical space. */
+/* Phase 38 CHT-04 — chart + table viewport sizing.
+   Caps the expanded chart container so the table is usable on every
+   viewport. The original CHT-04 plan gated this to @media max-height:900px,
+   but at 1080p+ monitors the chart grew to its intrinsic content height
+   (~640px) and squeezed the table to ~280px.
+
+   The cap wraps a compound region: at root it holds the cross-partner chart;
+   at partner-drill it holds the KPI strip + Collection Curves chart; at
+   batch-drill it holds the batch curve panel. 560px was tight enough at
+   partner-drill that the chart SVG's bottom (x-axis labels) clipped under
+   the `overflow: hidden` parent. clamp(360px, 60vh, 680px) gives enough
+   headroom for KPI+chart at partner view while still leaving the table
+   useful. Per 38-RESEARCH Pitfall 8 the cap lives on the INNER chart
+   container (`overflow-hidden > shrink-0`), never the grid row. */
+.chart-laptop-cap {
+  max-height: clamp(360px, 60vh, 680px);
+}
