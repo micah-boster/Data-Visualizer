@@ -55,7 +55,15 @@ export function TableFooter({ table }: TableFooterProps) {
   );
 
   const rowCount = rows.length;
-  let isFirstVisibleColumn = true;
+
+  // The row-count label goes in the first column with a non-empty header
+  // string — e.g. "Partner". Special no-header columns (like the 40px-wide
+  // `__anomaly_status`) get skipped, otherwise their overflow gets painted
+  // over by the adjacent sticky column's background.
+  const rowCountColumnId = visibleColumns.find((c) => {
+    const hdr = c.columnDef.header;
+    return typeof hdr === 'string' && hdr.trim().length > 0;
+  })?.id;
 
   return (
     <tfoot className="sticky bottom-0 z-20">
@@ -67,11 +75,10 @@ export function TableFooter({ table }: TableFooterProps) {
           const agg = aggregates[column.id];
 
           let displayValue = '';
-          if (isFirstVisibleColumn) {
+          if (column.id === rowCountColumnId) {
             displayValue = `${rowCount.toLocaleString()} rows`;
-            isFirstVisibleColumn = false;
           } else if (colType === 'text' || colType === 'date') {
-            // Skip text/date columns in footer (except first for row count)
+            // Skip text/date columns in footer (row count already placed above)
             displayValue = '';
           } else if (agg) {
             displayValue = formatAggregate(agg.primary, colType, agg.label);
