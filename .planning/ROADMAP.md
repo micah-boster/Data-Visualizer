@@ -109,6 +109,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 38. Polish + Correctness Pass | 5/5 | Complete    | 2026-04-25 | - |
 | 39. Partner Config Module | 4/4 | Complete    | 2026-04-25 | - |
 | 40. Projected Curves v1 | 3/3 | Complete    | 2026-04-25 | - |
+| 40.1. Projected Curves Polish | v4.1 | 0/3 | In Progress | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
 | 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
 | 43-44. (reserved — insert-phase slack) | — | — | — | - |
@@ -143,6 +144,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 - [x] **Phase 38: Polish + Correctness Pass** — 18 feedback items: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness, KPI cascade, filter fixes, laptop layout, Metabase Import chart-type override (completed 2026-04-24)
 - [x] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks) (completed 2026-04-25)
 - [x] **Phase 40: Projected Curves v1** — Per-batch modeled projection lines from `BOUNCE.FINANCE.CURVES_RESULTS` + optional panel-level "vs modeled curve" KPI baseline (completed 2026-04-25)
+- [ ] **Phase 40.1: Projected Curves Polish** — Tighten chart projection visibility (batch-level OR aggregate-narrowed-to-one only) + surface modeled + Δ vs modeled columns in the data table; unify chart + KPIs + table under a single BaselineSelector with localStorage persistence (planned)
 
 ### Phase 38: Polish + Correctness Pass
 
@@ -226,16 +228,30 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 **After Phase 40:** Feeds into v5.0 Phase 49 Dynamic Curve Re-Projection, which extends this with target-anchored, partner-reported, and confidence-band variants.
 
 ---
-*Last updated: 2026-04-23 — v4.0 milestone closed: phase details (26-37) collapsed into `<details>` block + archived to milestones/v4.0-ROADMAP.md; MILESTONES.md v4.0 entry flipped in-progress → shipped (13 phases / 105 plans / 67 requirements / ~25,875 LOC / 281 commits / 12 days); RETROSPECTIVE.md appended; git tag v4.0 created. Prior: v4.1 activated (Phases 38-40 detail sections retained). v4.0 scope: design system + URL nav + a11y + Partner Lists + Chart Builder + Metabase Import.*
+*Last updated: 2026-04-25 — Phase 40.1 (Projected Curves Polish) plans broken down: 3 plans / 3 waves / 5 new requirements (PRJ-09..PRJ-13). v4.0 milestone closed: phase details (26-37) collapsed into `<details>` block + archived to milestones/v4.0-ROADMAP.md; MILESTONES.md v4.0 entry flipped in-progress → shipped (13 phases / 105 plans / 67 requirements / ~25,875 LOC / 281 commits / 12 days); RETROSPECTIVE.md appended; git tag v4.0 created. Prior: v4.1 activated (Phases 38-40 detail sections retained). v4.0 scope: design system + URL nav + a11y + Partner Lists + Chart Builder + Metabase Import.*
 
-### Phase 40.1: Projected curves polish — visibility scoping + table integration (INSERTED)
+### Phase 40.1: Projected Curves Polish — visibility scoping + table integration
 
-**Goal:** Tighten projection-line visibility on the curve chart (only at batch-level drill or aggregate-narrowed-to-one) and surface modeled values + actual-vs-modeled deviations in the data table, gated by the existing BaselineSelector.
-**Requirements**: TBD (derive from CONTEXT during /gsd:plan-phase)
-**Depends on:** Phase 40
-**Plans:** 4/4 plans complete
+**Goal:** Tighten projection-line visibility on the curve chart (render only when `drillState.level === 'batch'` OR partner-aggregate is narrowed to one batch in modeled mode) and surface modeled values + actual-vs-modeled deviations in the data table — gated by a unified `BaselineSelector` (chart + KPIs + table single source of truth) with localStorage persistence (`gsd:baselineMode`, default `'rolling'`).
+**Depends on:** Phase 40 (data pipeline + chart overlay + KPI baseline shipped 2026-04-25)
+**Effort:** Small-Medium (consumer-side polish — no data-pipeline changes; ~5 surgical edits across `collection-curve-chart.tsx`, `chart-panel.tsx`, `data-display.tsx`, `definitions.ts`, `data-table.tsx` + 2 new files: `useBaselineMode` hook + `ModeledDeltaCell`)
+**Requirements**: PRJ-09 through PRJ-13 (extends v4.1 PRJ family; PRJ-06..08 reserved for v5.0 Phase 49)
+**Success Criteria** (what must be TRUE):
+  1. Aggregate (partner-level multi-batch) chart view renders ZERO projection `<Line>`s — restoring legibility lost in Phase 40 (CONTEXT § Phase Boundary issue 1)
+  2. Batch-level drill always renders projection when coverage exists (decoupled from `baselineMode` per RESEARCH § Pitfall 7 Option 2 — drilling in IS the inspection act)
+  3. Partner-level legend narrowed to one batch in modeled mode renders that one projection
+  4. Coverage-absent caption ("No modeled curve for this batch") shows in DataPanel actions slot when projection should-have-rendered but the focused batch has no `BatchCurve.projection`
+  5. Partner-level data table in modeled mode shows 4 new columns: Modeled 6mo, Δ vs Modeled 6mo, Modeled 12mo, Δ vs Modeled 12mo (polarity-colored Δ via `ModeledDeltaCell`); rolling mode hides them; root + batch level never show them (CONTEXT lock § Aggregate-row scope)
+  6. CSV export carries the new columns when visible (verified manually post-implementation; relies on `accessorKey` + row-stamping path per RESEARCH § Pitfall 4)
+  7. `baselineMode` persists across sessions via localStorage (`gsd:baselineMode`); legacy reset-to-rolling effect at `data-display.tsx:298-306` REMOVED (per-card "Switch to rolling avg" recovery action handles partial-coverage scopes without stomping persisted intent)
+  8. Cross-lender batch-name collision audit (Pitfall 3) shipped: zero collisions → audit doc + `use-partner-stats.ts` annotated; non-zero → defensive fix to `Map<string, Set<string>>` lookup
 
-Plans:
-- [ ] TBD (run /gsd:plan-phase 40.1 to break down)
+**Plans**: 3 plans (3 waves)
+- [ ] 40.1-01-PLAN.md — Foundation primitives: cross-lender collision audit (gate) + `useBaselineMode` localStorage hook + `ModeledDeltaCell` polarity-colored cell — Wave 1
+- [ ] 40.1-02-PLAN.md — Chart polish: visibility-scope gate + coverage-absent caption + `useBaselineMode` integration in data-display + reset-effect removal + `drillLevel`/`baselineMode` prop threading through ChartPanel → CollectionCurveChart — Wave 2
+- [ ] 40.1-03-PLAN.md — Table integration: 4 virtual modeled+delta ColumnDefs + row-stamping in `data-display.tsx` + `baselineMode`-gated visibility effect in `data-table.tsx` + CSV export verification — Wave 3
+
+**After Phase 40.1:** v4.1 milestone closes. v4.5 Phase 41 (Data Correctness Audit) + Phase 42 (Ingestion-Surface Security Review) up next.
 
 CONTEXT: `.planning/phases/40.1-projected-curves-polish/40.1-CONTEXT.md`
+RESEARCH: `.planning/phases/40.1-projected-curves-polish/40.1-RESEARCH.md`
