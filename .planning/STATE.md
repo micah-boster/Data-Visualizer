@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-25T02:43:48.471Z"
+last_updated: "2026-04-25T02:53:33Z"
 progress:
   total_phases: 40
   completed_phases: 38
   total_plans: 117
-  completed_plans: 113
+  completed_plans: 114
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 40 (Projected Curves v1) IN PROGRESS — 2/3 plans complete. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24 — all 5 plans shipped. Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) running in parallel.
-Plan: Phase 40 — 40-01 (data pipeline) COMPLETE 2026-04-25; 40-02 (chart rendering) COMPLETE 2026-04-25; 40-03 (KPI baseline) queued.
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24. Phase 40 plumbing + chart rendering landed 2026-04-25.
-Last activity: 2026-04-25 — 40-02 (Projected Curves chart rendering) completed: PRJ-02/PRJ-03/PRJ-05 dashed modeled <Line> per batch on CollectionCurveChart (same hue, 60% opacity, "6 3" dash), grep-unique batch_N__projected pivot keys via PROJECTED_KEY_SUFFIX export, hide-coupling via shared visibleBatchKeys.includes(key) predicate (one legend entry per batch — CHT-03 scroll preserved), isAnimationActive=false on projection (Pitfall 3 guard against second-pass flash when /api/curves-results resolves), pivot-side filter clips projection to maxAge (CHT-01 truncation reused). New composeBatchTooltipRow pure helper (delta math + polarity-aware direction tagging + suppression rules — divide-by-zero, non-finite, missing modeled), tooltip renders Modeled sub-row with signed delta colored emerald/red/muted via getPolarity(). Partner-average row UNCHANGED (CONTEXT lock). Modeled row only renders for recoveryRate metric (v1 rate-only). 3 atomic commits + 2 smoke tests (4 + 7 scenarios) + SUMMARY.md. 3 requirements closed (PRJ-02, PRJ-03, PRJ-05).
+Phase: 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 39 (Partner Config Module) IN PROGRESS — 1/4 plans complete (39-01 GATE). Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
+Plan: Phase 40 — all 3 plans COMPLETE 2026-04-25 (40-01 data pipeline, 40-02 chart rendering, 40-03 KPI baseline + docs re-sync). Phase 39 — 39-01 (pair migration GATE) COMPLETE 2026-04-25; 39-02 / 39-03 / 39-04 ready to start.
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24. Phase 40 COMPLETE 2026-04-25 — Projected Curves v1 ships per-batch modeled overlays + panel-level KPI baseline. Phase 39 GATE plan landed; 3 plans remain.
+Last activity: 2026-04-25 — 40-03 (KPI baseline selector + docs re-sync) completed: PRJ-04 panel-level BaselineSelector (Rolling avg | Modeled curve) above KPI row at partner drill-down. Implemented via Button + aria-pressed (matches ChartTypeSegmentedControl precedent — @base-ui/react/toggle-group does not exist in this codebase, plan's import deviation-fixed at Task 1). Disabled-with-tooltip on the modeled option when no visible batch has projection coverage. KpiSummaryCards extended with baselineMode + curves + onSwitchToRolling props; computeModeledDelta routes per-card delta against latestCurve.projection at HORIZON_BY_KEY[spec.key]. Per-card baseline-absent UX renders value-only with "No modeled curve for this scope. Switch to rolling avg" inline recovery (no silent fallback). rateSinceInception under modeled mode renders value-only with "Lifetime rate — no modeled baseline at a single horizon" caption. data-display.tsx mounts selector via flex justify-end div above KPI cards in partner-drill block ONLY (panel-level, partner-only — CONTEXT lock). useState<BaselineMode>('rolling') default + auto-reset useEffect when modeledAvailable flips false (prevents stuck modeled selection on scope change). ROADMAP + v4.1-REQUIREMENTS PRJ-01..05 wording re-synced from "historical-average projection" framing to actually-shipped modeled-deal-curve scope (closes CONTEXT.md follow-up flag). 3 atomic commits + 8-scenario smoke test + SUMMARY.md. PRJ-04 closed (rest already closed by 40-01 + 40-02).
 
-Progress: [████████████████████] 2/3 Phase 40 plans (40-01, 40-02 COMPLETE)
+Progress: [██████████░░░░░░░░░░] 1/4 Phase 39 plans (39-01 GATE COMPLETE) | [████████████████████] 3/3 Phase 40 plans COMPLETE
 
 ## Shipped Milestones
 
@@ -43,6 +43,15 @@ Progress: [████████████████████] 2/3 Pha
 
 ### Decisions
 
+- [Phase 39-01]: Pair encoding lives in `src/lib/partner-config/pair.ts` as pure helpers (PartnerProductPair, pairKey/parsePairKey, PRODUCT_TYPE_ORDER, PRODUCT_TYPE_LABELS, sortPairs, displayNameForPair, labelForProduct). Producers compute productsPerPartner once and pass it into displayNameForPair — keeps the helper trivially testable, avoids hidden global state. Map<pairKey, X> is the canonical container for pair-keyed lookups (anomalies, cross-partner entries, sidebar flagged set).
+- [Phase 39-01]: DrillState gains `product: string | null` as a third axis alongside partner/batch (NOT folded into a compound key). URL slots `?p=&pr=&b=` stay orthogonal to filter URL params (`?type=&age=`); drill owns selection, filter narrows scope. Mirrors Phase 32-02 / 34-04 / 38 FLT-01 additive-optional schema evolution (drill.product? landed without a schema version bump).
+- [Phase 39-01]: drillToPartner shim THROWS in dev (not warns) so any straggler call-site fails loudly during local testing rather than silently dropping selection (which would re-introduce cross-product blending — the exact thing PCFG-04 forbids). Production falls back to console.error — never crashes.
+- [Phase 39-01]: Open Q #2 resolved via DEPRECATION not repair — partner combobox removed from FilterPopover, FILTER_PARAMS.partner dropped, ?partner= URL params silently ignored, legacy saved-view dimensionFilters.partner stripped on load with sonner toast. Selection lives entirely on drill state. Phase 38 FLT-03 partner-column auto-hide foreshadowed this — sidebar is the canonical selection surface now.
+- [Phase 39-01]: Anomaly map re-keyed from PARTNER_NAME → pairKey; PartnerAnomaly stamped with displayName at compute time so UI consumers (anomaly toolbar trigger, sidebar pair rows) don't recompute productsPerPartner downstream. parsePairKey recovers the pair when needed for drill.
+- [Phase 39-01]: CrossPartnerEntry retains `partnerName` (deprecated, raw PARTNER_NAME) AND adds `product` + `displayName` rather than a breaking rename — preserves legacy callers while new render paths use displayName. Reopen as breaking change in v4.2 cleanup.
+- [Phase 39-01]: Recharts series keyed by pairKey ('partner::product') with display label via ChartContainer.config — two Happy Money rows are independently toggleable in trajectory legend without colliding on partnerName.
+- [Phase 39-01]: Legacy drill migration uses knownPairs Map<partnerName, productList[]> threaded through useSavedViews. Single-product partner with legacy drill.partner → product synthesized (unambiguous). Multi-product → drill stripped + `legacyDrillStrippedReason: 'multi-product-ambiguous'` flag → handleLoadView fires step-up toast on user-initiated load only (not hydration).
+- [Phase 39-01]: Deprecation alias `buildPartnerSummaryRows = buildPairSummaryRows` retained for one release to ease grep migration; same shape, same return.
 - [Phase 40-02]: Grep-unique sibling pivot keys via DOUBLE underscore suffix (PROJECTED_KEY_SUFFIX export = "__projected") — prevents Pitfall 5 substring collision in tooltip proximity logic. Reusable convention for any future per-batch overlay (variance bands, target lines).
 - [Phase 40-02]: isAnimationActive={false} on projection <Line> (Pitfall 3 lock) — actuals already animated on first paint; projection mounts when /api/curves-results resolves and a second animation pass would read as a glitch. Trade: no reveal animation (acceptable per RESEARCH default; flip to short animationDuration in fast-follow if user feedback prefers reveal).
 - [Phase 40-02]: No showProjection toggle in v1 — modeled renders whenever curve.projection has data (CONTEXT lock: dashed line alongside actuals is always-on per-batch). Toggle deferred to fast-follow if feedback requests one.
