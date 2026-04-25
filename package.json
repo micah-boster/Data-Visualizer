@@ -21,7 +21,8 @@
     "smoke:charts": "node --experimental-strip-types src/lib/charts/stale-column.smoke.ts",
     "smoke:transitions": "node --experimental-strip-types src/lib/charts/transitions.smoke.ts",
     "smoke:pair": "node --experimental-strip-types src/lib/partner-config/pair.smoke.ts",
-    "smoke:additive-drill-product": "node --experimental-strip-types src/lib/views/schema.additive-drill-product.smoke.ts"
+    "smoke:additive-drill-product": "node --experimental-strip-types src/lib/views/schema.additive-drill-product.smoke.ts",
+    "smoke:segment-evaluator": "node --experimental-strip-types src/lib/partner-config/segment-evaluator.smoke.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
