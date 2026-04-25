@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Header } from '@/components/layout/header';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
+import { PartnerConfigProvider } from '@/contexts/partner-config';
 import './globals.css';
 
 const inter = Inter({
@@ -50,18 +51,29 @@ export default function RootLayout({
           Skip to content
         </a>
         <Providers>
-          <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-              <Header />
-              <main
-                id="main"
-                className="flex-1 overflow-x-hidden p-2 md:p-3 bg-surface-raised"
-              >
-                {children}
-              </main>
-            </SidebarInset>
-          </SidebarProvider>
+          {/*
+            Phase 39-02 PCFG-05 — PartnerConfigProvider mounts the single
+            upstream usePartnerConfig() instance. The sidebar (PartnerSetupSheet
+            + future Plan 04 chart/KPI consumers) all read from this same
+            context so writes from one surface appear in every other.
+            Placed inside Providers (theme, query client) but outside
+            SidebarProvider so the entire tree (including the sidebar's
+            ContextMenu portal popups) can consume it.
+          */}
+          <PartnerConfigProvider>
+            <SidebarProvider>
+              <AppSidebar />
+              <SidebarInset>
+                <Header />
+                <main
+                  id="main"
+                  className="flex-1 overflow-x-hidden p-2 md:p-3 bg-surface-raised"
+                >
+                  {children}
+                </main>
+              </SidebarInset>
+            </SidebarProvider>
+          </PartnerConfigProvider>
           <Toaster richColors position="bottom-right" duration={4000} />
         </Providers>
       </body>

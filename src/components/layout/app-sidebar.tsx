@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Users,
   Bookmark,
@@ -10,13 +10,16 @@ import {
   Database,
   ChevronRight,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ContextMenu } from '@base-ui/react/context-menu';
+import { cn, getPartnerName, getStringField } from '@/lib/utils';
 import { useSidebarData } from '@/contexts/sidebar-data';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { PartnerListsSidebarGroup } from '@/components/partner-lists/partner-lists-sidebar-group';
 import { CreateListDialog } from '@/components/partner-lists/create-list-dialog';
 import { ImportSheet } from '@/components/metabase-import/import-sheet';
+import { PartnerSetupSheet } from '@/components/partner-config/partner-setup-sheet';
 import { useData } from '@/hooks/use-data';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 import {
   Sidebar,
   SidebarContent,
@@ -64,8 +67,27 @@ export function AppSidebar() {
   // Phase 37 Plan 02: Metabase import Sheet open state owned at the sidebar
   // level so the menu entry and the Sheet mount live in the same scope.
   const [importOpen, setImportOpen] = useState(false);
+  // Phase 39-02 PCFG-05: PartnerSetupSheet open state — null when closed,
+  // pair when a context-menu "Configure segments" click sets it. Mount lives
+  // at the sidebar root (the Sheet primitive portals itself, so its DOM
+  // location does not affect overlay position) — same placement convention
+  // as CreateListDialog and ImportSheet.
+  const [setupPair, setSetupPair] = useState<PartnerProductPair | null>(null);
   const { data: queryData } = useData();
   const allRows = queryData?.data ?? [];
+
+  // Phase 39-02 PCFG-05: pair-scoped rows for the active Setup sheet. Filter
+  // allRows by both PARTNER_NAME AND ACCOUNT_TYPE — this is the same row set
+  // Plan 39-04's segment-split charts/KPIs will operate on (Pitfall 7 lock —
+  // single source of truth for the evaluator input).
+  const setupPairScopedRows = useMemo(() => {
+    if (!setupPair) return [];
+    return allRows.filter(
+      (row) =>
+        getPartnerName(row) === setupPair.partner &&
+        getStringField(row, 'ACCOUNT_TYPE') === setupPair.product,
+    );
+  }, [allRows, setupPair]);
 
   // POL-02: Partners group collapse/expand. Hydration-safe: useState
   // initializes to `false` on BOTH server and first client render so the
@@ -227,38 +249,77 @@ export function AppSidebar() {
                       (name only); productTooltip carries the product label
                       shown on hover. Active state matches the FULL pair
                       (partner + product), so 1st-Party row stays inactive
-                      when 3rd-Party is selected. */}
+                      when 3rd-Party is selected.
+
+                      Phase 39-02 PCFG-05: each pair row is wrapped in a
+                      ContextMenu so right-click opens a menu with the
+                      "Configure segments" entry. The render-prop delegation
+                      pattern (Pitfall 8 in 39-RESEARCH) lets Base UI compose
+                      refs + event handlers correctly with the existing
+                      SidebarMenuButton primitive — no extra wrapper div, no
+                      keyboard-focus fight. Click-to-drill semantics are
+                      preserved on the trigger. */}
                   {isReady &&
                     pairs.map((p) => {
                       const isActive =
                         drillState.partner === p.partner &&
                         drillState.product === p.product;
+                      const pairForMenu: PartnerProductPair = {
+                        partner: p.partner,
+                        product: p.product,
+                      };
                       return (
                         <SidebarMenuItem key={`${p.partner}::${p.product}`}>
-                          <SidebarMenuButton
-                            tooltip={
-                              p.displayName === p.partner
-                                ? `${p.partner} (${p.productTooltip})`
-                                : p.displayName
-                            }
-                            isActive={isActive}
-                            aria-current={isActive ? 'page' : undefined}
-                            onClick={() =>
-                              drillToPair({ partner: p.partner, product: p.product })
-                            }
-                          >
-                            {p.isFlagged ? (
-                              <span
-                                aria-hidden="true"
-                                className="flex h-4 w-4 items-center justify-center"
-                              >
-                                <span className="h-2 w-2 rounded-full bg-brand-purple" />
-                              </span>
-                            ) : (
-                              <Users className="h-4 w-4" aria-hidden="true" />
-                            )}
-                            <span className="truncate">{p.displayName}</span>
-                          </SidebarMenuButton>
+                          <ContextMenu.Root>
+                            <ContextMenu.Trigger
+                              render={
+                                <SidebarMenuButton
+                                  tooltip={
+                                    p.displayName === p.partner
+                                      ? `${p.partner} (${p.productTooltip})`
+                                      : p.displayName
+                                  }
+                                  isActive={isActive}
+                                  aria-current={isActive ? 'page' : undefined}
+                                  onClick={() =>
+                                    drillToPair({
+                                      partner: p.partner,
+                                      product: p.product,
+                                    })
+                                  }
+                                >
+                                  {p.isFlagged ? (
+                                    <span
+                                      aria-hidden="true"
+                                      className="flex h-4 w-4 items-center justify-center"
+                                    >
+                                      <span className="h-2 w-2 rounded-full bg-brand-purple" />
+                                    </span>
+                                  ) : (
+                                    <Users
+                                      className="h-4 w-4"
+                                      aria-hidden="true"
+                                    />
+                                  )}
+                                  <span className="truncate">
+                                    {p.displayName}
+                                  </span>
+                                </SidebarMenuButton>
+                              }
+                            />
+                            <ContextMenu.Portal>
+                              <ContextMenu.Positioner sideOffset={4}>
+                                <ContextMenu.Popup className="min-w-[180px] rounded-md bg-surface-overlay p-1 shadow-elevation-overlay outline-hidden">
+                                  <ContextMenu.Item
+                                    className="rounded-sm px-2 py-1.5 text-body cursor-default outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground"
+                                    onClick={() => setSetupPair(pairForMenu)}
+                                  >
+                                    Configure segments
+                                  </ContextMenu.Item>
+                                </ContextMenu.Popup>
+                              </ContextMenu.Positioner>
+                            </ContextMenu.Portal>
+                          </ContextMenu.Root>
                           <SidebarMenuBadge>{p.batchCount}</SidebarMenuBadge>
                         </SidebarMenuItem>
                       );
@@ -394,6 +455,26 @@ export function AppSidebar() {
         onOpenChange={setImportOpen}
         onImportSql={onImportSql}
       />
+
+      {/*
+        Phase 39-02 PCFG-05 — PartnerSetupSheet for the per-pair segment
+        editor. Mount lives at the sidebar root because the entry point
+        (per-pair ContextMenu's "Configure segments" item) lives in the
+        sidebar's pair-row mapping above. The Sheet primitive portals
+        itself, so its DOM location does not affect overlay position.
+        Closing clears setupPair so the next open re-hydrates from storage
+        for whatever pair was clicked.
+      */}
+      {setupPair && (
+        <PartnerSetupSheet
+          open={!!setupPair}
+          onOpenChange={(next) => {
+            if (!next) setSetupPair(null);
+          }}
+          pair={setupPair}
+          pairScopedRows={setupPairScopedRows}
+        />
+      )}
     </Sidebar>
   );
 }
