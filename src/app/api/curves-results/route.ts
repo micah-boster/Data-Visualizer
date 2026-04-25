@@ -6,18 +6,19 @@ import type { CurvesResultsWireRow } from '@/types/curves-results';
 export const dynamic = 'force-dynamic'; // Never cache API responses
 
 /**
- * SQL pinned to the latest VERSION per (LENDER_ID, BATCH_, PRICING_TYPE) and then
- * deduped to a single row per (LENDER_ID, BATCH_, COLLECTION_MONTH) via
- * ROW_NUMBER. This handles two warehouse facts simultaneously (per CONFIRM.md):
+ * SQL pinned to the latest VERSION per (LENDER_ID, BATCH_, PRICING_TYPE), then
+ * deduped to a single row per (LENDER_ID, BATCH_, COLLECTION_MONTH), then
+ * cumulatively summed across months. This handles three warehouse facts
+ * simultaneously (per CONFIRM.md + post-merge unit probe):
  *   1. Each batch may have multiple VERSION rows from re-pricing — pin to MAX.
  *   2. Each batch may have multiple PRICING_TYPE rows (AF vs CCB variants) —
  *      ROW_NUMBER over (lender, batch, month) ORDER BY VERSION DESC keeps a
  *      single deterministic curve per batch (multi-pricing overlay deferred to v5.0).
- *
- * `PROJECTED_FRACTIONAL * 100` converts the warehouse's 0..1 fractional scale to
- * the app's 0..100 percentage scale (matches `CurvePoint.recoveryRate` from
- * `reshape-curves.ts:44`). If a live probe ever shows already-percentage units,
- * drop the `* 100` — see CONFIRM.md Probe 1 for the verification recipe.
+ *   3. PROJECTED_FRACTIONAL is a per-month rate, NOT cumulative recovery.
+ *      App-side `recoveryRate` (reshape-curves.ts:44) is cumulative
+ *      ((sum of collection thru month X) / placed). To compare apples-to-apples,
+ *      we cumulative-sum projections via SUM(...) OVER (PARTITION BY lender,batch
+ *      ORDER BY month). The * 100 converts the 0..1 fractional scale to 0..100 %.
  *
  * NOTE on alias case: column aliases are UPPERCASE to match the existing
  * `/api/data/route.ts` convention (snowflake-sdk preserves Snowflake's native
@@ -47,14 +48,22 @@ const CURVES_SQL = `
      AND c.PRICING_TYPE = l.PRICING_TYPE
      AND c.VERSION = l.version
     WHERE c.PROJECTED_FRACTIONAL IS NOT NULL
+  ),
+  filtered AS (
+    SELECT LENDER_ID, BATCH_, COLLECTION_MONTH, PROJECTED_FRACTIONAL
+    FROM deduped
+    WHERE rn = 1
   )
   SELECT
     LENDER_ID,
     BATCH_,
     COLLECTION_MONTH,
-    PROJECTED_FRACTIONAL * 100 AS PROJECTED_RATE
-  FROM deduped
-  WHERE rn = 1
+    SUM(PROJECTED_FRACTIONAL) OVER (
+      PARTITION BY LENDER_ID, BATCH_
+      ORDER BY COLLECTION_MONTH
+      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) * 100 AS PROJECTED_RATE
+  FROM filtered
   ORDER BY LENDER_ID, BATCH_, COLLECTION_MONTH
 `;
 
@@ -79,9 +88,9 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Curves results query error:', {
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    console.error(
+      `Curves results query error: ${error instanceof Error ? error.message : String(error)}`
+    );
     return NextResponse.json(
       { error: 'Failed to fetch projections' },
       { status: 500 }
