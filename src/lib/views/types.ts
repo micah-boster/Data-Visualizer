@@ -72,6 +72,16 @@ export interface ViewSnapshot {
   drill?: {
     partner?: string;
     batch?: string;
+    /**
+     * Phase 39 PCFG-03 — pair-aware drill captures both partner AND product
+     * (= ACCOUNT_TYPE). Additive-optional: pre-Phase-39 saved views load with
+     * `product: undefined`. The legacy-migration handler in
+     * `useSavedViews.sanitizeSnapshot` synthesizes a product when the partner
+     * is single-product (unambiguous) or strips the entire `drill` block and
+     * sets `legacyDrillStrippedReason` so `data-display.tsx#handleLoadView`
+     * can step up to root with a sonner toast.
+     */
+    product?: string;
   };
   /**
    * Phase 34 — optional partner-list reference. Additive field; pre-Phase-34

@@ -112,6 +112,11 @@ export const viewSnapshotSchema = z.object({
     .object({
       partner: z.string().optional(),
       batch: z.string().optional(),
+      // Phase 39 PCFG-03 — pair-aware drill state. Additive-optional so legacy
+      // pre-Phase-39 saved views (drill: { partner, batch }) safeParse cleanly.
+      // Mirrors the Phase 32-02 / 34-04 / 38 FLT-01 evolution pattern: NO
+      // schema version bump.
+      product: z.string().optional(),
     })
     .optional(),
   // Phase 34 — optional partner-list reference. Mirrors the additive-optional
