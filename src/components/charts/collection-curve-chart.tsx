@@ -227,7 +227,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
   if (curves.length === 0) {
     return (
       <DataPanel title="Collection Curves">
-        <div className="flex h-[40vh] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+        <div className="flex h-[clamp(200px,30vh,360px)] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
           <BarChart3 className="h-10 w-10 opacity-30" />
           <p className="text-body">No collection curve data available</p>
         </div>
@@ -274,7 +274,7 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
         <div className="flex-1 flex flex-col" ref={chartWrapperRef}>
           <ChartContainer
             config={chartConfig}
-            className="h-[40vh] w-full"
+            className="h-[clamp(200px,30vh,360px)] w-full"
             role="img"
             aria-label={`Collection curves: recovery rate over months on book across ${sortedCurves.length} ${sortedCurves.length === 1 ? 'batch' : 'batches'}. Sibling data table provides the same data in accessible tabular form.`}
           >
