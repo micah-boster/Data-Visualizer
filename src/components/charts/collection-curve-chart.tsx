@@ -290,6 +290,13 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
                 domain={[1, maxAge]}
                 tickFormatter={(m: number) => `${m}`}
                 tick={<NumericTick />}
+                height={40}
+                label={{
+                  value: 'Months Since Placement',
+                  position: 'insideBottom',
+                  offset: 0,
+                  style: { fontSize: 11, fill: 'var(--muted-foreground)', textAnchor: 'middle' },
+                }}
               />
               <YAxis
                 tickFormatter={
@@ -358,7 +365,6 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
               )}
             </LineChart>
           </ChartContainer>
-          <p className="text-center text-caption text-muted-foreground -mt-1">Months Since Placement</p>
         </div>
 
         {/* Right-side legend */}

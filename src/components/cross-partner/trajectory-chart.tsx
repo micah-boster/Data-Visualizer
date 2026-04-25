@@ -165,6 +165,13 @@ export function CrossPartnerTrajectoryChart() {
               domain={[1, 'dataMax']}
               tickFormatter={(m: number) => `${m}`}
               tick={<NumericTick />}
+              height={40}
+              label={{
+                value: 'Months Since Placement',
+                position: 'insideBottom',
+                offset: 0,
+                style: { fontSize: 11, fill: 'var(--muted-foreground)', textAnchor: 'middle' },
+              }}
             />
             <YAxis
               tickFormatter={(v: number) => `${v}%`}
@@ -237,9 +244,6 @@ export function CrossPartnerTrajectoryChart() {
             )}
           </LineChart>
         </ChartContainer>
-        <p className="text-center text-caption text-muted-foreground -mt-1">
-          Months Since Placement
-        </p>
         <TrajectoryLegend
           partners={partnerNames}
           colorMap={colorMap}
