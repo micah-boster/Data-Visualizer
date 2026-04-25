@@ -108,7 +108,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
 | 38. Polish + Correctness Pass | 5/5 | Complete    | 2026-04-25 | - |
 | 39. Partner Config Module | v4.1 | 0/4 | Not Started | - |
-| 40. Projected Curves v1 | v4.1 | 0/3 | Not Started | - |
+| 40. Projected Curves v1 | 1/3 | In Progress|  | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
 | 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
 | 43-44. (reserved — insert-phase slack) | — | — | — | - |
@@ -219,7 +219,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
   4. KPI cards gain a selectable "vs projected curve" baseline option
   5. When a partner has segments configured (from Phase 39), projections compute per segment when segment split is active
 **Plans**: 3 plans (2 waves)
-- [ ] 40-01-PLAN.md — Data Foundation: API route + useCurvesResults hook + BatchCurve.projection merge in usePartnerStats (PRJ-01 data) — Wave 1
+- [x] 40-01-PLAN.md — Data Foundation: API route + useCurvesResults hook + BatchCurve.projection merge in usePartnerStats (PRJ-01 data) — Wave 1 — COMPLETE 2026-04-25
 - [ ] 40-02-PLAN.md — Chart Overlay: dashed per-batch modeled <Line>, maxAge truncation reuse, tooltip 'Modeled' row, legend-coupling (PRJ-01 visual + PRJ-02 + PRJ-03 + PRJ-05) — Wave 2
 - [ ] 40-03-PLAN.md — KPI Baseline Selector + ROADMAP/REQUIREMENTS doc re-sync (PRJ-04 + all 5 PRJ wording updates) — Wave 2
 

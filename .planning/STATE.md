@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-25T02:14:36.760Z"
+last_updated: "2026-04-25T02:31:50Z"
 progress:
   total_phases: 40
   completed_phases: 38
   total_plans: 117
-  completed_plans: 110
+  completed_plans: 111
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 38 (Polish + Correctness Pass) COMPLETE 2026-04-24 — all 5 plans shipped. Full v4.1 scope defined in [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md): Phase 38 bundles 18 feedback items (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01) — all closed. Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) run in parallel next.
-Plan: Phase 38 5/5 plans complete (38-01 sidebar branding, 38-02 columns + formatting, 38-03 chart correctness, 38-04 KPI cascade, 38-05 filters + Metabase Import).
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24 — all 5 plans shipped in a single-day sprint.
-Last activity: 2026-04-24 — 38-05 (filters + Metabase Import) completed: FLT-01 date-range preset chips (3mo / 6mo / 12mo / All) with saved-view migration + sonner toast + coerceAgeMonths shared helper + ?age= URL param + ViewSnapshot.batchAgeFilter additive-optional field; FLT-02 inline tooltips on each filter label; FLT-03 PARTNER_NAME column auto-hide when active partner list has 1 partner (respects user manual toggle via lastAppliedHidePartnerRef); MBI-01 Metabase Import Preview chart-type override segmented control + AxisPicker x2 + inferenceReason helper text + pure mergeOverride helper. 4 requirements closed (FLT-01/02/03, MBI-01). 4 atomic commits + 3 smoke tests.
+Phase: 40 (Projected Curves v1) IN PROGRESS — 1/3 plans complete. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24 — all 5 plans shipped. Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) running in parallel.
+Plan: Phase 40 — 40-01 (data pipeline) COMPLETE 2026-04-25; 40-02 (chart rendering) + 40-03 (KPI baseline) queued.
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24. Phase 40 plumbing landed 2026-04-25.
+Last activity: 2026-04-25 — 40-01 (Projected Curves data pipeline) completed: PRJ-01 GET /api/curves-results route with latest-VERSION + ROW_NUMBER dedup against BOUNCE.FINANCE.CURVES_RESULTS, ×100 unit conversion at API boundary, static-mode early return; useCurvesResults TanStack Query hook (5min staleTime, sibling to useData) + useCurvesResultsIndex helper building Map<lenderId||batchName, CurvePoint[]>; BatchCurve.projection?: CurvePoint[] additive-optional field; usePartnerStats merges projections via per-batch lenderByBatch lookup (Pitfall 1 lock — partner may span multiple lenders). 1 requirement closed (PRJ-01). 3 atomic commits + CONFIRM.md probe-SQL deferral doc. Externalbrowser auth blocked live Snowflake probes; RESEARCH defaults applied per plan's fallback clause, post-deploy smoke checklist documented for Plan 02 author.
 
-Progress: [███████████████████░] 5/5 Phase 38 plans (v4.1 Phase 38 COMPLETE)
+Progress: [██████████████████░░] 1/3 Phase 40 plans (40-01 COMPLETE)
 
 ## Shipped Milestones
 
@@ -43,6 +43,14 @@ Progress: [███████████████████░] 5/5 Pha
 
 ### Decisions
 
+- [Phase 40-01]: PROJECTED_FRACTIONAL × 100 conversion at API boundary (not client-side) — keeps CurvePoint.recoveryRate consistently 0..100 across actuals + modeled. Reversible single-line drop in route.ts SQL alias if live probe shows already-percentage units.
+- [Phase 40-01]: Per-batch lenderByBatch lookup (NOT partner-uniform) for projection merge — Pitfall 1 lock. usePartnerStats walks partnerRows once into Map<batchName, lenderId>, looks up via `${lenderId}||${batchName}`. Robust to 1:1 and 1:N partner→lender mappings. Future warehouse-aggregating overlays should mirror this pattern.
+- [Phase 40-01]: ROW_NUMBER() OVER (PARTITION BY LENDER_ID, BATCH_, COLLECTION_MONTH ORDER BY VERSION DESC) dedup in route.ts SQL — handles multi-pricing-type rows deterministically (CONTEXT mentions AF vs CCB variants). One curve per batch in v1; multi-pricing overlay deferred to v5.0 Phase 49.
+- [Phase 40-01]: Wire shape mirrors /api/data UPPERCASE column convention — useCurvesResultsIndex hook renames to lowercase. Decouples warehouse casing from app code (CurvesResultsWireRow vs ProjectionRow split). Reusable pattern for any future Snowflake-backed API.
+- [Phase 40-01]: useCurvesResultsIndex called OUTSIDE the usePartnerStats useMemo — pulled into the hook body via const projectionIndex = useCurvesResultsIndex(); then consumed in the memo deps array. Per RESEARCH "don't block first paint": chart renders actuals immediately, modeled overlay appears when /api/curves-results resolves.
+- [Phase 40-01]: Sibling TanStack Query pattern (useCurvesResults parallel to useData) chosen over inlined JOIN into /api/data — base query is 61 cols × ~500 rows; adding 80-row-per-batch JOIN would 80× response size. Sibling query isolates latency and lets chart stay functional without modeled data.
+- [Phase 40-01]: Externalbrowser Snowflake auth blocked Task 0 live probes — applied RESEARCH defaults per plan's fallback clause and recorded probe SQL + post-deploy verification checklist in 40-01-CONFIRM.md. Plan 02 author runs probes against live warehouse before landing dashed-line render.
+- [Phase 40-01]: BatchCurve.projection?: CurvePoint[] is additive-optional — all 13 existing usePartnerStats consumers compile unchanged. Pattern: any cross-cutting BatchCurve extension should be optional-typed first, then upgraded to required only after every consumer is wired.
 - [v4.0]: v3.5 absorbed into v4.0 — no work started on v3.5, design foundation should come before features
 - [v4.0]: Order is code health -> design tokens -> surfaces -> component patterns -> micro-interactions -> polish -> then features
 - [v4.0]: URL-backed navigation runs as independent track (Phase 32), not blocked by design work
