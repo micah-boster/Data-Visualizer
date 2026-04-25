@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-25T13:20:12.235Z"
+last_updated: "2026-04-25T17:21:23.000Z"
 progress:
   total_phases: 40
-  completed_phases: 39
+  completed_phases: 40
   total_plans: 117
-  completed_plans: 116
+  completed_plans: 117
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 39 (Partner Config Module) IN PROGRESS — 39-01 + 39-02 + 39-03 (Wave 2 parallel) complete; 39-04 remaining. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
-Plan: Phase 40 — all 3 plans COMPLETE 2026-04-25 (40-01 data pipeline, 40-02 chart rendering, 40-03 KPI baseline + docs re-sync). Phase 39 — 39-01 (pair migration GATE) COMPLETE 2026-04-25; 39-02 (segment config + Setup UI, PCFG-05) COMPLETE 2026-04-25; 39-03 (partner-lists extension) parallel-wave COMPLETE 2026-04-25; 39-04 (segment-split charts/KPIs) ready to start.
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24. Phase 40 COMPLETE 2026-04-25 — Projected Curves v1 ships per-batch modeled overlays + panel-level KPI baseline. Phase 39 — 3/4 plans landed (39-01 + 39-02 + 39-03); 39-04 (segment-split charts/KPIs) remains.
-Last activity: 2026-04-25 — 39-03 (partner-lists extension, PCFG-06) completed in parallel wave with 39-02. Shipped PartnerListFilters extended with PRODUCT_TYPE (display alias of ACCOUNT_TYPE) + SEGMENT (config-driven) optional keys; additive-optional schema evolution (legacy lists parse cleanly per smoke test). PartnerList.source variant 'derived' + computeDerivedLists generator with stable IDs (DERIVED_LIST_ID_PREFIX + ACCOUNT_TYPE) — one auto-list per distinct ACCOUNT_TYPE (e.g. "1st Party Partners", "3rd Party Partners"). usePartnerLists merges derived lists without persisting to localStorage; deletion is a no-op + sonner "reappears on refresh" toast; rename disabled with Tooltip. Sidebar visual distinction = Sparkles icon + "Auto" pill (.text-label tier). PartnerListsProvider sources rows via useData() (TanStack Query dedupe). filter-evaluator handles PRODUCT_TYPE alias (cross-attribute AND with ACCOUNT_TYPE) + SEGMENT via optional segmentResolver callback (degrade-don't-crash on missing resolver). Attribute filter bar extended to 3 entries (Account Type, Product Type, Segment) data-driven; create-list-dialog wires segmentResolver from usePartnerConfigContext (defensive try/catch for parallel-wave provider absence — Plan 39-02 had landed but pattern stays as insurance). 3 atomic commits + 8-assertion derived-lists smoke + 6-assertion legacy-parse smoke + SUMMARY.md. PCFG-06 closed.
+Phase: 39 (Partner Config Module) COMPLETE 2026-04-25 — all 4 plans shipped, all 7 PCFG requirements closed (PCFG-01..07). Phase 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
+Plan: Phase 39 — 39-01 (pair migration GATE) + 39-02 (segment config + Setup UI, PCFG-05) + 39-03 (partner-lists extension, PCFG-06) + 39-04 (segment-split charts/KPIs, PCFG-07) all COMPLETE 2026-04-25. Phase 40 — all 3 plans COMPLETE 2026-04-25.
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 + Phase 40 + Phase 39 ALL COMPLETE 2026-04-25.
+Last activity: 2026-04-25 — 39-04 (segment-split charts/KPIs, PCFG-07) shipped in ~11min. Centralized segment-split helpers in `src/lib/partner-config/segment-split.ts` (splitRowsBySegment, kpiAggregatesPerSegment, reshapeCurvesPerSegment, tagRowsWithSegment, averageCurvesPerSegment) with stable __SEGMENT__ + 'Other' sentinels and apples-and-oranges invariant smoke (10 assertion blocks; sum of per-segment.totalCollected === pair.totalCollected). PartnerStats now exposes pair-filtered rawRows so chart + KPI surfaces consume the same row set the helpers compute over (Pitfall 7 lock — single SoT). CollectionCurveChart split toggle (Switch primitive in actions slot) renders one synthetic dollar-weighted-average curve per segment, reusing existing pivot pipeline. KpiSummaryCards independent toggle + grouped layout (stacked rows; Other muted via bg-surface-inset; KpiCardRow extracted so rolled-up + per-segment paths share cascade machinery). Chart Builder Segment series option (synthetic AxisPicker option, gated on hasAnySegments, Tooltip-explained when disabled). GenericChart useSegmentTaggedRows: single-pair tags from pair's segments, multi-pair tags per-row by row's (PARTNER_NAME, ACCOUNT_TYPE) with displayName fallback for unconfigured pairs (CONTEXT lock honored). Stale-column resolver allowlists '__'-prefixed sentinels (defense-in-depth). Derived effective-state pattern dodges react-hooks/set-state-in-effect lint. 3 atomic commits + 10-block invariant smoke + SUMMARY.md. PCFG-07 closed; v4.1 milestone COMPLETE.
 
-Progress: [████████████████░░░░] 3/4 Phase 39 plans (39-01 GATE + 39-02 + 39-03 COMPLETE) | [████████████████████] 3/3 Phase 40 plans COMPLETE
+Progress: [████████████████████] 4/4 Phase 39 plans COMPLETE | [████████████████████] 3/3 Phase 40 plans COMPLETE
 
 ## Shipped Milestones
 
@@ -43,6 +43,15 @@ Progress: [████████████████░░░░] 3/4 Pha
 
 ### Decisions
 
+- [Phase 39-04]: Toggle UI = Base UI Switch (size='sm') + .text-label muted-foreground span — picked over segmented-control or chip per CONTEXT 'Claude's Discretion'. Switch communicates 'on/off optional dimension' clearly; segmented control would imply a multi-state choice. Same primitive on chart and KPI block for visual consistency across the segment surface area.
+- [Phase 39-04]: KPI grouped layout = stacked rows (NOT grouped columns / NOT tabs). One full cascade row per segment, label as overline header above each row, Other bucket gets bg-surface-inset to signal 'auto-computed'. Tabs would hide segments behind clicks; grouped columns would compete for horizontal space with the cascade.
+- [Phase 39-04]: Per-segment KPI cards render in rolling-mode value-only (trending: null) — per-segment trending requires a segment-aware computeTrending out of scope for v1. Plan 39-04 success criteria explicitly accept value-only segment KPIs.
+- [Phase 39-04]: Segment chart aggregation = dollar-weighted average curve via averageCurvesPerSegment helper (mirrors compute-cross-partner.computeAverageCurve math, re-implemented inline). One synthetic BatchCurve per segment; chart treats it as another batch via existing pivotCurveData. Empty segments suppress.
+- [Phase 39-04]: Multi-pair scope tagging in GenericChart = per-row pair lookup with displayName fallback. Pairs WITH segments split into per-segment series; pairs WITHOUT segments emit __SEGMENT__ = displayName for a single rolled-up series per pair. CONTEXT lock honored exactly. productsPerPartner counts computed inside the useMemo so displayName suffix logic matches the rest of the app.
+- [Phase 39-04]: Sentinel-key short-circuit in resolveColumnWithFallback — keys starting with '__' return null. Defense-in-depth: GenericChart short-circuits before calling the resolver, but the resolver guard means any future caller path is safe. Reuses '__'-prefix convention (Phase 40 __projected, Phase 39 __derived__).
+- [Phase 39-04]: Derived effective-state vs reset useEffect — `const splitBySegment = segmentToggleAvailable && splitBySegmentRaw` instead of useEffect setSplitBySegment(false). Lint-clean (avoids react-hooks/set-state-in-effect error) and faster (no effect schedule). Reusable pattern for any local UI state that should be auto-reset on dependency change.
+- [Phase 39-04]: Smoke test self-contained without @/-aliased imports — node --experimental-strip-types can't resolve TS path aliases through transitive imports. segment-split.smoke.ts inlines copy-of-logic replicas of helpers and asserts the apples-and-oranges invariant via direct row-partition arithmetic over TOTAL_COLLECTED_LIFE_TIME (same field computeKpis sums internally). Filesystem-level regex check on segment-split.ts source catches sentinel-constant drift.
+- [Phase 39-04]: PartnerStats.rawRows additive field — preserves all existing 13 PartnerStats consumers; reference is stable across re-renders inside the useMemo. Pair-filtered, treat as immutable. Avoids consumers re-implementing the (PARTNER_NAME, ACCOUNT_TYPE) predicate.
 - [Phase 39-03]: PRODUCT_TYPE stored as a SEPARATE optional filter key (not folded into ACCOUNT_TYPE) — keeps evaluator semantics explicit (cross-attribute AND when both are set), preserves additive-optional schema invariant, lets the UI render two distinct labeled controls. Storing them as one key would have required a runtime mode flag and broken the .strict() schema contract.
 - [Phase 39-03]: DERIVED_LIST_ID_PREFIX = '__derived__' (double-underscore reserved sentinel) — crypto.randomUUID() output never starts with this prefix, so collisions with user-created list IDs are impossible. Callers detect derived lists via cheap id.startsWith() rather than reading list.source. Reusable convention for any future auto-maintained collection (derived saved views, auto-cohorts).
 - [Phase 39-03]: Derived lists computed inside usePartnerLists from a new optional `rows` arg (NOT threaded as props) — keeps merge logic colocated with persistence/CRUD, ensures derived lists auto-strip on persistence (filter before persistPartnerLists), prevents accidental dual-source-of-truth. PartnerListsProvider sources rows via useData() (TanStack Query dedupes by queryKey — no extra request).

@@ -107,7 +107,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 36. Chart Builder | 5/5 | Complete    | 2026-04-24 | - |
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
 | 38. Polish + Correctness Pass | 5/5 | Complete    | 2026-04-25 | - |
-| 39. Partner Config Module | 3/4 | In Progress|  | - |
+| 39. Partner Config Module | 4/4 | Complete   | 2026-04-25 | - |
 | 40. Projected Curves v1 | 3/3 | Complete    | 2026-04-25 | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
 | 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
@@ -141,7 +141,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 
 **Phases:**
 - [x] **Phase 38: Polish + Correctness Pass** — 18 feedback items: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness, KPI cascade, filter fixes, laptop layout, Metabase Import chart-type override (completed 2026-04-24)
-- [ ] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks)
+- [x] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks) (completed 2026-04-25)
 - [x] **Phase 40: Projected Curves v1** — Per-batch modeled projection lines from `BOUNCE.FINANCE.CURVES_RESULTS` + optional panel-level "vs modeled curve" KPI baseline (completed 2026-04-25)
 
 ### Phase 38: Polish + Correctness Pass
