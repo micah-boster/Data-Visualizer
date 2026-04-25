@@ -1119,6 +1119,8 @@ export function DataDisplay() {
                           baselineMode={baselineMode}
                           curves={partnerStats?.curves}
                           onSwitchToRolling={() => setBaselineMode('rolling')}
+                          pair={selectedPair}
+                          rawRows={partnerStats?.rawRows}
                         />
                         {/* Phase 38 CHT-01: render ASAP with whatever data exists
                             — the prior `>= 2` minimum-age gate hid charts for
@@ -1135,6 +1137,7 @@ export function DataDisplay() {
                               curves={partnerStats.curves}
                               chartSnapshotRef={chartSnapshotRef}
                               chartLoadRef={chartLoadRef}
+                              pair={selectedPair}
                             />
                           </>
                         )}
@@ -1148,6 +1151,7 @@ export function DataDisplay() {
                         curves={batchCurve}
                         chartSnapshotRef={chartSnapshotRef}
                         chartLoadRef={chartLoadRef}
+                        pair={selectedPair}
                       />
                     )}
                   </div>

@@ -9,7 +9,7 @@ import { computeKpis } from '@/lib/computation/compute-kpis';
 import { computeTrending } from '@/lib/computation/compute-trending';
 import { computeAnomalies } from '@/lib/computation/compute-anomalies';
 import { useCurvesResultsIndex } from '@/hooks/use-curves-results';
-import { getPartnerName, getStringField } from '@/lib/utils';
+import { getBatchName, getPartnerName, getStringField } from '@/lib/utils';
 
 /**
  * Compute structured partner analytics from raw batch rows.
@@ -54,7 +54,10 @@ export function usePartnerStats(
     // under a non-default lender). Walk partnerRows once.
     const lenderByBatch = new Map<string, string>();
     for (const r of partnerRows) {
-      const batch = String(r.BATCH_ ?? '');
+      // Read via getBatchName (column is `BATCH`, not `BATCH_` — that's
+      // CURVES_RESULTS' column. Mismatched field names previously left this
+      // map empty, suppressing all projection lookups.)
+      const batch = getBatchName(r);
       const lender = String(r.LENDER_ID ?? '');
       if (batch && lender && !lenderByBatch.has(batch)) {
         lenderByBatch.set(batch, lender);
@@ -85,6 +88,12 @@ export function usePartnerStats(
       curves,
       trending: computeTrending(partnerRows),
       anomalies,
+      // Phase 39 PCFG-07 — expose pair-filtered rows so segment-split
+      // consumers (chart, KPI block) can call splitRowsBySegment directly
+      // without re-implementing the pair-filter predicate. The reference is
+      // stable inside this useMemo (a single filter() call); downstream
+      // consumers should treat it as immutable.
+      rawRows: partnerRows,
     };
   }, [pair, allRows, projectionIndex]);
 }

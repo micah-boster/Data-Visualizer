@@ -155,6 +155,79 @@ export function reshapeCurvesPerSegment(
 }
 
 /**
+ * Build a single synthetic BatchCurve per segment by dollar-weighted-averaging
+ * the segment's per-batch curves at every month milestone.
+ *
+ * The Collection Curve chart in split-by-segment mode renders ONE line per
+ * segment (not per batch), so the chart consumer needs a single curve per
+ * segment to feed into the existing batch-pivot pipeline. Returning a
+ * `BatchCurve`-shaped record with `batchName = segment.label` lets the chart
+ * reuse `pivotCurveData` + the existing per-batch render path unchanged —
+ * the segment label is just a display name in the chart config.
+ *
+ * Mirrors the dollar-weighted-average math from
+ * `compute-cross-partner.ts.computeAverageCurve`. Truncation: the synthetic
+ * curve only includes months where at least 1 batch contributed a point. Empty
+ * segments produce a curve with `points: []` and `ageInMonths: 0` (chart
+ * gracefully renders no line for it).
+ */
+export interface SegmentAverageCurve {
+  label: string;
+  curve: BatchCurve;
+  isOther: boolean;
+}
+
+export function averageCurvesPerSegment(
+  rows: Array<Record<string, unknown>>,
+  segments: SegmentRule[],
+): SegmentAverageCurve[] {
+  const perSegment = reshapeCurvesPerSegment(rows, segments);
+
+  return perSegment.map(({ label, curves, isOther }) => {
+    const allMonths = new Set<number>();
+    let totalPlacedAcrossBatches = 0;
+    let maxAge = 0;
+    for (const c of curves) {
+      totalPlacedAcrossBatches += c.totalPlaced;
+      if (c.ageInMonths > maxAge) maxAge = c.ageInMonths;
+      for (const p of c.points) allMonths.add(p.month);
+    }
+    const sortedMonths = [...allMonths].sort((a, b) => a - b);
+    const points = sortedMonths
+      .map((month) => {
+        let weightedRecoverySum = 0;
+        let weightSum = 0;
+        let amountSum = 0;
+        for (const c of curves) {
+          const pt = c.points.find((p) => p.month === month);
+          if (!pt) continue;
+          weightedRecoverySum += pt.recoveryRate * c.totalPlaced;
+          weightSum += c.totalPlaced;
+          amountSum += pt.amount;
+        }
+        if (weightSum === 0) return null;
+        return {
+          month,
+          amount: amountSum,
+          recoveryRate: weightedRecoverySum / weightSum,
+        };
+      })
+      .filter((p): p is { month: number; amount: number; recoveryRate: number } => p !== null);
+
+    return {
+      label,
+      isOther,
+      curve: {
+        batchName: label,
+        totalPlaced: totalPlacedAcrossBatches,
+        ageInMonths: maxAge,
+        points,
+      },
+    };
+  });
+}
+
+/**
  * Tag each row with its segment name (or 'Other'). Used by GenericChart's
  * row-prep pipeline to feed the existing series pivot (`pivotForSeries`)
  * without changing pivot semantics — the synthetic `__SEGMENT__` column is

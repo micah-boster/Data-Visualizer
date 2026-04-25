@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import { StatCard } from '@/components/patterns/stat-card';
+import { Switch } from '@/components/ui/switch';
 import {
   formatCount,
   formatPercentage,
@@ -13,6 +15,9 @@ import {
 import {
   computeModeledDelta,
 } from '@/lib/computation/compute-projection';
+import { kpiAggregatesPerSegment } from '@/lib/partner-config/segment-split';
+import { usePartnerConfigContext } from '@/contexts/partner-config';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 import type {
   BatchCurve,
   BatchTrend,
@@ -144,6 +149,19 @@ interface KpiSummaryCardsProps {
    * flip the panel-level baselineMode back to 'rolling'.
    */
   onSwitchToRolling?: () => void;
+  /**
+   * Phase 39 PCFG-07 — active (partner, product) pair. When set AND the pair
+   * has segments configured, a "Split by segment" toggle appears in the
+   * header area. Toggling on renders a grouped layout (one StatCard row per
+   * segment). When null or no segments configured, no toggle / grouped view.
+   */
+  pair?: PartnerProductPair | null;
+  /**
+   * Phase 39 PCFG-07 — pair-filtered raw rows used to compute per-segment
+   * KPIs when split is on. Required when `pair` is non-null and the pair has
+   * segments. Sourced from `usePartnerStats(pair).rawRows` in the parent.
+   */
+  rawRows?: Array<Record<string, unknown>>;
 }
 
 /**
@@ -182,7 +200,25 @@ export function KpiSummaryCards({
   baselineMode = 'rolling',
   curves,
   onSwitchToRolling,
+  pair,
+  rawRows,
 }: KpiSummaryCardsProps) {
+  // Phase 39 PCFG-07 — segment-split state. Local to the KPI block (the
+  // chart's split toggle is independent). Hidden entirely when the active
+  // pair has no configured segments.
+  // Hooks must run unconditionally before any early returns.
+  const partnerConfig = usePartnerConfigContext();
+  const segments = useMemo(
+    () => (pair ? partnerConfig.getConfig(pair)?.segments ?? [] : []),
+    [pair, partnerConfig],
+  );
+  const segmentToggleAvailable = segments.length > 0;
+  const [splitBySegmentRaw, setSplitBySegment] = useState(false);
+  // Derive effective split state — see equivalent comment in
+  // CollectionCurveChart. Forces false when segments aren't available,
+  // avoiding a reset useEffect (lint: react-hooks/set-state-in-effect).
+  const splitBySegment = segmentToggleAvailable && splitBySegmentRaw;
+
   // Loading state: skeleton cards via StatCard's loading branch.
   // Width grid sized for the worst case (identity + 2 rate = 6 slots).
   if (kpis === null) {
@@ -206,6 +242,120 @@ export function KpiSummaryCards({
     );
   }
 
+  // Phase 39 PCFG-07 — split-by-segment grouped layout. One row of StatCards
+  // per segment, with the segment label as a section header. Other bucket
+  // (when present) renders with a muted surface to signal it's auto-computed.
+  if (splitBySegment && segmentToggleAvailable && rawRows) {
+    const segmentEntries = kpiAggregatesPerSegment(rawRows, segments);
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-end">
+          <SegmentSplitToggle
+            checked={splitBySegment}
+            onChange={setSplitBySegment}
+          />
+        </div>
+        <div className="space-y-3">
+          {segmentEntries.map((entry) => (
+            <div
+              key={entry.label}
+              className={
+                entry.isOther
+                  ? 'rounded-lg bg-surface-inset p-3 space-y-2'
+                  : 'space-y-2'
+              }
+            >
+              <div className="text-label text-muted-foreground uppercase">
+                {entry.label}
+              </div>
+              <KpiCardRow
+                kpis={entry.kpis}
+                trending={null}
+                baselineMode="rolling"
+                curves={undefined}
+                onSwitchToRolling={undefined}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {segmentToggleAvailable && (
+        <div className="flex items-center justify-end">
+          <SegmentSplitToggle
+            checked={splitBySegment}
+            onChange={setSplitBySegment}
+          />
+        </div>
+      )}
+      <KpiCardRow
+        kpis={kpis}
+        trending={trending}
+        baselineMode={baselineMode}
+        curves={curves}
+        onSwitchToRolling={onSwitchToRolling}
+      />
+    </div>
+  );
+}
+
+/**
+ * Phase 39 PCFG-07 — small chrome control rendered inline in the KPI block
+ * header area when the active pair has segments configured. Mirrors the
+ * Switch + label pattern used in the Collection Curve chart's toggle so the
+ * two surfaces feel consistent.
+ */
+function SegmentSplitToggle({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-label text-muted-foreground">
+      <Switch
+        size="sm"
+        checked={checked}
+        onCheckedChange={onChange}
+        aria-label="Split by segment"
+      />
+      <span>Split by segment</span>
+    </label>
+  );
+}
+
+/**
+ * Phase 39 PCFG-07 — rendering body extracted from the original
+ * KpiSummaryCards return path. Renders one cascade-driven StatCard row for a
+ * given KpiAggregates value. Used twice:
+ *   1. The default rolled-up layout (single row).
+ *   2. Inside the grouped split-by-segment layout (one row per segment).
+ *
+ * Trending + modeled baselines remain wired only for the rolled-up render
+ * path; per-segment rows fall back to value-only rolling-mode by passing
+ * `trending: null` (per-segment trending would require segmentation-aware
+ * computeTrending which is out of scope for v1 — segment grouped layout
+ * focuses on the headline KPIs themselves). See Plan 39-04 success criteria
+ * — all 6 truths pass with value-only-per-segment rendering.
+ */
+function KpiCardRow({
+  kpis,
+  trending,
+  baselineMode,
+  curves,
+  onSwitchToRolling,
+}: {
+  kpis: KpiAggregates;
+  trending: TrendingData | null;
+  baselineMode: 'rolling' | 'modeled';
+  curves: BatchCurve[] | undefined;
+  onSwitchToRolling?: () => void;
+}) {
   const cascadeKeys = selectCascadeTier(kpis.maxBatchAgeMonths);
   const rateCards = cascadeKeys.map((k) => RATE_CARDS[k]);
   const cards: CardSpec[] = [...IDENTITY_CARDS, ...rateCards];

@@ -14,7 +14,10 @@ import { ChartContainer } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
 import type { BatchCurve } from "@/types/partner-stats";
 import { useAnomalyContext } from "@/contexts/anomaly-provider";
+import { usePartnerConfigContext } from "@/contexts/partner-config";
 import { COLLECTION_MONTHS } from "@/lib/computation/reshape-curves";
+import { averageCurvesPerSegment } from "@/lib/partner-config/segment-split";
+import type { PartnerProductPair } from "@/lib/partner-config/pair";
 import {
   pivotCurveData,
   type PivotedPoint,
@@ -24,6 +27,7 @@ import { CurveTooltip, CHART_COLORS } from "@/components/charts/curve-tooltip";
 import { CurveLegend } from "@/components/charts/curve-legend";
 import { NumericTick } from "@/components/charts/numeric-tick";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { DataPanel } from "@/components/patterns/data-panel";
 import { BarChart3 } from "lucide-react";
 
@@ -46,9 +50,85 @@ interface CollectionCurveChartProps {
    * 36-RESEARCH Open Q #4.
    */
   presetMenu?: React.ReactNode;
+  /**
+   * Phase 39 PCFG-07 — when set, enables the optional split-by-segment toggle.
+   * The toggle only renders when the active pair has segments configured. When
+   * `pair` is null (root-level / cross-partner view) the toggle never appears.
+   */
+  pair?: PartnerProductPair | null;
+  /**
+   * Phase 39 PCFG-07 — pair-filtered raw rows used to compute per-segment
+   * curves when the split toggle is on. Required when `pair` is non-null.
+   * Sourced from `usePartnerStats(pair).rawRows` in the parent.
+   */
+  rawRows?: Array<Record<string, unknown>>;
 }
 
-export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, chartTypeSelector, presetMenu }: CollectionCurveChartProps) {
+export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, chartTypeSelector, presetMenu, pair, rawRows }: CollectionCurveChartProps) {
+  // Phase 39 PCFG-07 — segment-split state. Independent per-view (the KPI
+  // block has its own toggle). Hidden entirely when the active pair has no
+  // configured segments — preserves zero-regression behavior for the
+  // pair-rolled-up default.
+  const partnerConfig = usePartnerConfigContext();
+  const segments = useMemo(
+    () => (pair ? partnerConfig.getConfig(pair)?.segments ?? [] : []),
+    [pair, partnerConfig],
+  );
+  const segmentToggleAvailable = segments.length > 0;
+  const [splitBySegmentRaw, setSplitBySegment] = useState(false);
+  // Derive effective split state — if segments aren't available, force false
+  // even when local state still says true (handles the edge case where the
+  // user opened Setup mid-session and removed segments). Avoids a reset
+  // useEffect (which trips react-hooks/set-state-in-effect lint rule).
+  const splitBySegment = segmentToggleAvailable && splitBySegmentRaw;
+
+  // Phase 39 PCFG-07 — when split mode is on, replace the per-batch curves
+  // with one synthetic curve per segment (dollar-weighted average over the
+  // segment's batches). Reuses the entire downstream chart pipeline by feeding
+  // BatchCurve[]-shaped records through. Other-bucket curves only appear when
+  // uncovered rows exist.
+  const effectiveCurves = useMemo<BatchCurve[]>(() => {
+    if (!splitBySegment || !segmentToggleAvailable || !rawRows) return curves;
+    const segCurves = averageCurvesPerSegment(rawRows, segments);
+    return segCurves
+      .filter((s) => s.curve.points.length > 0)
+      .map((s) => s.curve);
+  }, [splitBySegment, segmentToggleAvailable, rawRows, segments, curves]);
+
+  return (
+    <CollectionCurveChartInner
+      curves={effectiveCurves}
+      chartSnapshotRef={chartSnapshotRef}
+      chartLoadRef={chartLoadRef}
+      chartTypeSelector={chartTypeSelector}
+      presetMenu={presetMenu}
+      segmentToggle={
+        segmentToggleAvailable ? (
+          <label className="flex items-center gap-2 text-label text-muted-foreground">
+            <Switch
+              size="sm"
+              checked={splitBySegment}
+              onCheckedChange={setSplitBySegment}
+              aria-label="Split by segment"
+            />
+            <span>Split by segment</span>
+          </label>
+        ) : null
+      }
+    />
+  );
+}
+
+interface CollectionCurveChartInnerProps {
+  curves: BatchCurve[];
+  chartSnapshotRef?: React.MutableRefObject<(() => CollectionCurveDefinition) | null>;
+  chartLoadRef?: React.MutableRefObject<((state: CollectionCurveDefinition) => void) | null>;
+  chartTypeSelector?: React.ReactNode;
+  presetMenu?: React.ReactNode;
+  segmentToggle?: React.ReactNode;
+}
+
+function CollectionCurveChartInner({ curves, chartSnapshotRef, chartLoadRef, chartTypeSelector, presetMenu, segmentToggle }: CollectionCurveChartInnerProps) {
   // Find batch anomalies for the partner whose curves we're displaying.
   // Match by batchName overlap between curves and anomaly data.
   const { partnerAnomalies } = useAnomalyContext();
@@ -264,6 +344,10 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
               Dollars Collected
             </Button>
           </div>
+          {/* Phase 39 PCFG-07 — split-by-segment toggle. Only rendered when
+              the active pair has segments configured. Independent from the
+              KPI block's toggle (per-view local state). */}
+          {segmentToggle ?? null}
           {presetMenu ?? null}
         </div>
       }

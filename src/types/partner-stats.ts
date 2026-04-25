@@ -156,6 +156,14 @@ export interface PartnerStats {
   curves: BatchCurve[];
   trending: TrendingData;
   anomalies?: AnomalyReport;
+  /**
+   * Phase 39 PCFG-07 — pair-filtered raw rows used internally to compute
+   * `kpis` / `curves` / etc. Exposed so segment-split consumers (chart,
+   * KPI cards) can call `splitRowsBySegment(rawRows, segments)` without
+   * re-implementing the pair-filter predicate. Same invariant: every entry
+   * in this array satisfies `(PARTNER_NAME, ACCOUNT_TYPE) === pair`.
+   */
+  rawRows: Array<Record<string, unknown>>;
 }
 
 /** Activity status for cross-partner ranking eligibility */

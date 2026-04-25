@@ -35,6 +35,7 @@ import type {
   GenericChartDefinition,
 } from '@/lib/views/types';
 import type { BatchCurve } from '@/types/partner-stats';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 
 const TITLE_BY_TYPE: Record<GenericChartDefinition['type'], string> = {
   line: 'Line Chart',
@@ -55,6 +56,12 @@ export interface ChartPanelProps {
   chartSnapshotRef?: MutableRefObject<(() => CollectionCurveDefinition) | null>;
   /** Restore ref wired by CollectionCurveChart on the preset branch. */
   chartLoadRef?: MutableRefObject<((state: CollectionCurveDefinition) => void) | null>;
+  /**
+   * Phase 39 PCFG-07 — active (partner, product) pair, or null at root level.
+   * Threaded through to CollectionCurveChart (split-by-segment toggle) and
+   * GenericChart (Chart Builder's Segment series option).
+   */
+  pair?: PartnerProductPair | null;
 }
 
 export function ChartPanel({
@@ -64,6 +71,7 @@ export function ChartPanel({
   curves,
   chartSnapshotRef,
   chartLoadRef,
+  pair,
 }: ChartPanelProps): ReactNode {
   /**
    * Pitfall 9 — when the user applies a preset via PresetMenu while already on
@@ -94,6 +102,8 @@ export function ChartPanel({
         curves={curves ?? []}
         chartSnapshotRef={chartSnapshotRef}
         chartLoadRef={chartLoadRef}
+        pair={pair ?? null}
+        rawRows={rows}
         chartTypeSelector={
           <ChartTypeSegmentedControl
             activeType={definition.type}
