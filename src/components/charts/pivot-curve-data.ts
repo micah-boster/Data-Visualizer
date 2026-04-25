@@ -9,12 +9,23 @@
  *   that break Recharts property access. We sanitize to `batch_0`, `batch_1`, etc.
  * - Missing months use `undefined` (NOT 0) so Recharts skips them instead of
  *   drawing false zero-cliff lines for young batches.
+ * - Phase 40 PRJ-01: when a curve has `projection`, emit a sibling
+ *   `batch_N__projected` key (DOUBLE underscore — grep-unique to prevent
+ *   substring collision in tooltip proximity logic per Pitfall 5).
  */
 
 import type { BatchCurve } from "@/types/partner-stats";
 
 /** Prefix for sanitized batch keys. batch_0, batch_1, etc. */
 export const BATCH_KEY_PREFIX = "batch_";
+
+/**
+ * Suffix for the modeled-projection sibling key. Double underscore is
+ * deliberate — keeps `batch_N__projected` grep-unique against any future
+ * `batch_N_*` keys and prevents substring collisions in tooltip proximity
+ * logic that filters keys like `batch_\d+`.
+ */
+export const PROJECTED_KEY_SUFFIX = "__projected";
 
 /**
  * A single data point for Recharts, with month on X and one key per batch series.
@@ -46,22 +57,36 @@ export function pivotCurveData(
   curves: BatchCurve[],
   metric: "recoveryRate" | "amount",
 ): { data: PivotedPoint[]; keyMap: BatchKeyMap } {
-  // Build key map: batch_N -> display name
+  // Build key map: batch_N -> display name. Phase 40: also map
+  // batch_N__projected -> same display name so the tooltip can resolve either
+  // key back to its batch (only emitted for curves that actually have
+  // projection data — keeps the keyMap a useful "is this a real series" check).
   const keyMap: BatchKeyMap = new Map();
   curves.forEach((curve, i) => {
-    keyMap.set(`${BATCH_KEY_PREFIX}${i}`, curve.batchName);
+    const baseKey = `${BATCH_KEY_PREFIX}${i}`;
+    keyMap.set(baseKey, curve.batchName);
+    if (curve.projection && curve.projection.length > 0) {
+      keyMap.set(`${baseKey}${PROJECTED_KEY_SUFFIX}`, curve.batchName);
+    }
   });
 
-  // Collect all unique months across all curves
+  // Collect all unique months across all curves -- include projection months so
+  // batches with modeled coverage extending past their actuals (e.g. 80mo
+  // projection on a 12mo batch) get rows out to maxAge. Caller clips later.
   const monthSet = new Set<number>();
   for (const curve of curves) {
     for (const pt of curve.points) {
       monthSet.add(pt.month);
     }
+    if (curve.projection) {
+      for (const pt of curve.projection) {
+        monthSet.add(pt.month);
+      }
+    }
   }
   const sortedMonths = [...monthSet].sort((a, b) => a - b);
 
-  // Build lookup: for each curve, month -> metric value
+  // Build lookup: for each curve, month -> metric value (actual + projected)
   const curveLookups: Map<number, number>[] = curves.map((curve) => {
     const lookup = new Map<number, number>();
     for (const pt of curve.points) {
@@ -69,6 +94,16 @@ export function pivotCurveData(
     }
     return lookup;
   });
+  const projectionLookups: Array<Map<number, number> | null> = curves.map(
+    (curve) => {
+      if (!curve.projection || curve.projection.length === 0) return null;
+      const lookup = new Map<number, number>();
+      for (const pt of curve.projection) {
+        lookup.set(pt.month, pt[metric]);
+      }
+      return lookup;
+    },
+  );
 
   // Pivot: one PivotedPoint per month
   const data: PivotedPoint[] = sortedMonths.map((month) => {
@@ -78,6 +113,17 @@ export function pivotCurveData(
       const value = curveLookups[i].get(month);
       // undefined for months beyond batch age -- Recharts skips these
       point[key] = value;
+      // Phase 40: emit sibling __projected key when modeled coverage exists at
+      // this month. Absence is the absence of the key (matches actual-line
+      // behavior for batches shorter than max age — Recharts treats missing
+      // keys as gaps when connectNulls={false}).
+      const projLookup = projectionLookups[i];
+      if (projLookup) {
+        const projValue = projLookup.get(month);
+        if (projValue !== undefined) {
+          point[`${key}${PROJECTED_KEY_SUFFIX}`] = projValue;
+        }
+      }
     });
     return point;
   });
