@@ -950,14 +950,15 @@ export function DataDisplay() {
                 data-charts-expanded={chartsExpanded}
               >
                 <div className="overflow-hidden">
-                  {/* Phase 38 CHT-04: chart-laptop-cap (globals.css @media
-                      max-height: 900px) caps the INNER chart container at
-                      48vh. Applied here per 38-RESEARCH Pitfall 8 — never on
-                      the grid row (would fight `grid-rows-[1fr]`). The
-                      outer `overflow-hidden` already handles any clipping
-                      for viewports too short to contain the KPI band + chart
-                      at full height. */}
-                  <div className="chart-laptop-cap shrink-0 px-2 pt-2 space-y-2">
+                  {/* Phase 38 CHT-04: the chart panel is content-sized.
+                      Each chart's ChartContainer carries its own clamp-
+                      capped height (CollectionCurveChart 30vh / max 360px,
+                      CrossPartnerTrajectoryChart 36vh / max 420px) so the
+                      table sibling claims the remaining vertical space via
+                      flex-1 on the table-laptop-floor wrapper below. The
+                      outer `overflow-hidden` clips the panel during the
+                      grid-rows expand/collapse animation (Pitfall 8). */}
+                  <div className="shrink-0 px-2 pt-2 space-y-2">
                     {drillState.level === 'root' && (
                       <>
                         <CrossPartnerTrajectoryChart />
