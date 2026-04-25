@@ -17,33 +17,46 @@ import type { PartnerListFilters } from '@/lib/partner-lists/types';
 /**
  * AttributeFilterBar — additive row of attribute multi-selects.
  *
- * v1 renders ONLY ACCOUNT_TYPE (CONTEXT 2026-04-18 lock — PRODUCT_TYPE and
- * REVENUE_BAND deferred). Structure is data-driven through the ATTRIBUTES
- * constant so adding a future attribute is a one-line config change plus
+ * Renders one combobox per entry in `ATTRIBUTES`, hidden if the parent's
+ * `availableValues` provides no options for that key. Structure is data-
+ * driven so adding a future attribute is a one-line config change plus
  * backing data; no component signature change is needed.
  *
+ * Phase 39 (PCFG-06) attribute scope:
+ *   - ACCOUNT_TYPE — raw partner classification (legacy).
+ *   - PRODUCT_TYPE — display alias of ACCOUNT_TYPE; identical underlying
+ *     values, different label. Selecting PRODUCT_TYPE is functionally
+ *     equivalent to selecting ACCOUNT_TYPE; if the user picks BOTH
+ *     simultaneously, the evaluator AND's them (cross-attribute AND
+ *     semantics — a row must satisfy both filter sets).
+ *   - SEGMENT — references SegmentRule.name values configured per pair
+ *     in usePartnerConfig. Hidden when no segments exist (parent supplies
+ *     empty array). Requires a segment resolver in evaluateFilters
+ *     (wired by the create-list dialog from usePartnerConfigContext).
+ *
  * Adaptation note: the existing `@/components/filters/filter-combobox`
- * primitive is SINGLE-select (`value: string | null` / `onValueChange`). This
- * feature requires MULTI-select per attribute, so we compose a small local
- * multi-select combobox using the Popover + Checkbox primitives already in
- * the codebase. This matches Plan 03's explicit guidance: "If FilterCombobox's
- * API differs materially ... adapt ... Document any adaptation inline."
+ * primitive is SINGLE-select. This feature requires MULTI-select per
+ * attribute, so we compose a small local multi-select combobox using the
+ * Popover + Checkbox primitives already in the codebase.
  */
 export interface AttributeFilterBarProps {
   /**
-   * Available values per attribute — derived from the dataset by the parent.
-   * Keyed by AttributeKey; v1 only supplies ACCOUNT_TYPE. Future attributes
-   * land here without any component signature change (additive by design).
+   * Available values per attribute — derived from the dataset (and config)
+   * by the parent. Phase 39 supplies ACCOUNT_TYPE + PRODUCT_TYPE (same
+   * values, different label) and SEGMENT (rule names from partner-config).
+   * Future attributes land here without any component signature change.
    */
-  availableValues: Partial<Record<'ACCOUNT_TYPE', string[]>>;
+  availableValues: Partial<
+    Record<'ACCOUNT_TYPE' | 'PRODUCT_TYPE' | 'SEGMENT', string[]>
+  >;
   value: PartnerListFilters;
   onChange: (next: PartnerListFilters) => void;
 }
 
 const ATTRIBUTES = [
   { key: 'ACCOUNT_TYPE', label: 'Account Type' },
-  // Future: add { key: 'PRODUCT_TYPE', label: 'Product Type' }, etc. Rendering
-  // is data-driven; schema.ts would also need the matching `.optional()` field.
+  { key: 'PRODUCT_TYPE', label: 'Product Type' },
+  { key: 'SEGMENT', label: 'Segment' },
 ] as const satisfies ReadonlyArray<{
   key: keyof PartnerListFilters;
   label: string;

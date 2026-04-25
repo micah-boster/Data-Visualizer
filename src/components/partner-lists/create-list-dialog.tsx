@@ -16,9 +16,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { useActivePartnerList } from '@/contexts/active-partner-list';
-import { evaluateFilters } from '@/lib/partner-lists/filter-evaluator';
+import {
+  evaluateFilters,
+  type SegmentResolver,
+} from '@/lib/partner-lists/filter-evaluator';
 import { getPartnerName, getStringField } from '@/lib/utils';
 import type { PartnerListFilters } from '@/lib/partner-lists/types';
+// Phase 39 (PCFG-06): SEGMENT attribute pulls rule names from partner-config.
+// usePartnerConfigContext lives in Plan 39-02 (sibling Wave 2 plan). Defensive
+// import + try/catch in the consumer below — if the provider isn't mounted
+// yet, segment names default to [] and the SEGMENT control simply hides.
+import { usePartnerConfigContext } from '@/contexts/partner-config';
 
 import { AttributeFilterBar } from './attribute-filter-bar';
 import { DualPaneTransfer } from './dual-pane-transfer';
@@ -75,6 +83,18 @@ export function CreateListDialog({
   // filter cascade without a second click. Edit mode never changes activation.
   const { setActiveListId } = useActivePartnerList();
 
+  // Phase 39 (PCFG-06) — partner-config segment rules drive the SEGMENT
+  // attribute control + the SEGMENT filter resolver. Defensive try/catch:
+  // if PartnerConfigProvider isn't mounted yet (e.g. plan 39-02 hasn't
+  // landed in this branch), the SEGMENT control simply hides because
+  // configs defaults to [].
+  let configs: ReturnType<typeof usePartnerConfigContext>['configs'] = [];
+  try {
+    configs = usePartnerConfigContext().configs;
+  } catch {
+    // Provider not mounted — leave configs as the empty default.
+  }
+
   const [name, setName] = useState('');
   const [filters, setFilters] = useState<PartnerListFilters>({});
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
@@ -95,28 +115,62 @@ export function CreateListDialog({
     return out;
   }, [allRows]);
 
-  // Unique ACCOUNT_TYPE values for the attribute bar. Empty array when the
-  // column has no non-null values in the dataset — AttributeFilterBar hides
-  // the combobox in that case.
+  // Phase 39 (PCFG-06) — available values per attribute key.
+  // - ACCOUNT_TYPE + PRODUCT_TYPE share the same source values (display alias).
+  // - SEGMENT pulls SegmentRule.name across all configured pairs (deduped).
+  //   Empty when no segments are configured anywhere; AttributeFilterBar
+  //   hides the SEGMENT combobox in that case.
   const availableValues = useMemo<
-    Partial<Record<'ACCOUNT_TYPE', string[]>>
+    Partial<Record<'ACCOUNT_TYPE' | 'PRODUCT_TYPE' | 'SEGMENT', string[]>>
   >(() => {
-    const values = new Set<string>();
+    const accountTypeValues = new Set<string>();
     for (const row of allRows) {
       const accountType = getStringField(row, 'ACCOUNT_TYPE');
-      if (accountType) values.add(accountType);
+      if (accountType) accountTypeValues.add(accountType);
     }
-    return { ACCOUNT_TYPE: Array.from(values).sort((a, b) => a.localeCompare(b)) };
-  }, [allRows]);
+    const sortedAccountTypes = Array.from(accountTypeValues).sort((a, b) =>
+      a.localeCompare(b),
+    );
+    const segmentNames = new Set<string>();
+    for (const config of configs) {
+      for (const segment of config.segments) {
+        if (segment.name) segmentNames.add(segment.name);
+      }
+    }
+    return {
+      ACCOUNT_TYPE: sortedAccountTypes,
+      PRODUCT_TYPE: sortedAccountTypes,
+      SEGMENT: Array.from(segmentNames).sort((a, b) => a.localeCompare(b)),
+    };
+  }, [allRows, configs]);
+
+  // Phase 39 (PCFG-06) — segment resolver wired from partner-config.
+  // Returns the segment rules configured for a given (partner, product)
+  // pair. Memoized on configs so the evaluator's dep array stays stable.
+  const segmentResolver = useMemo<SegmentResolver>(() => {
+    return (partner: string, product: string) => {
+      const entry = configs.find(
+        (c) => c.partner === partner && c.product === product,
+      );
+      return entry?.segments ?? [];
+    };
+  }, [configs]);
 
   // Real-time "narrow Available" via evaluateFilters. null === no constraint.
+  // Phase 39: pass segmentResolver only when SEGMENT is active to avoid
+  // unnecessary lookup work for filters without a segment constraint.
   const filteredPartnerIds = useMemo<Set<string> | null>(() => {
     const hasAnyFilter = Object.values(filters).some(
       (arr) => Array.isArray(arr) && arr.length > 0,
     );
     if (!hasAnyFilter) return null;
-    return evaluateFilters(allRows, filters);
-  }, [allRows, filters]);
+    const segmentActive = !!filters.SEGMENT && filters.SEGMENT.length > 0;
+    return evaluateFilters(
+      allRows,
+      filters,
+      segmentActive ? segmentResolver : undefined,
+    );
+  }, [allRows, filters, segmentResolver]);
 
   const availablePartners = useMemo(
     () =>
