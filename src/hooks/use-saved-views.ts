@@ -8,7 +8,7 @@
  * Follows the same pattern as useColumnManagement.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { SavedView, ViewSnapshot } from '@/lib/views/types';
 import { loadSavedViews, persistSavedViews } from '@/lib/views/storage';
 import { getDefaultViews } from '@/lib/views/defaults';
@@ -46,6 +46,40 @@ export function hasLegacyBatchFilter(snapshot: ViewSnapshot): boolean {
 }
 
 /**
+ * Phase 39 PCFG-04 — detect legacy `dimensionFilters.partner` entry on a raw
+ * snapshot.
+ *
+ * Pre-Phase-39 saved views could carry a column-equality filter on
+ * PARTNER_NAME (`?partner=Acme`) — Phase 39 deprecated that filter (selection
+ * is owned by drill state). Detector exposed for tests + the data-display
+ * toast path.
+ */
+export function hasLegacyPartnerFilter(snapshot: ViewSnapshot): boolean {
+  const dim = snapshot.dimensionFilters;
+  if (dim && typeof dim === 'object' && 'partner' in dim && dim.partner) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Phase 39 PCFG-03 — extra metadata stamped on a sanitized snapshot when the
+ * legacy `drill.partner` field couldn't be migrated unambiguously to a pair
+ * (multi-product partner with no `drill.product`).
+ *
+ * `data-display.tsx#handleLoadView` reads this flag, fires a sonner toast
+ * explaining the step-up, and clears the flag before persisting. NOT a
+ * persisted field on ViewSnapshot — it lives only on the in-memory snapshot
+ * during the load handoff.
+ */
+export interface SanitizedSnapshotMeta {
+  legacyDrillStrippedReason?: 'multi-product-ambiguous';
+  hasLegacyPartnerFilter?: boolean;
+}
+
+export type SnapshotWithMeta = ViewSnapshot & SanitizedSnapshotMeta;
+
+/**
  * Strip unknown column keys from a view snapshot.
  * Handles schema evolution when columns are added or removed.
  *
@@ -66,17 +100,60 @@ export function hasLegacyBatchFilter(snapshot: ViewSnapshot): boolean {
 export function sanitizeSnapshot(
   snapshot: ViewSnapshot,
   knownListIds: Set<string>,
-): ViewSnapshot {
-  // Phase 38 FLT-01: prune legacy batch dimension/column filters.
+  /**
+   * Phase 39 PCFG-03 — caller-supplied "products available per partner" map.
+   * Used to migrate legacy drill state: a snapshot with `drill.partner` but
+   * no `drill.product` is ambiguous for multi-product partners. When the
+   * partner has exactly ONE product in the map, we synthesize that product
+   * onto the migrated drill. Otherwise the entire `drill` block is stripped
+   * AND `legacyDrillStrippedReason` is stamped on the returned snapshot so
+   * `handleLoadView` can fire a step-up toast.
+   *
+   * Defaults to an empty map (= conservative: legacy `drill.partner` always
+   * stripped for hydration callers that don't yet have data loaded). The
+   * runtime data-display caller passes the real map.
+   */
+  knownPairs: Map<string, string[]> = new Map(),
+): SnapshotWithMeta {
+  // Phase 38 FLT-01 + Phase 39 PCFG-04 — prune legacy batch + partner
+  // dimension filters.
   const dim = snapshot.dimensionFilters;
+  const hasLegacyPartner = !!(
+    dim &&
+    typeof dim === 'object' &&
+    'partner' in dim &&
+    dim.partner
+  );
   const prunedDimensionFilters =
-    dim && typeof dim === 'object' && 'batch' in dim
-      ? Object.fromEntries(Object.entries(dim).filter(([k]) => k !== 'batch'))
-      : (dim ?? {});
+    dim && typeof dim === 'object'
+      ? Object.fromEntries(
+          Object.entries(dim).filter(([k]) => k !== 'batch' && k !== 'partner'),
+        )
+      : {};
   const col = snapshot.columnFilters ?? {};
   const prunedColumnFiltersBase = Object.fromEntries(
     Object.entries(col).filter(([k]) => k !== 'BATCH'),
   );
+
+  // Phase 39 PCFG-03 — legacy drill migration.
+  let migratedDrill: ViewSnapshot['drill'] = snapshot.drill;
+  let legacyDrillStrippedReason: 'multi-product-ambiguous' | undefined;
+  if (snapshot.drill?.partner && !snapshot.drill.product) {
+    const products = knownPairs.get(snapshot.drill.partner);
+    if (products && products.length === 1) {
+      // Single-product partner → synthesize the product onto the migrated drill.
+      migratedDrill = { ...snapshot.drill, product: products[0] };
+    } else if (products && products.length > 1) {
+      // Multi-product partner → can't disambiguate; strip the drill and flag
+      // for a step-up toast.
+      migratedDrill = undefined;
+      legacyDrillStrippedReason = 'multi-product-ambiguous';
+    } else {
+      // Partner not present in current data — leave drill as-is; the existing
+      // stale-deep-link guard in data-display.tsx will step up on its own.
+      migratedDrill = snapshot.drill;
+    }
+  }
 
   return {
     ...snapshot,
@@ -109,6 +186,9 @@ export function sanitizeSnapshot(
       snapshot.listId && knownListIds.has(snapshot.listId)
         ? snapshot.listId
         : undefined,
+    drill: migratedDrill,
+    legacyDrillStrippedReason,
+    hasLegacyPartnerFilter: hasLegacyPartner ? true : undefined,
   };
 }
 
@@ -118,14 +198,23 @@ export function sanitizeSnapshot(
 function sanitizeViews(
   views: SavedView[],
   knownListIds: Set<string>,
+  knownPairs: Map<string, string[]>,
 ): SavedView[] {
   return views.map((v) => ({
     ...v,
-    snapshot: sanitizeSnapshot(v.snapshot, knownListIds),
+    snapshot: sanitizeSnapshot(v.snapshot, knownListIds, knownPairs),
   }));
 }
 
-export function useSavedViews(knownListIds?: Set<string>) {
+export function useSavedViews(
+  knownListIds?: Set<string>,
+  /**
+   * Phase 39 PCFG-03 — products-per-partner map for legacy drill migration.
+   * Defaults to undefined; data-display threads the real map in once data
+   * loads. `Map<partnerName, productList>`.
+   */
+  knownPairs?: Map<string, string[]>,
+) {
   // Initialize empty for SSR/hydration safety
   const [views, setViews] = useState<SavedView[]>([]);
   const hasHydrated = useRef(false);
@@ -137,15 +226,20 @@ export function useSavedViews(knownListIds?: Set<string>) {
   //
   // Phase 34: re-runs when knownListIds changes (e.g. a partner list is
   // created/deleted), so stale listIds get sanitized without a page reload.
+  // Phase 39 PCFG-03 — stable empty Map sentinel so the effect doesn't re-run
+  // on every render when the caller doesn't supply knownPairs.
+  const stableEmptyPairs = useMemo(() => new Map<string, string[]>(), []);
+  const pairs = knownPairs ?? stableEmptyPairs;
+
   useEffect(() => {
     let loaded = loadSavedViews();
     if (loaded.length === 0) {
       loaded = getDefaultViews();
     }
     const ids = knownListIds ?? new Set<string>();
-    setViews(sanitizeViews(loaded, ids));
+    setViews(sanitizeViews(loaded, ids, pairs));
     hasHydrated.current = true;
-  }, [knownListIds]);
+  }, [knownListIds, pairs]);
 
   // Persist to localStorage after hydration on every change
   useEffect(() => {

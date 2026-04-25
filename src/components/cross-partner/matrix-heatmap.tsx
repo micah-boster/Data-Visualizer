@@ -19,7 +19,7 @@ export function MatrixHeatmap({
           <thead>
             <tr className="border-b">
               <th className="sticky left-0 z-10 bg-background px-3 py-2 text-left text-label uppercase text-muted-foreground">
-                Partner
+                Pair
               </th>
               {metrics.map((m) => (
                 <th
@@ -40,24 +40,29 @@ export function MatrixHeatmap({
             </tr>
           </thead>
           <tbody>
-            {partners.map((p) => (
-              <tr key={p.partnerName} className="border-b last:border-0">
-                <td className="sticky left-0 z-10 bg-background px-3 py-1.5 text-body whitespace-nowrap">
-                  {p.partnerName}
-                </td>
-                {metrics.map((m) => {
-                  const pctile = m.getPercentile(p);
-                  return (
-                    <td
-                      key={m.key}
-                      className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(pctile)}`}
-                    >
-                      {formatValue(m.getValue(p), m.format)}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+            {/* Phase 39 PCFG-04: each row is a (partner, product) pair —
+                displayName is suffixed for multi-product partners. */}
+            {partners.map((p) => {
+              const key = `${p.partnerName}::${p.product}`;
+              return (
+                <tr key={key} className="border-b last:border-0">
+                  <td className="sticky left-0 z-10 bg-background px-3 py-1.5 text-body whitespace-nowrap">
+                    {p.displayName}
+                  </td>
+                  {metrics.map((m) => {
+                    const pctile = m.getPercentile(p);
+                    return (
+                      <td
+                        key={m.key}
+                        className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(pctile)}`}
+                      >
+                        {formatValue(m.getValue(p), m.format)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -73,14 +78,17 @@ export function MatrixHeatmap({
             <th className="sticky left-0 z-10 bg-background px-3 py-2 text-left text-label uppercase text-muted-foreground">
               Metric
             </th>
-            {partners.map((p) => (
-              <th
-                key={p.partnerName}
-                className="px-3 py-2 text-right text-label uppercase text-muted-foreground whitespace-nowrap"
-              >
-                {p.partnerName}
-              </th>
-            ))}
+            {partners.map((p) => {
+              const key = `${p.partnerName}::${p.product}`;
+              return (
+                <th
+                  key={key}
+                  className="px-3 py-2 text-right text-label uppercase text-muted-foreground whitespace-nowrap"
+                >
+                  {p.displayName}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -104,9 +112,10 @@ export function MatrixHeatmap({
               </td>
               {partners.map((p) => {
                 const pctile = m.getPercentile(p);
+                const key = `${p.partnerName}::${p.product}`;
                 return (
                   <td
-                    key={p.partnerName}
+                    key={key}
                     className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(pctile)}`}
                   >
                     {formatValue(m.getValue(p), m.format)}

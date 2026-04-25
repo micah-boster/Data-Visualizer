@@ -10,7 +10,7 @@ import { useDrillDown } from '@/hooks/use-drill-down';
 import { useDataFreshness } from '@/contexts/data-freshness';
 import { useSidebarData } from '@/contexts/sidebar-data';
 import { accountColumnDefs } from '@/lib/columns/account-definitions';
-import { buildRootColumnDefs, buildPartnerSummaryRows } from '@/lib/columns/root-columns';
+import { buildRootColumnDefs, buildPairSummaryRows } from '@/lib/columns/root-columns';
 import dynamic from 'next/dynamic';
 import { usePartnerStats } from '@/hooks/use-partner-stats';
 import { PartnerNormsProvider } from '@/contexts/partner-norms';
@@ -24,6 +24,10 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DataTable } from '@/components/table/data-table';
 import { KpiSummaryCards } from '@/components/kpi/kpi-summary-cards';
+import {
+  BaselineSelector,
+  type BaselineMode,
+} from '@/components/kpi/baseline-selector';
 import { UnifiedToolbar } from '@/components/toolbar/unified-toolbar';
 import { QueryCommandDialog } from '@/components/query/query-command-dialog';
 import { useAnomalyContext } from '@/contexts/anomaly-provider';
@@ -33,7 +37,7 @@ import { useSavedViews } from '@/hooks/use-saved-views';
 import { useFilterState } from '@/hooks/use-filter-state';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
 import { computeKpis } from '@/lib/computation/compute-kpis';
-import { getPartnerName, getBatchName, coerceAgeMonths } from '@/lib/utils';
+import { getPartnerName, getBatchName, getStringField, coerceAgeMonths } from '@/lib/utils';
 import { SectionErrorBoundary } from '@/components/section-error-boundary';
 import { SectionDivider } from '@/components/layout/section-divider';
 import { toast } from 'sonner';
@@ -44,6 +48,13 @@ import { DEFAULT_COLLECTION_CURVE } from '@/lib/views/migrate-chart';
 import { mapToSnapshot } from '@/lib/metabase-import/map-to-snapshot';
 import type { ParseResult } from '@/lib/metabase-import/types';
 import { FILTER_PARAMS } from '@/hooks/use-filter-state';
+import {
+  pairKey,
+  sortPairs,
+  displayNameForPair,
+  labelForProduct,
+  type PartnerProductPair,
+} from '@/lib/partner-config/pair';
 
 const CrossPartnerTrajectoryChart = dynamic(
   () =>
@@ -108,7 +119,7 @@ const PartnerSparkline = dynamic(
 export function DataDisplay() {
   const router = useRouter();
   const { data, isLoading, isError, error, refetch, isFetching } = useData();
-  const { state: drillState, drillToPartner, drillToBatch, navigateToLevel } =
+  const { state: drillState, drillToPair, drillToBatch, navigateToLevel } =
     useDrillDown();
   const {
     data: accountData,
@@ -146,6 +157,25 @@ export function DataDisplay() {
     [partnerLists],
   );
 
+  // Phase 39 PCFG-03: knownPairs map drives legacy drill-state migration in
+  // useSavedViews.sanitizeSnapshot. `Map<partnerName, productList[]>` —
+  // single-product partners get their product synthesized onto a legacy
+  // `drill.partner` payload; multi-product partners trigger a step-up toast
+  // (Pitfall 2 in 39-RESEARCH).
+  const knownPairs = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    for (const row of data?.data ?? []) {
+      const partner = getPartnerName(row);
+      const product = getStringField(row, 'ACCOUNT_TYPE');
+      if (!partner || !product) continue;
+      if (!map.has(partner)) map.set(partner, new Set());
+      map.get(partner)!.add(product);
+    }
+    return new Map(
+      [...map.entries()].map(([partner, products]) => [partner, [...products]]),
+    );
+  }, [data?.data]);
+
   // Lifted state: saved views
   const {
     views,
@@ -155,7 +185,7 @@ export function DataDisplay() {
     hasViewWithName,
     replaceView,
     restoreDefaults,
-  } = useSavedViews(knownListIds);
+  } = useSavedViews(knownListIds, knownPairs);
 
   // Lifted state: dimension filters (URL-backed)
   // Phase 38 FLT-01: `age` (AgeBucket) + `setAge` added for the date-range
@@ -234,22 +264,35 @@ export function DataDisplay() {
     return out;
   }, [data?.data, dimensionFilters, age, activeList]);
 
+  // Phase 39 PCFG-03: derive the active (partner, product) pair from drill
+  // state. null at root level. Used as the canonical selection key downstream.
+  const selectedPair: PartnerProductPair | null = useMemo(() => {
+    if (!drillState.partner || !drillState.product) return null;
+    return { partner: drillState.partner, product: drillState.product };
+  }, [drillState.partner, drillState.product]);
+
   // Partner stats sourced from filteredRawData so root-level dimension filters
-  // (e.g. ACCOUNT_TYPE) cascade into partner drill-down aggregates.
-  const partnerStats = usePartnerStats(drillState.partner, filteredRawData);
+  // (e.g. ACCOUNT_TYPE) cascade into pair drill-down aggregates. Phase 39 —
+  // pair-aware: filters by both PARTNER_NAME and ACCOUNT_TYPE.
+  const partnerStats = usePartnerStats(selectedPair, filteredRawData);
 
   // Phase 36.x — row-level slices for the generic chart panel. The preset
   // (CollectionCurveChart) consumes the pre-shaped `curves` array; the generic
-  // branch (GenericChart) plots raw rows and must see the same partner/batch
+  // branch (GenericChart) plots raw rows and must see the same pair/batch
   // subset the rest of the drill-down view uses. Without these narrowed sets
-  // the multi-series line chart would plot every partner's batches even when
-  // the user is drilled into one partner.
+  // the multi-series line chart would plot every pair's batches even when
+  // the user is drilled into one pair.
+  // Phase 39 PCFG-04 — filter by BOTH PARTNER_NAME and ACCOUNT_TYPE.
   const partnerRows = useMemo(() => {
     if (!drillState.partner) return filteredRawData;
-    return filteredRawData.filter(
-      (r) => String(r.PARTNER_NAME ?? '') === drillState.partner,
-    );
-  }, [filteredRawData, drillState.partner]);
+    return filteredRawData.filter((r) => {
+      if (getPartnerName(r) !== drillState.partner) return false;
+      if (drillState.product && getStringField(r, 'ACCOUNT_TYPE') !== drillState.product) {
+        return false;
+      }
+      return true;
+    });
+  }, [filteredRawData, drillState.partner, drillState.product]);
   const batchRows = useMemo(() => {
     if (!drillState.partner || !drillState.batch) return partnerRows;
     return partnerRows.filter(
@@ -268,11 +311,12 @@ export function DataDisplay() {
     setIsFetching(isFetching);
   }, [isFetching, setIsFetching]);
 
-  // NAV-03: deep-link stale-param guard. When the URL references a partner
-  // or batch that isn't in the loaded dataset, show a toast and step up to
-  // the nearest valid level. Uses navigateToLevel (router.push) rather than
-  // router.replace so the user's back button still works coherently — matches
-  // CONTEXT's "render empty + toast, don't show error page" directive.
+  // NAV-03 + Phase 39 PCFG-03: deep-link stale-param guard. When the URL
+  // references a partner / pair / batch that isn't in the loaded dataset,
+  // show a toast and step up to the nearest valid level. Phase 39 adds:
+  //   - missing `?pr=` for a multi-product partner steps up to root with toast
+  //   - `(partner, product)` pair not present in data steps up to root
+  // Uses navigateToLevel (router.push) so the back button still works.
   useEffect(() => {
     if (isLoading || !data?.data || drillState.level === 'root') return;
 
@@ -289,10 +333,39 @@ export function DataDisplay() {
       return;
     }
 
+    // Phase 39 PCFG-03: missing or invalid product on a multi-product partner.
+    if (drillState.partner) {
+      const products = knownPairs.get(drillState.partner) ?? [];
+      if (!drillState.product) {
+        // Single-product partner is OK without ?pr= (drill state was likely
+        // built from a legacy URL); the page can still show pair view by
+        // implicit product. Multi-product partners must step up.
+        if (products.length > 1) {
+          toast(`Product type required for "${drillState.partner}"`, {
+            description: 'This partner has multiple products — returning to the root view.',
+          });
+          navigateToLevel('root');
+          return;
+        }
+      } else if (!products.includes(drillState.product)) {
+        toast(
+          `Pair "${drillState.partner} — ${labelForProduct(drillState.product)}" not found`,
+          {
+            description: 'Returning to the root view.',
+          },
+        );
+        navigateToLevel('root');
+        return;
+      }
+    }
+
     if (drillState.level === 'batch' && drillState.batch) {
       const batchExists = rows.some(
         (r) =>
           getPartnerName(r) === drillState.partner &&
+          (drillState.product
+            ? getStringField(r, 'ACCOUNT_TYPE') === drillState.product
+            : true) &&
           getBatchName(r) === drillState.batch,
       );
       if (!batchExists) {
@@ -302,7 +375,7 @@ export function DataDisplay() {
         navigateToLevel('partner');
       }
     }
-  }, [isLoading, data?.data, drillState, navigateToLevel]);
+  }, [isLoading, data?.data, drillState, navigateToLevel, knownPairs]);
 
   // Data source depends on drill level.
   // KI-12 fix: deps are object references (filteredRawData, accountData,
@@ -316,9 +389,14 @@ export function DataDisplay() {
       return accountData?.data ?? [];
     }
     if (drillState.level === 'partner' && drillState.partner) {
-      return filteredRawData.filter(
-        (row) => getPartnerName(row) === drillState.partner,
-      );
+      // Phase 39 PCFG-04: filter by BOTH partner AND product when available.
+      return filteredRawData.filter((row) => {
+        if (getPartnerName(row) !== drillState.partner) return false;
+        if (drillState.product && getStringField(row, 'ACCOUNT_TYPE') !== drillState.product) {
+          return false;
+        }
+        return true;
+      });
     }
     return filteredRawData;
   }, [filteredRawData, accountData, drillState]);
@@ -337,14 +415,8 @@ export function DataDisplay() {
     [data?.data],
   );
 
-  // Filter options for the toolbar filter popover
-  const partnerOptions = useMemo(
-    () =>
-      [...new Set((data?.data ?? []).map((r) => String(r.PARTNER_NAME ?? '')))]
-        .filter(Boolean)
-        .sort(),
-    [data?.data],
-  );
+  // Filter options for the toolbar filter popover. Phase 39 PCFG-04:
+  // partnerOptions / selectedPartner removed (partner is no longer a filter).
   const typeOptions = useMemo(
     () =>
       [...new Set((data?.data ?? []).map((r) => String(r.ACCOUNT_TYPE ?? '')))]
@@ -352,10 +424,6 @@ export function DataDisplay() {
         .sort(),
     [data?.data],
   );
-  const selectedPartner = useMemo(() => {
-    const f = dimensionFilters.find((cf) => cf.id === 'PARTNER_NAME');
-    return f ? String(f.value) : null;
-  }, [dimensionFilters]);
   const selectedType = useMemo(() => {
     const f = dimensionFilters.find((cf) => cf.id === 'ACCOUNT_TYPE');
     return f ? String(f.value) : null;
@@ -387,6 +455,14 @@ export function DataDisplay() {
   const handleLoadView = useCallback(
     (view: SavedView) => {
       const { snapshot } = view;
+      // Phase 39 PCFG-03: sanitizeSnapshot stamps `legacyDrillStrippedReason`
+      // and `hasLegacyPartnerFilter` on the snapshot when legacy fields were
+      // migrated. The view stored in useSavedViews has already been sanitized,
+      // but cast to read the optional metadata fields.
+      const meta = snapshot as ViewSnapshot & {
+        legacyDrillStrippedReason?: 'multi-product-ambiguous';
+        hasLegacyPartnerFilter?: boolean;
+      };
 
       // Phase 38 FLT-01: detect legacy batch-equality filter BEFORE
       // sanitizeSnapshot strips it elsewhere — we want to fire the toast
@@ -396,6 +472,8 @@ export function DataDisplay() {
           typeof snapshot.dimensionFilters === 'object' &&
           'batch' in snapshot.dimensionFilters &&
           (snapshot.dimensionFilters as Record<string, string>).batch);
+      const hadLegacyDrill = meta.legacyDrillStrippedReason === 'multi-product-ambiguous';
+      const hadLegacyPartnerFilter = meta.hasLegacyPartnerFilter === true;
 
       // Restore chart state
       if (snapshot.chartsExpanded !== undefined) {
@@ -436,15 +514,39 @@ export function DataDisplay() {
         });
       }
 
-      // NAV-04: Drill URL update runs separately from the dimension-filter
-      // history.replaceState above. router.push ensures useSearchParams re-reads
+      // Phase 39 PCFG-03: sonner toast when sanitizeSnapshot stripped the
+      // entire drill block because the partner had multiple products and
+      // the saved view didn't specify which.
+      if (hadLegacyDrill) {
+        toast('Saved view drill cleared', {
+          description:
+            'This view was saved before product split. Re-drill into the specific pair to restore.',
+          duration: 5000,
+        });
+      }
+
+      // Phase 39 PCFG-04: sonner toast when a legacy `?partner=` dimension
+      // filter was stripped. (The filter was deprecated when selection moved
+      // entirely to drill state.)
+      if (hadLegacyPartnerFilter) {
+        toast('Partner filter removed', {
+          description:
+            'This view was saved with the old partner filter. Use the sidebar to select a partner.',
+          duration: 5000,
+        });
+      }
+
+      // NAV-04 + Phase 39 PCFG-03: Drill URL update — pair-aware. Writes
+      // ?p=&pr=&b= when present. router.push ensures useSearchParams re-reads
       // and useDrillDown re-renders (Pitfall 5 in 32-RESEARCH.md).
       {
         const drillParams = new URLSearchParams(window.location.search);
         drillParams.delete('p');
+        drillParams.delete('pr');
         drillParams.delete('b');
         if (snapshot.drill?.partner) {
           drillParams.set('p', snapshot.drill.partner);
+          if (snapshot.drill.product) drillParams.set('pr', snapshot.drill.product);
           if (snapshot.drill.batch) drillParams.set('b', snapshot.drill.batch);
         }
         const drillQs = drillParams.toString();
@@ -632,6 +734,7 @@ export function DataDisplay() {
                     ? undefined
                     : {
                         partner: previousDrill.partner ?? undefined,
+                        product: previousDrill.product ?? undefined,
                         batch: previousDrill.batch ?? undefined,
                       },
               },
@@ -708,11 +811,11 @@ export function DataDisplay() {
         } else {
           snapshot.chartState = chartDefinition;
         }
-        // NAV-04: optional drill capture. Only write the field when the user
-        // opted in AND we actually have drill state to save.
+        // NAV-04 + Phase 39 PCFG-03: optional drill capture, now pair-aware.
         if (options?.includeDrill && drillState.level !== 'root') {
           snapshot.drill = {
             partner: drillState.partner ?? undefined,
+            product: drillState.product ?? undefined,
             batch: drillState.batch ?? undefined,
           };
         }
@@ -740,10 +843,12 @@ export function DataDisplay() {
         } else {
           snapshot.chartState = chartDefinition;
         }
-        // NAV-04: mirror handleSaveView — capture drill when opted in.
+        // NAV-04 + Phase 39 PCFG-03: mirror handleSaveView — capture drill
+        // (pair-aware) when opted in.
         if (options?.includeDrill && drillState.level !== 'root') {
           snapshot.drill = {
             partner: drillState.partner ?? undefined,
+            product: drillState.product ?? undefined,
             batch: drillState.batch ?? undefined,
           };
         }
@@ -856,7 +961,7 @@ export function DataDisplay() {
           allData={data.data}
           allowedPartnerIds={activeList?.partnerIds ?? null}
           drillState={drillState}
-          drillToPartner={drillToPartner}
+          drillToPair={drillToPair}
           navigateToLevel={navigateToLevel}
           views={views}
           onLoadView={handleLoadView}
@@ -920,7 +1025,7 @@ export function DataDisplay() {
             instant swap for users with prefers-reduced-motion: reduce.
           */}
           <div
-            key={`drill-${drillState.level}-${drillState.partner ?? 'none'}-${drillState.batch ?? 'none'}`}
+            key={`drill-${drillState.level}-${drillState.partner ?? 'none'}-${drillState.product ?? 'none'}-${drillState.batch ?? 'none'}`}
             data-drill-fade
             className="transition-opacity duration-normal ease-default flex min-h-0 flex-1 flex-col"
             style={{ contain: 'layout' }}
@@ -1038,7 +1143,7 @@ export function DataDisplay() {
                     drillState={drillState}
                     tableData={tableData}
                     isFetching={isFetching}
-                    drillToPartner={drillToPartner}
+                    drillToPair={drillToPair}
                     drillToBatch={drillToBatch}
                     navigateToLevel={navigateToLevel}
                     totalRowCount={uniquePartnerCount}
@@ -1063,10 +1168,8 @@ export function DataDisplay() {
                     comparisonVisible={comparisonVisible}
                     // Query
                     onOpenQuery={() => setQueryOpen(true)}
-                    // Filter options
-                    partnerOptions={partnerOptions}
+                    // Filter options (Phase 39 PCFG-04 — partnerOptions removed)
                     typeOptions={typeOptions}
-                    selectedPartner={selectedPartner}
                     selectedType={selectedType}
                     age={age}
                     onAgeChange={setAge}
@@ -1134,7 +1237,7 @@ function SidebarDataPopulator({
   allData,
   allowedPartnerIds,
   drillState,
-  drillToPartner,
+  drillToPair,
   navigateToLevel,
   views,
   onLoadView,
@@ -1151,7 +1254,7 @@ function SidebarDataPopulator({
    */
   allowedPartnerIds: string[] | null;
   drillState: DrillState;
-  drillToPartner: (name: string) => void;
+  drillToPair: (pair: PartnerProductPair) => void;
   navigateToLevel: (level: import('@/hooks/use-drill-down').DrillLevel) => void;
   views: SavedView[];
   onLoadView: (view: SavedView) => void;
@@ -1162,36 +1265,71 @@ function SidebarDataPopulator({
   const { setSidebarData } = useSidebarData();
   const { partnerAnomalies } = useAnomalyContext();
 
-  const partners = useMemo(() => {
-    const partnerGroups = new Map<string, number>();
+  // Phase 39 PCFG-02..04: emit one row per (partner, product) PAIR. Multi-
+  // product partners (Happy Money, Zable) split into peer rows with
+  // suffixed display names; single-product partners stay visually unchanged
+  // (name only, product revealed on hover). Pair anomaly flags read from
+  // the pair-keyed anomaly map (compute-anomalies.ts).
+  const pairs = useMemo(() => {
+    // Group rows by pairKey, count batches.
+    const pairBatchCounts = new Map<
+      string,
+      { pair: PartnerProductPair; batchCount: number }
+    >();
     for (const row of allData) {
-      const name = getPartnerName(row);
-      if (!name) continue;
-      partnerGroups.set(name, (partnerGroups.get(name) ?? 0) + 1);
+      const partner = getPartnerName(row);
+      const product = getStringField(row, 'ACCOUNT_TYPE');
+      if (!partner || !product) continue;
+      const pair: PartnerProductPair = { partner, product };
+      const key = pairKey(pair);
+      const existing = pairBatchCounts.get(key);
+      if (existing) existing.batchCount += 1;
+      else pairBatchCounts.set(key, { pair, batchCount: 1 });
     }
 
+    // Count products per partner so display name knows whether to suffix.
+    const productsPerPartner = new Map<string, number>();
+    for (const { pair } of pairBatchCounts.values()) {
+      productsPerPartner.set(
+        pair.partner,
+        (productsPerPartner.get(pair.partner) ?? 0) + 1,
+      );
+    }
+
+    // Pre-keyed flagged set (anomaly map is now keyed by pairKey).
     const flaggedSet = new Set(
       [...partnerAnomalies.entries()]
         .filter(([, a]) => a.isFlagged)
-        .map(([name]) => name),
+        .map(([key]) => key),
     );
 
-    const deduped = [...partnerGroups.entries()]
-      .map(([name, batchCount]) => ({
-        name,
-        batchCount,
-        isFlagged: flaggedSet.has(name),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    // Sort by canonical pair order, then build sidebar rows.
+    const sortedPairs = sortPairs(
+      [...pairBatchCounts.values()].map(({ pair }) => pair),
+    );
+    const rows = sortedPairs.map((pair) => {
+      const key = pairKey(pair);
+      const entry = pairBatchCounts.get(key)!;
+      const count = productsPerPartner.get(pair.partner) ?? 1;
+      return {
+        partner: pair.partner,
+        product: pair.product,
+        displayName: displayNameForPair(pair, count),
+        productTooltip: labelForProduct(pair.product),
+        batchCount: entry.batchCount,
+        isFlagged: flaggedSet.has(key),
+      };
+    });
 
     // Phase 34 LIST-03: when an active partner list is applied, narrow the
     // DISPLAYED sidebar entries to its partnerIds set. The underlying roster
     // source is still `allData` (Phase 25 navigation-integrity lock — drill
     // into partners inside the active list still works; partners outside
-    // it are simply not shown).
-    if (!allowedPartnerIds) return deduped;
+    // it are simply not shown). Partner-list membership is partner-level by
+    // design; both pair rows of a multi-product partner ride along together.
+    if (!allowedPartnerIds) return rows;
     const allow = new Set(allowedPartnerIds);
-    return deduped.filter((p) => allow.has(p.name));
+    return rows.filter((p) => allow.has(p.partner));
   }, [allData, partnerAnomalies, allowedPartnerIds]);
 
   const anomalyCount = useMemo(
@@ -1201,9 +1339,9 @@ function SidebarDataPopulator({
 
   useEffect(() => {
     setSidebarData({
-      partners,
+      pairs,
       drillState,
-      drillToPartner,
+      drillToPair,
       navigateToLevel,
       views,
       onLoadView,
@@ -1212,7 +1350,7 @@ function SidebarDataPopulator({
       onImportSql,
       anomalyCount,
     });
-  }, [partners, drillState, drillToPartner, navigateToLevel, views, onLoadView, onDeleteView, onSaveView, onImportSql, anomalyCount, setSidebarData]);
+  }, [pairs, drillState, drillToPair, navigateToLevel, views, onLoadView, onDeleteView, onSaveView, onImportSql, anomalyCount, setSidebarData]);
 
   return null;
 }
@@ -1225,7 +1363,7 @@ function CrossPartnerDataTable({
   drillState,
   tableData,
   isFetching,
-  drillToPartner,
+  drillToPair,
   drillToBatch,
   navigateToLevel,
   totalRowCount,
@@ -1250,10 +1388,8 @@ function CrossPartnerDataTable({
   comparisonVisible,
   // Query
   onOpenQuery,
-  // Filter options
-  partnerOptions,
+  // Filter options (Phase 39 PCFG-04 — partner removed)
   typeOptions,
-  selectedPartner,
   selectedType,
   age,
   onAgeChange,
@@ -1266,8 +1402,9 @@ function CrossPartnerDataTable({
   drillState: DrillState;
   tableData: Record<string, unknown>[];
   isFetching: boolean;
-  drillToPartner: (name: string) => void;
-  drillToBatch: (name: string, partnerName?: string) => void;
+  /** Phase 39 PCFG-03 — pair-aware drill. */
+  drillToPair: (pair: PartnerProductPair) => void;
+  drillToBatch: (name: string, pair?: PartnerProductPair) => void;
   navigateToLevel: (level: import('@/hooks/use-drill-down').DrillLevel) => void;
   totalRowCount: number;
   partnerStats: ReturnType<typeof usePartnerStats>;
@@ -1288,9 +1425,7 @@ function CrossPartnerDataTable({
   onToggleCharts: () => void;
   comparisonVisible: boolean;
   onOpenQuery: () => void;
-  partnerOptions: string[];
   typeOptions: string[];
-  selectedPartner: string | null;
   selectedType: string | null;
   /** Phase 38 FLT-01 — date-range bucket for the preset chip group. */
   age: import('@/hooks/use-filter-state').AgeBucket;
@@ -1303,9 +1438,9 @@ function CrossPartnerDataTable({
 }) {
   const { crossPartnerData } = useCrossPartnerContext();
 
-  // At root level, show one row per partner (deduplicated summary)
+  // At root level, show one row per (partner, product) PAIR (Phase 39 PCFG-04).
   const rootSummaryRows = useMemo(
-    () => (drillState.level === 'root' ? buildPartnerSummaryRows(allData) : []),
+    () => (drillState.level === 'root' ? buildPairSummaryRows(allData) : []),
     [drillState.level, allData],
   );
 
@@ -1351,11 +1486,11 @@ function CrossPartnerDataTable({
 
   return (
     <DataTable
-      key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.batch ?? ''}`}
+      key={`${drillState.level}-${drillState.partner ?? ''}-${drillState.product ?? ''}-${drillState.batch ?? ''}`}
       data={effectiveData}
       isFetching={drillState.level === 'batch' ? false : isFetching}
       drillState={drillState}
-      onDrillToPartner={drillToPartner}
+      onDrillToPair={drillToPair}
       onDrillToBatch={drillToBatch}
       onNavigateToLevel={navigateToLevel}
       totalRowCount={drillState.level === 'root' ? undefined : totalRowCount}
@@ -1384,9 +1519,7 @@ function CrossPartnerDataTable({
       onToggleCharts={onToggleCharts}
       comparisonVisible={comparisonVisible}
       onOpenQuery={onOpenQuery}
-      partnerOptions={partnerOptions}
       typeOptions={typeOptions}
-      selectedPartner={selectedPartner}
       selectedType={selectedType}
       age={age}
       onAgeChange={onAgeChange}
@@ -1420,17 +1553,39 @@ function QueryCommandDialogWithContext({
   const dataContext = useMemo(() => {
     if (!allData || allData.length === 0) return '';
 
-    const partnerGroups = new Map<string, Record<string, unknown>[]>();
+    // Phase 39 PCFG-04: build per-pair summaries (no cross-product blending).
+    const pairGroups = new Map<
+      string,
+      { pair: PartnerProductPair; rows: Record<string, unknown>[] }
+    >();
     for (const row of allData) {
-      const name = getPartnerName(row);
-      if (!name) continue;
-      if (!partnerGroups.has(name)) partnerGroups.set(name, []);
-      partnerGroups.get(name)!.push(row);
+      const partner = getPartnerName(row);
+      const product = getStringField(row, 'ACCOUNT_TYPE');
+      if (!partner || !product) continue;
+      const pair: PartnerProductPair = { partner, product };
+      const key = pairKey(pair);
+      const existing = pairGroups.get(key);
+      if (existing) existing.rows.push(row);
+      else pairGroups.set(key, { pair, rows: [row] });
     }
 
-    const partners: PartnerSummary[] = Array.from(partnerGroups.entries()).map(
-      ([name, rows]) => ({
-        name,
+    // Count products per partner so display name knows whether to suffix.
+    const productsPerPartner = new Map<string, number>();
+    for (const { pair } of pairGroups.values()) {
+      productsPerPartner.set(
+        pair.partner,
+        (productsPerPartner.get(pair.partner) ?? 0) + 1,
+      );
+    }
+
+    const partners: PartnerSummary[] = Array.from(pairGroups.values()).map(
+      ({ pair, rows }) => ({
+        name: displayNameForPair(
+          pair,
+          productsPerPartner.get(pair.partner) ?? 1,
+        ),
+        partner: pair.partner,
+        product: pair.product,
         batchCount: rows.length,
         stats: computeKpis(rows),
       }),
@@ -1440,6 +1595,7 @@ function QueryCommandDialogWithContext({
       {
         level: drillState.level,
         partnerId: drillState.partner,
+        productId: drillState.product,
         batchId: drillState.batch,
       },
       { partners, anomalies: partnerAnomalies },

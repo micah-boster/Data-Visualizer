@@ -35,10 +35,13 @@ import {
 
 export function AppSidebar() {
   // Phase 37 — Metabase import entry + Sheet mount.
+  // Phase 39 PCFG-02..04: sidebar reads pairs (not partners). drillToPair
+  // carries the full (partner, product) pair so multi-product partners
+  // (Happy Money, Zable) become two peer rows.
   const {
-    partners,
+    pairs,
     drillState,
-    drillToPartner,
+    drillToPair,
     navigateToLevel,
     views,
     onLoadView,
@@ -173,9 +176,9 @@ export function AppSidebar() {
               )}
             />
             <span>Partners</span>
-            {isReady && partners.length > 0 && (
+            {isReady && pairs.length > 0 && (
               <span className="ml-auto text-label-numeric text-muted-foreground">
-                {partners.length}
+                {pairs.length}
               </span>
             )}
           </SidebarGroupLabel>
@@ -218,31 +221,48 @@ export function AppSidebar() {
                     </>
                   )}
 
-                  {/* Partner list */}
+                  {/* Phase 39 PCFG-02..04: pair rows. Multi-product partners
+                      (Happy Money, Zable) appear as TWO rows with suffixed
+                      displayName. Single-product partners look unchanged
+                      (name only); productTooltip carries the product label
+                      shown on hover. Active state matches the FULL pair
+                      (partner + product), so 1st-Party row stays inactive
+                      when 3rd-Party is selected. */}
                   {isReady &&
-                    partners.map((p) => (
-                      <SidebarMenuItem key={p.name}>
-                        <SidebarMenuButton
-                          tooltip={p.name}
-                          isActive={drillState.partner === p.name}
-                          aria-current={drillState.partner === p.name ? 'page' : undefined}
-                          onClick={() => drillToPartner(p.name)}
-                        >
-                          {p.isFlagged ? (
-                            <span
-                              aria-hidden="true"
-                              className="flex h-4 w-4 items-center justify-center"
-                            >
-                              <span className="h-2 w-2 rounded-full bg-brand-purple" />
-                            </span>
-                          ) : (
-                            <Users className="h-4 w-4" aria-hidden="true" />
-                          )}
-                          <span className="truncate">{p.name}</span>
-                        </SidebarMenuButton>
-                        <SidebarMenuBadge>{p.batchCount}</SidebarMenuBadge>
-                      </SidebarMenuItem>
-                    ))}
+                    pairs.map((p) => {
+                      const isActive =
+                        drillState.partner === p.partner &&
+                        drillState.product === p.product;
+                      return (
+                        <SidebarMenuItem key={`${p.partner}::${p.product}`}>
+                          <SidebarMenuButton
+                            tooltip={
+                              p.displayName === p.partner
+                                ? `${p.partner} (${p.productTooltip})`
+                                : p.displayName
+                            }
+                            isActive={isActive}
+                            aria-current={isActive ? 'page' : undefined}
+                            onClick={() =>
+                              drillToPair({ partner: p.partner, product: p.product })
+                            }
+                          >
+                            {p.isFlagged ? (
+                              <span
+                                aria-hidden="true"
+                                className="flex h-4 w-4 items-center justify-center"
+                              >
+                                <span className="h-2 w-2 rounded-full bg-brand-purple" />
+                              </span>
+                            ) : (
+                              <Users className="h-4 w-4" aria-hidden="true" />
+                            )}
+                            <span className="truncate">{p.displayName}</span>
+                          </SidebarMenuButton>
+                          <SidebarMenuBadge>{p.batchCount}</SidebarMenuBadge>
+                        </SidebarMenuItem>
+                      );
+                    })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </div>

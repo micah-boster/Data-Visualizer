@@ -8,7 +8,12 @@ import type {
 } from '@/types/partner-stats';
 import { computeNorms } from './compute-norms';
 import { getPolarity } from './metric-polarity';
-import { getPartnerName, getBatchName } from '@/lib/utils';
+import { getPartnerName, getBatchName, getStringField } from '@/lib/utils';
+import {
+  pairKey,
+  displayNameForPair,
+  type PartnerProductPair,
+} from '@/lib/partner-config/pair';
 
 /**
  * Curated metrics for anomaly detection.
@@ -211,46 +216,68 @@ export function computeAnomalies(
 }
 
 /**
- * Compute anomaly detection for ALL partners from the full dataset.
+ * Compute anomaly detection for ALL `(partner, product)` PAIRS from the full
+ * dataset (Phase 39 PCFG-03..04).
  *
- * Partners with <3 batches use portfolio-average norms (computed from
+ * Pairs with <3 batches use portfolio-average norms (computed from
  * all rows) as fallback since they lack sufficient history for
- * meaningful partner-specific norms.
+ * meaningful pair-specific norms.
  *
- * @param allRows - All rows from the dataset (all partners combined)
- * @returns Map keyed by PARTNER_NAME with PartnerAnomaly for each
+ * @param allRows - All rows from the dataset (all pairs combined)
+ * @returns Map keyed by `pairKey({ partner, product })` with PartnerAnomaly
+ *   for each pair. Each entry carries a `displayName` (suffixed for
+ *   multi-product partners) so UI consumers don't have to recompute it.
  */
 export function computeAllPartnerAnomalies(
   allRows: Record<string, unknown>[],
 ): Map<string, PartnerAnomaly> {
   const result = new Map<string, PartnerAnomaly>();
 
-  // Group rows by partner
-  const byPartner = new Map<string, Record<string, unknown>[]>();
+  // Group rows by (partner, product) pair (PCFG-04 — no cross-product blending).
+  const byPair = new Map<
+    string,
+    { pair: PartnerProductPair; rows: Record<string, unknown>[] }
+  >();
   for (const row of allRows) {
-    const name = getPartnerName(row);
-    if (!name) continue;
-    const existing = byPartner.get(name);
+    const partner = getPartnerName(row);
+    const product = getStringField(row, 'ACCOUNT_TYPE');
+    if (!partner || !product) continue;
+    const pair: PartnerProductPair = { partner, product };
+    const key = pairKey(pair);
+    const existing = byPair.get(key);
     if (existing) {
-      existing.push(row);
+      existing.rows.push(row);
     } else {
-      byPartner.set(name, [row]);
+      byPair.set(key, { pair, rows: [row] });
     }
+  }
+
+  // Count products per partner so displayName logic knows whether to suffix.
+  const productsPerPartner = new Map<string, number>();
+  for (const { pair } of byPair.values()) {
+    productsPerPartner.set(
+      pair.partner,
+      (productsPerPartner.get(pair.partner) ?? 0) + 1,
+    );
   }
 
   // Compute portfolio-wide norms once for fallback
   const portfolioNorms = computeNorms(allRows);
 
-  for (const [partnerName, partnerRows] of byPartner) {
-    const usePortfolioFallback = partnerRows.length < 3;
+  for (const [key, { pair, rows: pairRows }] of byPair) {
+    const usePortfolioFallback = pairRows.length < 3;
     const norms = usePortfolioFallback
       ? portfolioNorms
-      : computeNorms(partnerRows);
+      : computeNorms(pairRows);
 
-    const report = computeAnomalies(partnerRows, norms);
+    const report = computeAnomalies(pairRows, norms);
     report.partner.usedPortfolioFallback = usePortfolioFallback;
+    report.partner.displayName = displayNameForPair(
+      pair,
+      productsPerPartner.get(pair.partner) ?? 1,
+    );
 
-    result.set(partnerName, report.partner);
+    result.set(key, report.partner);
   }
 
   return result;

@@ -19,7 +19,7 @@ export function MatrixPlainTable({
           <thead>
             <tr className="border-b">
               <th className="sticky left-0 z-10 bg-background px-3 py-2 text-left text-label uppercase text-muted-foreground">
-                Partner
+                Pair
               </th>
               {metrics.map((m) => (
                 <th
@@ -40,18 +40,22 @@ export function MatrixPlainTable({
             </tr>
           </thead>
           <tbody>
-            {partners.map((p) => (
-              <tr key={p.partnerName} className="border-b last:border-0">
-                <td className="sticky left-0 z-10 bg-background px-3 py-1.5 text-body whitespace-nowrap">
-                  {p.partnerName}
-                </td>
-                {metrics.map((m) => (
-                  <td key={m.key} className="px-3 py-1.5 text-right text-body-numeric">
-                    {formatValue(m.getValue(p), m.format)}
+            {/* Phase 39 PCFG-04: each row is a (partner, product) pair. */}
+            {partners.map((p) => {
+              const key = `${p.partnerName}::${p.product}`;
+              return (
+                <tr key={key} className="border-b last:border-0">
+                  <td className="sticky left-0 z-10 bg-background px-3 py-1.5 text-body whitespace-nowrap">
+                    {p.displayName}
                   </td>
-                ))}
-              </tr>
-            ))}
+                  {metrics.map((m) => (
+                    <td key={m.key} className="px-3 py-1.5 text-right text-body-numeric">
+                      {formatValue(m.getValue(p), m.format)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -67,14 +71,17 @@ export function MatrixPlainTable({
             <th className="sticky left-0 z-10 bg-background px-3 py-2 text-left text-label uppercase text-muted-foreground">
               Metric
             </th>
-            {partners.map((p) => (
-              <th
-                key={p.partnerName}
-                className="px-3 py-2 text-right text-label uppercase text-muted-foreground whitespace-nowrap"
-              >
-                {p.partnerName}
-              </th>
-            ))}
+            {partners.map((p) => {
+              const key = `${p.partnerName}::${p.product}`;
+              return (
+                <th
+                  key={key}
+                  className="px-3 py-2 text-right text-label uppercase text-muted-foreground whitespace-nowrap"
+                >
+                  {p.displayName}
+                </th>
+              );
+            })}
           </tr>
         </thead>
         <tbody>
@@ -96,11 +103,14 @@ export function MatrixPlainTable({
                   )}
                 </span>
               </td>
-              {partners.map((p) => (
-                <td key={p.partnerName} className="px-3 py-1.5 text-right text-body-numeric">
-                  {formatValue(m.getValue(p), m.format)}
-                </td>
-              ))}
+              {partners.map((p) => {
+                const key = `${p.partnerName}::${p.product}`;
+                return (
+                  <td key={key} className="px-3 py-1.5 text-right text-body-numeric">
+                    {formatValue(m.getValue(p), m.format)}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

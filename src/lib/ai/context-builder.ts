@@ -18,10 +18,23 @@
 
 import type { DrillLevel } from '@/hooks/use-drill-down';
 import type { KpiAggregates, PartnerAnomaly } from '@/types/partner-stats';
+import { pairKey } from '@/lib/partner-config/pair';
 
-/** Minimal partner data needed by the context builder */
+/**
+ * Minimal pair data needed by the context builder.
+ *
+ * Phase 39 PCFG-03: each entry represents a `(partner, product)` PAIR, not a
+ * partner alone. `name` is the user-facing display name (suffixed for
+ * multi-product partners — e.g. "Happy Money — 1st Party"). `partner` and
+ * `product` carry the raw values for keyed lookups against the anomaly map.
+ */
 export interface PartnerSummary {
+  /** User-facing label — bare partner name OR "Partner — Product Label". */
   name: string;
+  /** Raw PARTNER_NAME (Phase 39). */
+  partner: string;
+  /** Raw ACCOUNT_TYPE (Phase 39). */
+  product: string;
   stats: KpiAggregates;
   batchCount: number;
 }
@@ -44,6 +57,8 @@ export function buildDataContext(
   drillState: {
     level: DrillLevel;
     partnerId: string | null;
+    /** Phase 39 PCFG-03 — ACCOUNT_TYPE for the active pair. */
+    productId?: string | null;
     batchId: string | null;
   },
   data: ContextData,
@@ -58,6 +73,7 @@ export function buildDataContext(
     case 'partner':
       return buildPartnerContext(
         drillState.partnerId,
+        drillState.productId ?? null,
         data.partners,
         data.anomalies,
         data.currentPartnerStats,
@@ -66,6 +82,7 @@ export function buildDataContext(
       return buildBatchContext(
         drillState.batchId,
         drillState.partnerId,
+        drillState.productId ?? null,
         data.partners,
         data.anomalies,
         data.accountOutliers,
@@ -83,16 +100,19 @@ function buildRootContext(
   partners: PartnerSummary[],
   anomalies: Map<string, PartnerAnomaly>,
 ): string {
+  // Phase 39 PCFG-04: each entry is a (partner, product) PAIR. Multi-product
+  // partners contribute multiple rows so Claude never references "Happy Money"
+  // as a single blended entity.
   const lines: string[] = [
     '## Portfolio Overview',
-    `Total partners: ${partners.length}`,
+    `Total pairs: ${partners.length}`,
     '',
-    '| Partner | Batches | Penetration | 6mo Collection | 12mo Collection | Total Collected | Anomaly |',
-    '|---------|---------|-------------|----------------|-----------------|-----------------|---------|',
+    '| Pair | Batches | Penetration | 6mo Collection | 12mo Collection | Total Collected | Anomaly |',
+    '|------|---------|-------------|----------------|-----------------|-----------------|---------|',
   ];
 
   for (const p of partners) {
-    const anomaly = anomalies.get(p.name);
+    const anomaly = anomalies.get(pairKey({ partner: p.partner, product: p.product }));
     const anomalyStatus = anomaly?.isFlagged
       ? `FLAGGED (severity: ${anomaly.severityScore.toFixed(1)}, ${anomaly.flaggedBatchCount} batch${anomaly.flaggedBatchCount === 1 ? '' : 'es'})`
       : 'OK';
@@ -102,10 +122,12 @@ function buildRootContext(
     );
   }
 
-  const flaggedCount = partners.filter((p) => anomalies.get(p.name)?.isFlagged).length;
+  const flaggedCount = partners.filter((p) =>
+    anomalies.get(pairKey({ partner: p.partner, product: p.product }))?.isFlagged,
+  ).length;
   if (flaggedCount > 0) {
     lines.push('');
-    lines.push(`**${flaggedCount} partner(s) flagged** with anomalous batches.`);
+    lines.push(`**${flaggedCount} pair(s) flagged** with anomalous batches.`);
   }
 
   return lines.join('\n');
@@ -117,18 +139,28 @@ function buildRootContext(
 
 function buildPartnerContext(
   partnerId: string | null,
+  productId: string | null,
   partners: PartnerSummary[],
   anomalies: Map<string, PartnerAnomaly>,
   currentStats?: KpiAggregates,
 ): string {
   if (!partnerId) return 'No partner selected.';
 
-  const partner = partners.find((p) => p.name === partnerId);
+  // Phase 39 PCFG-03 — match by (partner, product). Falls back to partner-only
+  // match for legacy callers that don't pass productId (single-product partners
+  // still resolve unambiguously).
+  const partner =
+    partners.find(
+      (p) => p.partner === partnerId && (productId ? p.product === productId : true),
+    ) ?? partners.find((p) => p.partner === partnerId);
   const stats = currentStats ?? partner?.stats;
-  if (!stats) return `No data available for partner "${partnerId}".`;
+  const label = partner?.name ?? partnerId;
+  if (!stats) return `No data available for partner "${label}".`;
 
-  const anomaly = anomalies.get(partnerId);
-  const lines: string[] = [`## Partner: ${partnerId}`, ''];
+  const anomaly = partner
+    ? anomalies.get(pairKey({ partner: partner.partner, product: partner.product }))
+    : undefined;
+  const lines: string[] = [`## Partner: ${label}`, ''];
 
   // Key metrics
   lines.push('### Key Metrics');
@@ -141,12 +173,12 @@ function buildPartnerContext(
   lines.push(`- Total placed: ${fmt.currency(stats.totalPlaced)}`);
 
   // Portfolio rank comparisons
-  if (partners.length > 1) {
+  if (partners.length > 1 && partner) {
     lines.push('');
     lines.push('### Portfolio Rank');
-    const ranked = rankPartner(partnerId, partners);
+    const ranked = rankPair(partner, partners);
     for (const r of ranked) {
-      lines.push(`- ${r.metric}: ${r.rank} of ${partners.length} partners`);
+      lines.push(`- ${r.metric}: ${r.rank} of ${partners.length} pairs`);
     }
   }
 
@@ -188,6 +220,7 @@ function buildPartnerContext(
 function buildBatchContext(
   batchId: string | null,
   partnerId: string | null,
+  productId: string | null,
   partners: PartnerSummary[],
   anomalies: Map<string, PartnerAnomaly>,
   accountOutliers?: AccountOutlier[],
@@ -195,22 +228,28 @@ function buildBatchContext(
   if (!batchId || !partnerId)
     return 'No batch selected.';
 
-  const partner = partners.find((p) => p.name === partnerId);
-  const anomaly = anomalies.get(partnerId);
+  const partner =
+    partners.find(
+      (p) => p.partner === partnerId && (productId ? p.product === productId : true),
+    ) ?? partners.find((p) => p.partner === partnerId);
+  const label = partner?.name ?? partnerId;
+  const anomaly = partner
+    ? anomalies.get(pairKey({ partner: partner.partner, product: partner.product }))
+    : undefined;
   const batchAnomaly = anomaly?.batches.find((b) => b.batchName === batchId);
 
   const lines: string[] = [
     `## Batch: ${batchId}`,
-    `### Parent Partner: ${partnerId}`,
+    `### Parent Pair: ${label}`,
     '',
   ];
 
-  // Parent partner summary
+  // Parent pair summary
   if (partner) {
-    lines.push(`Partner has ${partner.batchCount} total batches.`);
-    lines.push(`Partner penetration: ${fmt.pct(partner.stats.weightedPenetrationRate)}`);
-    lines.push(`Partner 6mo collection: ${fmt.pct(partner.stats.collectionRate6mo)}`);
-    lines.push(`Partner total collected: ${fmt.currency(partner.stats.totalCollected)}`);
+    lines.push(`Pair has ${partner.batchCount} total batches.`);
+    lines.push(`Pair penetration: ${fmt.pct(partner.stats.weightedPenetrationRate)}`);
+    lines.push(`Pair 6mo collection: ${fmt.pct(partner.stats.collectionRate6mo)}`);
+    lines.push(`Pair total collected: ${fmt.currency(partner.stats.totalCollected)}`);
     lines.push('');
   }
 
@@ -263,7 +302,7 @@ interface RankEntry {
   rank: number;
 }
 
-function rankPartner(partnerId: string, partners: PartnerSummary[]): RankEntry[] {
+function rankPair(target: PartnerSummary, partners: PartnerSummary[]): RankEntry[] {
   const metrics: Array<{ key: keyof KpiAggregates; label: string; higherIsBetter: boolean }> = [
     { key: 'weightedPenetrationRate', label: 'Penetration rate', higherIsBetter: true },
     { key: 'collectionRate6mo', label: '6-month collection rate', higherIsBetter: true },
@@ -277,7 +316,9 @@ function rankPartner(partnerId: string, partners: PartnerSummary[]): RankEntry[]
       const bVal = b.stats[key] as number;
       return higherIsBetter ? bVal - aVal : aVal - bVal;
     });
-    const rank = sorted.findIndex((p) => p.name === partnerId) + 1;
+    const rank = sorted.findIndex(
+      (p) => p.partner === target.partner && p.product === target.product,
+    ) + 1;
     return { metric: label, rank: rank || partners.length };
   });
 }

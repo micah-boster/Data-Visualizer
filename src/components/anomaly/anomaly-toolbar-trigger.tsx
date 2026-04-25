@@ -22,19 +22,26 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import { parsePairKey, type PartnerProductPair } from '@/lib/partner-config/pair';
 
 interface AnomalyToolbarTriggerProps {
-  onDrillToPartner: (name: string) => void;
+  /** Phase 39 PCFG-03 — pair-aware drill (anomaly map is keyed by pairKey). */
+  onDrillToPair: (pair: PartnerProductPair) => void;
 }
 
 /**
- * Toolbar icon button with popover showing flagged partners.
+ * Toolbar icon button with popover showing flagged pairs.
  * Hidden when no anomalies. Badge shows count.
+ *
+ * Phase 39 PCFG-03: anomalies are keyed by `(partner, product)` pair, not
+ * partner name. Display shows the pair's display name (suffixed for
+ * multi-product partners — the buildAllPairAnomalies producer stamps a
+ * `displayName` on each PartnerAnomaly entry, see compute-anomalies.ts).
  */
-export function AnomalyToolbarTrigger({ onDrillToPartner }: AnomalyToolbarTriggerProps) {
+export function AnomalyToolbarTrigger({ onDrillToPair }: AnomalyToolbarTriggerProps) {
   const { partnerAnomalies } = useAnomalyContext();
 
-  const flaggedPartners = [...partnerAnomalies.entries()]
+  const flaggedPairs = [...partnerAnomalies.entries()]
     .filter(([, anomaly]) => anomaly.isFlagged)
     .sort((a, b) => b[1].severityScore - a[1].severityScore)
     .slice(0, 8);
@@ -75,24 +82,31 @@ export function AnomalyToolbarTrigger({ onDrillToPartner }: AnomalyToolbarTrigge
           </PopoverTitle>
         </PopoverHeader>
         <div className="space-y-0.5">
-          {flaggedPartners.map(([partnerName, anomaly]) => {
+          {flaggedPairs.map(([key, anomaly]) => {
             const severity = classifySeverity({
               flags: anomaly.latestBatch?.flags ?? [],
               severityScore: anomaly.severityScore,
             });
             const topFlag = anomaly.latestBatch?.flags[0];
+            const pair = parsePairKey(key);
+            // displayName is stamped on the anomaly entry by compute-anomalies.ts;
+            // fall back to the parsed pair's partner for legacy entries.
+            const label =
+              anomaly.displayName ?? pair?.partner ?? key;
 
             return (
               <button
-                key={partnerName}
+                key={key}
                 type="button"
-                onClick={() => onDrillToPartner(partnerName)}
+                onClick={() => {
+                  if (pair) onDrillToPair(pair);
+                }}
                 className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-caption transition-colors hover:bg-muted"
               >
                 <span
                   className={`h-2 w-2 shrink-0 rounded-full ${SEVERITY_BG_COLORS[severity]}`}
                 />
-                <span className="text-label text-foreground">{partnerName}</span>
+                <span className="text-label text-foreground">{label}</span>
                 <span className="text-muted-foreground">{SEVERITY_LABELS[severity]}</span>
                 {topFlag && (
                   <span className="ml-auto truncate text-muted-foreground">

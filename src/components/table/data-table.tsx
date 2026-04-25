@@ -16,6 +16,7 @@ import { useColumnManagement } from '@/hooks/use-column-management';
 import { useColumnFilters } from '@/hooks/use-column-filters';
 import type { SavedView, ViewSnapshot } from '@/lib/views/types';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
 import { usePartnerNorms } from '@/contexts/partner-norms';
 import { UnifiedToolbar } from '@/components/toolbar/unified-toolbar';
@@ -34,8 +35,9 @@ interface DataTableProps {
   data: Record<string, unknown>[];
   isFetching?: boolean;
   drillState?: DrillState;
-  onDrillToPartner?: (name: string) => void;
-  onDrillToBatch?: (name: string, partnerName?: string) => void;
+  /** Phase 39 PCFG-03 — pair-aware partner drill. */
+  onDrillToPair?: (pair: PartnerProductPair) => void;
+  onDrillToBatch?: (name: string, pair?: PartnerProductPair) => void;
   onNavigateToLevel?: (level: DrillLevel) => void;
   totalRowCount?: number;
   columnDefs?: ColumnDef<Record<string, unknown>>[];
@@ -59,9 +61,8 @@ interface DataTableProps {
   onToggleCharts: () => void;
   comparisonVisible: boolean;
   onOpenQuery: () => void;
-  partnerOptions: string[];
+  /** Phase 39 PCFG-04 — partnerOptions / selectedPartner removed; partner is no longer a filter. */
   typeOptions: string[];
-  selectedPartner: string | null;
   selectedType: string | null;
   /** Phase 38 FLT-01 — date-range bucket for the preset chip group. */
   age: AgeBucket;
@@ -83,7 +84,7 @@ export function DataTable({
   data,
   isFetching = false,
   drillState,
-  onDrillToPartner,
+  onDrillToPair,
   onDrillToBatch,
   onNavigateToLevel,
   totalRowCount,
@@ -108,9 +109,7 @@ export function DataTable({
   onToggleCharts,
   comparisonVisible,
   onOpenQuery,
-  partnerOptions,
   typeOptions,
-  selectedPartner,
   selectedType,
   age,
   onAgeChange,
@@ -186,7 +185,7 @@ export function DataTable({
   );
 
   const tableOptions: UseDataTableOptions = {
-    onDrillToPartner,
+    onDrillToPair,
     onDrillToBatch,
     drillLevel,
     columns: columnDefsOverride,
@@ -370,9 +369,9 @@ export function DataTable({
     <div className="flex h-full flex-col">
       {/* Unified toolbar — single row replacing old toolbar + filters + breadcrumb */}
       <UnifiedToolbar
-        drillState={drillState ?? { level: 'root', partner: null, batch: null }}
+        drillState={drillState ?? { level: 'root', partner: null, product: null, batch: null }}
         onNavigateToLevel={onNavigateToLevel ?? (() => {})}
-        onDrillToPartner={onDrillToPartner ?? (() => {})}
+        onDrillToPair={onDrillToPair ?? (() => {})}
         breadcrumbRowCounts={breadcrumbRowCounts}
         chartsExpanded={chartsExpanded}
         onToggleCharts={onToggleCharts}
@@ -380,9 +379,7 @@ export function DataTable({
         activePreset={activePreset}
         onPresetChange={handlePresetChange}
         filterData={data}
-        partnerOptions={partnerOptions}
         typeOptions={typeOptions}
-        selectedPartner={selectedPartner}
         selectedType={selectedType}
         age={age}
         onAgeChange={onAgeChange}

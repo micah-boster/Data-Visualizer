@@ -5,8 +5,13 @@
  * Cell renderers are NOT added here (Phase 3 handles formatting).
  *
  * Drill-down support: PARTNER_NAME and BATCH cells check table.options.meta
- * for onDrillToPartner / onDrillToBatch callbacks. When present, the cell
+ * for onDrillToPair / onDrillToBatch callbacks. When present, the cell
  * wraps its value in a DrillableCell (clickable link).
+ *
+ * Phase 39 PCFG-03: PARTNER_NAME drilling fires `onDrillToPair` with the
+ * full `(partner, product)` pair derived from row.PARTNER_NAME +
+ * row.ACCOUNT_TYPE. `onDrillToBatch` accepts an optional pair payload so
+ * batch drills also carry product context (rather than relying on drillState).
  */
 
 import type { ColumnDef, CellContext, FilterFn } from '@tanstack/react-table';
@@ -22,19 +27,28 @@ import { getFormatter, isNumericType, computeDeviation, HEATMAP_COLUMNS } from '
 import type { DrillLevel } from '@/hooks/use-drill-down';
 import type { TrendingData, MetricNorm, PartnerAnomaly, CrossPartnerData } from '@/types/partner-stats';
 import { anomalyStatusColumn } from './anomaly-column';
-import { getPartnerName } from '@/lib/utils';
+import { getPartnerName, getStringField } from '@/lib/utils';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 
 /** Drill-down callbacks and trending data passed through TanStack Table meta */
 export interface TableDrillMeta {
-  onDrillToPartner?: (name: string) => void;
-  onDrillToBatch?: (name: string, partnerName?: string) => void;
+  /**
+   * Phase 39 PCFG-03 — drill to a specific (partner, product) pair. Called
+   * by the PARTNER_NAME cell at root level after extracting both PARTNER_NAME
+   * and ACCOUNT_TYPE from the row.
+   */
+  onDrillToPair?: (pair: PartnerProductPair) => void;
+  onDrillToBatch?: (name: string, pair?: PartnerProductPair) => void;
   drillLevel?: DrillLevel;
   trending?: TrendingData;
   /** Partner norms for heatmap deviation formatting */
   norms?: Record<string, MetricNorm> | null;
   /** Whether heatmap is enabled (user toggle) */
   heatmapEnabled?: boolean;
-  /** Root-level anomaly map keyed by PARTNER_NAME */
+  /**
+   * Phase 39 PCFG-03: anomaly map keyed by `pairKey` ("PARTNER::PRODUCT").
+   * Sidebar pair rows + root summary rows look up flagged status by pair.
+   */
   anomalyMap?: Map<string, PartnerAnomaly>;
   /** Cross-partner data for percentile rank columns */
   crossPartnerData?: CrossPartnerData | null;
@@ -49,29 +63,37 @@ function renderDrillableCell(
 
   const meta = ctx.table.options.meta as TableDrillMeta | undefined;
 
-  // PARTNER_NAME: drillable at root level
+  // PARTNER_NAME: drillable at root level. Phase 39 PCFG-03 — fires
+  // onDrillToPair with the full (partner, product) pair extracted from the
+  // row. Falls through to text rendering if onDrillToPair isn't wired.
   if (
     config.key === 'PARTNER_NAME' &&
-    meta?.onDrillToPartner &&
+    meta?.onDrillToPair &&
     (!meta.drillLevel || meta.drillLevel === 'root')
   ) {
+    const row = ctx.row.original;
+    const partner = String(value);
+    const product = getStringField(row, 'ACCOUNT_TYPE');
     return createElement(DrillableCell, {
-      value: String(value),
-      onDrill: () => meta.onDrillToPartner!(String(value)),
+      value: partner,
+      onDrill: () => meta.onDrillToPair!({ partner, product }),
     });
   }
 
-  // BATCH: drillable at root and partner levels
+  // BATCH: drillable at root and partner levels.
   if (
     config.key === 'BATCH' &&
     meta?.onDrillToBatch &&
     meta.drillLevel !== 'batch'
   ) {
     const row = ctx.row.original;
-    const partner = row.PARTNER_NAME ? getPartnerName(row) : undefined;
+    const partner = row.PARTNER_NAME ? getPartnerName(row) : '';
+    const product = getStringField(row, 'ACCOUNT_TYPE');
+    const pair: PartnerProductPair | undefined =
+      partner && product ? { partner, product } : undefined;
     return createElement(DrillableCell, {
       value: String(value),
-      onDrill: () => meta.onDrillToBatch!(String(value), partner),
+      onDrill: () => meta.onDrillToBatch!(String(value), pair),
     });
   }
 

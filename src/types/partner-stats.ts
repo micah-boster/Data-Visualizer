@@ -136,6 +136,13 @@ export interface PartnerAnomaly {
   isPercentileOutlier?: boolean;
   /** Metrics below 10th percentile */
   percentileOutlierMetrics?: string[];
+  /**
+   * Phase 39 PCFG-03 — user-facing display name for the (partner, product)
+   * pair. Suffixed for multi-product partners (e.g. "Happy Money — 1st Party"),
+   * bare partner name otherwise. Stamped by computeAllPartnerAnomalies so
+   * UI consumers don't have to recompute it.
+   */
+  displayName?: string;
 }
 
 /** Full anomaly report for a single partner */
@@ -171,18 +178,30 @@ export interface AverageCurve {
   dollarWeighted: CurvePoint[];
 }
 
-/** Cross-partner stats for a single partner */
+/** Cross-partner stats for a single (partner, product) pair (Phase 39 PCFG-04). */
 export interface CrossPartnerEntry {
+  /**
+   * @deprecated Phase 39: kept for legacy callers. Prefer `displayName` for
+   * user-facing labels and `pair` for selection. This field carries the bare
+   * PARTNER_NAME, NOT the suffixed display string.
+   */
   partnerName: string;
+  /** Phase 39 PCFG-04 — ACCOUNT_TYPE for this entry's pair. */
+  product: string;
+  /**
+   * Phase 39 PCFG-04 — user-facing label. Suffixed for multi-product partners
+   * (e.g. "Happy Money — 1st Party"), bare partner name otherwise.
+   */
+  displayName: string;
   kpis: KpiAggregates;
   perDollarPlacedRate: number;
   percentileRanks: PercentileRanks | null;
   averageCurve: AverageCurve;
   activityStatus: PartnerActivityStatus;
   batchCount: number;
-  /** Whether this partner is eligible for ranking (3+ batches, not inactive) */
+  /** Whether this pair is eligible for ranking (3+ batches, not inactive) */
   isRankEligible: boolean;
-  /** Whether this partner is a percentile outlier (<10th on any metric) */
+  /** Whether this pair is a percentile outlier (<10th on any metric) */
   isPercentileOutlier: boolean;
   /** Which metrics are below 10th percentile */
   outlierMetrics: (keyof PercentileRanks)[];
@@ -190,10 +209,13 @@ export interface CrossPartnerEntry {
 
 /** Full cross-partner computation result */
 export interface CrossPartnerData {
-  /** Map of partner name to cross-partner stats */
+  /**
+   * Map keyed by `pairKey({ partner, product })` (Phase 39 PCFG-04). Each entry
+   * is a unique pair — multi-product partners contribute multiple entries.
+   */
   partners: Map<string, CrossPartnerEntry>;
-  /** Only partners eligible for ranking (3+ batches, not 12+ months inactive) */
+  /** Only pairs eligible for ranking (3+ batches, not 12+ months inactive) */
   rankedPartners: CrossPartnerEntry[];
-  /** Portfolio-wide average curve (all eligible partners combined) */
+  /** Portfolio-wide average curve (all eligible pairs combined) */
   portfolioAverageCurve: AverageCurve;
 }

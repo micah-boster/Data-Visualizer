@@ -11,9 +11,14 @@ import type {
 import { computeKpis } from './compute-kpis';
 import { reshapeCurves } from './reshape-curves';
 import { COLLECTION_MONTHS } from './reshape-curves';
-import { getPartnerName } from '@/lib/utils';
+import { getPartnerName, getStringField } from '@/lib/utils';
+import {
+  pairKey,
+  displayNameForPair,
+  type PartnerProductPair,
+} from '@/lib/partner-config/pair';
 
-/** Minimum batches required for a partner to appear in rankings. */
+/** Minimum batches required for a pair to appear in rankings. */
 const MIN_BATCHES_FOR_RANKING = 3;
 
 /** Inactivity threshold in days: 12 months. */
@@ -22,32 +27,40 @@ const INACTIVE_DAYS = 365;
 /** Semi-inactive threshold in days: 6 months. */
 const SEMI_INACTIVE_DAYS = 180;
 
-/** Percentile threshold below which a partner is flagged as an outlier. */
+/** Percentile threshold below which a pair is flagged as an outlier. */
 const OUTLIER_PERCENTILE = 0.10;
 
 /**
- * Group rows by PARTNER_NAME.
- * Same pattern as computeAllPartnerAnomalies in compute-anomalies.ts.
+ * Phase 39 PCFG-04 — group rows by `(PARTNER_NAME, ACCOUNT_TYPE)` pair.
+ * Replaces the legacy partner-only `groupByPartner`. Multi-product partners
+ * (Happy Money, Zable) emit multiple groups so cross-partner ranking treats
+ * each pair as its own entity.
  */
-function groupByPartner(
+function groupByPair(
   allRows: Record<string, unknown>[],
-): Map<string, Record<string, unknown>[]> {
-  const byPartner = new Map<string, Record<string, unknown>[]>();
+): Map<string, { pair: PartnerProductPair; rows: Record<string, unknown>[] }> {
+  const byPair = new Map<
+    string,
+    { pair: PartnerProductPair; rows: Record<string, unknown>[] }
+  >();
   for (const row of allRows) {
-    const name = getPartnerName(row);
-    if (!name) continue;
-    const existing = byPartner.get(name);
+    const partner = getPartnerName(row);
+    const product = getStringField(row, 'ACCOUNT_TYPE');
+    if (!partner || !product) continue;
+    const pair: PartnerProductPair = { partner, product };
+    const key = pairKey(pair);
+    const existing = byPair.get(key);
     if (existing) {
-      existing.push(row);
+      existing.rows.push(row);
     } else {
-      byPartner.set(name, [row]);
+      byPair.set(key, { pair, rows: [row] });
     }
   }
-  return byPartner;
+  return byPair;
 }
 
 /**
- * Classify partner activity status based on their most recent batch age.
+ * Classify pair activity status based on the most recent batch age.
  * BATCH_AGE_IN_MONTHS is actually stored in days (per reshape-curves.ts).
  */
 function classifyActivity(
@@ -127,7 +140,7 @@ function buildAverageCurve(curves: BatchCurve[]): AverageCurve {
 }
 
 /**
- * Compute percentile ranks for all rank-eligible partners on each of the
+ * Compute percentile ranks for all rank-eligible pairs on each of the
  * 5 key metrics. Mutates entries in-place by setting percentileRanks.
  */
 function computePercentileRanks(entries: CrossPartnerEntry[]): void {
@@ -165,7 +178,7 @@ function computePercentileRanks(entries: CrossPartnerEntry[]): void {
 }
 
 /**
- * Detect percentile outliers: partners below 10th percentile on any metric.
+ * Detect percentile outliers: pairs below 10th percentile on any metric.
  * Mutates entries in-place by setting isPercentileOutlier and outlierMetrics.
  */
 function detectPercentileOutliers(entries: CrossPartnerEntry[]): void {
@@ -197,18 +210,32 @@ function detectPercentileOutliers(entries: CrossPartnerEntry[]): void {
 /**
  * Compute all cross-partner data from the full dataset in a single pass.
  *
+ * Phase 39 PCFG-04: each `(partner, product)` pair is a separate entity
+ * in rankings. Happy Money 1st Party and Happy Money 3rd Party rank as
+ * two distinct pairs.
+ *
  * @param allRows - All rows from the dataset (all partners combined)
- * @returns CrossPartnerData with per-partner stats, rankings, and portfolio averages
+ * @returns CrossPartnerData with per-pair stats, rankings, and portfolio averages
  */
 export function computeCrossPartnerData(
   allRows: Record<string, unknown>[],
 ): CrossPartnerData {
-  const byPartner = groupByPartner(allRows);
+  const byPair = groupByPair(allRows);
+
+  // Count products per partner — drives whether displayName carries the suffix.
+  const productsPerPartner = new Map<string, number>();
+  for (const { pair } of byPair.values()) {
+    productsPerPartner.set(
+      pair.partner,
+      (productsPerPartner.get(pair.partner) ?? 0) + 1,
+    );
+  }
+
   const partners = new Map<string, CrossPartnerEntry>();
   const allEligibleCurves: BatchCurve[] = [];
 
-  // Step 1: Compute per-partner stats
-  for (const [name, rows] of byPartner) {
+  // Step 1: Compute per-pair stats
+  for (const [key, { pair, rows }] of byPair) {
     const kpis = computeKpis(rows);
     const perDollarPlacedRate =
       kpis.totalPlaced > 0 ? kpis.totalCollected / kpis.totalPlaced : 0;
@@ -219,8 +246,11 @@ export function computeCrossPartnerData(
     const isRankEligible =
       batchCount >= MIN_BATCHES_FOR_RANKING && activityStatus !== 'inactive';
 
+    const count = productsPerPartner.get(pair.partner) ?? 1;
     const entry: CrossPartnerEntry = {
-      partnerName: name,
+      partnerName: pair.partner,
+      product: pair.product,
+      displayName: displayNameForPair(pair, count),
       kpis,
       perDollarPlacedRate,
       percentileRanks: null,
@@ -232,22 +262,22 @@ export function computeCrossPartnerData(
       outlierMetrics: [],
     };
 
-    partners.set(name, entry);
+    partners.set(key, entry);
 
-    // Collect curves from eligible partners for portfolio average
+    // Collect curves from eligible pairs for portfolio average
     if (isRankEligible) {
       allEligibleCurves.push(...curves);
     }
   }
 
-  // Step 2: Compute percentile ranks across eligible partners
+  // Step 2: Compute percentile ranks across eligible pairs
   const allEntries = [...partners.values()];
   computePercentileRanks(allEntries);
 
   // Step 3: Detect percentile outliers
   detectPercentileOutliers(allEntries);
 
-  // Step 4: Build ranked partners list (eligible only)
+  // Step 4: Build ranked pairs list (eligible only)
   const rankedPartners = allEntries.filter((e) => e.isRankEligible);
 
   // Step 5: Compute portfolio-wide average curve

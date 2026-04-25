@@ -4,20 +4,33 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import type { SavedView } from '@/lib/views/types';
 import type { ParseResult } from '@/lib/metabase-import/types';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 
-export interface SidebarPartner {
-  name: string;
+/**
+ * Phase 39 PCFG-02..04: sidebar entries are PAIRS, not partners. Multi-product
+ * partners (Happy Money, Zable) emit multiple peer rows with suffixed
+ * displayName. Single-product partners emit a single row (displayName equals
+ * the bare partner name; productTooltip carries the product label for the
+ * hover treatment per CONTEXT lock).
+ */
+export interface SidebarPair {
+  partner: string;
+  product: string;
+  /** Bare partner name (single-product) OR "Partner — Product Label" (multi). */
+  displayName: string;
+  /** Always-present product label for the hover tooltip. */
+  productTooltip: string;
   batchCount: number;
   isFlagged: boolean;
 }
 
 interface SidebarDataState {
-  /** Partner list for sidebar navigation */
-  partners: SidebarPartner[];
+  /** Phase 39 PCFG-02 — list of (partner, product) pair rows. */
+  pairs: SidebarPair[];
   /** Current drill-down state */
   drillState: DrillState;
-  /** Navigate to a partner */
-  drillToPartner: (name: string) => void;
+  /** Phase 39 PCFG-03 — pair-aware drill setter. */
+  drillToPair: (pair: PartnerProductPair) => void;
   /** Navigate to a drill level */
   navigateToLevel: (level: DrillLevel) => void;
   /** Saved views for sidebar list */
@@ -48,15 +61,20 @@ interface SidebarDataSetter {
 
 type SidebarDataContextValue = SidebarDataState & SidebarDataSetter;
 
-const DEFAULT_DRILL: DrillState = { level: 'root', partner: null, batch: null };
+const DEFAULT_DRILL: DrillState = {
+  level: 'root',
+  partner: null,
+  product: null,
+  batch: null,
+};
 
 const SidebarDataContext = createContext<SidebarDataContextValue | null>(null);
 
 export function SidebarDataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<SidebarDataState>({
-    partners: [],
+    pairs: [],
     drillState: DEFAULT_DRILL,
-    drillToPartner: () => {},
+    drillToPair: () => {},
     navigateToLevel: () => {},
     views: [],
     onLoadView: () => {},

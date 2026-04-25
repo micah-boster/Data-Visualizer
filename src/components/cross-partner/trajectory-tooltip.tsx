@@ -9,10 +9,15 @@ interface TrajectoryTooltipProps {
     stroke?: string;
   }>;
   label?: number;
-  /** Map of partner key → display color */
+  /** Map of pairKey → display color */
   colorMap: Map<string, string>;
-  /** Currently hovered partner (null = none) */
-  hoveredPartner: string | null;
+  /**
+   * Phase 39 PCFG-04 — currently hovered pair, keyed by pairKey
+   * ("partner::product"). null = none.
+   */
+  hoveredPair: string | null;
+  /** Phase 39 PCFG-04 — pairKey → user-facing display name. */
+  labelMap: Map<string, string>;
 }
 
 export function TrajectoryTooltip({
@@ -20,19 +25,22 @@ export function TrajectoryTooltip({
   payload,
   label,
   colorMap,
-  hoveredPartner,
+  hoveredPair,
+  labelMap,
 }: TrajectoryTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;
 
-  // Sort: hovered partner first, then reference lines, then rest alphabetically
+  // Sort: hovered pair first, then reference lines, then rest alphabetically
   const sorted = [...payload]
     .filter((p) => p.value !== undefined && p.value !== null)
     .sort((a, b) => {
-      if (a.dataKey === hoveredPartner) return -1;
-      if (b.dataKey === hoveredPartner) return 1;
+      if (a.dataKey === hoveredPair) return -1;
+      if (b.dataKey === hoveredPair) return 1;
       if (a.dataKey.startsWith('__')) return 1;
       if (b.dataKey.startsWith('__')) return -1;
-      return a.dataKey.localeCompare(b.dataKey);
+      const aLabel = labelMap.get(a.dataKey) ?? a.dataKey;
+      const bLabel = labelMap.get(b.dataKey) ?? b.dataKey;
+      return aLabel.localeCompare(bLabel);
     });
 
   return (
@@ -43,13 +51,13 @@ export function TrajectoryTooltip({
       <div className="space-y-0.5">
         {sorted.map((entry) => {
           const isRef = entry.dataKey.startsWith('__');
-          const isHovered = entry.dataKey === hoveredPartner;
+          const isHovered = entry.dataKey === hoveredPair;
           const color = entry.stroke ?? colorMap.get(entry.dataKey) ?? 'var(--muted-foreground)';
           const name = isRef
             ? entry.dataKey === '__portfolioAvg__'
               ? 'Portfolio Avg'
               : entry.dataKey.replace('__bestInClass__', 'Best-in-class')
-            : entry.dataKey;
+            : labelMap.get(entry.dataKey) ?? entry.dataKey;
 
           return (
             <div

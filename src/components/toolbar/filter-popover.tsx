@@ -20,9 +20,7 @@ import { cn } from '@/lib/utils';
 
 interface FilterPopoverProps {
   data: Record<string, unknown>[];
-  partnerOptions: string[];
   typeOptions: string[];
-  selectedPartner: string | null;
   selectedType: string | null;
   /** Phase 38 FLT-01 — current date-range bucket; null = 'All'. */
   age: AgeBucket;
@@ -34,13 +32,18 @@ interface FilterPopoverProps {
 }
 
 /**
- * Popover containing the Partner + Account Type filter comboboxes, the Phase
- * 38 FLT-01 date-range preset chip group, and active-filter chips.
+ * Popover containing the Account Type filter combobox, the Phase 38 FLT-01
+ * date-range preset chip group, and active-filter chips.
  *
- * Phase 38 FLT-01: the batch combobox is gone — it was structurally broken
- * (pre-aggregated rows rarely matched a specific batch cleanly) and replaced
- * by a 4-chip preset group that caps BATCH_AGE_IN_MONTHS (All / Last 3mo /
- * Last 6mo / Last 12mo). The predicate runs upstream of aggregation in
+ * Phase 39 PCFG-04 — the Partner combobox was REMOVED. Selection is owned by
+ * drill state (`?p=&pr=`); the sidebar pair rows are the canonical selection
+ * surface. Open Q #2 deprecation: legacy `?partner=` URL params are silently
+ * ignored at runtime (use-filter-state no longer reads them) and saved-view
+ * snapshots that carried `dimensionFilters.partner` are stripped on load.
+ *
+ * Phase 38 FLT-01: the batch combobox is gone — replaced by the 4-chip
+ * preset group capping BATCH_AGE_IN_MONTHS (All / Last 3mo / Last 6mo /
+ * Last 12mo). The predicate runs upstream of aggregation in
  * data-display.tsx#filteredRawData (Phase 25 filter-before-aggregate).
  *
  * Phase 38 FLT-02: each filter label carries a Tooltip explaining what the
@@ -54,9 +57,7 @@ const AGE_PRESETS: ReadonlyArray<{ value: AgeBucket; label: string }> = [
 ];
 
 export function FilterPopover({
-  partnerOptions,
   typeOptions,
-  selectedPartner,
   selectedType,
   age,
   onAgeChange,
@@ -64,11 +65,20 @@ export function FilterPopover({
   activeFilters,
   onClearAll,
 }: FilterPopoverProps) {
+  // Defensive: drop any stray `partner` entries that legacy callers may pass
+  // through `activeFilters` (Phase 39 PCFG-04 — partner is no longer a filter
+  // in FILTER_PARAMS, but the type system doesn't catch a hand-edited URL or
+  // legacy snapshot that smuggled one in). Cast through string for the runtime
+  // check since `f.param` is type-narrowed to the current FILTER_PARAMS keys.
+  const visibleActiveFilters = activeFilters.filter(
+    (f) => (f.param as string) !== 'partner',
+  );
+
   // Phase 38 FLT-01: active-filters count includes the age chip when any bucket
   // other than 'All' is selected. FLT-01 age is NOT in ActiveFilter[] (it's a
   // value-range predicate, not column-equality) so we add it here manually for
   // the popover's chip counter and the toolbar badge.
-  const activeCount = activeFilters.length + (age !== null ? 1 : 0);
+  const activeCount = visibleActiveFilters.length + (age !== null ? 1 : 0);
 
   return (
     <Popover>
@@ -110,9 +120,9 @@ export function FilterPopover({
                 type="button"
                 onClick={() => {
                   onClearAll();
-                  // Phase 38 FLT-01: onClearAll only clears dimensionFilters
-                  // (partner / type). Reset the age bucket to All as well so
-                  // the "Clear all" affordance actually does.
+                  // Phase 38 FLT-01: onClearAll only clears dimensionFilters.
+                  // Reset the age bucket to All as well so the "Clear all"
+                  // affordance actually does.
                   if (age !== null) onAgeChange(null);
                 }}
                 className="text-caption text-muted-foreground hover:text-foreground"
@@ -124,29 +134,9 @@ export function FilterPopover({
           </div>
         </PopoverHeader>
         <div className="space-y-3">
-          {/* Phase 38 FLT-02: Partner label wrapped in a Tooltip explaining the
-              filter's effect + how it composes with the sidebar partner list. */}
-          <div>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <label className="mb-1 block text-label uppercase text-muted-foreground cursor-help">
-                    Partner
-                  </label>
-                }
-              />
-              <TooltipContent>
-                Filter the table and charts to one partner. Stacks with the sidebar partner list.
-              </TooltipContent>
-            </Tooltip>
-            <FilterCombobox
-              label="Partner"
-              placeholder="All partners"
-              options={partnerOptions}
-              value={selectedPartner}
-              onValueChange={(val) => onFilterChange('partner', val)}
-            />
-          </div>
+          {/* Phase 39 PCFG-04: Partner combobox removed (selection is owned by
+              drill state). Account Type stays — useful for cross-partner
+              filtering at root (e.g. show only 1st-party pairs). */}
           <div>
             <Tooltip>
               <TooltipTrigger
@@ -214,7 +204,7 @@ export function FilterPopover({
         {/* Active filter chips — dimension filters + Phase 38 FLT-01 age chip. */}
         {activeCount > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5 border-t pt-3">
-            {activeFilters.map((f) => (
+            {visibleActiveFilters.map((f) => (
               <span
                 key={f.param}
                 className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption"

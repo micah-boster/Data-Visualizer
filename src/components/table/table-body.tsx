@@ -5,7 +5,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { getCommonPinningStyles } from './pinning-styles';
 import { isNumericType } from '@/lib/formatting';
 import type { TableDrillMeta } from '@/lib/columns/definitions';
-import { getPartnerName, getBatchName } from '@/lib/utils';
+import { getPartnerName, getBatchName, getStringField } from '@/lib/utils';
 import { useDrillDown, type DrillLevel } from '@/hooks/use-drill-down';
 
 interface TableBodyProps {
@@ -65,22 +65,30 @@ export function TableBody({ table, tableContainerRef }: TableBodyProps) {
         const row = rows[virtualRow.index];
 
         // A11Y-03 row-level drill target + up-level target derived from the
-        // current drill level:
-        //   root    → Enter drills into the row's partner
+        // current drill level. Phase 39 PCFG-03: root drills go through
+        // onDrillToPair (pair-aware) using PARTNER_NAME + ACCOUNT_TYPE from
+        // the row.
+        //   root    → Enter drills into the row's pair
         //   partner → Enter drills into the row's batch; Escape pops to root
         //   batch   → rows are read-only; Escape pops to partner
         // Matches the same drill handler DrillableCell already invokes; this
         // keyboard path is additive and does NOT replace the cell button.
         let onRowDrill: (() => void) | undefined;
         let parentLevel: DrillLevel | null = null;
-        if (drillLevel === 'root' && meta?.onDrillToPartner) {
+        if (drillLevel === 'root' && meta?.onDrillToPair) {
           const partner = getPartnerName(row.original);
-          if (partner) onRowDrill = () => meta.onDrillToPartner!(partner);
+          const product = getStringField(row.original, 'ACCOUNT_TYPE');
+          if (partner && product) {
+            onRowDrill = () => meta.onDrillToPair!({ partner, product });
+          }
           // No parent — root is top-level.
         } else if (drillLevel === 'partner' && meta?.onDrillToBatch) {
           const batch = getBatchName(row.original);
-          const partner = getPartnerName(row.original) ?? undefined;
-          if (batch) onRowDrill = () => meta.onDrillToBatch!(batch, partner);
+          const partner = getPartnerName(row.original);
+          const product = getStringField(row.original, 'ACCOUNT_TYPE');
+          const pair =
+            partner && product ? { partner, product } : undefined;
+          if (batch) onRowDrill = () => meta.onDrillToBatch!(batch, pair);
           parentLevel = 'root';
         } else if (drillLevel === 'batch') {
           // Read-only rows — no drill, but Escape pops back to partner.

@@ -3,8 +3,14 @@
 /**
  * Root-level column definitions for the partner-summary table.
  *
- * At root level the table shows one row per partner with aggregated metrics.
- * These columns replace the batch-level columns (BATCH, BATCH_AGE, ACCOUNT_TYPE).
+ * Phase 39 PCFG-02..04: at root level the table shows ONE ROW PER
+ * `(PARTNER_NAME, ACCOUNT_TYPE)` PAIR — not one row per partner. Multi-product
+ * partners (Happy Money, Zable) render as N rows. The drillable PARTNER_NAME
+ * cell renders a `__DISPLAY_NAME` (suffixed for multi-product partners, bare
+ * for single-product partners) but passes the raw pair to `onDrillToPair`.
+ *
+ * These columns replace the batch-level columns (BATCH, BATCH_AGE,
+ * ACCOUNT_TYPE) at root drill level.
  */
 
 import type { ColumnDef, CellContext } from '@tanstack/react-table';
@@ -13,7 +19,14 @@ import { DrillableCell } from '@/components/navigation/drillable-cell';
 import { getCellRenderer } from '@/components/table/formatted-cell';
 import type { TableDrillMeta } from './definitions';
 import { anomalyStatusColumn } from './anomaly-column';
-import { getPartnerName } from '@/lib/utils';
+import { getPartnerName, getStringField } from '@/lib/utils';
+import {
+  pairKey,
+  sortPairs,
+  displayNameForPair,
+  PRODUCT_TYPE_LABELS,
+  type PartnerProductPair,
+} from '@/lib/partner-config/pair';
 
 interface RootColumnConfig {
   key: string;
@@ -24,6 +37,10 @@ interface RootColumnConfig {
 
 const ROOT_COLUMNS: RootColumnConfig[] = [
   { key: 'PARTNER_NAME', label: 'Partner', type: 'text', size: 180 },
+  // Phase 39 PCFG-02: Product column distinguishes pair rows for multi-product
+  // partners. Positioned right after PARTNER_NAME so visual scan reads
+  // "Partner | Product | metrics".
+  { key: 'ACCOUNT_TYPE', label: 'Product', type: 'text', size: 110 },
   { key: '__BATCH_COUNT', label: '# Batches', type: 'count', size: 90 },
   { key: 'TOTAL_ACCOUNTS', label: 'Total Accounts', type: 'count', size: 120 },
   { key: 'TOTAL_AMOUNT_PLACED', label: 'Total Placed', type: 'currency', size: 130 },
@@ -47,15 +64,28 @@ export function buildRootColumnDefs(): ColumnDef<Record<string, unknown>>[] {
       const value = ctx.getValue();
       if (value == null) return null;
 
-      // PARTNER_NAME: drillable
+      // PARTNER_NAME: drillable, shows __DISPLAY_NAME (suffixed for
+      // multi-product partners) but drills to the raw pair.
       if (col.key === 'PARTNER_NAME') {
         const meta = ctx.table.options.meta as TableDrillMeta | undefined;
-        if (meta?.onDrillToPartner) {
+        if (meta?.onDrillToPair) {
+          const row = ctx.row.original;
+          const partner = getPartnerName(row);
+          const product = getStringField(row, 'ACCOUNT_TYPE');
+          // __DISPLAY_NAME was stamped on the row by buildPairSummaryRows.
+          const displayName =
+            (row['__DISPLAY_NAME'] as string | undefined) ?? partner;
           return createElement(DrillableCell, {
-            value: String(value),
-            onDrill: () => meta.onDrillToPartner!(String(value)),
+            value: displayName,
+            onDrill: () => meta.onDrillToPair!({ partner, product }),
           });
         }
+      }
+
+      // ACCOUNT_TYPE: human-friendly label rather than the raw enum value.
+      if (col.key === 'ACCOUNT_TYPE') {
+        const raw = String(value);
+        return PRODUCT_TYPE_LABELS[raw] ?? raw;
       }
 
       return getCellRenderer(col.type, col.key, value);
@@ -68,22 +98,49 @@ export function buildRootColumnDefs(): ColumnDef<Record<string, unknown>>[] {
 }
 
 /**
- * Build partner-summary rows from raw batch data for root-level display.
- * One row per unique PARTNER_NAME with aggregated metrics.
+ * Build pair-summary rows from raw batch data for root-level display.
+ *
+ * Phase 39 PCFG-02..04: ONE ROW PER `(PARTNER_NAME, ACCOUNT_TYPE)` PAIR — not
+ * one row per partner. Each row carries:
+ *   - `PARTNER_NAME` (verbatim)
+ *   - `ACCOUNT_TYPE` (verbatim — raw enum, displayed via PRODUCT_TYPE_LABELS)
+ *   - `__DISPLAY_NAME` (suffixed for multi-product partners, bare otherwise)
+ *   - aggregate metrics
+ *
+ * Sorted by partner alphabetical, then within-partner by PRODUCT_TYPE_ORDER
+ * (1st Party → 3rd Party → Pre-Chargeoff 3rd Party → unknown alpha).
  */
-export function buildPartnerSummaryRows(
+export function buildPairSummaryRows(
   batchRows: Record<string, unknown>[],
 ): Record<string, unknown>[] {
-  const groups = new Map<string, Record<string, unknown>[]>();
+  // Group rows by pair key.
+  const groups = new Map<
+    string,
+    { pair: PartnerProductPair; rows: Record<string, unknown>[] }
+  >();
   for (const row of batchRows) {
-    const name = getPartnerName(row);
-    if (!name) continue;
-    if (!groups.has(name)) groups.set(name, []);
-    groups.get(name)!.push(row);
+    const partner = getPartnerName(row);
+    const product = getStringField(row, 'ACCOUNT_TYPE');
+    if (!partner || !product) continue;
+    const pair: PartnerProductPair = { partner, product };
+    const key = pairKey(pair);
+    const existing = groups.get(key);
+    if (existing) existing.rows.push(row);
+    else groups.set(key, { pair, rows: [row] });
   }
 
+  // Count products per partner so __DISPLAY_NAME knows whether to suffix.
+  const productsPerPartner = new Map<string, number>();
+  for (const { pair } of groups.values()) {
+    productsPerPartner.set(
+      pair.partner,
+      (productsPerPartner.get(pair.partner) ?? 0) + 1,
+    );
+  }
+
+  // Build summary rows.
   const summaryRows: Record<string, unknown>[] = [];
-  for (const [name, rows] of groups) {
+  for (const { pair, rows } of groups.values()) {
     const sum = (key: string) =>
       rows.reduce((s, r) => s + (Number(r[key]) || 0), 0);
     const weightedAvg = (key: string) => {
@@ -92,8 +149,11 @@ export function buildPartnerSummaryRows(
       return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0) / total;
     };
 
+    const count = productsPerPartner.get(pair.partner) ?? 1;
     summaryRows.push({
-      PARTNER_NAME: name,
+      PARTNER_NAME: pair.partner,
+      ACCOUNT_TYPE: pair.product,
+      __DISPLAY_NAME: displayNameForPair(pair, count),
       LENDER_ID: rows[0].LENDER_ID,
       __BATCH_COUNT: rows.length,
       TOTAL_ACCOUNTS: sum('TOTAL_ACCOUNTS'),
@@ -105,8 +165,26 @@ export function buildPartnerSummaryRows(
     });
   }
 
-  // Sort alphabetically by partner name
-  return summaryRows.sort((a, b) =>
-    String(a.PARTNER_NAME).localeCompare(String(b.PARTNER_NAME)),
-  );
+  // Sort by canonical pair order (partner alpha, then product order).
+  const sortedPairs = sortPairs([...groups.values()].map(({ pair }) => pair));
+  const orderIx = new Map<string, number>();
+  sortedPairs.forEach((p, i) => orderIx.set(pairKey(p), i));
+  return summaryRows.sort((a, b) => {
+    const ka = pairKey({
+      partner: String(a.PARTNER_NAME),
+      product: String(a.ACCOUNT_TYPE),
+    });
+    const kb = pairKey({
+      partner: String(b.PARTNER_NAME),
+      product: String(b.ACCOUNT_TYPE),
+    });
+    return (orderIx.get(ka) ?? 0) - (orderIx.get(kb) ?? 0);
+  });
 }
+
+/**
+ * Phase 39 deprecation alias — keeps grep lookups working through the
+ * migration window. Same shape, same return; consumers should migrate to
+ * `buildPairSummaryRows`.
+ */
+export const buildPartnerSummaryRows = buildPairSummaryRows;

@@ -23,10 +23,12 @@ import type { TableDrillMeta } from '@/lib/columns/definitions';
 import { PRESETS, DEFAULT_PRESET } from '@/lib/columns/presets';
 import type { DrillLevel } from '@/hooks/use-drill-down';
 import type { TrendingData, MetricNorm, PartnerAnomaly, CrossPartnerData } from '@/types/partner-stats';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 
 export interface UseDataTableOptions {
-  onDrillToPartner?: (name: string) => void;
-  onDrillToBatch?: (name: string, partnerName?: string) => void;
+  /** Phase 39 PCFG-03 — pair-aware partner drill. */
+  onDrillToPair?: (pair: PartnerProductPair) => void;
+  onDrillToBatch?: (name: string, pair?: PartnerProductPair) => void;
   drillLevel?: DrillLevel;
   columns?: ColumnDef<Record<string, unknown>>[];
   /** Extra columns to append after the standard column definitions (e.g. percentile rank columns) */
@@ -38,6 +40,7 @@ export interface UseDataTableOptions {
   trendingData?: TrendingData | null;
   norms?: Record<string, MetricNorm> | null;
   heatmapEnabled?: boolean;
+  /** Phase 39 PCFG-03 — anomaly map keyed by pairKey. */
   anomalyMap?: Map<string, PartnerAnomaly>;
   /** Cross-partner data for percentile rank column cell renderers */
   crossPartnerData?: CrossPartnerData | null;
@@ -164,9 +167,9 @@ export function useDataTable(
   }, [columns]);
 
   const meta: TableDrillMeta | undefined = useMemo(() => {
-    if (!options?.onDrillToPartner && !options?.onDrillToBatch && !options?.trendingData && !options?.norms && !options?.anomalyMap && !options?.crossPartnerData) return undefined;
+    if (!options?.onDrillToPair && !options?.onDrillToBatch && !options?.trendingData && !options?.norms && !options?.anomalyMap && !options?.crossPartnerData) return undefined;
     return {
-      onDrillToPartner: options?.onDrillToPartner,
+      onDrillToPair: options?.onDrillToPair,
       onDrillToBatch: options?.onDrillToBatch,
       drillLevel: options?.drillLevel,
       trending: options?.trendingData ?? undefined,
@@ -175,7 +178,7 @@ export function useDataTable(
       anomalyMap: options?.anomalyMap,
       crossPartnerData: options?.crossPartnerData ?? undefined,
     };
-  }, [options?.onDrillToPartner, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled, options?.anomalyMap, options?.crossPartnerData]);
+  }, [options?.onDrillToPair, options?.onDrillToBatch, options?.drillLevel, options?.trendingData, options?.norms, options?.heatmapEnabled, options?.anomalyMap, options?.crossPartnerData]);
 
   const stableFilters = columnFilters ?? EMPTY_FILTERS;
 

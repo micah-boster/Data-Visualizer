@@ -18,16 +18,21 @@ import { NumericTick } from '@/components/charts/numeric-tick';
 import { COLLECTION_MONTHS } from '@/lib/computation/reshape-curves';
 import { useCrossPartnerContext } from '@/contexts/cross-partner-provider';
 import type { CrossPartnerEntry, CurvePoint } from '@/types/partner-stats';
+import { pairKey } from '@/lib/partner-config/pair';
 import { TrajectoryTooltip } from './trajectory-tooltip';
 import { TrajectoryLegend } from './trajectory-legend';
 
 type CurveMode = 'dollarWeighted' | 'equalWeight';
 
-/** Pivot cross-partner curves into Recharts flat format */
+/**
+ * Phase 39 PCFG-04 — Recharts series key is the pairKey ("partner::product")
+ * so multi-product partners contribute distinct series. Display labels go
+ * through the chart config.
+ */
 function pivotTrajectoryData(
   partners: CrossPartnerEntry[],
   portfolioAvg: CurvePoint[],
-  bestInClass: { name: string; curve: CurvePoint[] } | null,
+  bestInClass: { key: string; curve: CurvePoint[] } | null,
   curveMode: CurveMode,
 ): Record<string, number | undefined>[] {
   const months = [...COLLECTION_MONTHS];
@@ -35,7 +40,7 @@ function pivotTrajectoryData(
     const point: Record<string, number | undefined> = { month };
     for (const p of partners) {
       const cp = p.averageCurve[curveMode].find((c) => c.month === month);
-      if (cp) point[p.partnerName] = cp.recoveryRate;
+      if (cp) point[pairKey({ partner: p.partnerName, product: p.product })] = cp.recoveryRate;
     }
     // Portfolio average reference line
     const avgPt = portfolioAvg.find((c) => c.month === month);
@@ -51,66 +56,77 @@ function pivotTrajectoryData(
 
 export function CrossPartnerTrajectoryChart() {
   const { crossPartnerData } = useCrossPartnerContext();
-  const [hiddenPartners, setHiddenPartners] = useState<Set<string>>(new Set());
-  const [hoveredPartner, setHoveredPartner] = useState<string | null>(null);
+  // Phase 39 PCFG-04: hidden / hovered tracking switched from partnerName
+  // string to pairKey string so multi-product partners are independently
+  // toggleable.
+  const [hiddenPairs, setHiddenPairs] = useState<Set<string>>(new Set());
+  const [hoveredPair, setHoveredPair] = useState<string | null>(null);
   const [curveMode, setCurveMode] = useState<CurveMode>('dollarWeighted');
 
-  // Sorted partner list and color assignment (deterministic by name)
-  const { sortedPartners, colorMap } = useMemo(() => {
-    if (!crossPartnerData) return { sortedPartners: [], colorMap: new Map<string, string>() };
+  // Sorted pair list and color assignment (deterministic by display name)
+  const { sortedPairs, colorMap } = useMemo(() => {
+    if (!crossPartnerData) return { sortedPairs: [], colorMap: new Map<string, string>() };
     const sorted = [...crossPartnerData.rankedPartners].sort((a, b) =>
-      a.partnerName.localeCompare(b.partnerName),
+      a.displayName.localeCompare(b.displayName),
     );
     const cMap = new Map<string, string>();
     sorted.forEach((p, i) => {
-      cMap.set(p.partnerName, CHART_COLORS[i % CHART_COLORS.length]);
+      cMap.set(
+        pairKey({ partner: p.partnerName, product: p.product }),
+        CHART_COLORS[i % CHART_COLORS.length],
+      );
     });
-    return { sortedPartners: sorted, colorMap: cMap };
+    return { sortedPairs: sorted, colorMap: cMap };
   }, [crossPartnerData]);
 
-  // Determine best-in-class partner (highest perDollarPlacedRate)
-  // Suppress when there's only 1 partner — best-in-class would be that same
-  // partner, rendering a duplicate line on top of itself.
+  // Determine best-in-class pair (highest perDollarPlacedRate)
+  // Suppress when there's only 1 ranked pair — best-in-class would be that
+  // same pair, rendering a duplicate line on top of itself.
   const bestInClass = useMemo(() => {
     if (!crossPartnerData || crossPartnerData.rankedPartners.length < 2) return null;
     const best = [...crossPartnerData.rankedPartners].sort(
       (a, b) => b.perDollarPlacedRate - a.perDollarPlacedRate,
     )[0];
-    return { name: best.partnerName, curve: best.averageCurve[curveMode] };
+    return {
+      key: pairKey({ partner: best.partnerName, product: best.product }),
+      displayName: best.displayName,
+      curve: best.averageCurve[curveMode],
+    };
   }, [crossPartnerData, curveMode]);
 
   // Pivot data for Recharts
   const pivotedData = useMemo(() => {
     if (!crossPartnerData) return [];
     return pivotTrajectoryData(
-      sortedPartners,
+      sortedPairs,
       crossPartnerData.portfolioAverageCurve[curveMode],
       bestInClass,
       curveMode,
     );
-  }, [crossPartnerData, sortedPartners, bestInClass, curveMode]);
+  }, [crossPartnerData, sortedPairs, bestInClass, curveMode]);
 
   // Chart config for shadcn ChartContainer
   const chartConfig = useMemo(() => {
     const cfg: ChartConfig = {};
-    sortedPartners.forEach((p) => {
-      cfg[p.partnerName] = {
-        label: p.partnerName,
-        color: colorMap.get(p.partnerName) ?? 'var(--muted-foreground)',
+    sortedPairs.forEach((p) => {
+      const key = pairKey({ partner: p.partnerName, product: p.product });
+      cfg[key] = {
+        label: p.displayName,
+        color: colorMap.get(key) ?? 'var(--muted-foreground)',
       };
     });
     cfg.__portfolioAvg__ = { label: 'Portfolio Avg', color: 'var(--muted-foreground)' };
     if (bestInClass) {
-      cfg.__bestInClass__ = { label: `Best-in-class (${bestInClass.name})`, color: 'var(--foreground)' };
+      cfg.__bestInClass__ = { label: `Best-in-class (${bestInClass.displayName})`, color: 'var(--foreground)' };
     }
     return cfg;
-  }, [sortedPartners, colorMap, bestInClass]);
+  }, [sortedPairs, colorMap, bestInClass]);
 
-  const togglePartner = useCallback((name: string) => {
-    setHiddenPartners((prev) => {
+  const togglePair = useCallback((key: string) => {
+    setHiddenPairs((prev) => {
       const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }, []);
@@ -119,7 +135,11 @@ export function CrossPartnerTrajectoryChart() {
     return null;
   }
 
-  const partnerNames = sortedPartners.map((p) => p.partnerName);
+  // Display-name labels for the legend — match key order.
+  const legendEntries = sortedPairs.map((p) => ({
+    key: pairKey({ partner: p.partnerName, product: p.product }),
+    displayName: p.displayName,
+  }));
 
   return (
     <DataPanel
@@ -151,7 +171,7 @@ export function CrossPartnerTrajectoryChart() {
           config={chartConfig}
           className="h-[clamp(200px,28vh,320px)] w-full"
           role="img"
-          aria-label={`Cross-partner collection trajectory: recovery rate across batches for ${sortedPartners.length} ${sortedPartners.length === 1 ? 'partner' : 'partners'}${bestInClass ? `, best-in-class ${bestInClass.name}` : ''}. Sibling data table provides the same data in accessible tabular form.`}
+          aria-label={`Cross-partner collection trajectory: recovery rate across batches for ${sortedPairs.length} ${sortedPairs.length === 1 ? 'pair' : 'pairs'}${bestInClass ? `, best-in-class ${bestInClass.displayName}` : ''}. Sibling data table provides the same data in accessible tabular form.`}
         >
           <LineChart
             data={pivotedData}
@@ -189,22 +209,31 @@ export function CrossPartnerTrajectoryChart() {
               content={
                 <TrajectoryTooltip
                   colorMap={colorMap}
-                  hoveredPartner={hoveredPartner}
+                  hoveredPair={hoveredPair}
+                  labelMap={
+                    new Map(
+                      sortedPairs.map((p) => [
+                        pairKey({ partner: p.partnerName, product: p.product }),
+                        p.displayName,
+                      ]),
+                    )
+                  }
                 />
               }
             />
 
-            {/* Partner lines */}
-            {sortedPartners.map((p) => {
-              const isHidden = hiddenPartners.has(p.partnerName);
-              const isHovered = hoveredPartner === p.partnerName;
-              const isDimmed = hoveredPartner !== null && !isHovered;
+            {/* Pair lines — Recharts dataKey is the pairKey */}
+            {sortedPairs.map((p) => {
+              const key = pairKey({ partner: p.partnerName, product: p.product });
+              const isHidden = hiddenPairs.has(key);
+              const isHovered = hoveredPair === key;
+              const isDimmed = hoveredPair !== null && !isHovered;
               return (
                 <Line
-                  key={p.partnerName}
-                  dataKey={p.partnerName}
+                  key={key}
+                  dataKey={key}
                   type="monotone"
-                  stroke={colorMap.get(p.partnerName)}
+                  stroke={colorMap.get(key)}
                   strokeWidth={isHovered ? 3 : 2}
                   strokeOpacity={isDimmed ? 0.15 : 1}
                   dot={false}
@@ -213,8 +242,8 @@ export function CrossPartnerTrajectoryChart() {
                   connectNulls={false}
                   isAnimationActive={true}
                   animationDuration={800}
-                  onMouseEnter={() => setHoveredPartner(p.partnerName)}
-                  onMouseLeave={() => setHoveredPartner(null)}
+                  onMouseEnter={() => setHoveredPair(key)}
+                  onMouseLeave={() => setHoveredPair(null)}
                 />
               );
             })}
@@ -245,11 +274,11 @@ export function CrossPartnerTrajectoryChart() {
           </LineChart>
         </ChartContainer>
         <TrajectoryLegend
-          partners={partnerNames}
+          pairs={legendEntries}
           colorMap={colorMap}
-          hiddenPartners={hiddenPartners}
-          bestPartnerName={bestInClass?.name ?? null}
-          onTogglePartner={togglePartner}
+          hiddenPairs={hiddenPairs}
+          bestPairLabel={bestInClass?.displayName ?? null}
+          onTogglePair={togglePair}
         />
     </DataPanel>
   );

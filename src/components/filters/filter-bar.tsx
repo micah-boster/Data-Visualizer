@@ -12,33 +12,22 @@ interface FilterBarProps {
 }
 
 /**
- * Horizontal bar rendering the partner + account-type filter comboboxes.
+ * Horizontal bar rendering the account-type filter combobox.
  *
- * Phase 38 FLT-01: the batch combobox was removed. The toolbar's FilterPopover
- * now owns a date-range preset chip group (BATCH_AGE_IN_MONTHS <= cap) that
- * replaces the structurally-broken batch combobox. This standalone FilterBar
- * is unused as of Phase 27 (toolbar-unification) but kept as a reference.
+ * Phase 39 PCFG-04: the partner combobox was removed — selection is owned by
+ * drill state (`?p=&pr=`). This standalone FilterBar has been unused since the
+ * Phase 27 toolbar-unification but is retained as a reference. Account Type
+ * stays useful for cross-partner filtering at root.
+ *
+ * Phase 38 FLT-01: the batch combobox was previously removed; the toolbar's
+ * FilterPopover now owns a date-range preset chip group (BATCH_AGE_IN_MONTHS
+ * <= cap) that replaced the structurally-broken batch combobox.
  */
 export function FilterBar({ data, columnFilters, onFilterChange }: FilterBarProps) {
-  // Current selected values derived from columnFilters
-  const selectedPartner = useMemo(() => {
-    const f = columnFilters.find((cf) => cf.id === FILTER_PARAMS.partner);
-    return f ? String(f.value) : null;
-  }, [columnFilters]);
-
   const selectedType = useMemo(() => {
     const f = columnFilters.find((cf) => cf.id === FILTER_PARAMS.type);
     return f ? String(f.value) : null;
   }, [columnFilters]);
-
-  // Unique sorted partner names from full dataset
-  const partnerOptions = useMemo(
-    () =>
-      [...new Set(data.map((r) => String(r.PARTNER_NAME ?? '')))]
-        .filter(Boolean)
-        .sort(),
-    [data]
-  );
 
   // Unique sorted account types from full dataset
   const typeOptions = useMemo(
@@ -51,13 +40,6 @@ export function FilterBar({ data, columnFilters, onFilterChange }: FilterBarProp
 
   return (
     <div className="flex items-center gap-3 px-2 py-2">
-      <FilterCombobox
-        label="Partner"
-        placeholder="All partners"
-        options={partnerOptions}
-        value={selectedPartner}
-        onValueChange={(val) => onFilterChange('partner', val)}
-      />
       <FilterCombobox
         label="Account Type"
         placeholder="All account types"

@@ -46,19 +46,21 @@ export function MatrixBarRanking({ partners, metrics }: MatrixViewProps) {
         ))}
       </div>
 
-      {/* Bars */}
+      {/* Bars — Phase 39 PCFG-04: each entry is a (partner, product) pair;
+          displayName is suffixed for multi-product partners. */}
       <div className="space-y-1.5">
         {sortedPartners.map((p, i) => {
           const value = metric.getValue(p);
           const pct = maxValue > 0 ? (value / maxValue) * 100 : 0;
           const color = CHART_COLORS[i % CHART_COLORS.length];
+          const key = `${p.partnerName}::${p.product}`;
           return (
-            <div key={p.partnerName} className="flex items-center gap-2">
+            <div key={key} className="flex items-center gap-2">
               <span className="w-4 text-right text-label-numeric text-muted-foreground">
                 {i + 1}.
               </span>
               <span className="w-28 truncate text-body">
-                {p.partnerName}
+                {p.displayName}
               </span>
               <div className="flex-1 h-5 rounded bg-muted/50 overflow-hidden">
                 <div

@@ -11,6 +11,7 @@ import {
 import type { Table, SortingState } from '@tanstack/react-table';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import type { ActiveFilter, AgeBucket } from '@/hooks/use-filter-state';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -31,7 +32,8 @@ interface UnifiedToolbarProps {
   // Drill state
   drillState: DrillState;
   onNavigateToLevel: (level: DrillLevel) => void;
-  onDrillToPartner: (name: string) => void;
+  /** Phase 39 PCFG-03 — pair-aware drill (used by anomaly toolbar trigger). */
+  onDrillToPair: (pair: PartnerProductPair) => void;
   breadcrumbRowCounts: {
     root?: number;
     partner?: number;
@@ -49,11 +51,10 @@ interface UnifiedToolbarProps {
   activePreset: string;
   onPresetChange: (preset: string) => void;
 
-  // Filters (root only)
+  // Filters (root only). Phase 39 PCFG-04: partnerOptions / selectedPartner
+  // dropped — the partner combobox no longer renders in the filter popover.
   filterData: Record<string, unknown>[];
-  partnerOptions: string[];
   typeOptions: string[];
-  selectedPartner: string | null;
   selectedType: string | null;
   /** Phase 38 FLT-01 — date-range bucket for the preset chip group. */
   age: AgeBucket;
@@ -90,7 +91,7 @@ interface UnifiedToolbarProps {
 export function UnifiedToolbar({
   drillState,
   onNavigateToLevel,
-  onDrillToPartner,
+  onDrillToPair,
   breadcrumbRowCounts,
   chartsExpanded,
   onToggleCharts,
@@ -98,9 +99,7 @@ export function UnifiedToolbar({
   activePreset,
   onPresetChange,
   filterData,
-  partnerOptions,
   typeOptions,
-  selectedPartner,
   selectedType,
   age,
   onAgeChange,
@@ -154,7 +153,7 @@ export function UnifiedToolbar({
         </Tooltip>
 
         {/* Anomalies */}
-        <AnomalyToolbarTrigger onDrillToPartner={onDrillToPartner} />
+        <AnomalyToolbarTrigger onDrillToPair={onDrillToPair} />
 
         {/* Charts toggle */}
         <Tooltip>
@@ -243,9 +242,7 @@ export function UnifiedToolbar({
         {isRoot && (
           <FilterPopover
             data={filterData}
-            partnerOptions={partnerOptions}
             typeOptions={typeOptions}
-            selectedPartner={selectedPartner}
             selectedType={selectedType}
             age={age}
             onAgeChange={onAgeChange}
