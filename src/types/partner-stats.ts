@@ -11,6 +11,19 @@ export interface BatchCurve {
   totalPlaced: number;
   ageInMonths: number;
   points: CurvePoint[];
+  /**
+   * Phase 40 PRJ-01 — optional modeled projection from
+   * BOUNCE.FINANCE.CURVES_RESULTS.PROJECTED_FRACTIONAL (per-batch, latest VERSION).
+   *
+   * Absent when the batch has no modeled coverage (e.g., older bounce_af
+   * batches like AF_AUG_23 with null PROJECTED_FRACTIONAL). Consumers must
+   * treat undefined as a valid state and degrade gracefully (chart renders
+   * actuals only; KPI cards render value-only without a modeled-baseline delta).
+   *
+   * Clipped to chart maxAge at render time (CHT-01 truncation contract).
+   * `recoveryRate` is on the same 0..100 percentage scale as `points[].recoveryRate`.
+   */
+  projection?: CurvePoint[];
 }
 
 export interface MetricNorm {
