@@ -227,3 +227,15 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 
 ---
 *Last updated: 2026-04-23 — v4.0 milestone closed: phase details (26-37) collapsed into `<details>` block + archived to milestones/v4.0-ROADMAP.md; MILESTONES.md v4.0 entry flipped in-progress → shipped (13 phases / 105 plans / 67 requirements / ~25,875 LOC / 281 commits / 12 days); RETROSPECTIVE.md appended; git tag v4.0 created. Prior: v4.1 activated (Phases 38-40 detail sections retained). v4.0 scope: design system + URL nav + a11y + Partner Lists + Chart Builder + Metabase Import.*
+
+### Phase 40.1: Projected curves polish — visibility scoping + table integration (INSERTED)
+
+**Goal:** Tighten projection-line visibility on the curve chart (only at batch-level drill or aggregate-narrowed-to-one) and surface modeled values + actual-vs-modeled deviations in the data table, gated by the existing BaselineSelector.
+**Requirements**: TBD (derive from CONTEXT during /gsd:plan-phase)
+**Depends on:** Phase 40
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 40.1 to break down)
+
+CONTEXT: `.planning/phases/40.1-projected-curves-polish/40.1-CONTEXT.md`
