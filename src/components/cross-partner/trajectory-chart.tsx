@@ -149,7 +149,7 @@ export function CrossPartnerTrajectoryChart() {
     >
         <ChartContainer
           config={chartConfig}
-          className="h-[clamp(240px,36vh,420px)] w-full"
+          className="h-[clamp(200px,28vh,320px)] w-full"
           role="img"
           aria-label={`Cross-partner collection trajectory: recovery rate across batches for ${sortedPartners.length} ${sortedPartners.length === 1 ? 'partner' : 'partners'}${bestInClass ? `, best-in-class ${bestInClass.name}` : ''}. Sibling data table provides the same data in accessible tabular form.`}
         >
