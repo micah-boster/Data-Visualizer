@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-25T02:53:33Z"
+last_updated: "2026-04-25T03:10:33Z"
 progress:
   total_phases: 40
-  completed_phases: 38
+  completed_phases: 39
   total_plans: 117
-  completed_plans: 114
+  completed_plans: 116
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 39 (Partner Config Module) IN PROGRESS — 1/4 plans complete (39-01 GATE). Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
-Plan: Phase 40 — all 3 plans COMPLETE 2026-04-25 (40-01 data pipeline, 40-02 chart rendering, 40-03 KPI baseline + docs re-sync). Phase 39 — 39-01 (pair migration GATE) COMPLETE 2026-04-25; 39-02 / 39-03 / 39-04 ready to start.
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24. Phase 40 COMPLETE 2026-04-25 — Projected Curves v1 ships per-batch modeled overlays + panel-level KPI baseline. Phase 39 GATE plan landed; 3 plans remain.
-Last activity: 2026-04-25 — 40-03 (KPI baseline selector + docs re-sync) completed: PRJ-04 panel-level BaselineSelector (Rolling avg | Modeled curve) above KPI row at partner drill-down. Implemented via Button + aria-pressed (matches ChartTypeSegmentedControl precedent — @base-ui/react/toggle-group does not exist in this codebase, plan's import deviation-fixed at Task 1). Disabled-with-tooltip on the modeled option when no visible batch has projection coverage. KpiSummaryCards extended with baselineMode + curves + onSwitchToRolling props; computeModeledDelta routes per-card delta against latestCurve.projection at HORIZON_BY_KEY[spec.key]. Per-card baseline-absent UX renders value-only with "No modeled curve for this scope. Switch to rolling avg" inline recovery (no silent fallback). rateSinceInception under modeled mode renders value-only with "Lifetime rate — no modeled baseline at a single horizon" caption. data-display.tsx mounts selector via flex justify-end div above KPI cards in partner-drill block ONLY (panel-level, partner-only — CONTEXT lock). useState<BaselineMode>('rolling') default + auto-reset useEffect when modeledAvailable flips false (prevents stuck modeled selection on scope change). ROADMAP + v4.1-REQUIREMENTS PRJ-01..05 wording re-synced from "historical-average projection" framing to actually-shipped modeled-deal-curve scope (closes CONTEXT.md follow-up flag). 3 atomic commits + 8-scenario smoke test + SUMMARY.md. PRJ-04 closed (rest already closed by 40-01 + 40-02).
+Phase: 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 39 (Partner Config Module) IN PROGRESS — 39-01 + 39-02 + 39-03 (Wave 2 parallel) complete; 39-04 remaining. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
+Plan: Phase 40 — all 3 plans COMPLETE 2026-04-25 (40-01 data pipeline, 40-02 chart rendering, 40-03 KPI baseline + docs re-sync). Phase 39 — 39-01 (pair migration GATE) COMPLETE 2026-04-25; 39-02 (segment config + Setup UI, PCFG-05) COMPLETE 2026-04-25; 39-03 (partner-lists extension) parallel-wave COMPLETE 2026-04-25; 39-04 (segment-split charts/KPIs) ready to start.
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24. Phase 40 COMPLETE 2026-04-25 — Projected Curves v1 ships per-batch modeled overlays + panel-level KPI baseline. Phase 39 — 3/4 plans landed (39-01 + 39-02 + 39-03); 39-04 (segment-split charts/KPIs) remains.
+Last activity: 2026-04-25 — 39-03 (partner-lists extension, PCFG-06) completed in parallel wave with 39-02. Shipped PartnerListFilters extended with PRODUCT_TYPE (display alias of ACCOUNT_TYPE) + SEGMENT (config-driven) optional keys; additive-optional schema evolution (legacy lists parse cleanly per smoke test). PartnerList.source variant 'derived' + computeDerivedLists generator with stable IDs (DERIVED_LIST_ID_PREFIX + ACCOUNT_TYPE) — one auto-list per distinct ACCOUNT_TYPE (e.g. "1st Party Partners", "3rd Party Partners"). usePartnerLists merges derived lists without persisting to localStorage; deletion is a no-op + sonner "reappears on refresh" toast; rename disabled with Tooltip. Sidebar visual distinction = Sparkles icon + "Auto" pill (.text-label tier). PartnerListsProvider sources rows via useData() (TanStack Query dedupe). filter-evaluator handles PRODUCT_TYPE alias (cross-attribute AND with ACCOUNT_TYPE) + SEGMENT via optional segmentResolver callback (degrade-don't-crash on missing resolver). Attribute filter bar extended to 3 entries (Account Type, Product Type, Segment) data-driven; create-list-dialog wires segmentResolver from usePartnerConfigContext (defensive try/catch for parallel-wave provider absence — Plan 39-02 had landed but pattern stays as insurance). 3 atomic commits + 8-assertion derived-lists smoke + 6-assertion legacy-parse smoke + SUMMARY.md. PCFG-06 closed.
 
-Progress: [██████████░░░░░░░░░░] 1/4 Phase 39 plans (39-01 GATE COMPLETE) | [████████████████████] 3/3 Phase 40 plans COMPLETE
+Progress: [████████████████░░░░] 3/4 Phase 39 plans (39-01 GATE + 39-02 + 39-03 COMPLETE) | [████████████████████] 3/3 Phase 40 plans COMPLETE
 
 ## Shipped Milestones
 
@@ -319,6 +319,12 @@ Progress: [██████████░░░░░░░░░░] 1/4 Pha
 - [Phase 38-05]: Legacy-batch-filter toast fires on handleLoadView (user-initiated) only, not sanitizeSnapshot (also runs on hydration); hasLegacyBatchFilter pure export provides explicit detection so sanitizer signature stays stable
 - [Phase 38-05]: FLT-03 auto-hide uses lastAppliedHidePartnerRef transition-tracking rather than a state machine — effect only re-applies on flag transitions, so user's subsequent manual toggle via column picker (POL-03 unlocked identity cols) survives the auto-hide
 - [Phase 38-05]: MBI-01 uses a local 4-button segmented control inside preview-step.tsx (line/scatter/bar/none) rather than reusing ChartTypeSegmentedControl — the shared component carries a 'collection-curve' option Import never produces and would need a 'none' option that leaks Import semantics into the chart-builder
+- [Phase 39]: [Phase 39-02]: Open Q #1 resolved via 'scaffold-now-empty-state-until-ETL-lands' — today's agg_batch_performance_summary has no viable segmenting columns; getViableSegmentColumns returns [] and the Setup UI surfaces a clear empty-state Alert. Full scaffolding (schema, storage, hook, context, evaluator, UI primitives) ships ready to consume future ETL adds (LANGUAGE, BANK_SUBSIDIARY, sub-cohort) without code changes beyond data.
+- [Phase 39]: [Phase 39-02]: Open Q #3 resolved via up/down arrow reorder buttons (drag deferred). CONTEXT explicitly marked drag-handle details as Claude's Discretion. Up/down buttons keyboard-accessible by default, no DnD lib added, simpler implementation. Revisit drag-and-drop in fast-follow if user feedback requests.
+- [Phase 39]: [Phase 39-02]: SegmentEditorTable exposes imperative save() via forwardRef instead of lifting draft state to PartnerSetupSheet — keeps row-level state updates from re-rendering the sheet wrapper, cleaner separation between shell (header/footer) and body (editable table). Hydration via parent-driven hydrationKey bump on every false→true open transition; editor's useEffect re-reads stored config when key changes (avoids re-hydrating mid-edit).
+- [Phase 39]: [Phase 39-02]: Validation severity ladder — empty-fields/duplicate-names/'Other'-reserved are HARD blocks (no force-confirm). Overlapping value-sets are a WARNING with an inline banner; first save attempt blocks, second save attempt after user clicks 'Confirm and save anyway' bypasses via forceWarnAccepted flag. Recognizes that real-world transitions may legitimately overlap even though the partition invariant is the goal.
+- [Phase 39]: [Phase 39-02]: viable-columns heuristic excludes PARTNER_NAME + ACCOUNT_TYPE (self-referential within a pair-scoped row set), LENDER_ID (typically 1:1 with partner — would only show one value), BATCH (too high-cardinality). Distinct-value count must be 2..20 (degenerate vs ultra-high-cardinality bounds). Returns [] today against batch-summary; auto-detects future ETL-added columns.
+- [Phase 39]: [Phase 39-02]: ContextMenu wires every sidebar pair row via Base UI render-prop delegation (<ContextMenu.Trigger render={<SidebarMenuButton ...}>) — composes refs and event handlers correctly with the existing primitive (Pitfall 8 in 39-RESEARCH). Right-click opens menu without disturbing click-to-drill or keyboard nav. Popup styled via bg-surface-overlay + shadow-elevation-overlay (semantic tokens, not raw shadow-md). Items use text-body + data-[highlighted]:bg-accent.
 
 ### Pending Todos
 
@@ -337,7 +343,7 @@ Progress: [██████████░░░░░░░░░░] 1/4 Pha
 ## Session Continuity
 
 Last session: 2026-04-25
-Stopped at: Completed 40-02-PLAN.md (Projected Curves chart rendering — PRJ-02/03/05). Per-batch dashed modeled <Line> on CollectionCurveChart with same hue + 60% opacity + "6 3" dash; batch_N__projected pivot key convention (grep-unique double-underscore via PROJECTED_KEY_SUFFIX export); CurveTooltip composes "Modeled" sub-row with polarity-aware delta-vs-actual coloring via composeBatchTooltipRow pure helper. 3 atomic commits (3a577c6 pivot, 418193e chart, a3dc675 tooltip) + 2 smoke tests (pivot-curve-data.smoke.ts 4 scenarios + curve-tooltip-modeled.smoke.ts 7 scenarios) all printing OK. `tsc --noEmit` clean on all four Plan 02 files (pre-existing Phase 39 consumer + axe-core errors persist, logged to deferred-items.md). All three guards (check:tokens, check:motion, check:surfaces) clean. Phase 40 — 40-03 (KPI baseline selector + modeled-delta) is the last queued plan; Phase 39 still in parallel.
+Stopped at: Completed 39-02-PLAN.md (PCFG-05 — partner-config substrate + Setup UI). Wave 2 parallel with 39-03. Shipped src/lib/partner-config/* domain (types/schema/storage/defaults/segment-evaluator/viable-columns), usePartnerConfig hook + PartnerConfigProvider context, PartnerSetupSheet slide-over (SegmentEditorTable forwardRef + SegmentRow + OtherBucketRow), sidebar pair-row ContextMenu wiring, app/layout provider mount. 3 atomic commits (b492062 data-layer, d098d7b setup-UI, fc8b464 sidebar-wireup) + 7-block smoke test (segment-evaluator.smoke.ts) + SUMMARY.md. Open Q #1 resolved via scaffold-now-empty-state (today's batch-summary has no viable segmenting columns — Setup shows Alert; UI ready for ETL adds). Open Q #3 resolved via up/down reorder buttons (drag deferred). All guards green: tsc --noEmit (excluding pre-existing axe-core defer), check:tokens, check:surfaces, smoke:segment-evaluator. Pre-existing globals.css Turbopack build failure persists (logged at phase 39 level, not introduced by this plan). Phase 39 — 39-04 (segment-split charts/KPIs, PCFG-07) is the last queued plan.
 Resume file: None
 
 ## Performance Metrics
@@ -385,4 +391,5 @@ Resume file: None
 | Phase 38 P04 | ~7 min | 4 + auto-approved checkpoint tasks | 7 modified / 3 created files |
 | Phase 38 P05 | 12 min | 4 + auto-approved checkpoint tasks | 4 created / 10 modified files |
 | Phase 40-projected-curves-v1 P02 | 5min | 3 tasks | 7 files |
+| Phase 39 P02 | 9 | 4 tasks | 16 files |
 
