@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-25T02:31:50Z"
+last_updated: "2026-04-25T02:43:48.471Z"
 progress:
   total_phases: 40
   completed_phases: 38
   total_plans: 117
-  completed_plans: 111
+  completed_plans: 113
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 40 (Projected Curves v1) IN PROGRESS — 1/3 plans complete. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24 — all 5 plans shipped. Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) running in parallel.
-Plan: Phase 40 — 40-01 (data pipeline) COMPLETE 2026-04-25; 40-02 (chart rendering) + 40-03 (KPI baseline) queued.
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24. Phase 40 plumbing landed 2026-04-25.
-Last activity: 2026-04-25 — 40-01 (Projected Curves data pipeline) completed: PRJ-01 GET /api/curves-results route with latest-VERSION + ROW_NUMBER dedup against BOUNCE.FINANCE.CURVES_RESULTS, ×100 unit conversion at API boundary, static-mode early return; useCurvesResults TanStack Query hook (5min staleTime, sibling to useData) + useCurvesResultsIndex helper building Map<lenderId||batchName, CurvePoint[]>; BatchCurve.projection?: CurvePoint[] additive-optional field; usePartnerStats merges projections via per-batch lenderByBatch lookup (Pitfall 1 lock — partner may span multiple lenders). 1 requirement closed (PRJ-01). 3 atomic commits + CONFIRM.md probe-SQL deferral doc. Externalbrowser auth blocked live Snowflake probes; RESEARCH defaults applied per plan's fallback clause, post-deploy smoke checklist documented for Plan 02 author.
+Phase: 40 (Projected Curves v1) IN PROGRESS — 2/3 plans complete. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24 — all 5 plans shipped. Phase 39 Partner Config Module (PCFG-01..07) and Phase 40 Projected Curves v1 (PRJ-01..05) running in parallel.
+Plan: Phase 40 — 40-01 (data pipeline) COMPLETE 2026-04-25; 40-02 (chart rendering) COMPLETE 2026-04-25; 40-03 (KPI baseline) queued.
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 COMPLETE 2026-04-24. Phase 40 plumbing + chart rendering landed 2026-04-25.
+Last activity: 2026-04-25 — 40-02 (Projected Curves chart rendering) completed: PRJ-02/PRJ-03/PRJ-05 dashed modeled <Line> per batch on CollectionCurveChart (same hue, 60% opacity, "6 3" dash), grep-unique batch_N__projected pivot keys via PROJECTED_KEY_SUFFIX export, hide-coupling via shared visibleBatchKeys.includes(key) predicate (one legend entry per batch — CHT-03 scroll preserved), isAnimationActive=false on projection (Pitfall 3 guard against second-pass flash when /api/curves-results resolves), pivot-side filter clips projection to maxAge (CHT-01 truncation reused). New composeBatchTooltipRow pure helper (delta math + polarity-aware direction tagging + suppression rules — divide-by-zero, non-finite, missing modeled), tooltip renders Modeled sub-row with signed delta colored emerald/red/muted via getPolarity(). Partner-average row UNCHANGED (CONTEXT lock). Modeled row only renders for recoveryRate metric (v1 rate-only). 3 atomic commits + 2 smoke tests (4 + 7 scenarios) + SUMMARY.md. 3 requirements closed (PRJ-02, PRJ-03, PRJ-05).
 
-Progress: [██████████████████░░] 1/3 Phase 40 plans (40-01 COMPLETE)
+Progress: [████████████████████] 2/3 Phase 40 plans (40-01, 40-02 COMPLETE)
 
 ## Shipped Milestones
 
@@ -43,6 +43,14 @@ Progress: [██████████████████░░] 1/3 Pha
 
 ### Decisions
 
+- [Phase 40-02]: Grep-unique sibling pivot keys via DOUBLE underscore suffix (PROJECTED_KEY_SUFFIX export = "__projected") — prevents Pitfall 5 substring collision in tooltip proximity logic. Reusable convention for any future per-batch overlay (variance bands, target lines).
+- [Phase 40-02]: isAnimationActive={false} on projection <Line> (Pitfall 3 lock) — actuals already animated on first paint; projection mounts when /api/curves-results resolves and a second animation pass would read as a glitch. Trade: no reveal animation (acceptable per RESEARCH default; flip to short animationDuration in fast-follow if user feedback prefers reveal).
+- [Phase 40-02]: No showProjection toggle in v1 — modeled renders whenever curve.projection has data (CONTEXT lock: dashed line alongside actuals is always-on per-batch). Toggle deferred to fast-follow if feedback requests one.
+- [Phase 40-02]: Tooltip row ordering LOCKED — actual value first (primary reading), Modeled sub-row second (benchmark with signed delta). Future tooltip consumers can rely on this order.
+- [Phase 40-02]: Pure-helper extraction (composeBatchTooltipRow) for tooltip math — keeps delta + polarity + suppression rules smoke-testable without React. Matches Phase 38 pattern. Smoke test covers 7 scenarios (positive, negative, absent, divide-by-zero, polarity flip, flat, NaN/Infinity).
+- [Phase 40-02]: Polarity-aware direction tagging via getPolarity(metric) — higher_is_better metrics color +delta emerald (beat the model); lower_is_better flip. v1 chart calls with "COLLECTION_AFTER_6_MONTH" since the recoveryRate axis is higher-is-better business semantics.
+- [Phase 40-02]: Hide-coupling via shared visibleBatchKeys.includes(key) predicate on both actual + projection <Line> — legend toggles flow to both without UI doubling. CurveLegend untouched (iterates defaultVisibleKeys which never carries __projected entries).
+- [Phase 40-02]: Pivot-side .filter((p) => p.month <= maxAge) clips projection to visible domain automatically (CHT-01 contract reused) — no per-line clipping logic needed in CollectionCurveChart's <Line> render.
 - [Phase 40-01]: PROJECTED_FRACTIONAL × 100 conversion at API boundary (not client-side) — keeps CurvePoint.recoveryRate consistently 0..100 across actuals + modeled. Reversible single-line drop in route.ts SQL alias if live probe shows already-percentage units.
 - [Phase 40-01]: Per-batch lenderByBatch lookup (NOT partner-uniform) for projection merge — Pitfall 1 lock. usePartnerStats walks partnerRows once into Map<batchName, lenderId>, looks up via `${lenderId}||${batchName}`. Robust to 1:1 and 1:N partner→lender mappings. Future warehouse-aggregating overlays should mirror this pattern.
 - [Phase 40-01]: ROW_NUMBER() OVER (PARTITION BY LENDER_ID, BATCH_, COLLECTION_MONTH ORDER BY VERSION DESC) dedup in route.ts SQL — handles multi-pricing-type rows deterministically (CONTEXT mentions AF vs CCB variants). One curve per batch in v1; multi-pricing overlay deferred to v5.0 Phase 49.
@@ -319,8 +327,8 @@ Progress: [██████████████████░░] 1/3 Pha
 
 ## Session Continuity
 
-Last session: 2026-04-24
-Stopped at: Completed 38-05-PLAN.md (FLT-01 date-range preset chips + saved-view migration, FLT-02 filter tooltips, FLT-03 PARTNER_NAME auto-hide, MBI-01 Metabase Import chart-type override). Phase 38 now 5/5 plans complete — all 18 v4.1 feedback items closed (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01). 4 atomic commits (ba7ea92, fd94c8f, 7db7193, 68cf359) + 3 smoke tests (use-filter-state.smoke.ts, use-saved-views.smoke.ts, override.smoke.ts) all printing OK. `tsc --noEmit` clean on all touched files; `check:tokens` clean. Pre-existing `npm run build` Tailwind v4 / Turbopack CSS issue unchanged (documented in deferred-items.md). Phase 39 (Partner Config Module) and Phase 40 (Projected Curves v1) queued next — both already have RESEARCH + CONTEXT docs landed in parallel prep commits (a0ac669 / abf53a4).
+Last session: 2026-04-25
+Stopped at: Completed 40-02-PLAN.md (Projected Curves chart rendering — PRJ-02/03/05). Per-batch dashed modeled <Line> on CollectionCurveChart with same hue + 60% opacity + "6 3" dash; batch_N__projected pivot key convention (grep-unique double-underscore via PROJECTED_KEY_SUFFIX export); CurveTooltip composes "Modeled" sub-row with polarity-aware delta-vs-actual coloring via composeBatchTooltipRow pure helper. 3 atomic commits (3a577c6 pivot, 418193e chart, a3dc675 tooltip) + 2 smoke tests (pivot-curve-data.smoke.ts 4 scenarios + curve-tooltip-modeled.smoke.ts 7 scenarios) all printing OK. `tsc --noEmit` clean on all four Plan 02 files (pre-existing Phase 39 consumer + axe-core errors persist, logged to deferred-items.md). All three guards (check:tokens, check:motion, check:surfaces) clean. Phase 40 — 40-03 (KPI baseline selector + modeled-delta) is the last queued plan; Phase 39 still in parallel.
 Resume file: None
 
 ## Performance Metrics
@@ -367,4 +375,5 @@ Resume file: None
 | Phase 38 P03 | 7 min | 3 tasks | 5 files |
 | Phase 38 P04 | ~7 min | 4 + auto-approved checkpoint tasks | 7 modified / 3 created files |
 | Phase 38 P05 | 12 min | 4 + auto-approved checkpoint tasks | 4 created / 10 modified files |
+| Phase 40-projected-curves-v1 P02 | 5min | 3 tasks | 7 files |
 
