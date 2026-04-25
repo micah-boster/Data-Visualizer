@@ -106,7 +106,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 35. Chart Schema & Migration | 2/2 | Complete    | 2026-04-19 | - |
 | 36. Chart Builder | 5/5 | Complete    | 2026-04-24 | - |
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
-| 38. Polish + Correctness Pass | 5/5 | Complete   | 2026-04-24 | - |
+| 38. Polish + Correctness Pass | 5/5 | Complete    | 2026-04-25 | - |
 | 39. Partner Config Module | v4.1 | 0/4 | Not Started | - |
 | 40. Projected Curves v1 | v4.1 | 0/3 | Not Started | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
