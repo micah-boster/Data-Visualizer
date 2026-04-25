@@ -12,11 +12,17 @@
  * `ActivePartnerListProvider` so its stale-ID sanitizer (and active-list
  * memo) read from the same array.
  *
+ * Phase 39 — derived auto-lists (PCFG-06):
+ *   The provider reads dataset rows via `useData()` (TanStack Query
+ *   dedupes the fetch — same queryKey shared with all other consumers,
+ *   no extra request) and passes them to `usePartnerLists(rows)`. The
+ *   hook computes derived lists from the rows and merges them with the
+ *   user-stored lists. Pre-data render (rows undefined / empty) returns
+ *   only user-stored lists; derived lists materialize when the query
+ *   resolves.
+ *
  * This replaces the plan's option-(a) "thread CRUD as props from AppSidebar"
  * approach because AppSidebar does NOT encompass DataDisplay in this tree.
- * Matches the plan's escalation clause ("if AppSidebar is structured such
- * that its JSX does NOT encompass data-display.tsx, escalate: the provider
- * must live HIGHER in the tree").
  */
 
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
@@ -24,12 +30,19 @@ import {
   usePartnerLists,
   type UsePartnerListsResult,
 } from '@/hooks/use-partner-lists';
+import { useData } from '@/hooks/use-data';
 import { ActivePartnerListProvider } from '@/contexts/active-partner-list';
 
 const PartnerListsContext = createContext<UsePartnerListsResult | null>(null);
 
 export function PartnerListsProvider({ children }: { children: ReactNode }) {
-  const value = usePartnerLists();
+  // Phase 39 — derived auto-lists are computed from the same dataset rows
+  // every other surface reads. TanStack Query dedupes by queryKey so this
+  // call shares the cached fetch with use-data consumers (no extra request).
+  const { data: queryData } = useData();
+  const rows = queryData?.data;
+
+  const value = usePartnerLists(rows);
 
   // Memoize the context value so unrelated parent re-renders don't invalidate
   // every downstream memo keyed on this value. `value` is itself already a
