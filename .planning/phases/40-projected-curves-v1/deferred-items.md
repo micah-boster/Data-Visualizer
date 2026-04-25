@@ -29,3 +29,12 @@
   executes. Plan 40-01 considered the typecheck "clean for files Plan 40-01
   modifies" (verified: `partner-stats.ts`, `use-partner-stats.ts`, `route.ts`,
   `curves-results.ts`, `use-curves-results.ts` all pass tsc).
+
+## 2026-04-25 (Plan 02 execution)
+
+- **Same pre-existing Phase 39 consumer errors persist** — `data-display.tsx`,
+  `filter-bar.tsx`, `data-table.tsx`, `table-body.tsx`, `unified-toolbar.tsx`,
+  `sidebar-data.tsx`. None touch Plan 02 files. Verified that the four files
+  modified by Plan 02 (`pivot-curve-data.ts`, `collection-curve-chart.tsx`,
+  `curve-tooltip.tsx`, `compose-batch-tooltip-row.ts`) all pass `tsc --noEmit`
+  cleanly. The `axe-core` test error is also unchanged from Plan 01.
