@@ -276,6 +276,35 @@ export function DataDisplay() {
   // pair-aware: filters by both PARTNER_NAME and ACCOUNT_TYPE.
   const partnerStats = usePartnerStats(selectedPair, filteredRawData);
 
+  // Phase 40 PRJ-04 — panel-level baseline selector state. Default 'rolling'
+  // for zero regression with existing users (CONTEXT lock); 'modeled' is
+  // opt-in. Persistence is intentionally out of scope for v1 (CONTEXT
+  // Deferred Idea: localStorage/URL-sync deferred to a fast-follow).
+  const [baselineMode, setBaselineMode] = useState<BaselineMode>('rolling');
+
+  // True when ANY visible batch in the current scope has projection coverage.
+  // Drives BaselineSelector's disabled state for the modeled toggle. Reading
+  // any-coverage (rather than all-coverage at all horizons) is the right gate
+  // for the panel-level affordance — per-card baseline-absent state handles
+  // partial coverage gracefully via the "Switch to rolling avg" recovery.
+  const modeledAvailable = useMemo(
+    () =>
+      (partnerStats?.curves ?? []).some(
+        (c) => c.projection && c.projection.length > 0,
+      ),
+    [partnerStats?.curves],
+  );
+
+  // Reset to rolling if modeled becomes unavailable mid-session (e.g., scope
+  // change removes all modeled-coverage batches, or user switches partners
+  // away from one that has projection data). Prevents a stuck "modeled"
+  // selection on a scope where it's no longer meaningful.
+  useEffect(() => {
+    if (!modeledAvailable && baselineMode === 'modeled') {
+      setBaselineMode('rolling');
+    }
+  }, [modeledAvailable, baselineMode]);
+
   // Phase 36.x — row-level slices for the generic chart panel. The preset
   // (CollectionCurveChart) consumes the pre-shaped `curves` array; the generic
   // branch (GenericChart) plots raw rows and must see the same pair/batch
@@ -1071,9 +1100,25 @@ export function DataDisplay() {
                     )}
                     {drillState.level === 'partner' && (
                       <>
+                        {/* Phase 40 PRJ-04 — panel-level baseline selector
+                            mounted above the KPI row. CONTEXT lock: panel-
+                            level, not per-card. Disabled state is owned by
+                            modeledAvailable (any visible batch with
+                            projection data); per-card baseline-absent UX
+                            handles horizons without modeled coverage. */}
+                        <div className="flex items-center justify-end px-1">
+                          <BaselineSelector
+                            value={baselineMode}
+                            onChange={setBaselineMode}
+                            modeledAvailable={modeledAvailable}
+                          />
+                        </div>
                         <KpiSummaryCards
                           kpis={partnerStats?.kpis ?? null}
                           trending={partnerStats?.trending ?? null}
+                          baselineMode={baselineMode}
+                          curves={partnerStats?.curves}
+                          onSwitchToRolling={() => setBaselineMode('rolling')}
                         />
                         {/* Phase 38 CHT-01: render ASAP with whatever data exists
                             — the prior `>= 2` minimum-age gate hid charts for
