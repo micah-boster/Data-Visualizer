@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import React, { Fragment, useMemo, useState, useCallback, useRef, useEffect } from "react";
 import type { CollectionCurveDefinition } from "@/lib/views/types";
 import {
   LineChart,
@@ -323,31 +323,56 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
                   />
                 )}
               />
-              {/* One Line per batch -- use hide prop, not conditional rendering */}
-              {sortedCurves.map((_, i) => {
+              {/* One Line per batch -- use hide prop, not conditional rendering.
+                  Phase 40 PRJ-01/03: when curve.projection exists, render a sibling
+                  dashed <Line> in the same hue at 60% opacity. Hide-coupled to the
+                  actual line (Pattern 5 — toggling actual hides modeled too).
+                  isAnimationActive={false} on projection avoids Pitfall 3 re-animation
+                  when the second query resolves after actuals have already rendered. */}
+              {sortedCurves.map((curve, i) => {
                 const key = `batch_${i}`;
+                const projKey = `${key}__projected`;
                 const anomalyColor = getAnomalyLineColor(key);
+                const baseColor = anomalyColor ?? CHART_COLORS[i % CHART_COLORS.length];
+                const isVisible = visibleBatchKeys.includes(key);
+                const hasProjection =
+                  curve.projection !== undefined && curve.projection.length > 0;
                 return (
-                  <Line
-                    key={key}
-                    dataKey={key}
-                    type="monotone"
-                    stroke={anomalyColor ?? CHART_COLORS[i % CHART_COLORS.length]}
-                    strokeWidth={getLineStrokeWidth(key)}
-                    strokeOpacity={getLineOpacity(key)}
-                    dot={false}
-                    activeDot={{
-                      r: 5,
-                      onMouseEnter: () => setHoveredLineKey(key),
-                      onClick: () => handleLineClick(key),
-                      cursor: "pointer",
-                    }}
-                    hide={!visibleBatchKeys.includes(key)}
-                    connectNulls={false}
-                    isAnimationActive={true}
-                    animationDuration={1000}
-                    animationEasing="ease-in-out"
-                  />
+                  <Fragment key={key}>
+                    <Line
+                      dataKey={key}
+                      type="monotone"
+                      stroke={baseColor}
+                      strokeWidth={getLineStrokeWidth(key)}
+                      strokeOpacity={getLineOpacity(key)}
+                      dot={false}
+                      activeDot={{
+                        r: 5,
+                        onMouseEnter: () => setHoveredLineKey(key),
+                        onClick: () => handleLineClick(key),
+                        cursor: "pointer",
+                      }}
+                      hide={!isVisible}
+                      connectNulls={false}
+                      isAnimationActive={true}
+                      animationDuration={1000}
+                      animationEasing="ease-in-out"
+                    />
+                    {hasProjection && (
+                      <Line
+                        dataKey={projKey}
+                        type="monotone"
+                        stroke={baseColor}
+                        strokeDasharray="6 3"
+                        strokeOpacity={0.6}
+                        strokeWidth={1.5}
+                        dot={false}
+                        hide={!isVisible}
+                        connectNulls={false}
+                        isAnimationActive={false}
+                      />
+                    )}
+                  </Fragment>
                 );
               })}
               {/* Average reference line */}
