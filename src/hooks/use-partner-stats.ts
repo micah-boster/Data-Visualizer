@@ -2,18 +2,22 @@
 
 import { useMemo } from 'react';
 import type { PartnerStats } from '@/types/partner-stats';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 import { reshapeCurves } from '@/lib/computation/reshape-curves';
 import { computeNorms } from '@/lib/computation/compute-norms';
 import { computeKpis } from '@/lib/computation/compute-kpis';
 import { computeTrending } from '@/lib/computation/compute-trending';
 import { computeAnomalies } from '@/lib/computation/compute-anomalies';
 import { useCurvesResultsIndex } from '@/hooks/use-curves-results';
+import { getPartnerName, getStringField } from '@/lib/utils';
 
 /**
  * Compute structured partner analytics from raw batch rows.
  *
- * Filters allRows to the given partner, then composes KPI aggregates,
- * metric norms, collection curve series, and batch-over-batch trending.
+ * Phase 39 PCFG-03: filters by `(partner, product)` pair, not by partner
+ * name alone. Calling with a multi-product partner without a product would
+ * blend 1st + 3rd party rows together — the pair-aware filter prevents
+ * that structurally.
  *
  * Phase 40 PRJ-01 — merges modeled-projection points onto each `BatchCurve`
  * via a `(LENDER_ID, BATCH_)` lookup. The lookup is per-batch (not partner-
@@ -21,10 +25,10 @@ import { useCurvesResultsIndex } from '@/hooks/use-curves-results';
  * Batches without modeled coverage keep `projection: undefined` (graceful
  * degradation — consumers must check for undefined).
  *
- * Returns null when no partner is selected or no data matches.
+ * Returns null when no pair is selected or no data matches the pair.
  */
 export function usePartnerStats(
-  partnerName: string | null,
+  pair: PartnerProductPair | null,
   allRows: Record<string, unknown>[],
 ): PartnerStats | null {
   // Stable Map<"lenderId||batchName", CurvePoint[]> — rebuilt only when the
@@ -35,10 +39,12 @@ export function usePartnerStats(
   const projectionIndex = useCurvesResultsIndex();
 
   return useMemo(() => {
-    if (!partnerName || allRows.length === 0) return null;
+    if (!pair || allRows.length === 0) return null;
 
     const partnerRows = allRows.filter(
-      (r) => String(r.PARTNER_NAME ?? '') === partnerName,
+      (r) =>
+        getPartnerName(r) === pair.partner &&
+        getStringField(r, 'ACCOUNT_TYPE') === pair.product,
     );
 
     if (partnerRows.length === 0) return null;
@@ -57,8 +63,8 @@ export function usePartnerStats(
 
     const norms = computeNorms(partnerRows);
 
-    // Partners with <3 batches get anomalies from the root-level
-    // AnomalyProvider (which has portfolio norms). For partner-level
+    // Pairs with <3 batches get anomalies from the root-level
+    // AnomalyProvider (which has portfolio norms). For pair-level
     // drill-down with sufficient history, compute inline.
     const anomalies =
       partnerRows.length >= 3
@@ -80,5 +86,5 @@ export function usePartnerStats(
       trending: computeTrending(partnerRows),
       anomalies,
     };
-  }, [partnerName, allRows, projectionIndex]);
+  }, [pair, allRows, projectionIndex]);
 }

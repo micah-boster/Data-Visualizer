@@ -2,12 +2,21 @@
 
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
+import type { PartnerProductPair } from '@/lib/partner-config/pair';
 
 export type DrillLevel = 'root' | 'partner' | 'batch';
 
 export interface DrillState {
   level: DrillLevel;
   partner: string | null;
+  /**
+   * Phase 39 PCFG-03 — product (= ACCOUNT_TYPE) component of the
+   * canonical (partner, product) pair. Travels with `partner` on partner-
+   * and batch-level drill states. `null` only at root level OR for legacy
+   * deep-links missing `?pr=` (validation effect in data-display.tsx steps
+   * those up to root with a sonner toast).
+   */
+  product: string | null;
   batch: string | null;
 }
 
@@ -17,9 +26,15 @@ export interface DrillState {
  * Drill state lives in URL search params so browser back/forward traverse
  * drill levels and deep-links into partner/batch views work from cold load.
  *
+ * Phase 39 PCFG-03: extended to carry product alongside partner. URL slots
+ * are now `?p=<partner>&pr=<product>&b=<batch>` — three independent params.
+ * `partner` + `product` always travel together at partner / batch levels;
+ * the validation effect in `data-display.tsx` steps deep-links missing
+ * `?pr=` up to root (Pitfall 2 in 39-RESEARCH).
+ *
  * Param names intentionally differ from `use-filter-state.ts`'s FILTER_PARAMS
- * (`partner`/`batch`): drill uses `p` and `b`. This avoids a collision where
- * dimension-filter state and drill state would otherwise share URL slots.
+ * (`partner`/`type`): drill uses `p`, `pr`, and `b`. This avoids collisions
+ * where dimension-filter state and drill state would otherwise share URL slots.
  *
  * Mirrors the memo-key discipline in `use-filter-state.ts`: state and the
  * setter memoize off `paramsString` (the serialized query), not the
@@ -31,10 +46,11 @@ export interface DrillState {
  * Scroll is pinned with `{ scroll: false }` so drilling doesn't jump to top.
  */
 
-// Param names chosen to avoid collision with use-filter-state.ts's FILTER_PARAMS
-// (`partner` / `batch` are already taken by dimension filters).
+// Param names chosen to avoid collision with use-filter-state.ts's FILTER_PARAMS.
 const DRILL_PARTNER_PARAM = 'p';
 const DRILL_BATCH_PARAM = 'b';
+/** Phase 39 PCFG-03: ACCOUNT_TYPE component of the pair. */
+export const DRILL_PRODUCT_PARAM = 'pr';
 
 export function useDrillDown() {
   const searchParams = useSearchParams();
@@ -46,19 +62,28 @@ export function useDrillDown() {
 
   const state: DrillState = useMemo(() => {
     const partner = searchParams.get(DRILL_PARTNER_PARAM);
+    const product = searchParams.get(DRILL_PRODUCT_PARAM);
     const batch = searchParams.get(DRILL_BATCH_PARAM);
-    if (partner && batch) return { level: 'batch', partner, batch };
-    if (partner) return { level: 'partner', partner, batch: null };
-    return { level: 'root', partner: null, batch: null };
+    if (partner && batch) return { level: 'batch', partner, product, batch };
+    if (partner) return { level: 'partner', partner, product, batch: null };
+    return { level: 'root', partner: null, product: null, batch: null };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paramsString]);
 
   const pushWith = useCallback(
-    (next: { partner?: string | null; batch?: string | null }) => {
+    (next: {
+      partner?: string | null;
+      product?: string | null;
+      batch?: string | null;
+    }) => {
       const params = new URLSearchParams(searchParams.toString());
       if ('partner' in next) {
         if (next.partner) params.set(DRILL_PARTNER_PARAM, next.partner);
         else params.delete(DRILL_PARTNER_PARAM);
+      }
+      if ('product' in next) {
+        if (next.product) params.set(DRILL_PRODUCT_PARAM, next.product);
+        else params.delete(DRILL_PRODUCT_PARAM);
       }
       if ('batch' in next) {
         if (next.batch) params.set(DRILL_BATCH_PARAM, next.batch);
@@ -73,25 +98,63 @@ export function useDrillDown() {
     [paramsString, pathname, router],
   );
 
-  const drillToPartner = useCallback(
-    (partnerName: string) => pushWith({ partner: partnerName, batch: null }),
+  /**
+   * Phase 39 PCFG-03 canonical drill setter — writes BOTH partner and product
+   * (the pair) atomically. Replaces the legacy `drillToPartner(name)` shape;
+   * sidebar pair rows and root-table pair cells call this.
+   */
+  const drillToPair = useCallback(
+    (pair: PartnerProductPair) =>
+      pushWith({ partner: pair.partner, product: pair.product, batch: null }),
     [pushWith],
   );
 
+  /**
+   * Phase 39 deprecation shim. Throws in development if called without a
+   * product — every call site must migrate to `drillToPair`. Kept as a thin
+   * wrapper so tooling that grep'd for `drillToPartner` can be migrated
+   * deliberately rather than silently fail at runtime.
+   */
+  const drillToPartner = useCallback(
+    (_partnerName: string) => {
+      const msg =
+        'drillToPartner is deprecated as of Phase 39 — use drillToPair({ partner, product }). ' +
+        'Selecting a partner without a product would re-introduce cross-product blending.';
+      if (process.env.NODE_ENV !== 'production') {
+        throw new Error(msg);
+      } else {
+        // eslint-disable-next-line no-console
+        console.error(msg);
+      }
+    },
+    [],
+  );
+
   const drillToBatch = useCallback(
-    (batchName: string, partnerName?: string) =>
-      pushWith({ partner: partnerName ?? state.partner, batch: batchName }),
-    [pushWith, state.partner],
+    (batchName: string, pair?: PartnerProductPair) => {
+      const partner = pair?.partner ?? state.partner;
+      const product = pair?.product ?? state.product;
+      pushWith({ partner, product, batch: batchName });
+    },
+    [pushWith, state.partner, state.product],
   );
 
   const navigateToLevel = useCallback(
     (level: DrillLevel) => {
-      if (level === 'root') pushWith({ partner: null, batch: null });
+      // Phase 39: 'partner' preserves both partner + product (the pair); only
+      // batch is cleared. 'root' clears all three slots.
+      if (level === 'root') pushWith({ partner: null, product: null, batch: null });
       else if (level === 'partner') pushWith({ batch: null });
       // 'batch' is deepest — no-op
     },
     [pushWith],
   );
 
-  return { state, drillToPartner, drillToBatch, navigateToLevel };
+  return {
+    state,
+    drillToPair,
+    drillToPartner,
+    drillToBatch,
+    navigateToLevel,
+  };
 }

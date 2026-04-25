@@ -3,7 +3,6 @@
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { useCallback, useMemo } from 'react';
 import type { ColumnFiltersState } from '@tanstack/react-table';
-import { getPartnerName, getBatchName } from '@/lib/utils';
 
 /**
  * Mapping from URL query param names to TanStack Table column IDs.
@@ -12,16 +11,23 @@ import { getPartnerName, getBatchName } from '@/lib/utils';
  * date-range preset chip group. Date range is a value-range predicate
  * (BATCH_AGE_IN_MONTHS <= cap), NOT a column-equality filter, so it lives
  * on a standalone `?age=` URL param and is NOT registered in FILTER_PARAMS.
+ *
+ * Phase 39 PCFG-04: `partner` removed — selection is owned by the drill
+ * state (`?p=&pr=`). The standalone partner combobox in the filter popover
+ * was removed in this same plan; legacy `?partner=` URL params are simply
+ * ignored at runtime (filter-state never reads them) and saved-view
+ * snapshots that carried `dimensionFilters.partner` are stripped on load
+ * by `useSavedViews.sanitizeSnapshot`. `type: 'ACCOUNT_TYPE'` stays — still
+ * useful for cross-partner filtering at root (e.g. "show only 1st-party
+ * pairs" across the comparison matrix).
  */
 export const FILTER_PARAMS = {
-  partner: 'PARTNER_NAME',
   type: 'ACCOUNT_TYPE',
 } as const;
 
 type FilterParam = keyof typeof FILTER_PARAMS;
 
 const PARAM_LABELS: Record<FilterParam, string> = {
-  partner: 'Partner',
   type: 'Account Type',
 };
 
@@ -43,10 +49,12 @@ export interface ActiveFilter {
  * no React state is used for filter values. Updates use router.replace() to avoid
  * history pollution.
  *
- * When partner changes and the current batch is invalid for the new partner,
- * the batch param is auto-cleared in the same URL update.
+ * Phase 39 PCFG-04: `partner` is no longer a filter — it lives in drill state
+ * (`?p=&pr=`). The legacy partner→batch cascading logic is gone (batch combobox
+ * removed in 38 FLT-01 + partner combobox removed here). `data` arg retained
+ * (existing callers pass it) for future cascade hooks but not used currently.
  */
-export function useFilterState(data?: Record<string, unknown>[]) {
+export function useFilterState(_data?: Record<string, unknown>[]) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -93,35 +101,15 @@ export function useFilterState(data?: Record<string, unknown>[]) {
         params.delete(param);
       }
 
-      // Auto-clear cascading batch: when partner changes and current batch
-      // is invalid for the new partner, remove batch in the same URL update.
-      // Phase 38 FLT-01: retained because legacy URLs may still carry ?batch=
-      // (a user-shared link from before FLT-01 shipped); keep the cascade so
-      // switching partners strips stale batch params.
-      if (param === 'partner' && data) {
-        const currentBatch = params.get('batch');
-        if (currentBatch) {
-          if (value) {
-            // Check if any row with the new partner has the current batch
-            const batchValid = data.some(
-              (row) =>
-                getPartnerName(row) === value &&
-                getBatchName(row) === currentBatch
-            );
-            if (!batchValid) {
-              params.delete('batch');
-            }
-          }
-          // If partner is cleared (value === null), keep batch as-is —
-          // batch is valid against the full dataset
-        }
-      }
+      // Phase 39 PCFG-04: partner→batch cascade removed (partner no longer a
+      // filter; batch combobox removed in Phase 38 FLT-01). Filter setter is
+      // now a pure URL-param mutator.
 
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [paramsString, pathname, router, data]
+    [paramsString, pathname, router]
   );
 
   const clearAll = useCallback(() => {
