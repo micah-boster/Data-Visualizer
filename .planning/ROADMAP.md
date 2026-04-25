@@ -236,6 +236,17 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 **Depends on:** Phase 40 (data pipeline + chart overlay + KPI baseline shipped 2026-04-25)
 **Effort:** Small-Medium (consumer-side polish — no data-pipeline changes; ~5 surgical edits across `collection-curve-chart.tsx`, `chart-panel.tsx`, `data-display.tsx`, `definitions.ts`, `data-table.tsx` + 2 new files: `useBaselineMode` hook + `ModeledDeltaCell`)
 **Requirements**: PRJ-09 through PRJ-13 (extends v4.1 PRJ family; PRJ-06..08 reserved for v5.0 Phase 49)
+
+**Requirement → behavior → primary plan mapping (locked 2026-04-25 to disambiguate cross-plan claims):**
+
+| ID | Behavior | Primary plan(s) |
+|----|----------|-----------------|
+| PRJ-09 | Chart projection visibility scoping — projections render only when `drillState.level === 'batch'` OR (`drillLevel === 'partner'` AND `baselineMode === 'modeled'` AND `visibleBatchKeys.length === 1`); otherwise hidden | Plan 02 |
+| PRJ-10 | Coverage-absent caption — "No modeled curve for this batch" appears in the chart's DataPanel actions slot when the gate says "should render" but the focused batch has no `BatchCurve.projection` | Plan 02 |
+| PRJ-11 | Table modeled + Δ columns — at partner-level drill in modeled mode, four virtual columns appear (Modeled 6mo, Δ vs Modeled 6mo, Modeled 12mo, Δ vs Modeled 12mo); hidden at root + batch + rolling mode | Plan 03 |
+| PRJ-12 | localStorage persistence (`gsd:baselineMode`, default `'rolling'`) + cross-lender batch-name collision audit gate (Pitfall 3) — collision audit is the precondition for safe persisted-mode behavior across drills, so it lives in the same ID | Plans 01, 02 |
+| PRJ-13 | BaselineSelector unification — one toggle controls chart + KPIs + table together (chart half lands in Plan 02 via `drillLevel`+`baselineMode` props; table half lands in Plan 03 via the visibility-effect on `__MODELED_*` / `__DELTA_*` column ids) | Plans 02, 03 |
+
 **Success Criteria** (what must be TRUE):
   1. Aggregate (partner-level multi-batch) chart view renders ZERO projection `<Line>`s — restoring legibility lost in Phase 40 (CONTEXT § Phase Boundary issue 1)
   2. Batch-level drill always renders projection when coverage exists (decoupled from `baselineMode` per RESEARCH § Pitfall 7 Option 2 — drilling in IS the inspection act)
