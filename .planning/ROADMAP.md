@@ -142,7 +142,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 **Phases:**
 - [x] **Phase 38: Polish + Correctness Pass** — 18 feedback items: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness, KPI cascade, filter fixes, laptop layout, Metabase Import chart-type override (completed 2026-04-24)
 - [ ] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks)
-- [ ] **Phase 40: Projected Curves v1** — Historical-average-based projection line + optional "vs projected curve" KPI baseline
+- [ ] **Phase 40: Projected Curves v1** — Per-batch modeled projection lines from `BOUNCE.FINANCE.CURVES_RESULTS` + optional panel-level "vs modeled curve" KPI baseline
 
 ### Phase 38: Polish + Correctness Pass
 
@@ -208,20 +208,20 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 
 ### Phase 40: Projected Curves v1
 
-**Goal**: A first-pass projected collection-curve line (historical-average-based) that the team can benchmark against, and an optional KPI delta baseline ("vs projected curve") that replaces the opaque "vs rolling avg"
+**Goal**: Per-batch modeled collection-curve overlays (sourced from `BOUNCE.FINANCE.CURVES_RESULTS.PROJECTED_FRACTIONAL`) that the team can benchmark against, and an optional panel-level KPI delta baseline ("vs modeled curve") that joins — rather than replaces — the existing "vs rolling avg" option
 **Depends on**: Phase 36 (Chart Builder — projections overlay on the generic chart renderer). Phase 39 is optional (enables PRJ-05 segment-aware projections). Independent of Phase 38.
 **Effort**: Medium (projection computation + chart overlay + KPI baseline wiring)
 **Requirements**: PRJ-01 through PRJ-05
 **Success Criteria** (what must be TRUE):
-  1. Collection curve chart renders a projected-trajectory line alongside actual batch curves
-  2. Projection extends from the last actual data point to the max-age of the displayed vintages (same truncation contract as CHT-01)
-  3. Projection line is visually distinct (dashed, subdued color, labeled "Projected")
-  4. KPI cards gain a selectable "vs projected curve" baseline option
-  5. When a partner has segments configured (from Phase 39), projections compute per segment when segment split is active
+  1. Collection curve chart renders per-batch modeled projection lines alongside actual batch curves (sourced from `BOUNCE.FINANCE.CURVES_RESULTS`; batches without modeled data render actuals only)
+  2. Modeled projection renders as a full shadow from month 1 through the chart's maxAge (visible-vintage truncation contract, same as CHT-01)
+  3. Each modeled line is dashed, same hue as its batch's actual line, ~60% opacity; labeled "Modeled" in the proximity tooltip with delta-vs-actual on the same row; one legend entry per batch (toggling actual silently toggles modeled)
+  4. KPI cards gain a panel-level baseline selector (Rolling avg | Modeled curve); default remains Rolling avg; "Modeled curve" is disabled when no batch at any KPI horizon has modeled coverage; per-card baseline-absent state renders value-only with a "No modeled curve for this scope" caption + inline "Switch to rolling avg" recovery action
+  5. When Phase 39 segment-split is active, segment filtering affects actuals only; per-batch modeled curves stay at batch grain and remain the benchmark (no segment-specific modeled data required from the warehouse for v1; graceful degradation when Phase 39 has not shipped)
 **Plans**: 3 plans (2 waves)
 - [x] 40-01-PLAN.md — Data Foundation: API route + useCurvesResults hook + BatchCurve.projection merge in usePartnerStats (PRJ-01 data) — Wave 1 — COMPLETE 2026-04-25
-- [ ] 40-02-PLAN.md — Chart Overlay: dashed per-batch modeled <Line>, maxAge truncation reuse, tooltip 'Modeled' row, legend-coupling (PRJ-01 visual + PRJ-02 + PRJ-03 + PRJ-05) — Wave 2
-- [ ] 40-03-PLAN.md — KPI Baseline Selector + ROADMAP/REQUIREMENTS doc re-sync (PRJ-04 + all 5 PRJ wording updates) — Wave 2
+- [x] 40-02-PLAN.md — Chart Overlay: dashed per-batch modeled <Line>, maxAge truncation reuse, tooltip 'Modeled' row, legend-coupling (PRJ-01 visual + PRJ-02 + PRJ-03 + PRJ-05) — Wave 2 — COMPLETE 2026-04-25
+- [x] 40-03-PLAN.md — KPI Baseline Selector + ROADMAP/REQUIREMENTS doc re-sync (PRJ-04 + all 5 PRJ wording updates) — Wave 2 — COMPLETE 2026-04-25
 
 **After Phase 40:** Feeds into v5.0 Phase 49 Dynamic Curve Re-Projection, which extends this with target-anchored, partner-reported, and confidence-band variants.
 
