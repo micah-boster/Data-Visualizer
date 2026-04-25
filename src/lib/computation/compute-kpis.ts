@@ -45,6 +45,14 @@ export function selectCascadeTier(
  * Compute aggregate KPI metrics across all partner rows.
  *
  * All row values are strings from Snowflake -- Number() conversion on every read.
+ *
+ * Phase 39 PCFG-07 — segment-level aggregates are computed by
+ * `kpiAggregatesPerSegment` in `src/lib/partner-config/segment-split.ts`,
+ * which delegates to THIS function per segment's row subset. The
+ * apples-and-oranges invariant
+ *   sum(per-segment.totalCollected) === computeKpis(allRows).totalCollected
+ * holds when segments are non-overlapping (the v1 expectation enforced by
+ * the Setup UI's overlap-warning gate).
  */
 export function computeKpis(
   rows: Record<string, unknown>[],

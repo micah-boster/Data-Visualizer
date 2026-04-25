@@ -36,6 +36,7 @@
  */
 
 import type { ReactElement } from 'react';
+import { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -60,6 +61,18 @@ import { GenericChartLegend } from './generic-chart-legend';
 import { ScatterTooltip } from './scatter-tooltip';
 import { EmptyState } from '@/components/patterns/empty-state';
 import { resolveColumnWithFallback } from '@/lib/charts/stale-column';
+import { usePartnerConfigContext } from '@/contexts/partner-config';
+import {
+  SEGMENT_VIRTUAL_COLUMN,
+  tagRowsWithSegment,
+  OTHER_BUCKET_LABEL,
+} from '@/lib/partner-config/segment-split';
+import {
+  pairKey,
+  displayNameForPair,
+  type PartnerProductPair,
+} from '@/lib/partner-config/pair';
+import { getPartnerName, getStringField } from '@/lib/utils';
 import type { ColumnConfig } from '@/lib/columns/config';
 import type {
   ChartDefinition,
@@ -84,6 +97,13 @@ export interface GenericChartProps {
    * 36-03-PLAN.md and to signal intent to readers.
    */
   onDefinitionChange: (next: ChartDefinition) => void;
+  /**
+   * Phase 39 PCFG-07 — active pair, or null at root/cross-partner scope.
+   * When the user picks "Segment" as the series axis, this drives whether
+   * row tagging uses single-pair segments (drilled-in scope) or per-pair
+   * segments (multi-pair scope at root).
+   */
+  pair?: PartnerProductPair | null;
 }
 
 /**
@@ -139,7 +159,32 @@ export function GenericChart({
   rows,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onDefinitionChange: _onDefinitionChange,
+  pair,
 }: GenericChartProps) {
+  // Phase 39 PCFG-07 — segment-aware row prep. When the user picks
+  // SEGMENT_VIRTUAL_COLUMN as the series axis, tag every row with its
+  // segment label BEFORE pivotForSeries so the existing categorical-pivot
+  // pipeline groups by __SEGMENT__ value just like any other column.
+  //
+  //  - Single-pair scope (pair !== null): use the active pair's segments,
+  //    fall back to a single 'Other' tag when no segments configured.
+  //  - Multi-pair scope (pair === null): tag each row with its own pair's
+  //    segments. Pairs without segments emit `__SEGMENT__ = '<displayName>'`
+  //    so they render as a single rolled-up series per pair, while pairs
+  //    with segments split into per-segment series. Per-pair displayName
+  //    requires productsPerPartner counts — computed inline from the row set.
+  const partnerConfig = usePartnerConfigContext();
+  const seriesIsSegment =
+    'series' in definition &&
+    definition.series?.column === SEGMENT_VIRTUAL_COLUMN;
+
+  const segmentTaggedRows = useSegmentTaggedRows(
+    rows,
+    seriesIsSegment,
+    pair ?? null,
+    partnerConfig.configs,
+  );
+  const effectiveRows = seriesIsSegment ? segmentTaggedRows : rows;
   // --- Resolve axes (Pitfall 3: read-only; never writes back) --------------
   const xResolved = resolveColumnWithFallback(
     definition.type,
@@ -213,11 +258,29 @@ export function GenericChart({
   //     consumes scatterGroups below).
   const seriesRef =
     'series' in definition ? definition.series ?? null : null;
+  // Phase 39 PCFG-07 — short-circuit the stale-column resolver when the
+  // series ref is the SEGMENT_VIRTUAL_COLUMN sentinel. The sentinel is not
+  // a registered column in COLUMN_CONFIGS by design; the resolver would
+  // flag it as stale and fall back to the first eligible column, which
+  // would silently break segment-split mode. We bypass the resolver and
+  // synthesize a ColumnConfig-shaped record so the rest of the pivot path
+  // treats it like any other categorical column.
+  const isSegmentSeries =
+    seriesRef !== null && seriesRef.column === SEGMENT_VIRTUAL_COLUMN;
   const seriesResolved =
-    seriesRef !== null
+    seriesRef !== null && !isSegmentSeries
       ? resolveColumnWithFallback(definition.type, 'series', seriesRef)
       : null;
-  const seriesCol = seriesResolved?.config ?? null;
+  const seriesCol: ColumnConfig | null = isSegmentSeries
+    ? {
+        key: SEGMENT_VIRTUAL_COLUMN,
+        label: 'Segment',
+        type: 'text',
+        defaultVisible: false,
+        nullDisplay: '\u2014',
+        identity: false,
+      }
+    : seriesResolved?.config ?? null;
   if (seriesResolved?.stale && seriesResolved.requested) {
     banners.push(
       <StaleColumnWarning
@@ -229,7 +292,7 @@ export function GenericChart({
     );
   }
 
-  const { pivoted, seriesKeys } = pivotForSeries(rows, xCol.key, yCol.key, seriesCol?.key ?? null);
+  const { pivoted, seriesKeys } = pivotForSeries(effectiveRows, xCol.key, yCol.key, seriesCol?.key ?? null);
 
   // --- ChartConfig — single entry (no series) or N entries (one per series) --
   const chartConfig: ChartConfig = {};
@@ -366,7 +429,7 @@ export function GenericChart({
     }> = [];
     if (seriesCol) {
       const groupMap = new Map<string, Array<Record<string, unknown>>>();
-      for (const row of rows) {
+      for (const row of effectiveRows) {
         const raw = row[seriesCol.key];
         if (raw === null || raw === undefined) continue;
         const sv = String(raw);
@@ -426,7 +489,7 @@ export function GenericChart({
                   />
                 ))
               ) : (
-                <Scatter data={rows} dataKey={yCol.key} fill="var(--chart-1)" />
+                <Scatter data={effectiveRows} dataKey={yCol.key} fill="var(--chart-1)" />
               )}
             </ScatterChart>
           </ChartContainer>
@@ -619,4 +682,87 @@ function pivotForSeries(
     pivoted: Array.from(buckets.values()),
     seriesKeys,
   };
+}
+
+/**
+ * Phase 39 PCFG-07 — segment-tagging row prep.
+ *
+ * When the user selects "Segment" as the series axis, every row needs a
+ * `__SEGMENT__` virtual column stamped before pivot. This hook centralizes
+ * the two regimes:
+ *   - Single-pair scope: tag with the active pair's segments via
+ *     `tagRowsWithSegment`.
+ *   - Multi-pair scope: per-pair tagging — each row consults its own
+ *     `(PARTNER_NAME, ACCOUNT_TYPE)` to pick which pair's segments apply.
+ *     Pairs without segments emit `__SEGMENT__ = '<pair displayName>'` so
+ *     they render as a single rolled-up series per pair (CONTEXT lock).
+ */
+function useSegmentTaggedRows(
+  rows: Array<Record<string, unknown>>,
+  seriesIsSegment: boolean,
+  pair: PartnerProductPair | null,
+  configs: ReturnType<typeof usePartnerConfigContext>['configs'],
+): Array<Record<string, unknown>> {
+  return useMemo(() => {
+    if (!seriesIsSegment) return rows;
+
+    // Single-pair scope: tag with that pair's segments. Pair with no
+    // segments → all rows get tagged 'Other' (chart still renders, single
+    // series — degenerate but graceful).
+    if (pair) {
+      const entry = configs.find(
+        (c) => c.partner === pair.partner && c.product === pair.product,
+      );
+      const segments = entry?.segments ?? [];
+      return tagRowsWithSegment(rows, segments);
+    }
+
+    // Multi-pair scope: index configs by pairKey, count distinct products
+    // per partner so displayName suffixing matches the rest of the app
+    // (Phase 39 PCFG-03 displayNameForPair contract).
+    const configByPairKey = new Map<string, typeof configs[number]>();
+    for (const c of configs) {
+      configByPairKey.set(pairKey({ partner: c.partner, product: c.product }), c);
+    }
+    const productsPerPartner = new Map<string, Set<string>>();
+    for (const r of rows) {
+      const partner = getPartnerName(r);
+      const product = getStringField(r, 'ACCOUNT_TYPE');
+      if (!partner || !product) continue;
+      let set = productsPerPartner.get(partner);
+      if (!set) {
+        set = new Set();
+        productsPerPartner.set(partner, set);
+      }
+      set.add(product);
+    }
+
+    return rows.map((row) => {
+      const partner = getPartnerName(row);
+      const product = getStringField(row, 'ACCOUNT_TYPE');
+      const rowPair: PartnerProductPair = { partner, product };
+      const entry = configByPairKey.get(pairKey(rowPair));
+      const segments = entry?.segments ?? [];
+      if (segments.length === 0) {
+        // No segments configured for this pair — tag with the pair display
+        // name so the entire pair renders as a single rolled-up series.
+        const productCount = productsPerPartner.get(partner)?.size ?? 1;
+        const label = displayNameForPair(rowPair, productCount);
+        return { ...row, [SEGMENT_VIRTUAL_COLUMN]: label };
+      }
+      // Pair has segments — tag with first matching segment, falling back
+      // to 'Other' for uncovered rows. First-match-wins matches
+      // tagRowsWithSegment's contract.
+      let label: string = OTHER_BUCKET_LABEL;
+      for (const s of segments) {
+        const v = row[s.column];
+        if (v == null) continue;
+        if (s.values.includes(String(v))) {
+          label = s.name;
+          break;
+        }
+      }
+      return { ...row, [SEGMENT_VIRTUAL_COLUMN]: label };
+    });
+  }, [rows, seriesIsSegment, pair, configs]);
 }

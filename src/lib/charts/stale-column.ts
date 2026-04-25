@@ -38,6 +38,22 @@ export interface ResolvedColumn {
   requested: string | null;
 }
 
+/**
+ * Phase 39 PCFG-07 — sentinel-key prefix recognized as "intentionally not in
+ * COLUMN_CONFIGS." Keys starting with `__` are virtual-axis sentinels (e.g.
+ * `__SEGMENT__` from segment-split.ts) — they ride through ChartDefinition
+ * unchanged and the renderer (GenericChart) handles them as synthetic
+ * categorical columns. The stale-column resolver MUST NOT flag them as
+ * stale; doing so would cause the resolver to silently swap the user's
+ * picked sentinel for whatever the first eligible registry column happens
+ * to be, breaking segment-split mode.
+ *
+ * Callers (GenericChart) typically short-circuit BEFORE calling this
+ * function when they detect the sentinel, but we defense-in-depth here so
+ * any future caller path is safe by default.
+ */
+const SENTINEL_KEY_PREFIX = '__';
+
 export function resolveColumnWithFallback(
   chartType: ChartTypeForAxis,
   axis: AxisRole,
@@ -46,6 +62,13 @@ export function resolveColumnWithFallback(
   if (requested === null) return null;
 
   const requestedKey = requested.column;
+
+  // Phase 39 PCFG-07 — sentinel keys (e.g. __SEGMENT__) are valid by design,
+  // never stale. Caller is responsible for synthesizing a ColumnConfig.
+  if (requestedKey.startsWith(SENTINEL_KEY_PREFIX)) {
+    return null;
+  }
+
   const found = COLUMN_CONFIGS.find((c) => c.key === requestedKey);
 
   if (found && isColumnEligible(chartType, axis, requestedKey)) {

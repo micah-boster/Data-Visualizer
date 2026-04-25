@@ -141,6 +141,7 @@ export function ChartPanel({
         definition={definition}
         rows={rows}
         onDefinitionChange={onDefinitionChange}
+        pair={pair ?? null}
       />
     </DataPanel>
   );

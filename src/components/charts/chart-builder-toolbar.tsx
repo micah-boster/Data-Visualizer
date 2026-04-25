@@ -21,9 +21,11 @@
  */
 
 import { ToolbarDivider } from '@/components/patterns/toolbar-divider';
-import { AxisPicker } from './axis-picker';
+import { AxisPicker, type SyntheticAxisOption } from './axis-picker';
 import { ChartTypeSegmentedControl } from './chart-type-segmented-control';
 import { switchChartType } from '@/lib/charts/transitions';
+import { usePartnerConfigContext } from '@/contexts/partner-config';
+import { SEGMENT_VIRTUAL_COLUMN } from '@/lib/partner-config/segment-split';
 import type {
   ChartDefinition,
   GenericChartDefinition,
@@ -75,6 +77,25 @@ export function ChartBuilderToolbar({
   const seriesPickerLabel =
     definition.type === 'scatter' ? 'Label' : 'Series';
 
+  // Phase 39 PCFG-07 — Segment synthetic option for the series axis. Enabled
+  // when ANY pair has segments configured. When no pairs have segments, the
+  // option still renders (so users discover the feature) but is disabled with
+  // a tooltip explaining how to enable it.
+  const partnerConfig = usePartnerConfigContext();
+  const hasAnySegments = partnerConfig.configs.some(
+    (c) => c.segments.length > 0,
+  );
+  const seriesSyntheticOptions: SyntheticAxisOption[] = [
+    {
+      column: SEGMENT_VIRTUAL_COLUMN,
+      label: 'Segment (from partner config)',
+      caption: 'Auto-grouped by per-pair segment rules',
+      disabled: !hasAnySegments,
+      disabledReason:
+        'No segments configured — use the Setup UI on a partner to define segments.',
+    },
+  ];
+
   return (
     <div className="flex items-center gap-inline">
       <ChartTypeSegmentedControl
@@ -109,6 +130,7 @@ export function ChartBuilderToolbar({
         value={currentSeries}
         onChange={handleSeriesChange}
         placeholder="None"
+        syntheticOptions={seriesSyntheticOptions}
       />
     </div>
   );
