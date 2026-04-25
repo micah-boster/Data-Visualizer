@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-25T03:10:33Z"
+last_updated: "2026-04-25T03:14:35.102Z"
 progress:
   total_phases: 40
   completed_phases: 39
@@ -43,6 +43,15 @@ Progress: [████████████████░░░░] 3/4 Pha
 
 ### Decisions
 
+- [Phase 39-03]: PRODUCT_TYPE stored as a SEPARATE optional filter key (not folded into ACCOUNT_TYPE) — keeps evaluator semantics explicit (cross-attribute AND when both are set), preserves additive-optional schema invariant, lets the UI render two distinct labeled controls. Storing them as one key would have required a runtime mode flag and broken the .strict() schema contract.
+- [Phase 39-03]: DERIVED_LIST_ID_PREFIX = '__derived__' (double-underscore reserved sentinel) — crypto.randomUUID() output never starts with this prefix, so collisions with user-created list IDs are impossible. Callers detect derived lists via cheap id.startsWith() rather than reading list.source. Reusable convention for any future auto-maintained collection (derived saved views, auto-cohorts).
+- [Phase 39-03]: Derived lists computed inside usePartnerLists from a new optional `rows` arg (NOT threaded as props) — keeps merge logic colocated with persistence/CRUD, ensures derived lists auto-strip on persistence (filter before persistPartnerLists), prevents accidental dual-source-of-truth. PartnerListsProvider sources rows via useData() (TanStack Query dedupes by queryKey — no extra request).
+- [Phase 39-03]: Visual distinction for derived lists = Sparkles icon + "Auto" pill (.text-label tier — 12px / mono / weight 500) — preserves type-token discipline (no ad-hoc font-medium pairing). Rename disabled via Tooltip + opacity-50 (NOT hidden) — affordance visible so the lock is discoverable.
+- [Phase 39-03]: Open Q #4 resolved via 'derived variant + reappears-on-refresh semantics' — alternative was a permanent 'don't-show' flag with additional storage state and undelete complexity. Re-derivation gives users a single mental model: derived lists are computed, not stored. Sonner toast on derived-delete: "Auto-list — will reappear on next refresh".
+- [Phase 39-03]: SegmentResolver type lives in filter-evaluator.ts (not types.ts) — single import path for the evaluator + its resolver type. Caller wires the resolver from usePartnerConfigContext().configs in create-list-dialog. Evaluator stays React-/context-free.
+- [Phase 39-03]: filter-evaluator degrades gracefully on missing SEGMENT resolver (console.warn + skip the SEGMENT check) rather than throwing — defensive against hand-edited localStorage payloads with stale SEGMENT entries that shouldn't crash list rendering.
+- [Phase 39-03]: Defensive try/catch around usePartnerConfigContext() in create-list-dialog (parallel-wave provider absence guard) — Rules of Hooks NOT violated: hook is called every render, only the throw path is caught. Plan 39-02 had landed by the time 39-03 finished, but the defensive pattern stays as cheap insurance for future refactors.
+- [Phase 39-03]: filter-evaluator passes segmentResolver only when filters.SEGMENT is non-empty (perf optimization in create-list-dialog) — skips per-row segment lookup work for the common case (lists without SEGMENT constraints).
 - [Phase 39-01]: Pair encoding lives in `src/lib/partner-config/pair.ts` as pure helpers (PartnerProductPair, pairKey/parsePairKey, PRODUCT_TYPE_ORDER, PRODUCT_TYPE_LABELS, sortPairs, displayNameForPair, labelForProduct). Producers compute productsPerPartner once and pass it into displayNameForPair — keeps the helper trivially testable, avoids hidden global state. Map<pairKey, X> is the canonical container for pair-keyed lookups (anomalies, cross-partner entries, sidebar flagged set).
 - [Phase 39-01]: DrillState gains `product: string | null` as a third axis alongside partner/batch (NOT folded into a compound key). URL slots `?p=&pr=&b=` stay orthogonal to filter URL params (`?type=&age=`); drill owns selection, filter narrows scope. Mirrors Phase 32-02 / 34-04 / 38 FLT-01 additive-optional schema evolution (drill.product? landed without a schema version bump).
 - [Phase 39-01]: drillToPartner shim THROWS in dev (not warns) so any straggler call-site fails loudly during local testing rather than silently dropping selection (which would re-introduce cross-product blending — the exact thing PCFG-04 forbids). Production falls back to console.error — never crashes.
@@ -392,4 +401,5 @@ Resume file: None
 | Phase 38 P05 | 12 min | 4 + auto-approved checkpoint tasks | 4 created / 10 modified files |
 | Phase 40-projected-curves-v1 P02 | 5min | 3 tasks | 7 files |
 | Phase 39 P02 | 9 | 4 tasks | 16 files |
+| Phase 39 P03 | 9 min | 4 tasks | 12 files |
 

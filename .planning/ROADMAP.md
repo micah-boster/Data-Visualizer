@@ -107,7 +107,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 36. Chart Builder | 5/5 | Complete    | 2026-04-24 | - |
 | 37. Metabase SQL Import | 3/3 | Complete    | 2026-04-24 | - |
 | 38. Polish + Correctness Pass | 5/5 | Complete    | 2026-04-25 | - |
-| 39. Partner Config Module | 2/4 | In Progress|  | - |
+| 39. Partner Config Module | 3/4 | In Progress|  | - |
 | 40. Projected Curves v1 | 3/3 | Complete | 2026-04-25 | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
 | 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
@@ -199,7 +199,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 **Plans**: 4 plans (3 waves)
 - [x] 39-01-PLAN.md — Pair migration: sidebar + drill state + root table + cross-partner + anomalies + saved-view schema (PCFG-01/02/03/04) — Wave 1 gate (Done 2026-04-25)
 - [x] 39-02-PLAN.md — Segment config schema + storage + usePartnerConfig + Partner Setup slide-over Sheet (PCFG-05) — Wave 2 (Done 2026-04-25)
-- [ ] 39-03-PLAN.md — Partner Lists extension: PRODUCT_TYPE + SEGMENT filters + derived auto-lists (PCFG-06) — Wave 2
+- [x] 39-03-PLAN.md — Partner Lists extension: PRODUCT_TYPE + SEGMENT filters + derived auto-lists (PCFG-06) — Wave 2 (Done 2026-04-25)
 - [ ] 39-04-PLAN.md — Segment-split dimension on Collection Curve chart + KPIs + Chart Builder (PCFG-07) — Wave 3
 
 **After Phase 39:** Enables Phase 40's PRJ-05 (segment-aware projections) and v5.0 Phase 49 Dynamic Curve Re-Projection to operate at segment granularity.
