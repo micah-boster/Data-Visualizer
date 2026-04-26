@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-25T17:43:01.285Z"
+last_updated: "2026-04-26T04:43:26.246Z"
 progress:
   total_phases: 41
   completed_phases: 40
-  total_plans: 117
-  completed_plans: 117
+  total_plans: 120
+  completed_plans: 118
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 39 (Partner Config Module) COMPLETE 2026-04-25 — all 4 plans shipped, all 7 PCFG requirements closed (PCFG-01..07). Phase 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
-Plan: Phase 39 — 39-01 (pair migration GATE) + 39-02 (segment config + Setup UI, PCFG-05) + 39-03 (partner-lists extension, PCFG-06) + 39-04 (segment-split charts/KPIs, PCFG-07) all COMPLETE 2026-04-25. Phase 40 — all 3 plans COMPLETE 2026-04-25.
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 + Phase 40 + Phase 39 ALL COMPLETE 2026-04-25.
-Last activity: 2026-04-25 — 39-04 (segment-split charts/KPIs, PCFG-07) shipped in ~11min. Centralized segment-split helpers in `src/lib/partner-config/segment-split.ts` (splitRowsBySegment, kpiAggregatesPerSegment, reshapeCurvesPerSegment, tagRowsWithSegment, averageCurvesPerSegment) with stable __SEGMENT__ + 'Other' sentinels and apples-and-oranges invariant smoke (10 assertion blocks; sum of per-segment.totalCollected === pair.totalCollected). PartnerStats now exposes pair-filtered rawRows so chart + KPI surfaces consume the same row set the helpers compute over (Pitfall 7 lock — single SoT). CollectionCurveChart split toggle (Switch primitive in actions slot) renders one synthetic dollar-weighted-average curve per segment, reusing existing pivot pipeline. KpiSummaryCards independent toggle + grouped layout (stacked rows; Other muted via bg-surface-inset; KpiCardRow extracted so rolled-up + per-segment paths share cascade machinery). Chart Builder Segment series option (synthetic AxisPicker option, gated on hasAnySegments, Tooltip-explained when disabled). GenericChart useSegmentTaggedRows: single-pair tags from pair's segments, multi-pair tags per-row by row's (PARTNER_NAME, ACCOUNT_TYPE) with displayName fallback for unconfigured pairs (CONTEXT lock honored). Stale-column resolver allowlists '__'-prefixed sentinels (defense-in-depth). Derived effective-state pattern dodges react-hooks/set-state-in-effect lint. 3 atomic commits + 10-block invariant smoke + SUMMARY.md. PCFG-07 closed; v4.1 milestone COMPLETE.
+Phase: 40.1 (Projected Curves Polish) IN PROGRESS — 1 of 3 plans shipped (40.1-01 foundation primitives COMPLETE 2026-04-26). Plans 02 (chart visibility scoping + coverage caption, PRJ-09/10/13) and 03 (table modeled+delta cols, PRJ-11/13) queued next. Phase 39 (Partner Config Module) COMPLETE 2026-04-25 — all 4 plans shipped, all 7 PCFG requirements closed (PCFG-01..07). Phase 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
+Plan: Phase 40.1 — 40.1-01 (foundation primitives, PRJ-12) COMPLETE 2026-04-26 in ~4min (3 atomic commits). Audit script scanned 477 (pair, batch) entries — zero cross-lender batch-name collisions found. lenderByBatch ships as-is. useBaselineMode hook + ModeledDeltaCell component ready for Plans 02 + 03 to consume.
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 + Phase 40 + Phase 39 ALL COMPLETE 2026-04-25. v4.1 Phase 40.1 IN PROGRESS — 1/3 plans shipped 2026-04-26.
+Last activity: 2026-04-26 — 40.1-01 (foundation primitives, PRJ-12) shipped in ~4min. Cross-lender batch-name collision audit (40.1-01-AUDIT.md) confirmed zero collisions across 477 (pair, batch) entries including the 3-lender Imprint family — lenderByBatch first-seen-wins is empirically safe; one-line audit-reference comment added at use-partner-stats.ts:54. useBaselineMode hook persists BaselineMode to localStorage at key 'gsd:baselineMode' (CONTEXT lock); SSR-safe with try/catch on read+write; isValid type-guard rejects corrupt stored values; tuple shape mirrors useHeatmapPreference exactly. ModeledDeltaCell renders signed +X.Xpp / -X.Xpp / 0.0pp with green/red/gray polarity-coloring via getPolarity(metricKey); ±0.5pp flat threshold matches recoveryRate display precision; uses .text-body-numeric only (passes check:tokens); no tooltip per RESEARCH anti-pattern. 3 atomic commits + audit doc + SUMMARY. Plan 02 (data-display BaselineSelector swap + chart visibility scoping) and Plan 03 (table modeled+delta column integration) ready to start.
 
-Progress: [████████████████████] 4/4 Phase 39 plans COMPLETE | [████████████████████] 3/3 Phase 40 plans COMPLETE
+Progress: [████████████████████] 4/4 Phase 39 plans COMPLETE | [████████████████████] 3/3 Phase 40 plans COMPLETE | [██████░░░░░░░░░░░░░░] 1/3 Phase 40.1 plans COMPLETE
 
 ## Shipped Milestones
 
@@ -343,6 +343,9 @@ Progress: [████████████████████] 4/4 Pha
 - [Phase 39]: [Phase 39-02]: Validation severity ladder — empty-fields/duplicate-names/'Other'-reserved are HARD blocks (no force-confirm). Overlapping value-sets are a WARNING with an inline banner; first save attempt blocks, second save attempt after user clicks 'Confirm and save anyway' bypasses via forceWarnAccepted flag. Recognizes that real-world transitions may legitimately overlap even though the partition invariant is the goal.
 - [Phase 39]: [Phase 39-02]: viable-columns heuristic excludes PARTNER_NAME + ACCOUNT_TYPE (self-referential within a pair-scoped row set), LENDER_ID (typically 1:1 with partner — would only show one value), BATCH (too high-cardinality). Distinct-value count must be 2..20 (degenerate vs ultra-high-cardinality bounds). Returns [] today against batch-summary; auto-detects future ETL-added columns.
 - [Phase 39]: [Phase 39-02]: ContextMenu wires every sidebar pair row via Base UI render-prop delegation (<ContextMenu.Trigger render={<SidebarMenuButton ...}>) — composes refs and event handlers correctly with the existing primitive (Pitfall 8 in 39-RESEARCH). Right-click opens menu without disturbing click-to-drill or keyboard nav. Popup styled via bg-surface-overlay + shadow-elevation-overlay (semantic tokens, not raw shadow-md). Items use text-body + data-[highlighted]:bg-accent.
+- [Phase 40.1-01]: Cross-lender batch-name collision audit (40.1-01-AUDIT.md): 0 collisions across 477 (pair, batch) entries including 3-lender Imprint family. lenderByBatch ships as Map<string, string> first-seen-wins. Plan 03's projectionByBatch lookup keyed on batchName alone is provably safe. Re-run audit if data model evolves (script body recoverable from PLAN.md git history).
+- [Phase 40.1-01]: useBaselineMode tuple shape mirrors useHeatmapPreference exactly — single SoT pattern for persisted UI preferences. Storage key 'gsd:baselineMode' (CONTEXT lock); default 'rolling' for zero regression on first load. isValid() type-guard rejects corrupt stored values, falling back to default. try/catch on read+write for private-browsing/quota-exceeded survival.
+- [Phase 40.1-01]: ModeledDeltaCell uses 'pp' (percentage points) unit — difference of two percentages is in pp by convention. Consumers pass deltaPercent on 0..100 scale (Phase 40 Pitfall 5: recoveryRate is 0..100 throughout app); cell does NOT divide by 100. ±0.5pp flat threshold matches recoveryRate's 1-decimal display precision; flat renders as '0.0pp' regardless of input sign noise. No tooltip per RESEARCH anti-pattern (per-row tooltips = visual noise).
 
 ### Pending Todos
 
@@ -411,4 +414,5 @@ Resume file: None
 | Phase 40-projected-curves-v1 P02 | 5min | 3 tasks | 7 files |
 | Phase 39 P02 | 9 | 4 tasks | 16 files |
 | Phase 39 P03 | 9 min | 4 tasks | 12 files |
+| Phase 40.1 P01 | 4min | 3 tasks | 4 files |
 
