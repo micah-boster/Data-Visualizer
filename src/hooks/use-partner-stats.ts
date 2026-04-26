@@ -52,6 +52,10 @@ export function usePartnerStats(
     // Per-batch lenderId lookup (Pitfall 1 — partner may span multiple lenders,
     // so a partner-uniform lookup would silently drop projections for batches
     // under a non-default lender). Walk partnerRows once.
+    // Audit 2026-04-26 (40.1-01-AUDIT.md): zero cross-lender batch-name
+    // collisions in the production snapshot (477 (pair, batch) entries scanned,
+    // including the worst-case 3-lender Imprint family) — first-seen-wins is
+    // safe. Re-run the audit if the data model evolves.
     const lenderByBatch = new Map<string, string>();
     for (const r of partnerRows) {
       // Read via getBatchName (column is `BATCH`, not `BATCH_` — that's
