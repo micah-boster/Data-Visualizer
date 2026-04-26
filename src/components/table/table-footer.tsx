@@ -70,7 +70,19 @@ export function TableFooter({ table }: TableFooterProps) {
       <tr>
         {visibleColumns.map((column) => {
           const pinningStyles = getCommonPinningStyles(column, { isHeader: true });
-          const meta = column.columnDef.meta as { type?: string; identity?: boolean } | undefined;
+          // Phase 40.1 Plan 04 (Gap 1): meta.footerFormatter is an optional
+          // per-column escape hatch consulted before the generic formatAggregate
+          // path. Used by columns whose stored values are on a non-default scale
+          // (e.g. modeled cols on 0..100) or need a non-default unit suffix
+          // (e.g. delta cols emit "pp" not "%"). Pure addition — columns without
+          // footerFormatter fall through to the existing behavior unchanged.
+          const meta = column.columnDef.meta as
+            | {
+                type?: string;
+                identity?: boolean;
+                footerFormatter?: (avg: number | null, label: string) => string;
+              }
+            | undefined;
           const colType = meta?.type ?? 'text';
           const agg = aggregates[column.id];
 
@@ -81,7 +93,13 @@ export function TableFooter({ table }: TableFooterProps) {
             // Skip text/date columns in footer (row count already placed above)
             displayValue = '';
           } else if (agg) {
-            displayValue = formatAggregate(agg.primary, colType, agg.label);
+            // Per-column footer override takes precedence over the generic path.
+            // Used by the modeled+delta cols (0..100 scale → "%" without ×100;
+            // delta cols → signed "pp" suffix). Other percentage cols fall
+            // through to formatAggregate exactly as before.
+            displayValue = meta?.footerFormatter
+              ? meta.footerFormatter(agg.primary, agg.label)
+              : formatAggregate(agg.primary, colType, agg.label);
           }
 
           const isNumeric = isNumericType(colType);

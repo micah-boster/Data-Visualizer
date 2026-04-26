@@ -157,7 +157,19 @@ function buildModeledColumns(): ColumnDef<Record<string, unknown>>[] {
           // Pitfall 5: recoveryRate is 0..100; formatPercentage assumes 0..1.
           return getCellRenderer('percentage', modeledKey, (value as number) / 100);
         },
-        meta: { type: 'percentage' },
+        meta: {
+          type: 'percentage',
+          // Phase 40.1 Plan 04 — Gap 1 (footer-aggregate-unit-mismatch).
+          // The generic TableFooter path routes percentage cols through
+          // formatPercentage (×100), but our modeled values are already on
+          // the 0..100 scale (Pitfall 5). Format the aggregate directly so
+          // the footer "Avg" magnitude matches the body cells (e.g. ~42.3%,
+          // NOT ~4230%).
+          footerFormatter: (avg: number | null, label: string) => {
+            if (avg == null) return '\u2014';
+            return `${label}: ${avg.toFixed(1)}%`;
+          },
+        },
       } satisfies ColumnDef<Record<string, unknown>>,
       {
         id: deltaKey,
@@ -186,7 +198,20 @@ function buildModeledColumns(): ColumnDef<Record<string, unknown>>[] {
         //       a new meta.type entry + formatter registry change for one
         //       cell type — disproportionate to v1 scope.
         // FLAG FOR v4.2 follow-up if user feedback requests WYSIWYG delta format.
-        meta: { type: 'percentage' },
+        meta: {
+          type: 'percentage',
+          // Phase 40.1 Plan 04 — Gap 1 (footer-aggregate-unit-mismatch).
+          // Δ values are signed and on the 0..100 scale (Plan 01 contract;
+          // ModeledDeltaCell does NOT divide). Footer must match body unit
+          // convention: signed "pp" suffix, NOT "%". Without this override the
+          // generic formatPercentage path would emit "+0.05%" for an avg of
+          // 5pp — both wrong magnitude and wrong unit.
+          footerFormatter: (avg: number | null, label: string) => {
+            if (avg == null) return '\u2014';
+            const sign = avg > 0 ? '+' : '';
+            return `${label}: ${sign}${avg.toFixed(1)}pp`;
+          },
+        },
       } satisfies ColumnDef<Record<string, unknown>>,
     ];
   });
