@@ -101,13 +101,22 @@ export function DraggableHeader({
               <GripVertical className="h-3.5 w-3.5" />
             </span>
           )}
-          {/* POL-06 (Phase 38): truncate long labels with ellipsis; full
-              label revealed via native title attribute on hover. Native title
-              preferred over Tooltip primitive per RESEARCH: headers re-render
-              on drill/filter change (per-cell Tooltip mounts are costly) and
-              drag pointer events can conflict with hover-open Tooltips. */}
+          {/* POL-06 (Phase 38) reversal — Phase 40.1 Plan 04 (Gap 2,
+              header-truncation-illegible).
+              Direct user feedback 2026-04-26: 'impossible to use if you
+              can't read any column titles without a tooltip'. The
+              truncate-with-tooltip pattern was hostile to scanning.
+              Switched to line-clamp-2 so labels wrap to up to 2 lines
+              and remain readable on first glance. Native title retained
+              as last-resort fallback for the rare 3+ line edge case
+              (still preferred over Tooltip primitive per the original
+              POL-06 rationale: headers re-render on drill/filter change
+              and drag pointer events conflict with hover-open Tooltips).
+              max-w-[180px] removed — line-clamp-2 honors the column's
+              actual size (set per-col via ColumnDef.size); imposing a
+              180px cap would constrain wider columns. */}
           <span
-            className="truncate min-w-0 max-w-[180px]"
+            className="line-clamp-2 break-words leading-snug min-w-0"
             title={
               typeof header.column.columnDef.header === 'string'
                 ? header.column.columnDef.header
