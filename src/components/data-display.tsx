@@ -35,6 +35,7 @@ import { useActivePartnerList } from '@/contexts/active-partner-list';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { useSavedViews } from '@/hooks/use-saved-views';
 import { useFilterState } from '@/hooks/use-filter-state';
+import { useBaselineMode } from '@/hooks/use-baseline-mode';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
 import { computeKpis } from '@/lib/computation/compute-kpis';
 import { getPartnerName, getBatchName, getStringField, coerceAgeMonths } from '@/lib/utils';
@@ -276,11 +277,15 @@ export function DataDisplay() {
   // pair-aware: filters by both PARTNER_NAME and ACCOUNT_TYPE.
   const partnerStats = usePartnerStats(selectedPair, filteredRawData);
 
-  // Phase 40 PRJ-04 — panel-level baseline selector state. Default 'rolling'
-  // for zero regression with existing users (CONTEXT lock); 'modeled' is
-  // opt-in. Persistence is intentionally out of scope for v1 (CONTEXT
-  // Deferred Idea: localStorage/URL-sync deferred to a fast-follow).
-  const [baselineMode, setBaselineMode] = useState<BaselineMode>('rolling');
+  // Phase 40.1 PRJ-12 — baselineMode persists across sessions via localStorage
+  // (key 'gsd:baselineMode'). Default 'rolling' for zero regression with users
+  // who have never seen the toggle. Per CONTEXT § Persistence: replaces the
+  // inline useState that shipped in Phase 40; the legacy reset-to-rolling
+  // effect (formerly here) is REMOVED below to prevent stomping on persisted
+  // intent. Per-card recovery action ("Switch to rolling avg") at
+  // kpi-summary-cards.tsx:462-470 handles empty-scope recovery without
+  // overwriting localStorage.
+  const [baselineMode, setBaselineMode] = useBaselineMode();
 
   // True when ANY visible batch in the current scope has projection coverage.
   // Drives BaselineSelector's disabled state for the modeled toggle. Reading
@@ -295,15 +300,12 @@ export function DataDisplay() {
     [partnerStats?.curves],
   );
 
-  // Reset to rolling if modeled becomes unavailable mid-session (e.g., scope
-  // change removes all modeled-coverage batches, or user switches partners
-  // away from one that has projection data). Prevents a stuck "modeled"
-  // selection on a scope where it's no longer meaningful.
-  useEffect(() => {
-    if (!modeledAvailable && baselineMode === 'modeled') {
-      setBaselineMode('rolling');
-    }
-  }, [modeledAvailable, baselineMode]);
+  // Phase 40.1 — reset-to-rolling effect REMOVED (was here in Phase 40). With
+  // localStorage persistence (PRJ-12), the auto-reset stomps on user intent.
+  // The per-card "Switch to rolling avg" recovery action at
+  // kpi-summary-cards.tsx:462-470 covers the partial-coverage case; the
+  // BaselineSelector's `modeledAvailable` disabled state covers full-absent.
+  // See RESEARCH § Pitfall 8 + CONTEXT § Persistence for the full rationale.
 
   // Phase 36.x — row-level slices for the generic chart panel. The preset
   // (CollectionCurveChart) consumes the pre-shaped `curves` array; the generic
@@ -1138,6 +1140,12 @@ export function DataDisplay() {
                               chartSnapshotRef={chartSnapshotRef}
                               chartLoadRef={chartLoadRef}
                               pair={selectedPair}
+                              // Phase 40.1 PRJ-09 / PRJ-13 — projection
+                              // visibility scoping. Partner-level mount:
+                              // projection only renders in modeled mode +
+                              // legend-narrowed-to-one batch.
+                              drillLevel={drillState.level}
+                              baselineMode={baselineMode}
                             />
                           </>
                         )}
@@ -1152,6 +1160,13 @@ export function DataDisplay() {
                         chartSnapshotRef={chartSnapshotRef}
                         chartLoadRef={chartLoadRef}
                         pair={selectedPair}
+                        // Phase 40.1 PRJ-09 — batch-level mount: projection
+                        // ALWAYS renders here (Pitfall 7 Option 2 — drilling
+                        // into a batch is an intentional inspection act, so
+                        // projectionScopeAllows is true regardless of
+                        // baselineMode at this scope).
+                        drillLevel={drillState.level}
+                        baselineMode={baselineMode}
                       />
                     )}
                   </div>
