@@ -109,7 +109,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 38. Polish + Correctness Pass | 5/5 | Complete    | 2026-04-25 | - |
 | 39. Partner Config Module | 4/4 | Complete    | 2026-04-25 | - |
 | 40. Projected Curves v1 | 3/3 | Complete    | 2026-04-25 | - |
-| 40.1. Projected Curves Polish | 1/3 | In Progress|  | - |
+| 40.1. Projected Curves Polish | 2/3 | In Progress|  | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
 | 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
 | 43-44. (reserved — insert-phase slack) | — | — | — | - |

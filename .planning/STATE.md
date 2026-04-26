@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-26T04:43:26.246Z"
+last_updated: "2026-04-26T04:51:29.593Z"
 progress:
   total_phases: 41
   completed_phases: 40
   total_plans: 120
-  completed_plans: 118
+  completed_plans: 119
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-04-23)
 
 ## Current Position
 
-Phase: 40.1 (Projected Curves Polish) IN PROGRESS — 1 of 3 plans shipped (40.1-01 foundation primitives COMPLETE 2026-04-26). Plans 02 (chart visibility scoping + coverage caption, PRJ-09/10/13) and 03 (table modeled+delta cols, PRJ-11/13) queued next. Phase 39 (Partner Config Module) COMPLETE 2026-04-25 — all 4 plans shipped, all 7 PCFG requirements closed (PCFG-01..07). Phase 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
-Plan: Phase 40.1 — 40.1-01 (foundation primitives, PRJ-12) COMPLETE 2026-04-26 in ~4min (3 atomic commits). Audit script scanned 477 (pair, batch) entries — zero cross-lender batch-name collisions found. lenderByBatch ships as-is. useBaselineMode hook + ModeledDeltaCell component ready for Plans 02 + 03 to consume.
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 + Phase 40 + Phase 39 ALL COMPLETE 2026-04-25. v4.1 Phase 40.1 IN PROGRESS — 1/3 plans shipped 2026-04-26.
-Last activity: 2026-04-26 — 40.1-01 (foundation primitives, PRJ-12) shipped in ~4min. Cross-lender batch-name collision audit (40.1-01-AUDIT.md) confirmed zero collisions across 477 (pair, batch) entries including the 3-lender Imprint family — lenderByBatch first-seen-wins is empirically safe; one-line audit-reference comment added at use-partner-stats.ts:54. useBaselineMode hook persists BaselineMode to localStorage at key 'gsd:baselineMode' (CONTEXT lock); SSR-safe with try/catch on read+write; isValid type-guard rejects corrupt stored values; tuple shape mirrors useHeatmapPreference exactly. ModeledDeltaCell renders signed +X.Xpp / -X.Xpp / 0.0pp with green/red/gray polarity-coloring via getPolarity(metricKey); ±0.5pp flat threshold matches recoveryRate display precision; uses .text-body-numeric only (passes check:tokens); no tooltip per RESEARCH anti-pattern. 3 atomic commits + audit doc + SUMMARY. Plan 02 (data-display BaselineSelector swap + chart visibility scoping) and Plan 03 (table modeled+delta column integration) ready to start.
+Phase: 40.1 (Projected Curves Polish) IN PROGRESS — 2 of 3 plans shipped (40.1-01 foundation primitives + 40.1-02 chart visibility scoping COMPLETE 2026-04-26). Plan 03 (table modeled+delta cols, PRJ-11/13 table half) queued next. Phase 39 (Partner Config Module) COMPLETE 2026-04-25 — all 4 plans shipped, all 7 PCFG requirements closed (PCFG-01..07). Phase 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
+Plan: Phase 40.1 — 40.1-02 (chart visibility scoping + coverage caption, PRJ-09/10/13) COMPLETE 2026-04-26 in ~4min (2 atomic commits). projectionScopeAllows predicate gates projection <Line hide> at partner-level (modeled mode + single-batch focus only) and always-on at batch-level. Coverage-absent caption renders in DataPanel actions slot. data-display.tsx now uses persisting useBaselineMode() hook; legacy reset-to-rolling effect deleted with deliberate-removal comment marker.
+Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 Phase 38 + Phase 40 + Phase 39 ALL COMPLETE 2026-04-25. v4.1 Phase 40.1 IN PROGRESS — 2/3 plans shipped 2026-04-26.
+Last activity: 2026-04-26 — 40.1-02 (chart visibility scoping + coverage caption, PRJ-09/10/13) shipped in ~4min. CollectionCurveChart accepts new drillLevel + baselineMode props (default 'root' / 'rolling') threaded through ChartPanel from data-display. projectionScopeAllows predicate combines drillLevel === 'batch' (always-on) OR drillLevel === 'partner' && baselineMode === 'modeled' && visibleBatchKeys.length === 1 (modeled-mode-narrowed-to-one). Aggregate views with multi-batch legend now render zero dashed projection siblings — kills the 8-20 dashed-sibling illegibility from Phase 40. Coverage-absent caption ('No modeled curve for this batch') mounts in DataPanel actions slot when projectionScopeAllows but focused batch lacks projection. data-display.tsx swapped inline useState<BaselineMode>('rolling') for useBaselineMode() — baselineMode now persists across sessions at localStorage key 'gsd:baselineMode'; the legacy reset-to-rolling useEffect at lines 298-306 was DELETED (RESEARCH § Pitfall 8 simpler-alternative path) with a 5-line deliberate-removal comment so future readers don't reintroduce the persistence-stomping symptom. Both ChartPanel mount sites (partner-level + batch-level) thread drillLevel + baselineMode props. RESEARCH § Pitfall 7 Option 2 (batch-level decoupled from baselineMode) supersedes the more permissive CONTEXT trigger-table reading at partner-level — disambiguation callout documented inline at the predicate site. 2 atomic commits (111f67d feat, 850cf86 feat) + final metadata commit. All token guards green. Zero new TS errors. Plan 03 (table modeled+delta cols) ready to start.
 
-Progress: [████████████████████] 4/4 Phase 39 plans COMPLETE | [████████████████████] 3/3 Phase 40 plans COMPLETE | [██████░░░░░░░░░░░░░░] 1/3 Phase 40.1 plans COMPLETE
+Progress: [████████████████████] 4/4 Phase 39 plans COMPLETE | [████████████████████] 3/3 Phase 40 plans COMPLETE | [█████████████░░░░░░░] 2/3 Phase 40.1 plans COMPLETE
 
 ## Shipped Milestones
 
@@ -346,6 +346,12 @@ Progress: [████████████████████] 4/4 Pha
 - [Phase 40.1-01]: Cross-lender batch-name collision audit (40.1-01-AUDIT.md): 0 collisions across 477 (pair, batch) entries including 3-lender Imprint family. lenderByBatch ships as Map<string, string> first-seen-wins. Plan 03's projectionByBatch lookup keyed on batchName alone is provably safe. Re-run audit if data model evolves (script body recoverable from PLAN.md git history).
 - [Phase 40.1-01]: useBaselineMode tuple shape mirrors useHeatmapPreference exactly — single SoT pattern for persisted UI preferences. Storage key 'gsd:baselineMode' (CONTEXT lock); default 'rolling' for zero regression on first load. isValid() type-guard rejects corrupt stored values, falling back to default. try/catch on read+write for private-browsing/quota-exceeded survival.
 - [Phase 40.1-01]: ModeledDeltaCell uses 'pp' (percentage points) unit — difference of two percentages is in pp by convention. Consumers pass deltaPercent on 0..100 scale (Phase 40 Pitfall 5: recoveryRate is 0..100 throughout app); cell does NOT divide by 100. ±0.5pp flat threshold matches recoveryRate's 1-decimal display precision; flat renders as '0.0pp' regardless of input sign noise. No tooltip per RESEARCH anti-pattern (per-row tooltips = visual noise).
+- [Phase 40.1-02]: RESEARCH § Pitfall 7 Option 2 supersedes CONTEXT trigger-table at partner-level. projectionScopeAllows predicate ships with the more restrictive 'baselineMode === modeled AND visibleBatchKeys.length === 1' clause at partner-level (CONTEXT alone reads single-batch as sufficient). Rationale: the unification phrase 'modeled mode affects chart + KPIs + table together' implies a mode gate on partner-aggregate; without it, a rolling-mode user would still see one dashed line whenever they narrowed the legend, contradicting the unified-mental-model contract. Disambiguation callout documented inline at predicate site so a future reader (or user pushback) only flips one branch.
+- [Phase 40.1-02]: Batch-level projection ALWAYS shows regardless of baselineMode (Pitfall 7 Option 2 lock). Drilling into a batch is an intentional inspection act; gating it on a panel-level toggle the user cannot see at batch-level (BaselineSelector remains partner-only) would create an unrecoverable state. Decoupling stands even if Pitfall 7 Option 1 (mount BaselineSelector at batch-level too) is later adopted.
+- [Phase 40.1-02]: Coverage-absent caption ('No modeled curve for this batch') mounts in DataPanel actions slot — NOT chart body. Token: .text-caption text-muted-foreground (mirrors kpi-summary-cards.tsx:460 exactly). Rationale: chart body kept uncluttered for actuals reading; 'metadata in actions' pattern matches the rest of the panel (chart-type selector, preset menu, segment toggle all live there).
+- [Phase 40.1-02]: Reset-to-rolling effect at data-display.tsx:298-306 DELETED (NOT refactored to a 'two-state distinction' as RESEARCH Pitfall 8 Option 1 outlined). Simpler alternative wins: per-card 'Switch to rolling avg' recovery at kpi-summary-cards.tsx:462-470 handles partial-coverage; BaselineSelector's modeledAvailable disabled state covers full-absent. Avoids the persistence-stomping problem entirely. 5-line deliberate-removal comment marks the deletion so future readers don't reintroduce.
+- [Phase 40.1-02]: Two-hop prop pass-through (data-display → ChartPanel → CollectionCurveChart) chosen over a BaselineMode/DrillLevel context. Only two hops + one consumer surface (CollectionCurveChart); adding context for this would set a precedent for over-engineering similar pass-through scenarios. Generic chart branch ignores the props — generic charts have no projection.
+- [Phase 40.1-02]: Default values 'root' / 'rolling' on the new optional drillLevel + baselineMode props guard against missing-prop callers accidentally rendering projections. drillLevel='root' means projectionScopeAllows is always false at default; baselineMode='rolling' means partner-level fallback also short-circuits. Defense-in-depth — props are always passed by ChartPanel callers in this app, but optional+default keeps the contract resilient to future call sites.
 
 ### Pending Todos
 
@@ -415,4 +421,5 @@ Resume file: None
 | Phase 39 P02 | 9 | 4 tasks | 16 files |
 | Phase 39 P03 | 9 min | 4 tasks | 12 files |
 | Phase 40.1 P01 | 4min | 3 tasks | 4 files |
+| Phase 40.1 P02 | 4min | 2 tasks | 3 files |
 
