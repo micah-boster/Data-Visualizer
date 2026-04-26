@@ -113,6 +113,24 @@ export function AppSidebar() {
     });
   }, []);
 
+  // Views collapse — same hydration-safe recipe as partners. Defaults to
+  // expanded (Views is small and benefits from being visible by default);
+  // user choice persists via 'views-list-collapsed' (true=collapsed).
+  const [viewsExpanded, setViewsExpanded] = useState(true);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem('views-list-collapsed') === 'true') {
+      setViewsExpanded(false);
+    }
+  }, []);
+  const toggleViews = useCallback(() => {
+    setViewsExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem('views-list-collapsed', String(!next));
+      return next;
+    });
+  }, []);
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -330,67 +348,94 @@ export function AppSidebar() {
           </div>
         </SidebarGroup>
 
-        {/* Saved views */}
+        {/* Saved views — collapsible (same recipe as Partners group) */}
         <SidebarGroup>
-          <SidebarGroupLabel>
-            Views
+          <SidebarGroupLabel
+            render={
+              <button
+                type="button"
+                onClick={toggleViews}
+                aria-expanded={viewsExpanded}
+                aria-controls="views-list-region"
+              />
+            }
+            className="w-full cursor-pointer"
+          >
+            <ChevronRight
+              aria-hidden="true"
+              className={cn(
+                'mr-1 h-3.5 w-3.5 transition-transform duration-quick ease-default',
+                viewsExpanded && 'rotate-90',
+              )}
+            />
+            <span>Views</span>
             {views.length > 0 && (
               <span className="ml-auto text-label-numeric text-muted-foreground">
                 {views.length}
               </span>
             )}
           </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {!isReady && (
-                <>
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <SidebarMenuItem key={i}>
-                      <SidebarMenuSkeleton index={i} />
+          <div
+            id="views-list-region"
+            className={cn(
+              'grid transition-[grid-template-rows] duration-normal ease-default',
+              viewsExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+            )}
+          >
+            <div className="overflow-hidden">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {!isReady && (
+                    <>
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <SidebarMenuItem key={i}>
+                          <SidebarMenuSkeleton index={i} />
+                        </SidebarMenuItem>
+                      ))}
+                    </>
+                  )}
+
+                  {isReady && views.length === 0 && (
+                    <SidebarMenuItem>
+                      <SidebarMenuButton disabled className="text-caption text-muted-foreground">
+                        <Bookmark className="h-4 w-4" />
+                        <span>No saved views</span>
+                      </SidebarMenuButton>
                     </SidebarMenuItem>
-                  ))}
-                </>
-              )}
+                  )}
 
-              {isReady && views.length === 0 && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton disabled className="text-caption text-muted-foreground">
-                    <Bookmark className="h-4 w-4" />
-                    <span>No saved views</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-
-              {isReady &&
-                views.map((view) => (
-                  <SidebarMenuItem key={view.id}>
-                    <SidebarMenuButton
-                      tooltip={view.name}
-                      onClick={() => onLoadView(view)}
-                    >
-                      {view.isDefault ? (
-                        <Star className="h-4 w-4 text-amber-500" aria-hidden="true" />
-                      ) : (
-                        <Bookmark className="h-4 w-4" aria-hidden="true" />
-                      )}
-                      <span className="truncate">{view.name}</span>
-                    </SidebarMenuButton>
-                    {!view.isDefault && (
-                      <SidebarMenuAction
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDeleteView(view.id);
-                        }}
-                        showOnHover
-                        aria-label={`Delete saved view ${view.name}`}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                      </SidebarMenuAction>
-                    )}
-                  </SidebarMenuItem>
-                ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
+                  {isReady &&
+                    views.map((view) => (
+                      <SidebarMenuItem key={view.id}>
+                        <SidebarMenuButton
+                          tooltip={view.name}
+                          onClick={() => onLoadView(view)}
+                        >
+                          {view.isDefault ? (
+                            <Star className="h-4 w-4 text-amber-500" aria-hidden="true" />
+                          ) : (
+                            <Bookmark className="h-4 w-4" aria-hidden="true" />
+                          )}
+                          <span className="truncate">{view.name}</span>
+                        </SidebarMenuButton>
+                        {!view.isDefault && (
+                          <SidebarMenuAction
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteView(view.id);
+                            }}
+                            showOnHover
+                            aria-label={`Delete saved view ${view.name}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          </SidebarMenuAction>
+                        )}
+                      </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </div>
+          </div>
         </SidebarGroup>
 
         {/*
