@@ -14,6 +14,7 @@ import { useDataTable } from '@/lib/table/hooks';
 import type { UseDataTableOptions } from '@/lib/table/hooks';
 import { useColumnManagement } from '@/hooks/use-column-management';
 import { useColumnFilters } from '@/hooks/use-column-filters';
+import type { BaselineMode } from '@/components/kpi/baseline-selector';
 import type { SavedView, ViewSnapshot } from '@/lib/views/types';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 import type { PartnerProductPair } from '@/lib/partner-config/pair';
@@ -75,6 +76,15 @@ interface DataTableProps {
    * subsequent manual toggle through the column picker wins (POL-03).
    */
   hidePartnerColumn?: boolean;
+  /**
+   * Phase 40.1 PRJ-13 — when 'modeled', the table reveals __MODELED_*_MONTH
+   * and __DELTA_VS_MODELED_*_MONTH virtual columns; when 'rolling', they are
+   * hidden. Visibility is applied via a one-shot effect (FLT-03 pattern) so
+   * the user's manual column-picker toggle wins after first apply. Default
+   * 'rolling' on the prop guards against missing-prop callers accidentally
+   * revealing the columns.
+   */
+  baselineMode?: BaselineMode;
   canIncludeDrill?: boolean;
   snapshotRef: React.MutableRefObject<(() => ViewSnapshot) | null>;
   loadViewRef: React.MutableRefObject<((view: SavedView) => void) | null>;
@@ -114,6 +124,7 @@ export function DataTable({
   age,
   onAgeChange,
   hidePartnerColumn = false,
+  baselineMode = 'rolling',
   canIncludeDrill,
   snapshotRef,
   loadViewRef,
@@ -177,6 +188,31 @@ export function DataTable({
     // identity change would undo user toggles. Locally disable exhaustive-deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hidePartnerColumn]);
+
+  // Phase 40.1 PRJ-13 — modeled+delta column visibility follows baselineMode.
+  // One-shot effect (last-applied ref guard) — user's column-picker toggle
+  // wins after first apply. Same pattern as the FLT-03 hidePartnerColumn
+  // effect above. On initial mount with default 'rolling', the ref starts
+  // null so the body fires once and pins the four __MODELED_* / __DELTA_*
+  // ids to visible:false. At root + batch drill levels these column ids
+  // don't exist in the rendered table (root uses buildRootColumnDefs, batch
+  // uses accountColumnDefs via columnDefsOverride) — TanStack Table accepts
+  // visibility entries for unknown ids without error, so the effect is a
+  // no-op there.
+  const lastAppliedBaselineRef = useRef<BaselineMode | null>(null);
+  useEffect(() => {
+    if (lastAppliedBaselineRef.current === baselineMode) return;
+    lastAppliedBaselineRef.current = baselineMode;
+    const visible = baselineMode === 'modeled';
+    columnManagement.setColumnVisibility((prev) => ({
+      ...prev,
+      __MODELED_AFTER_6_MONTH: visible,
+      __DELTA_VS_MODELED_6_MONTH: visible,
+      __MODELED_AFTER_12_MONTH: visible,
+      __DELTA_VS_MODELED_12_MONTH: visible,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baselineMode]);
 
   // Build percentile columns for root-level table
   const percentileColumns = useMemo(

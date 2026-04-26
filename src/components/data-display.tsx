@@ -38,6 +38,7 @@ import { useFilterState } from '@/hooks/use-filter-state';
 import { useBaselineMode } from '@/hooks/use-baseline-mode';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
 import { computeKpis } from '@/lib/computation/compute-kpis';
+import { modeledRateAtMonth } from '@/lib/computation/compute-projection';
 import { getPartnerName, getBatchName, getStringField, coerceAgeMonths } from '@/lib/utils';
 import { SectionErrorBoundary } from '@/components/section-error-boundary';
 import { SectionDivider } from '@/components/layout/section-divider';
@@ -431,6 +432,41 @@ export function DataDisplay() {
     }
     return filteredRawData;
   }, [filteredRawData, accountData, drillState]);
+
+  // Phase 40.1 PRJ-11 — stamp modeled + delta numerics onto each partner-level
+  // row so the table's accessorKey columns can read them and CSV export Just
+  // Works (RESEARCH § Pitfall 4: cell-only readers fail under row.getValue).
+  //
+  // Per CONTEXT § "Aggregate-row scope": modeled is per-batch only — root
+  // (cross-partner aggregate) and batch (account-level) scopes do NOT enrich.
+  // The cross-lender batch-name collision audit (40.1-01-AUDIT.md, 0
+  // collisions across 477 entries) gates the safety of keying the lookup map
+  // on batchName alone within a single (partner, product) pair.
+  //
+  // Note: getBatchName(row) is already imported at line 41 — it returns
+  // String(row.BATCH ?? ''), trivial wrapper kept for consistency with the
+  // file's existing batch-lookup style.
+  const enrichedTableData = useMemo(() => {
+    if (drillState.level !== 'partner' || !partnerStats?.curves) return tableData;
+    const byBatch = new Map<string, typeof partnerStats.curves[number]>();
+    for (const c of partnerStats.curves) byBatch.set(c.batchName, c);
+    return tableData.map((row) => {
+      const curve = byBatch.get(getBatchName(row));
+      if (!curve) return row;
+      const m6 = modeledRateAtMonth(curve, 6);
+      const m12 = modeledRateAtMonth(curve, 12);
+      const a6 = curve.points.find((p) => p.month === 6)?.recoveryRate ?? null;
+      const a12 = curve.points.find((p) => p.month === 12)?.recoveryRate ?? null;
+      return {
+        ...row,
+        __MODELED_AFTER_6_MONTH: m6,
+        __MODELED_AFTER_12_MONTH: m12,
+        // Δ stays on 0..100 scale to match ModeledDeltaCell's contract.
+        __DELTA_VS_MODELED_6_MONTH: m6 != null && a6 != null ? a6 - m6 : null,
+        __DELTA_VS_MODELED_12_MONTH: m12 != null && a12 != null ? a12 - m12 : null,
+      };
+    });
+  }, [drillState.level, tableData, partnerStats?.curves]);
 
   // Memoize batch-level curve for single-batch drill-down.
   // KI-12 fix: same object-ref pattern.
@@ -1205,7 +1241,11 @@ export function DataDisplay() {
                 ) : (
                   <CrossPartnerDataTable
                     drillState={drillState}
-                    tableData={tableData}
+                    // Phase 40.1 PRJ-11 — enrichedTableData stamps modeled +
+                    // delta numerics on each partner-level row; root + batch
+                    // scopes pass through unchanged (see enrichedTableData
+                    // useMemo above).
+                    tableData={enrichedTableData}
                     isFetching={isFetching}
                     drillToPair={drillToPair}
                     drillToBatch={drillToBatch}
@@ -1213,6 +1253,11 @@ export function DataDisplay() {
                     totalRowCount={uniquePartnerCount}
                     partnerStats={partnerStats}
                     allData={filteredRawData}
+                    // Phase 40.1 PRJ-13 — table half of the BaselineSelector
+                    // unification: baselineMode flows down so DataTable's
+                    // visibility effect can flip the four __MODELED_* /
+                    // __DELTA_* column ids visible/hidden.
+                    baselineMode={baselineMode}
                     // Lifted state
                     dimensionFilters={dimensionFilters}
                     setFilter={setFilter}
@@ -1433,6 +1478,8 @@ function CrossPartnerDataTable({
   totalRowCount,
   partnerStats,
   allData,
+  // Phase 40.1 PRJ-13 — table half of BaselineSelector unification.
+  baselineMode,
   // Lifted state
   dimensionFilters,
   setFilter,
@@ -1473,6 +1520,8 @@ function CrossPartnerDataTable({
   totalRowCount: number;
   partnerStats: ReturnType<typeof usePartnerStats>;
   allData: Record<string, unknown>[];
+  /** Phase 40.1 PRJ-13 — flows into DataTable's modeled-column visibility effect. */
+  baselineMode: BaselineMode;
   dimensionFilters: import('@tanstack/react-table').ColumnFiltersState;
   setFilter: (param: string, value: string | null) => void;
   clearAllDimension: () => void;
@@ -1589,6 +1638,12 @@ function CrossPartnerDataTable({
       onAgeChange={onAgeChange}
       hidePartnerColumn={hidePartnerColumn}
       canIncludeDrill={canIncludeDrill}
+      // Phase 40.1 PRJ-13 — baselineMode drives the modeled+delta column
+      // visibility effect inside DataTable. The DataTable `key` prop above
+      // intentionally encodes drill level + scope only (NOT baselineMode),
+      // so toggling baselineMode mutates visibility without remounting the
+      // table — preserving sorting/sizing/filter state across toggles.
+      baselineMode={baselineMode}
       snapshotRef={snapshotRef}
       loadViewRef={loadViewRef}
     />
