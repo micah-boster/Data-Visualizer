@@ -12,6 +12,15 @@
  * full `(partner, product)` pair derived from row.PARTNER_NAME +
  * row.ACCOUNT_TYPE. `onDrillToBatch` accepts an optional pair payload so
  * batch drills also carry product context (rather than relying on drillState).
+ *
+ * Phase 40.1 PRJ-11 — appends four virtual modeled+delta columns
+ * (`__MODELED_AFTER_{6,12}_MONTH`, `__DELTA_VS_MODELED_{6,12}_MONTH`) at the
+ * end via `buildModeledColumns()`. These are NOT in COLUMN_CONFIGS (no
+ * Snowflake mapping) — they are derived from BatchCurve.projection by
+ * data-display.tsx, which stamps the raw numeric values onto each row before
+ * passing to DataTable. Visibility is gated by `baselineMode` via a one-shot
+ * visibility effect in data-table.tsx (see PRJ-13 — BaselineSelector
+ * unification, table half).
  */
 
 import type { ColumnDef, CellContext, FilterFn } from '@tanstack/react-table';
@@ -22,6 +31,7 @@ import { checklistFilter, rangeFilter } from './filter-functions';
 import { getCellRenderer } from '@/components/table/formatted-cell';
 import { DrillableCell } from '@/components/navigation/drillable-cell';
 import { TrendIndicator, InsufficientTrendIndicator } from '@/components/table/trend-indicator';
+import { ModeledDeltaCell } from '@/components/table/modeled-delta-cell';
 import { TRENDING_METRICS } from '@/lib/computation/compute-trending';
 import { getFormatter, isNumericType, computeDeviation, HEATMAP_COLUMNS } from '@/lib/formatting';
 import type { DrillLevel } from '@/hooks/use-drill-down';
@@ -100,6 +110,88 @@ function renderDrillableCell(
   return getCellRenderer(config.type, config.key, value);
 }
 
+/**
+ * Phase 40.1 PRJ-11 — horizons for modeled + delta virtual columns. Kept
+ * as a separate const so adding a future horizon (3mo, 24mo) is one-line.
+ *
+ * Resulting column ids (template-built in `buildModeledColumns()` below):
+ *   __MODELED_AFTER_6_MONTH, __DELTA_VS_MODELED_6_MONTH,
+ *   __MODELED_AFTER_12_MONTH, __DELTA_VS_MODELED_12_MONTH
+ */
+const MODELED_HORIZONS = [6, 12] as const;
+
+/**
+ * Phase 40.1 PRJ-11 — builds the four virtual modeled/delta column defs
+ * appended to `buildColumnDefs()` output. These columns:
+ *
+ *   - Have NO Snowflake mapping (NOT in COLUMN_CONFIGS / ALLOWED_COLUMNS).
+ *   - Read from row-stamped numeric fields via `accessorKey` so the existing
+ *     CSV export path (`row.getValue(col.id)` in `csv.ts:95`) Just Works
+ *     (RESEARCH § Pattern 4 + § Pitfall 4).
+ *   - Default to hidden — `data-table.tsx` flips them visible when
+ *     `baselineMode === 'modeled'` via a one-shot visibility effect.
+ *   - Render percentage values dividing by 100 (Pitfall 5: recoveryRate is
+ *     0..100 throughout the app; `formatPercentage` assumes 0..1).
+ *   - Δ cells render via `ModeledDeltaCell` which expects 0..100 scale and
+ *     does NOT divide by 100 (Plan 01 contract).
+ */
+function buildModeledColumns(): ColumnDef<Record<string, unknown>>[] {
+  return MODELED_HORIZONS.flatMap((month) => {
+    const modeledKey = `__MODELED_AFTER_${month}_MONTH`;
+    const deltaKey = `__DELTA_VS_MODELED_${month}_MONTH`;
+    const metricKey = `COLLECTION_AFTER_${month}_MONTH`;
+    return [
+      {
+        id: modeledKey,
+        accessorKey: modeledKey, // CSV export reads via row.getValue(col.id)
+        header: `Modeled ${month}mo`,
+        size: 110,
+        minSize: 60,
+        maxSize: 400,
+        enableSorting: true,
+        // CONTEXT lock: derived cols ship without column-filter UI in v1.
+        enableColumnFilter: false,
+        cell: (ctx: CellContext<Record<string, unknown>, unknown>) => {
+          const value = ctx.getValue();
+          if (value == null) return null; // table-body emits em-dash on null
+          // Pitfall 5: recoveryRate is 0..100; formatPercentage assumes 0..1.
+          return getCellRenderer('percentage', modeledKey, (value as number) / 100);
+        },
+        meta: { type: 'percentage' },
+      } satisfies ColumnDef<Record<string, unknown>>,
+      {
+        id: deltaKey,
+        accessorKey: deltaKey, // CSV export reads via row.getValue(col.id)
+        header: `Δ vs Modeled ${month}mo`,
+        size: 130,
+        minSize: 60,
+        maxSize: 400,
+        enableSorting: true,
+        enableColumnFilter: false,
+        cell: (ctx: CellContext<Record<string, unknown>, unknown>) => {
+          const value = ctx.getValue();
+          if (value == null) return null;
+          // ModeledDeltaCell expects 0..100 scale (Plan 01 contract — no division).
+          return createElement(ModeledDeltaCell, {
+            deltaPercent: value as number,
+            metricKey,
+          });
+        },
+        // Accepted v1 limitation: CSV will show "5.30%" for delta columns where
+        // the UI shows "+5.3pp". The unit mismatch is NOT explicitly listed in
+        // CONTEXT § Out-of-scope — accepted as v1 minor inconsistency because:
+        //   (a) the modeled+delta CSV columns are for spreadsheet analysis,
+        //       not WYSIWYG, and "5.30%" is unambiguous as a magnitude;
+        //   (b) implementing a custom CSV formatter for a delta-pp type adds
+        //       a new meta.type entry + formatter registry change for one
+        //       cell type — disproportionate to v1 scope.
+        // FLAG FOR v4.2 follow-up if user feedback requests WYSIWYG delta format.
+        meta: { type: 'percentage' },
+      } satisfies ColumnDef<Record<string, unknown>>,
+    ];
+  });
+}
+
 export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
   const dataColumns: ColumnDef<Record<string, unknown>>[] = COLUMN_CONFIGS.map((config) => {
     // Determine filter function based on column type
@@ -172,8 +264,10 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
   };
   });
 
-  // Prepend anomaly status column as leftmost column
-  return [anomalyStatusColumn, ...dataColumns];
+  // Prepend anomaly status column as leftmost column. Phase 40.1 PRJ-11 —
+  // append modeled+delta virtual columns at the end (default-hidden; flipped
+  // visible by data-table.tsx when baselineMode === 'modeled').
+  return [anomalyStatusColumn, ...dataColumns, ...buildModeledColumns()];
 }
 
 /** Pre-built column definitions ready for table consumption */
