@@ -2,6 +2,13 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Tailwind v4 oxide scans the whole project for utility-class candidates,
+   including markdown in .planning/. A doc example like `max-h-[900:48vh]`
+   (38-03-PLAN.md:298, intentionally invalid) gets emitted as a real rule
+   and crashes the production PostCSS reparse with "Missed semicolon".
+   Exclude planning docs from the candidate scan. */
+@source not "../../.planning";
+
 @custom-variant dark (&:is(.dark *));
 
 /* =============================================================================

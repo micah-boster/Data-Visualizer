@@ -2,20 +2,13 @@
 
 Out-of-scope discoveries logged during plan execution. NOT fixed by this phase.
 
-## Pre-existing `npm run build` CSS compilation failure
+## ✅ RESOLVED 2026-04-26 — `npm run build` CSS compilation failure
 
 - **File:** `src/app/globals.css` (parse error at compiled `line 2:18245`)
 - **Error:** `CssSyntaxError: Missed semicolon` from `@tailwindcss/postcss` v4.2.2 inside Turbopack
-- **Discovered during:** Phase 39-01 Task 4 checkpoint verify (`npm run build`)
-- **Why deferred:** `globals.css` was last touched in Phase 38 (commit `5f6289e`); none of the Phase 39 changes modify CSS. The error originates inside Tailwind's compiled output stream (the source CSS itself parses fine through other tools — `tsc` and the smoke runners). Reproduced with a clean `.next` cache.
-- **Impact on Phase 39 verification:** `npx tsc --noEmit` is clean across the repo (excluding the pre-existing `axe-core` test issue), both smoke tests pass (`smoke:pair`, `smoke:additive-drill-product`), and the dev server runs the migration in browser. The production build failure is a Tailwind v4 / globals.css regression that pre-dates Phase 39 work.
-
-## Pre-existing typecheck error in tests/a11y/baseline-capture.spec.ts
-
-- **File:** `tests/a11y/baseline-capture.spec.ts:18`
-- **Error:** `error TS2307: Cannot find module 'axe-core' or its corresponding type declarations.`
-- **Discovered during:** Phase 39-01 Task 1 (typecheck baseline)
-- **Why deferred:** Unrelated to pair migration; the a11y test scaffolding lives under `tests/` (not `src/`) and the missing `axe-core` types are an out-of-tree dependency issue. `@axe-core/playwright` is present in devDependencies but the bare `axe-core` import does not resolve. Rule: only auto-fix issues directly caused by the current task; pre-existing test-infra warnings are not in scope.
+- **Root cause:** Tailwind v4's oxide candidate-scanner walks the entire project (not just `src/`), so it picked up the literal string `max-h-[900:48vh]` from `38-03-PLAN.md:298` (a doc example labeled "do NOT do this"), emitted it as a real utility, and Lightning CSS preserved the invalid value `max-height: 900:48vh`. The PostCSS reparse step in the production pipeline then rejected the colon. Dev / typecheck / lint don't run that final reparse, which is why it slipped past those gates.
+- **Fix:** Added `@source not "../../.planning";` near the top of `globals.css` to exclude planning markdown from oxide's candidate scan.
+- **Verified:** `npm run build` exits clean (5/5 pages, no CSS errors). Dev server renders with brand-green primary, warm cream surface, Inter font — tokens fully resolved, zero console errors, no visual regression.
 
 ## Pre-existing typecheck error in tests/a11y/baseline-capture.spec.ts
 
