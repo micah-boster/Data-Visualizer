@@ -13,6 +13,8 @@ import {
 import { ChartContainer } from "@/components/ui/chart";
 import type { ChartConfig } from "@/components/ui/chart";
 import type { BatchCurve } from "@/types/partner-stats";
+import type { DrillLevel } from "@/hooks/use-drill-down";
+import type { BaselineMode } from "@/components/kpi/baseline-selector";
 import { useAnomalyContext } from "@/contexts/anomaly-provider";
 import { usePartnerConfigContext } from "@/contexts/partner-config";
 import { COLLECTION_MONTHS } from "@/lib/computation/reshape-curves";
@@ -62,9 +64,25 @@ interface CollectionCurveChartProps {
    * Sourced from `usePartnerStats(pair).rawRows` in the parent.
    */
   rawRows?: Array<Record<string, unknown>>;
+  /**
+   * Phase 40.1 PRJ-09 — drill level from the parent. Gates projection
+   * visibility together with `baselineMode` and `visibleBatchKeys.length`.
+   * Default `'root'` so missing-prop callers never accidentally render
+   * dashed projection lines. See `projectionScopeAllows` in the inner
+   * component for the predicate logic.
+   */
+  drillLevel?: DrillLevel;
+  /**
+   * Phase 40.1 PRJ-09 / PRJ-13 — baseline mode from the panel-level
+   * BaselineSelector. Gates projection visibility on partner-aggregate views
+   * (batch-level is decoupled per RESEARCH § Pitfall 7 Option 2). Default
+   * `'rolling'` so missing-prop callers don't accidentally render projections
+   * on aggregate scopes.
+   */
+  baselineMode?: BaselineMode;
 }
 
-export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, chartTypeSelector, presetMenu, pair, rawRows }: CollectionCurveChartProps) {
+export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, chartTypeSelector, presetMenu, pair, rawRows, drillLevel = 'root', baselineMode = 'rolling' }: CollectionCurveChartProps) {
   // Phase 39 PCFG-07 — segment-split state. Independent per-view (the KPI
   // block has its own toggle). Hidden entirely when the active pair has no
   // configured segments — preserves zero-regression behavior for the
@@ -102,6 +120,8 @@ export function CollectionCurveChart({ curves, chartSnapshotRef, chartLoadRef, c
       chartLoadRef={chartLoadRef}
       chartTypeSelector={chartTypeSelector}
       presetMenu={presetMenu}
+      drillLevel={drillLevel}
+      baselineMode={baselineMode}
       segmentToggle={
         segmentToggleAvailable ? (
           <label className="flex items-center gap-2 text-label text-muted-foreground">
@@ -126,9 +146,13 @@ interface CollectionCurveChartInnerProps {
   chartTypeSelector?: React.ReactNode;
   presetMenu?: React.ReactNode;
   segmentToggle?: React.ReactNode;
+  /** Phase 40.1 PRJ-09 — gates projection <Line> visibility (see predicate). */
+  drillLevel: DrillLevel;
+  /** Phase 40.1 PRJ-09 / PRJ-13 — partner-level scope gate for projection. */
+  baselineMode: BaselineMode;
 }
 
-function CollectionCurveChartInner({ curves, chartSnapshotRef, chartLoadRef, chartTypeSelector, presetMenu, segmentToggle }: CollectionCurveChartInnerProps) {
+function CollectionCurveChartInner({ curves, chartSnapshotRef, chartLoadRef, chartTypeSelector, presetMenu, segmentToggle, drillLevel, baselineMode }: CollectionCurveChartInnerProps) {
   // Find batch anomalies for the partner whose curves we're displaying.
   // Match by batchName overlap between curves and anomaly data.
   const { partnerAnomalies } = useAnomalyContext();
@@ -169,6 +193,46 @@ function CollectionCurveChartInner({ curves, chartSnapshotRef, chartLoadRef, cha
     if (chartSnapshotRef) chartSnapshotRef.current = getChartSnapshot;
     if (chartLoadRef) chartLoadRef.current = restoreChartState;
   }, [chartSnapshotRef, chartLoadRef, getChartSnapshot, restoreChartState]);
+
+  // Phase 40.1 PRJ-09 — projection visibility scope gate.
+  //
+  // Batch-level drill ALWAYS shows projections (drilling into a batch is an
+  // intentional inspection act — RESEARCH § Pitfall 7 Option 2 decouples
+  // batch-level from baselineMode). Partner-level requires BOTH modeled mode
+  // AND single-batch focus to keep aggregates legible (CONTEXT § Phase
+  // Boundary issue 1: 8-20 dashed siblings on partner-aggregate = unreadable).
+  //
+  // Disambiguation: CONTEXT trigger-table (line 36) reads `drillState.level
+  // === 'batch' OR visibleBatchCount === 1` with no baselineMode qualifier on
+  // the partner-level row. The plan implements the more restrictive
+  // `baselineMode === 'modeled' AND single batch` predicate at partner-level
+  // per RESEARCH § Pitfall 7 Option 2 — RESEARCH supersedes the more
+  // permissive CONTEXT-table reading because the unification phrase ("modeled
+  // mode affects chart + KPIs + table together") implies a mode gate on the
+  // partner-aggregate level. Without it, a user in rolling-mode would still
+  // see one dashed line whenever they narrowed the legend, contradicting the
+  // unified-mental-model contract.
+  const projectionScopeAllows =
+    drillLevel === 'batch' ||
+    (drillLevel === 'partner' && baselineMode === 'modeled' && visibleBatchKeys.length === 1);
+
+  // Phase 40.1 PRJ-10 — coverage-absent caption gate.
+  //
+  // When the scope predicate says "should render projection" but the focused
+  // batch has no projection coverage, show a small caption in the actions
+  // slot (mirrors the KPI baseline-absent recipe at kpi-summary-cards.tsx:460).
+  // The "focused" batch is sortedCurves[0] at batch-level (single curve in)
+  // or visibleBatchKeys[0] at partner-level narrowed-to-one.
+  const focusedHasProjection = (() => {
+    if (!projectionScopeAllows) return true; // gate hides projection anyway; no caption needed
+    if (drillLevel === 'batch') {
+      return sortedCurves.some((c) => c.projection && c.projection.length > 0);
+    }
+    // partner-level narrowed to one
+    const idx = parseInt(visibleBatchKeys[0]?.replace('batch_', '') ?? '-1', 10);
+    return Boolean(sortedCurves[idx]?.projection?.length);
+  })();
+  const showCoverageAbsent = projectionScopeAllows && !focusedHasProjection;
 
   // Phase 38 CHT-01: derive the user-visible subset of curves. visibleBatchKeys
   // is positional ("batch_0", "batch_1", ...) against sortedCurves index order.
@@ -349,6 +413,15 @@ function CollectionCurveChartInner({ curves, chartSnapshotRef, chartLoadRef, cha
               KPI block's toggle (per-view local state). */}
           {segmentToggle ?? null}
           {presetMenu ?? null}
+          {/* Phase 40.1 PRJ-10 — coverage-absent caption. Renders in the
+              actions slot when the scope predicate allows projection but the
+              focused batch has no projection coverage. Mirrors the KPI
+              baseline-absent recipe (kpi-summary-cards.tsx:460). */}
+          {showCoverageAbsent && (
+            <p className="text-caption text-muted-foreground">
+              No modeled curve for this batch
+            </p>
+          )}
         </div>
       }
     >
@@ -451,7 +524,11 @@ function CollectionCurveChartInner({ curves, chartSnapshotRef, chartLoadRef, cha
                         strokeOpacity={0.6}
                         strokeWidth={1.5}
                         dot={false}
-                        hide={!isVisible}
+                        // Phase 40.1 PRJ-09 — second gate stacked on the
+                        // existing legend-visibility gate. projectionScopeAllows
+                        // false on partner-aggregate multi-batch views (kills
+                        // 8-20 dashed siblings); always true on batch-level.
+                        hide={!isVisible || !projectionScopeAllows}
                         connectNulls={false}
                         isAnimationActive={false}
                       />

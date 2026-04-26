@@ -36,6 +36,8 @@ import type {
 } from '@/lib/views/types';
 import type { BatchCurve } from '@/types/partner-stats';
 import type { PartnerProductPair } from '@/lib/partner-config/pair';
+import type { DrillLevel } from '@/hooks/use-drill-down';
+import type { BaselineMode } from '@/components/kpi/baseline-selector';
 
 const TITLE_BY_TYPE: Record<GenericChartDefinition['type'], string> = {
   line: 'Line Chart',
@@ -62,6 +64,17 @@ export interface ChartPanelProps {
    * GenericChart (Chart Builder's Segment series option).
    */
   pair?: PartnerProductPair | null;
+  /**
+   * Phase 40.1 PRJ-09 — current drill level. Forwarded verbatim to
+   * CollectionCurveChart on the preset branch to gate projection visibility.
+   * Generic branch ignores this prop — generic charts have no projection.
+   */
+  drillLevel?: DrillLevel;
+  /**
+   * Phase 40.1 PRJ-09 / PRJ-13 — current baseline mode. Forwarded verbatim
+   * to CollectionCurveChart on the preset branch. Generic branch ignores.
+   */
+  baselineMode?: BaselineMode;
 }
 
 export function ChartPanel({
@@ -72,6 +85,8 @@ export function ChartPanel({
   chartSnapshotRef,
   chartLoadRef,
   pair,
+  drillLevel,
+  baselineMode,
 }: ChartPanelProps): ReactNode {
   /**
    * Pitfall 9 — when the user applies a preset via PresetMenu while already on
@@ -104,6 +119,8 @@ export function ChartPanel({
         chartLoadRef={chartLoadRef}
         pair={pair ?? null}
         rawRows={rows}
+        drillLevel={drillLevel}
+        baselineMode={baselineMode}
         chartTypeSelector={
           <ChartTypeSegmentedControl
             activeType={definition.type}
