@@ -9,9 +9,9 @@
 - ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
 - ✅ **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (shipped 2026-04-24) — [Archive](milestones/v4.0-ROADMAP.md)
 - 🚧 **v4.1 Feedback-Driven Polish** — Phases 38-40 (Phase 38 complete 2026-04-24; 39 + 40 queued) — [Roadmap](milestones/v4.1-ROADMAP.md)
-- 📋 **v4.5 Correctness & Security Foundation** — Phases 41-42 (planned; 43-44 reserved slack) — [Roadmap](milestones/v4.5-ROADMAP.md)
+- 📋 **v4.5 Correctness & Foundation** — Phases 41-44 (planned; expanded from 41-42 on 2026-04-26 to absorb multi-lens audit findings) — [Roadmap](milestones/v4.5-ROADMAP.md)
 - 📋 **v5.0 External Intelligence** — Phases 45-49 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
-- 📋 **v5.5 Real-Use Hardening** — Phases 50-51 (planned) — [Roadmap](milestones/v5.5-ROADMAP.md)
+- 📋 **v5.5 Real-Use Hardening** — Phases 50-51 (expanded scope) — [Roadmap](milestones/v5.5-ROADMAP.md)
 - 📋 **v6.0 Proactive Intelligence & Action** — Phases 52-57 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
 
 ## Phases
@@ -109,17 +109,19 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 38. Polish + Correctness Pass | 5/5 | Complete    | 2026-04-25 | - |
 | 39. Partner Config Module | 4/4 | Complete    | 2026-04-25 | - |
 | 40. Projected Curves v1 | 3/3 | Complete    | 2026-04-25 | - |
-| 40.1. Projected Curves Polish | 3/3 | Complete   | 2026-04-26 | - |
-| 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
-| 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
-| 43-44. (reserved — insert-phase slack) | — | — | — | - |
+| 40.1. Projected Curves Polish | 4/4 | Complete + gap-clean | 2026-04-26 (Plan 04 closed footer unit + header truncation gaps) | - |
+| Wave 0 (Data review quick fixes) | — | Complete | 2026-04-26 | MIN_GROUPS gate, matrix bar default, KPI denominator floor |
+| 41. Data Correctness Audit (expanded) | v4.5 | 0/TBD | Planned | DCR-01..11 (was DCR-01..06) |
+| 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned (gated on OAuth landing on Vercel) |
+| 43. Boundary Hardening | v4.5 | 0/TBD | Planned | BND-01..06 (NEW — was reserved slack) |
+| 44. Vocabulary Lock & Glossary | v4.5 | 0/TBD | Planned | VOC-01..04 (NEW — was reserved slack) |
 | 45. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
 | 46. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
 | 47. Triangulation Views | v5.0 | 0/TBD | Planned | - |
 | 48. Scorecard Reconciliation | v5.0 | 0/TBD | Planned | - |
 | 49. Dynamic Curve Re-Projection | v5.0 | 0/TBD | Planned | - |
-| 50. Behavioral QA from Usage | v5.5 | 0/TBD | Planned | - |
-| 51. Tech Debt Sweep | v5.5 | 0/TBD | Planned | - |
+| 50. Behavioral QA + In-situ Research Infra | v5.5 | 0/TBD | Planned | QA-01..06 + IUR-01..03 (IUR co-built into v5.0) |
+| 51. Tech Debt Sweep (expanded) | v5.5 | 0/TBD | Planned | DEBT-01..10 (was 01..06; +decomposition / state / tests / perf budget) |
 | 52. Weekly Partner Highlights | v6.0 | 0/TBD | Planned* | - |
 | 53. Pattern Alerts | v6.0 | 0/TBD | Planned | - |
 | 54. MBR Pipeline Integration | v6.0 | 0/TBD | Planned | - |
@@ -228,7 +230,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 **After Phase 40:** Feeds into v5.0 Phase 49 Dynamic Curve Re-Projection, which extends this with target-anchored, partner-reported, and confidence-band variants.
 
 ---
-*Last updated: 2026-04-25 — Phase 40.1 (Projected Curves Polish) plans broken down: 3 plans / 3 waves / 5 new requirements (PRJ-09..PRJ-13). v4.0 milestone closed: phase details (26-37) collapsed into `<details>` block + archived to milestones/v4.0-ROADMAP.md; MILESTONES.md v4.0 entry flipped in-progress → shipped (13 phases / 105 plans / 67 requirements / ~25,875 LOC / 281 commits / 12 days); RETROSPECTIVE.md appended; git tag v4.0 created. Prior: v4.1 activated (Phases 38-40 detail sections retained). v4.0 scope: design system + URL nav + a11y + Partner Lists + Chart Builder + Metabase Import.*
+*Last updated: 2026-04-26 — Phase 40.1 Plan 04 added (gap closure, Wave 1) addressing two browser-UAT blockers: (a) footer "Avg" row under the 4 modeled+delta cols rendering ~100x too large + wrong unit suffix (Gap 1, PRJ-11 incomplete delivery) — fix via `meta.footerFormatter` escape hatch on the col defs + `TableFooter` honoring it; (b) header label truncation illegible across all columns (Gap 2, POL-06 reversal) — fix via global swap of `truncate min-w-0 max-w-[180px]` → `line-clamp-2 break-words leading-snug min-w-0` in `draggable-header.tsx`, native `title` retained as fallback. Single plan, 2 tasks, 3 files modified (`definitions.ts`, `table-footer.tsx`, `draggable-header.tsx`). Phase 40.1 row flipped 3/3 Complete → 3/4 Gap-closure pending. Prior: 2026-04-25 — Phase 40.1 (Projected Curves Polish) plans broken down: 3 plans / 3 waves / 5 new requirements (PRJ-09..PRJ-13). v4.0 milestone closed: phase details (26-37) collapsed into `<details>` block + archived to milestones/v4.0-ROADMAP.md; MILESTONES.md v4.0 entry flipped in-progress → shipped (13 phases / 105 plans / 67 requirements / ~25,875 LOC / 281 commits / 12 days); RETROSPECTIVE.md appended; git tag v4.0 created. Prior: v4.1 activated (Phases 38-40 detail sections retained). v4.0 scope: design system + URL nav + a11y + Partner Lists + Chart Builder + Metabase Import.*
 
 ### Phase 40.1: Projected Curves Polish — visibility scoping + table integration
 
@@ -257,10 +259,11 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
   7. `baselineMode` persists across sessions via localStorage (`gsd:baselineMode`); legacy reset-to-rolling effect at `data-display.tsx:298-306` REMOVED (per-card "Switch to rolling avg" recovery action handles partial-coverage scopes without stomping persisted intent)
   8. Cross-lender batch-name collision audit (Pitfall 3) shipped: zero collisions → audit doc + `use-partner-stats.ts` annotated; non-zero → defensive fix to `Map<string, Set<string>>` lookup
 
-**Plans**: 3 plans (3 waves)
+**Plans**: 4 plans (4 waves — Plan 04 added 2026-04-26 as gap closure after browser UAT)
 - [x] 40.1-01-PLAN.md — Foundation primitives: cross-lender collision audit (gate) + `useBaselineMode` localStorage hook + `ModeledDeltaCell` polarity-colored cell — Wave 1 (completed 2026-04-26)
 - [x] 40.1-02-PLAN.md — Chart polish: visibility-scope gate + coverage-absent caption + `useBaselineMode` integration in data-display + reset-effect removal + `drillLevel`/`baselineMode` prop threading through ChartPanel → CollectionCurveChart — Wave 2 (completed 2026-04-26)
 - [x] 40.1-03-PLAN.md — Table integration: 4 virtual modeled+delta ColumnDefs + row-stamping in `data-display.tsx` + `baselineMode`-gated visibility effect in `data-table.tsx` + CSV export verification — Wave 3 (completed 2026-04-26)
+- [x] 40.1-04-PLAN.md — Gap closure: footer aggregate unit fix on the 4 modeled+delta cols (`meta.footerFormatter` escape hatch in `TableFooter`) + global header truncation reversal (POL-06 → `line-clamp-2` in `draggable-header.tsx`, native `title` retained as fallback) — Wave 1 (gap_closure) (completed 2026-04-26)
 
 **After Phase 40.1:** v4.1 milestone closes. v4.5 Phase 41 (Data Correctness Audit) + Phase 42 (Ingestion-Surface Security Review) up next.
 
