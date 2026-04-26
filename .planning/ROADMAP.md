@@ -109,7 +109,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 38. Polish + Correctness Pass | 5/5 | Complete    | 2026-04-25 | - |
 | 39. Partner Config Module | 4/4 | Complete    | 2026-04-25 | - |
 | 40. Projected Curves v1 | 3/3 | Complete    | 2026-04-25 | - |
-| 40.1. Projected Curves Polish | 2/3 | In Progress|  | - |
+| 40.1. Projected Curves Polish | 3/3 | Complete   | 2026-04-26 | - |
 | 41. Data Correctness Audit | v4.5 | 0/TBD | Planned | - |
 | 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned | - |
 | 43-44. (reserved — insert-phase slack) | — | — | — | - |
@@ -144,7 +144,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 - [x] **Phase 38: Polish + Correctness Pass** — 18 feedback items: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness, KPI cascade, filter fixes, laptop layout, Metabase Import chart-type override (completed 2026-04-24)
 - [x] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks) (completed 2026-04-25)
 - [x] **Phase 40: Projected Curves v1** — Per-batch modeled projection lines from `BOUNCE.FINANCE.CURVES_RESULTS` + optional panel-level "vs modeled curve" KPI baseline (completed 2026-04-25)
-- [ ] **Phase 40.1: Projected Curves Polish** — Tighten chart projection visibility (batch-level OR aggregate-narrowed-to-one only) + surface modeled + Δ vs modeled columns in the data table; unify chart + KPIs + table under a single BaselineSelector with localStorage persistence (planned)
+- [x] **Phase 40.1: Projected Curves Polish** — Tighten chart projection visibility (batch-level OR aggregate-narrowed-to-one only) + surface modeled + Δ vs modeled columns in the data table; unify chart + KPIs + table under a single BaselineSelector with localStorage persistence (planned) (completed 2026-04-26)
 
 ### Phase 38: Polish + Correctness Pass
 
@@ -258,9 +258,9 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
   8. Cross-lender batch-name collision audit (Pitfall 3) shipped: zero collisions → audit doc + `use-partner-stats.ts` annotated; non-zero → defensive fix to `Map<string, Set<string>>` lookup
 
 **Plans**: 3 plans (3 waves)
-- [ ] 40.1-01-PLAN.md — Foundation primitives: cross-lender collision audit (gate) + `useBaselineMode` localStorage hook + `ModeledDeltaCell` polarity-colored cell — Wave 1
-- [ ] 40.1-02-PLAN.md — Chart polish: visibility-scope gate + coverage-absent caption + `useBaselineMode` integration in data-display + reset-effect removal + `drillLevel`/`baselineMode` prop threading through ChartPanel → CollectionCurveChart — Wave 2
-- [ ] 40.1-03-PLAN.md — Table integration: 4 virtual modeled+delta ColumnDefs + row-stamping in `data-display.tsx` + `baselineMode`-gated visibility effect in `data-table.tsx` + CSV export verification — Wave 3
+- [x] 40.1-01-PLAN.md — Foundation primitives: cross-lender collision audit (gate) + `useBaselineMode` localStorage hook + `ModeledDeltaCell` polarity-colored cell — Wave 1 (completed 2026-04-26)
+- [x] 40.1-02-PLAN.md — Chart polish: visibility-scope gate + coverage-absent caption + `useBaselineMode` integration in data-display + reset-effect removal + `drillLevel`/`baselineMode` prop threading through ChartPanel → CollectionCurveChart — Wave 2 (completed 2026-04-26)
+- [x] 40.1-03-PLAN.md — Table integration: 4 virtual modeled+delta ColumnDefs + row-stamping in `data-display.tsx` + `baselineMode`-gated visibility effect in `data-table.tsx` + CSV export verification — Wave 3 (completed 2026-04-26)
 
 **After Phase 40.1:** v4.1 milestone closes. v4.5 Phase 41 (Data Correctness Audit) + Phase 42 (Ingestion-Surface Security Review) up next.
 
