@@ -3,7 +3,11 @@
 import { useMemo, useState } from 'react';
 import { CHART_COLORS } from '@/components/charts/curve-tooltip';
 import type { MatrixViewProps } from './matrix-types';
-import { formatValue, MATRIX_METRICS } from './matrix-types';
+import {
+  formatValue,
+  MATRIX_METRICS,
+  polarityForMatrixMetric,
+} from './matrix-types';
 import type { PercentileRanks } from '@/types/partner-stats';
 
 export function MatrixBarRanking({ partners, metrics }: MatrixViewProps) {
@@ -16,10 +20,19 @@ export function MatrixBarRanking({ partners, metrics }: MatrixViewProps) {
     [selectedMetric],
   );
 
-  const sortedPartners = useMemo(
-    () => [...partners].sort((a, b) => metric.getValue(b) - metric.getValue(a)),
-    [partners, metric],
-  );
+  // Phase 41-03 (DCR-09): rank order honors polarity. higher_is_better and
+  // neutral metrics sort descending (best/largest at top). lower_is_better
+  // metrics sort ascending so the lowest value (the "best" partner) appears
+  // first — consistent with the bar's "best at top" reading. Neutral
+  // magnitude metrics keep descending order because the bar is a magnitude
+  // ranking, not a quality ranking — there's no inverted "best."
+  const sortedPartners = useMemo(() => {
+    const polarity = polarityForMatrixMetric(metric);
+    return [...partners].sort((a, b) => {
+      const diff = metric.getValue(b) - metric.getValue(a);
+      return polarity === 'lower_is_better' ? -diff : diff;
+    });
+  }, [partners, metric]);
 
   const maxValue = useMemo(
     () => Math.max(...sortedPartners.map((p) => metric.getValue(p)), 0.001),

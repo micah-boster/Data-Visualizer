@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useCrossPartnerContext } from '@/contexts/cross-partner-provider';
 import type { PercentileRanks } from '@/types/partner-stats';
-import { MATRIX_METRICS } from './matrix-types';
+import { MATRIX_METRICS, polarityForMatrixMetric } from './matrix-types';
 import type { Orientation, SortDirection } from './matrix-types';
 import { MatrixHeatmap } from './matrix-heatmap';
 import { MatrixBarRanking } from './matrix-bar-ranking';
@@ -38,13 +38,21 @@ export function PartnerComparisonMatrix() {
   const [sortMetric, setSortMetric] = useState<keyof PercentileRanks>('perDollarPlacedRate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
+  // Phase 41-03 (DCR-09): when the user picks a new metric, the default sort
+  // direction is "best first" — descending for higher_is_better / neutral
+  // (largest at top), ascending for lower_is_better (lowest dispute rate at
+  // top). The user can still flip direction via the header chevron; this
+  // only changes the FIRST direction after a metric switch so the default
+  // reading shows the "best partner" at the top regardless of polarity.
   const handleSort = useCallback(
     (metricKey: keyof PercentileRanks) => {
       if (metricKey === sortMetric) {
         setSortDirection((d) => (d === 'desc' ? 'asc' : 'desc'));
       } else {
+        const metric = MATRIX_METRICS.find((m) => m.key === metricKey);
+        const polarity = metric ? polarityForMatrixMetric(metric) : 'higher_is_better';
         setSortMetric(metricKey);
-        setSortDirection('desc');
+        setSortDirection(polarity === 'lower_is_better' ? 'asc' : 'desc');
       }
     },
     [sortMetric],

@@ -2,7 +2,12 @@
 
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { MatrixViewProps } from './matrix-types';
-import { formatValue, getTierClass } from './matrix-types';
+import {
+  formatValue,
+  getTierClass,
+  polarityAwarePercentile,
+  polarityForMatrixMetric,
+} from './matrix-types';
 
 export function MatrixHeatmap({
   partners,
@@ -41,7 +46,11 @@ export function MatrixHeatmap({
           </thead>
           <tbody>
             {/* Phase 39 PCFG-04: each row is a (partner, product) pair —
-                displayName is suffixed for multi-product partners. */}
+                displayName is suffixed for multi-product partners.
+                Phase 41-03 (DCR-09): cell tier color routes through
+                polarityAwarePercentile so lower_is_better metrics flip the
+                heatmap (lowest value = best/green) and neutral metrics
+                flatten to the mid tier. */}
             {partners.map((p) => {
               const key = `${p.partnerName}::${p.product}`;
               return (
@@ -51,10 +60,12 @@ export function MatrixHeatmap({
                   </td>
                   {metrics.map((m) => {
                     const pctile = m.getPercentile(p);
+                    const polarity = polarityForMatrixMetric(m);
+                    const adjusted = polarityAwarePercentile(pctile, polarity);
                     return (
                       <td
                         key={m.key}
-                        className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(pctile)}`}
+                        className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(adjusted)}`}
                       >
                         {formatValue(m.getValue(p), m.format)}
                       </td>
@@ -112,11 +123,17 @@ export function MatrixHeatmap({
               </td>
               {partners.map((p) => {
                 const pctile = m.getPercentile(p);
+                // Phase 41-03 (DCR-09): mirror the partners-as-rows orientation
+                // — polarity-aware percentile so the diverging palette
+                // inverts for lower_is_better metrics and flattens to the mid
+                // tier for neutral metrics.
+                const polarity = polarityForMatrixMetric(m);
+                const adjusted = polarityAwarePercentile(pctile, polarity);
                 const key = `${p.partnerName}::${p.product}`;
                 return (
                   <td
                     key={key}
-                    className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(pctile)}`}
+                    className={`px-3 py-1.5 text-right text-body-numeric ${getTierClass(adjusted)}`}
                   >
                     {formatValue(m.getValue(p), m.format)}
                   </td>
