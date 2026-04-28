@@ -141,10 +141,9 @@ Phase 25 discussion context (Partner Lists) was preserved and moved to Phase 34.
 - Phase 40: Projected Curves v1 (per-batch modeled projection lines + KPI baseline selector) — completed 2026-04-25
 - Phase 40.1: Projected Curves Polish (chart visibility scoping, table modeled+delta cols, footer+header gap closure, BaselineSelector unification + localStorage persistence) — completed 2026-04-27
 
-**Post-ship stabilization queued:**
-- Phase 40.2: two unrelated bugs surfaced during 40.1 browser UAT — React duplicate-key warning under DataDisplay re-render path + 4 always-empty trailing footer cells at root drill. Pre-date Plan 40.1-04 fixes; not blocking v4.1 close. Likely needs `/gsd:debug` for the duplicate-key root cause.
-
 **Key decision:** Ship a simpler static projection in v4.1 rather than waiting for v5.0's target-anchored dynamic projection — the team needs something to benchmark against now, and the v5.0 version extends this foundation.
+
+**Carryover to v4.5 Phase 41.2:** Two unrelated bugs surfaced during 40.1 browser UAT (React duplicate-key warning under DataDisplay re-render path + 4 always-empty trailing footer cells at root drill). Both pre-date Plan 40.1-04 fixes — moved to v4.5 under Phase 41.2 to keep v4.1 close clean.
 
 ---
 
