@@ -59,6 +59,21 @@ export interface KpiAggregates {
   collectionRateSinceInception: number;
   totalCollected: number;
   totalPlaced: number;
+  /**
+   * Wave 0 (Phase 41-pre) — per-rate "denominator too small" flags.
+   *
+   * Set when the eligibility-gated denominator backing the rate falls below
+   * `MIN_PLACED_DENOMINATOR_DOLLARS` (see compute-kpis.ts). Consumers should
+   * render the rate card VALUE-ONLY with an "Insufficient data" caption
+   * rather than display a confident-looking percentage on noisy data.
+   *
+   * Currently populated for `rate3mo` only (the rate with eligibility-gated
+   * `placed3mo` denominator). Phase 41.6 (Statistical Correctness Pass)
+   * extends eligibility-gating + this flag to `rate6mo` and `rate12mo`.
+   */
+  insufficientDenominator?: {
+    rate3mo?: boolean;
+  };
 }
 
 export interface BatchTrend {

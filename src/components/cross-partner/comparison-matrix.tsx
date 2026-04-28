@@ -29,7 +29,11 @@ const VIEW_MODES: { key: ViewMode; label: string; Icon: typeof Grid3X3 }[] = [
 
 export function PartnerComparisonMatrix() {
   const { crossPartnerData } = useCrossPartnerContext();
-  const [viewMode, setViewMode] = useState<ViewMode>('heatmap');
+  // Wave 0 fix: default to bar mode. Length/position is the strongest
+  // perceptual channel for quantitative comparison; color hue (heatmap) is
+  // the weakest. Heatmap remains available as a one-click toggle for the
+  // dense-overview use case.
+  const [viewMode, setViewMode] = useState<ViewMode>('bar');
   const [orientation, setOrientation] = useState<Orientation>('partners-as-rows');
   const [sortMetric, setSortMetric] = useState<keyof PercentileRanks>('perDollarPlacedRate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');

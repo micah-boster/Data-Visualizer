@@ -24,6 +24,21 @@ function coerceAgeMonths(raw: unknown): number {
 }
 
 /**
+ * Wave 0 (Phase 41-pre) — minimum eligibility-gated denominator below which
+ * a rate is too noisy to display as a confident percentage.
+ *
+ * Backs the `insufficientDenominator` flags on `KpiAggregates`. Threshold
+ * chosen as $100K of placed amount — typical batch sizes are $1M+, so
+ * <$100K eligible means a fraction of one batch contributing to the rate.
+ * Surface as "Insufficient data" rather than a misleadingly precise number.
+ *
+ * Phase 41.6 (Statistical Correctness Pass) will revisit this threshold
+ * per-horizon and potentially per-partner once realistic batch-size
+ * distributions inform the choice.
+ */
+const MIN_PLACED_DENOMINATOR_DOLLARS = 100_000;
+
+/**
  * Graduated KPI-card cascade selector (Phase 38 KPI-01).
  *
  * Rules (per v4.1-REQUIREMENTS.md):
@@ -120,6 +135,14 @@ export function computeKpis(
   const collectionRateSinceInception =
     totalPlaced > 0 ? totalCollected / totalPlaced : 0;
 
+  // Wave 0 fix: flag rates whose eligibility-gated denominator is too small
+  // to support a confident percentage. UI renders value-only with an
+  // "Insufficient data" caption when set.
+  const insufficientDenominator: { rate3mo?: boolean } = {};
+  if (placed3mo > 0 && placed3mo < MIN_PLACED_DENOMINATOR_DOLLARS) {
+    insufficientDenominator.rate3mo = true;
+  }
+
   return {
     totalBatches,
     totalAccounts,
@@ -131,5 +154,6 @@ export function computeKpis(
     collectionRateSinceInception,
     totalCollected,
     totalPlaced,
+    insufficientDenominator,
   };
 }

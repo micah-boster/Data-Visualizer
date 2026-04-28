@@ -75,8 +75,19 @@ export const METRIC_GROUPS: Record<
 /** Z-score threshold: flag only when abs(z) exceeds this. */
 const Z_THRESHOLD = 2;
 
-/** Minimum flagged metrics per batch to mark it anomalous. */
-const MIN_FLAGS = 2;
+/**
+ * Minimum number of distinct correlated-metric GROUPS that must contain at
+ * least one flag for a batch to be marked anomalous.
+ *
+ * Wave 0 (Phase 41-pre) correctness fix: previously gated on raw flag count
+ * (`flags.length >= 2`), which treated highly-correlated metrics
+ * (COLLECTION_AFTER_3/6/12_MONTH) as independent evidence. Two flags from a
+ * single correlated cluster is one signal, not two. Gating on `groups.length`
+ * forces the two flags to come from distinct concern-areas (funnel,
+ * collection, portfolio_quality, engagement, other) before raising an
+ * anomaly.
+ */
+const MIN_GROUPS = 2;
 
 /**
  * Compute z-score anomaly flags for a single metric value.
@@ -183,8 +194,13 @@ export function computeAnomalies(
       if (anomaly) flags.push(anomaly);
     }
 
-    const isFlagged = flags.length >= MIN_FLAGS;
-    const groups = isFlagged ? groupFlags(flags) : [];
+    // Wave 0 fix: compute groups first, then gate on group count. Previously
+    // the gate was `flags.length >= MIN_FLAGS` which double-counted
+    // correlated metrics (e.g. two collection-horizon flags = one signal,
+    // not two). Group-level gating enforces that the >=2 evidence comes from
+    // distinct concern-areas.
+    const groups = groupFlags(flags);
+    const isFlagged = groups.length >= MIN_GROUPS;
 
     // Severity: flagCount * avgDeviation * log(placementVolume)
     let severityScore = 0;

@@ -25,10 +25,16 @@ import type {
   TrendingData,
 } from '@/types/partner-stats';
 
+/**
+ * Numeric-valued KPI field keys. Excludes the Wave-0 `insufficientDenominator`
+ * meta field so card specs (which expect a `number` value) stay type-safe.
+ */
+type NumericKpiKey = Exclude<keyof KpiAggregates, 'insufficientDenominator'>;
+
 /** Identity/volume cards — never vary with batch age; always rendered. */
 interface IdentityCardSpec {
   kind: 'identity';
-  key: keyof KpiAggregates;
+  key: NumericKpiKey;
   label: string;
   format: (v: number) => string;
 }
@@ -38,7 +44,7 @@ interface RateCardSpec {
   kind: 'rate';
   key: CascadeRateKey;
   /** KPI-aggregate field backing this rate (also used for trend metric lookup). */
-  aggregateKey: keyof KpiAggregates;
+  aggregateKey: NumericKpiKey;
   label: string;
   format: (v: number) => string;
   /** Snowflake column name for rolling-avg trend lookup. */
@@ -476,6 +482,31 @@ function KpiCardRow({
         // Rolling-avg path (default) — gate trend via per-horizon suppressDelta.
         const isSuppressed =
           trending?.suppressDelta?.[spec.key] ?? true;
+
+        // Wave 0 fix: when the eligibility-gated denominator is too small to
+        // support a confident rate (currently `rate3mo` only), render
+        // value-only with an "Insufficient data" caption rather than a
+        // misleadingly precise percentage. Phase 41.6 extends this to 6mo /
+        // 12mo once eligibility-gated denominators are added there.
+        const isInsufficientDenom =
+          spec.key === 'rate3mo' &&
+          kpis.insufficientDenominator?.rate3mo === true;
+
+        if (isInsufficientDenom) {
+          return (
+            <div key={spec.key} className="flex flex-col gap-1">
+              <StatCard
+                label={spec.label}
+                value={formattedValue}
+                interactive={INTERACTIVE}
+              />
+              <p className="text-caption text-muted-foreground px-1">
+                Insufficient data — too few accounts have reached the 3-month
+                horizon for a stable rate.
+              </p>
+            </div>
+          );
+        }
 
         // Find trend entry for this metric (latest batch).
         const trend =
