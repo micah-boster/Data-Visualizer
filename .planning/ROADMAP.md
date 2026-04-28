@@ -8,7 +8,7 @@
 - ✅ **v3.1 Stabilization & Code Quality** — Phases 21-24 (shipped 2026-04-14) — [Archive](milestones/v3.1-ROADMAP.md)
 - ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
 - ✅ **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (shipped 2026-04-24) — [Archive](milestones/v4.0-ROADMAP.md)
-- 🚧 **v4.1 Feedback-Driven Polish** — Phases 38-40 (Phase 38 complete 2026-04-24; 39 + 40 queued) — [Roadmap](milestones/v4.1-ROADMAP.md)
+- ✅ **v4.1 Feedback-Driven Polish** — Phases 38-40 + 40.1 (shipped 2026-04-27) — [Archive](milestones/v4.1-ROADMAP.md)
 - 📋 **v4.5 Correctness & Foundation** — Phases 41-44 (planned; expanded from 41-42 on 2026-04-26 to absorb multi-lens audit findings) — [Roadmap](milestones/v4.5-ROADMAP.md)
 - 📋 **v5.0 External Intelligence** — Phases 45-49 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
 - 📋 **v5.5 Real-Use Hardening** — Phases 50-51 (expanded scope) — [Roadmap](milestones/v5.5-ROADMAP.md)
@@ -138,7 +138,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 ---
 
 
-### 🚧 v4.1 Feedback-Driven Polish (In Progress)
+### ✅ v4.1 Feedback-Driven Polish (Shipped 2026-04-27)
 
 **Milestone Goal:** Close the 14 first-week feedback items, enforce `(partner, product)` as the canonical unit of analysis (no cross-product blending), and ship a first-pass projected-curve line the team can benchmark against. Full detail: [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md).
 
@@ -147,6 +147,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 - [x] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks) (completed 2026-04-25)
 - [x] **Phase 40: Projected Curves v1** — Per-batch modeled projection lines from `BOUNCE.FINANCE.CURVES_RESULTS` + optional panel-level "vs modeled curve" KPI baseline (completed 2026-04-25)
 - [x] **Phase 40.1: Projected Curves Polish** — Tighten chart projection visibility (batch-level OR aggregate-narrowed-to-one only) + surface modeled + Δ vs modeled columns in the data table; unify chart + KPIs + table under a single BaselineSelector with localStorage persistence (planned) (completed 2026-04-26)
+- [ ] **Phase 40.2: Post-Ship Stabilization** — Fix two unrelated bugs surfaced during 40.1 browser UAT: (a) React duplicate-key warning `'Happy Money'` from a re-render path under `DataDisplay` — root cause not yet identified via static analysis (likely in the in-flight Phase 41-pre anomaly compute or a partner-keyed `.map()` reachable post-`flushPassiveEffects`); (b) 4 always-empty trailing footer cells in All Partners root drill — possible regression on Plan 40.1-03 truth #5 (modeled+delta cols leaking past `buildRootColumnDefs` boundary) OR pre-existing column-picker artifact. Likely needs `/gsd:debug` for (a) before plan-phase; (b) is a static fix. (queued 2026-04-27 post v4.1 close)
 
 ### Phase 38: Polish + Correctness Pass
 

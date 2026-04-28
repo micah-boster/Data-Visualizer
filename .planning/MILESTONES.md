@@ -128,37 +128,48 @@ Phase 25 discussion context (Partner Lists) was preserved and moved to Phase 34.
 ---
 
 
-## v4.1 Feedback-Driven Polish (Planned)
+## v4.1 Feedback-Driven Polish (Shipped: 2026-04-27)
 
-**Phases:** 3 (38-40) | **Plans:** TBD | **Status:** Planned, follows v4.0
-**Requirements:** 27 total across branding, chart correctness, KPI clarity, filters, partner config, and projected curves
+**Phases:** 4 (38, 39, 40, 40.1) | **Plans:** 14 | **Status:** Shipped
+**Requirements:** 35 total — POL-01..06, CHT-01..04, KPI-01,02,04, FLT-01..03, MBI-01, PCFG-01..07, PRJ-01..05, PRJ-09..13. (KPI-03 deferred to Phase 41 pending new Snowflake column; PRJ-06..08 deferred to v5.0 Phase 49.)
 
 **Goal:** Close the first-week daily-use feedback list from v4.0 and ship the two foundational features (Partner Config + Projected Curves v1) that unlock downstream v5.0 work. The app should feel like a daily-driver after this milestone.
 
 **Phase breakdown:**
-- Phase 38: Polish + Correctness Pass (logo, collapsible sidebar, column unlock, number formatting, chart avg truncation, tooltip hover, legend scroll, KPI horizon gating + delta labels + commitment rate, date-range filter, filter tooltips, partner-column dedup, laptop layout)
-- Phase 39: Partner Config Module (product type + named segments per partner, Partner Lists extension, segment-aware charts/KPIs)
-- Phase 40: Projected Curves v1 (historical-average projection overlay + "vs projected" KPI delta option)
+- Phase 38: Polish + Correctness Pass (logo, collapsible sidebar, column unlock, number formatting, chart avg truncation, tooltip hover, legend scroll, KPI horizon gating + delta labels + commitment rate, date-range filter, filter tooltips, partner-column dedup, laptop layout) — completed 2026-04-24
+- Phase 39: Partner Config Module (product type + named segments per partner, Partner Lists extension, segment-aware charts/KPIs) — completed 2026-04-25
+- Phase 40: Projected Curves v1 (per-batch modeled projection lines + KPI baseline selector) — completed 2026-04-25
+- Phase 40.1: Projected Curves Polish (chart visibility scoping, table modeled+delta cols, footer+header gap closure, BaselineSelector unification + localStorage persistence) — completed 2026-04-27
+
+**Post-ship stabilization queued:**
+- Phase 40.2: two unrelated bugs surfaced during 40.1 browser UAT — React duplicate-key warning under DataDisplay re-render path + 4 always-empty trailing footer cells at root drill. Pre-date Plan 40.1-04 fixes; not blocking v4.1 close. Likely needs `/gsd:debug` for the duplicate-key root cause.
 
 **Key decision:** Ship a simpler static projection in v4.1 rather than waiting for v5.0's target-anchored dynamic projection — the team needs something to benchmark against now, and the v5.0 version extends this foundation.
 
 ---
 
 
-## v4.5 Correctness & Security Foundation (Planned)
+## v4.5 Correctness & Foundation (Planned, expanded 2026-04-26)
 
-**Phases:** 2 (41-42) | **Plans:** TBD | **Status:** Planned, follows v4.1, precedes v5.0
-**Requirements:** 12 total across data correctness and ingestion-surface security
+**Phases:** 4 (41-44) | **Plans:** TBD | **Status:** Planned, follows v4.1, precedes v5.0. Wave 0 quick fixes shipped 2026-04-26.
+**Requirements:** 27 total (was 12) — across data correctness, ingestion-surface security, boundary hardening, and vocabulary lock
 
-**Goal:** Tight, structural hardening pass before v5.0 — verified metrics (so triangulation doesn't amplify silent bugs) and a documented threat model for v5.0's file-upload + Claude-extraction surface. Scope deliberately narrow: only the audits whose value degrades when deferred.
+**Goal:** Tight, structural hardening pass before v5.0 — verified metrics, documented threat model for ingestion, typed parsing boundaries with versioned persistence and unified chart primitives, and locked vocabulary with in-product glossary. Scope is the work whose value *degrades* if deferred past v5.0. Scope expanded from 2 to 4 phases on 2026-04-26 after multi-lens audit (data correctness, structural/systems, design-thinking, code-quality reviews) surfaced two more categories with the same degradation profile.
 
 **Phase breakdown:**
-- Phase 41: Data Correctness Audit (seed bug fix + breadth-first metric verification + scope-rollup consistency + regression fixtures + aggregation contract docs)
-- Phase 42: Ingestion-Surface Security Review (credential handling + client-side exposure + SQL injection surface + forward threat model for v5.0 Phase 45)
+- Phase 41: Data Correctness Audit (expanded) — seed bug fix + breadth-first metric verification + scope-rollup consistency + regression fixtures + aggregation contract docs + young-batch censoring fix + NULL-vs-zero semantics + polarity audit + apples-and-oranges runtime invariant + statistical threshold ADRs
+- Phase 42: Ingestion-Surface Security Review — credential handling + client-side exposure + SQL injection surface + forward threat model for v5.0 Phase 45 (gated on OAuth landing on Vercel)
+- Phase 43: Boundary Hardening (NEW) — typed canonical row representation + versioned persistence + Snowflake reliability primitives + ChartFrame primitive + tuned caching
+- Phase 44: Vocabulary Lock & Glossary (NEW) — in-product glossary + TERMS registry + `<Term>` component + List/View/Workspace conceptual resolution
 
-**Key decision:** Behavioral QA and tech-debt sweep moved to v5.5 (post-v5.0) — those audits improve with post-usage observation, while correctness and security architecture degrade when deferred. Split by the direction the work ages.
+**Key decisions:**
+- Behavioral QA, component decomposition, state consolidation, test pyramid inversion, and perf budget deferred to v5.5 — those audits/refactors improve with post-v5.0 observation. v4.5 holds work whose value degrades when deferred; v5.5 holds work whose value grows with observation.
+- Phase 43 was reserved slack; reallocated to a defined phase 2026-04-26 because boundary hardening shares the "must precede v5.0" property (v5.0 adds 3 new data shapes that would otherwise inherit current parsing debt × 3).
+- Phase 44 was reserved slack; reallocated 2026-04-26 because v5.0 introduces 5 new domain terms — vocabulary lock has to precede new term introduction or the conceptual sprawl compounds.
+- Phase 42 timing depends on OAuth on Vercel — currently localhost-only. Full security review value depends on the deployed surface being real.
+- v5.0 phase numbers (45-49) remain stable; reserved slack is now consumed but no v5.0 references churn.
 
-**Phases 43-44 reserved as insert-phase slack** (useful for urgent work discovered during v5.0; keeps v5.0 phase numbers stable).
+**Wave 0 (shipped 2026-04-26 in advance of Phase 41):** Three quick correctness fixes from the data review — MIN_GROUPS gate on anomaly detection, comparison matrix defaults to bar mode, KPI suppression on insufficient 3mo denominator (`MIN_PLACED_DENOMINATOR_DOLLARS = $100K`). Referenced in DCR-07/08/11 context.
 
 ---
 
@@ -182,18 +193,23 @@ Phase 25 discussion context (Partner Lists) was preserved and moved to Phase 34.
 ---
 
 
-## v5.5 Real-Use Hardening (Planned)
+## v5.5 Real-Use Hardening (Planned, expanded 2026-04-26)
 
 **Phases:** 2 (50-51) | **Plans:** TBD | **Status:** Planned, follows v5.0, precedes v6.0
-**Requirements:** 12 total across behavioral QA and tech-debt sweep
+**Requirements:** 19 total (was 12) — across behavioral QA, in-situ research infrastructure, and an expanded tech-debt sweep
 
-**Goal:** Post-v5.0 hardening that improves when deferred — behavioral QA built from observed MBR-prep workflows, and a tech-debt sweep informed by v5.0's actual code additions. Complements v4.5's pre-v5.0 structural audits.
+**Goal:** Post-v5.0 hardening that improves when deferred — behavioral QA from observed MBR-prep workflows, in-situ research infrastructure (telemetry + feedback channel) that's *built into v5.0* so observation has data to consume, and a tech-debt sweep informed by v5.0's actual code shape. Scope expanded 2026-04-26 to absorb the multi-lens audit's architectural refactors (data-display decomposition, state consolidation, test pyramid inversion, perf budget) — those are explicitly deferred from v4.5 because they benefit from v5.0's surface revealing the right seams.
 
 **Phase breakdown:**
-- Phase 50: Behavioral QA from Usage (living `docs/QA-SCRIPT.md` grounded in real use + v5.0 feature regression battery + keyboard/mouse/browser/size parity)
-- Phase 51: Tech Debt Sweep (close `docs/KNOWN-ISSUES.md` backlog + consolidate v5.0 computation-layer duplication + TanStack v9 migration + dependency upgrades + dead-code retirement + hot-path perf)
+- Phase 50: Behavioral QA + In-situ Research Infrastructure — living `docs/QA-SCRIPT.md` grounded in real use + v5.0 feature regression battery + keyboard/mouse/browser/size parity + telemetry sink + confusion-button feedback channel + weekly review ritual (IUR-01..03 are *co-built into v5.0* as it ships, not retrofitted)
+- Phase 51: Tech Debt Sweep (expanded) — close `docs/KNOWN-ISSUES.md` backlog + consolidate v5.0 computation-layer duplication + TanStack v9 migration + dependency upgrades + dead-code retirement + hot-path perf + **decompose `data-display.tsx`** + **state consolidation into typed Zustand store** + **test pyramid inversion (Vitest + property tests)** + **perf budget enforced in CI**
 
-**Key decision:** Splitting hardening across v4.5 (load-bearing for v5.0) and v5.5 (informed by v5.0) lets each piece land at its most effective moment. Audits whose value degrades when deferred (correctness, security architecture) stay in v4.5; audits whose value grows with observation (behavioral QA, code consolidation) land in v5.5.
+**Key decisions:**
+- Splitting hardening across v4.5 (load-bearing for v5.0) and v5.5 (informed by v5.0) lets each piece land at its most effective moment. Audits whose value degrades when deferred (correctness, security architecture, boundary hardening, vocabulary lock) stay in v4.5; audits whose value grows with observation (behavioral QA, code consolidation, decomposition informed by v5.0's seams) land in v5.5.
+- Architectural refactors (data-display decomposition, state consolidation) explicitly deferred to v5.5 because v5.0's triangulation/scorecard/reconciliation views will reveal the right seams. Premature decomposition creates abstractions v5.0 needs to rework.
+- Test pyramid inversion lands in v5.5 (not earlier) because tests are most valuable on the *typed* substrate Phase 43 (Boundary Hardening) establishes — testing the bag-of-strings layer is wasted work.
+- IUR-01..03 (telemetry, confusion button, weekly review) are *co-built into v5.0 plumbing*, not waiting for Phase 50 to start. Without that, "post-v5.0 observation" becomes "ask people sometimes" which is no data at all.
+- Phase 51 effort upgraded from Medium to Large to reflect the expanded scope (4 architectural refactors added).
 
 ---
 
