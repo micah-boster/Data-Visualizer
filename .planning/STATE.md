@@ -1,33 +1,35 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Feedback-Driven Polish
-status: unknown
-last_updated: "2026-04-28T01:35:20.293Z"
+milestone: v4.5
+milestone_name: Correctness & Foundation
+status: defining-requirements
+last_updated: "2026-04-27T00:00:00Z"
 progress:
-  total_phases: 41
-  completed_phases: 41
-  total_plans: 121
-  completed_plans: 121
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-23)
+See: .planning/PROJECT.md (updated 2026-04-27)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** v4.1 SHIPPED 2026-04-27 (Phases 38, 39, 40, 40.1 — 14 plans, 35 reqs). Two non-blocking bugs from 40.1 UAT carried over to v4.5 Phase 41.2. Next: v4.5 Phase 41 (Data Correctness Audit).
+**Current focus:** v4.5 Correctness & Foundation — Phase 41 (Data Correctness Audit) up next; Phase 44 (Vocabulary Lock) parallelizable; Phase 43 (Boundary Hardening) sequenced after Phase 41 DCR-08; Phase 42 (Security Review) gated on OAuth on Vercel. Two non-blocking bugs from 40.1 UAT carried over to v4.5 Phase 41.2 (React duplicate-key warning under DataDisplay re-render path; possible 4-trailing-empty-cell artifact at All Partners root drill).
 
 ## Current Position
 
-Phase: 40.1 (Projected Curves Polish) COMPLETE + GAPS CLOSED 2026-04-26 — all 4 plans shipped (40.1-01 foundation primitives + 40.1-02 chart visibility scoping + 40.1-03 table modeled+delta cols + 40.1-04 browser-UAT gap closure). All 5 PRJ-09..13 requirements closed; both browser-UAT gaps from 40.1-VERIFICATION.md (footer-aggregate-unit-mismatch + header-truncation-illegible) RESOLVED. v4.1 milestone closed (gap-clean). Phase 39 (Partner Config Module) COMPLETE 2026-04-25 — all 4 plans shipped, all 7 PCFG requirements closed (PCFG-01..07). Phase 40 (Projected Curves v1) COMPLETE 2026-04-25 — all 3 plans shipped, all 5 PRJ requirements closed. Phase 38 (Polish + Correctness Pass) COMPLETE 2026-04-24.
-Plan: Phase 40.1 — 40.1-04 (browser-UAT gap closure) COMPLETE 2026-04-26 in ~3min (2 atomic commits). Closes Gap 1 (footer-aggregate-unit-mismatch — modeled "Avg" was ~100x too large because TableFooter routed all percentage cols through formatPercentage which assumes 0..1 scale; fix: per-column meta.footerFormatter escape hatch on the 4 modeled+delta col defs + extend TableFooter to consult it before formatAggregate fallback) and Gap 2 (header-truncation-illegible — POL-06 reversal per direct user feedback "impossible to use if you can't read any column titles without a tooltip"; fix: globally swap header label span className from `truncate min-w-0 max-w-[180px]` → `line-clamp-2 break-words leading-snug min-w-0`, native `title` retained as 3+ line fallback). Three files modified (definitions.ts, table-footer.tsx, draggable-header.tsx); zero new files; zero schema changes. No-remount contract from Plan 40.1-03 preserved (`git diff` empty for data-table.tsx + data-display.tsx). formatPercentage UNTOUCHED (30+ callers preserved). aggregations.ts UNTOUCHED.
-Status: v4.0 shipped 2026-04-24 (Phases 25-37 all complete, 105/105 plans). v4.1 SHIPPED 2026-04-27 — Phases 38, 39, 40, 40.1 (4 phases, 14 plans, 35 reqs incl. PRJ-09..13 registered post-hoc on milestone close). Two non-blocking bugs from 40.1 browser UAT moved to v4.5 Phase 41.2 — (a) React duplicate-key warning `'Happy Money'` under DataDisplay re-render path (root cause not localizable via static analysis; recommend `/gsd:debug` when 41.2 starts); (b) possible 4-trailing-empty-cell artifact at All Partners root drill (possible regression on Plan 40.1-03 truth #5 OR pre-existing column-picker artifact). Both pre-date Plan 40.1-04 fixes; carried over to keep v4.1 close clean. Next: v4.5 Phase 41 (Data Correctness Audit).
-Last activity: 2026-04-26 — 40.1-04 (browser-UAT gap closure) shipped in ~3min. Gap 1 (footer aggregate unit mismatch): src/lib/columns/definitions.ts adds meta.footerFormatter callback to each of the 4 modeled+delta col-template meta objects — modeled cols format avg as `${label}: ${avg.toFixed(1)}%` (no /100 divide; 0..100 scale honored), delta cols format as `${label}: ${sign}${avg.toFixed(1)}pp` (signed; pp suffix matches body cell unit from ModeledDeltaCell). src/components/table/table-footer.tsx extends the inline meta type cast to include footerFormatter?: (avg, label) => string and consults meta.footerFormatter before falling through to the generic formatAggregate(agg.primary, colType, agg.label) path — pure addition, columns without footerFormatter behave exactly as before. Path A (per-column escape hatch) chosen over Path B (new meta.type values) because it's surgical and narrowly scoped — no new type-system enums for downstream consumers to interpret. Gap 2 (header truncation illegible): src/components/table/draggable-header.tsx swaps the header label `<span>` className from `truncate min-w-0 max-w-[180px]` to `line-clamp-2 break-words leading-snug min-w-0`. max-w-[180px] dropped — line-clamp-2 honors per-column ColumnDef.size; imposing a 180px cap would constrain wider columns. Native `title` attribute retained as last-resort fallback for the rare 3+ line edge case (original POL-06 rationale — header re-renders + drag pointer events conflict with hover-open Tooltips — still applies for the fallback path). Comment block above the span updated to record the POL-06 reversal date, user feedback verbatim, and why max-w cap was dropped. table-header.tsx UNTOUCHED — sticky `top-0` + bg-surface-base + shadow-xs chrome correct as-is; no fixed height on thead/tr/th means the row grows naturally to fit 2-line labels and stays pinned. flex items-center on the inner row keeps SortIndicator + ColumnHeaderFilter vertically centered against the (now multi-line) label. 2 atomic commits (5a7d21e fix, 0e9f308 fix) + final metadata commit. All token guards green (check:tokens, check:surfaces, check:motion, check:components). Zero new TS errors. git diff empty for data-table.tsx + data-display.tsx + numbers.ts + aggregations.ts (no-remount contract + read-only contracts preserved). 2026-04-26 prior — 40.1-03 (table modeled+delta cols, PRJ-11/13 table half) shipped in ~5min. src/lib/columns/definitions.ts adds MODELED_HORIZONS const + buildModeledColumns() helper appending four virtual ColumnDefs at horizons 6mo + 12mo. Each col has both id + accessorKey set to match the sentinel column name (__MODELED_AFTER_*_MONTH, __DELTA_VS_MODELED_*_MONTH) so the existing CSV export at csv.ts:95 (row.getValue(col.id)) Just Works without custom export code (RESEARCH § Pitfall 4 lock). Modeled cells divide by 100 before getCellRenderer('percentage', ...) (Pitfall 5: recoveryRate is 0..100, formatPercentage assumes 0..1). Δ cells use createElement(ModeledDeltaCell, { deltaPercent, metricKey }) with NO division (Plan 01 contract: 0..100 scale). data-display.tsx adds modeledRateAtMonth import + new enrichedTableData useMemo that stamps __MODELED_AFTER_{6,12}_MONTH (raw modeled rate, 0..100) and __DELTA_VS_MODELED_{6,12}_MONTH (actual − modeled, 0..100) onto each partner-level row using a Map<batchName, BatchCurve> keyed lookup; root + batch scopes pass through unchanged (CONTEXT § Aggregate-row scope). data-table.tsx adds baselineMode?: BaselineMode prop (default 'rolling') + new visibility effect mirroring the FLT-03 hidePartnerColumn pattern at lines 166-179: lastAppliedBaselineRef guard ensures one-shot application per baselineMode change, columnManagement.setColumnVisibility((prev) => ({ ...prev, ...flip })) sets the four __MODELED_* / __DELTA_* ids to visible/hidden. User's column-picker toggle wins after first apply. DataTable key prop at data-display.tsx:1571 intentionally encodes only drill scope (level + partner + product + batch) — baselineMode mutates columnVisibility state in place, NOT remounts (success criterion lock: sort/sizing/filter survive toggles). TanStack Table accepts visibility entries for unknown column ids without error, so the effect is a no-op at root + batch where the column ids don't exist (root uses buildRootColumnDefs, batch uses accountColumnDefs via columnDefsOverride). src/lib/columns/config.ts UNCHANGED — schema-validator boundary preserved. src/lib/columns/root-columns.ts UNCHANGED. CSV unit-format mismatch on delta cells (UI '+5.3pp' vs CSV '5.30%') accepted as v1 minor inconsistency, documented inline at the column def, flagged for v4.2. 2 atomic commits (338b781 feat, 6892009 feat) + final metadata commit. All token guards green (check:tokens, check:surfaces, check:motion, check:components). Zero new TS errors.
+Phase: Not started (Phase 41 ready to plan)
+Plan: —
+Status: v4.5 activated via /gsd:new-milestone 2026-04-27. Pre-scoped REQUIREMENTS (4 phases / 30 requirements: DCR-01..11, SEC-01..06, BND-01..06, VOC-01..07) and ROADMAP (`milestones/v4.5-ROADMAP.md`) already exist from the multi-lens audit (2026-04-26). Wave 0 quick fixes shipped in advance (MIN_GROUPS gate, comparison-matrix bar default, KPI denominator floor — staged in working dir, awaiting commit per NEXT-STEPS.md). Recommended start: `/gsd:plan-phase 41` (Data Correctness Audit). Phase 44 (Vocabulary Lock) can run in parallel.
 
-Progress: [████████████████████] 4/4 Phase 39 plans COMPLETE | [████████████████████] 3/3 Phase 40 plans COMPLETE | [████████████████████] 4/4 Phase 40.1 plans COMPLETE (incl. gap-closure)
+Prior history: v4.1 SHIPPED 2026-04-27 — Phases 38, 39, 40, 40.1 (4 phases, 14 plans, 35 reqs incl. PRJ-09..13 registered post-hoc on milestone close). Phase 40.1 — 40.1-04 (browser-UAT gap closure) closed Gap 1 (footer-aggregate-unit-mismatch via per-column meta.footerFormatter escape hatch on the 4 modeled+delta col defs) and Gap 2 (header-truncation-illegible — POL-06 reversal: globally swap header label span className from `truncate min-w-0 max-w-[180px]` → `line-clamp-2 break-words leading-snug min-w-0`). 40.1-03 (table modeled+delta cols, PRJ-11/13 table half) added MODELED_HORIZONS const + buildModeledColumns() helper appending four virtual ColumnDefs at horizons 6mo + 12mo. 2026-04-25: Phase 39 (Partner Config Module, 4 plans, 7 PCFG requirements) + Phase 40 (Projected Curves v1, 3 plans, 5 PRJ requirements) complete. 2026-04-24: Phase 38 (Polish + Correctness Pass) complete.
+Last activity: 2026-04-27 — v4.5 milestone activated via /gsd:new-milestone. PROJECT.md updated (v4.1 phases moved to Validated; Active section now lists Phases 41-44; Out of Scope expanded with v5.5/v6.0 deferrals + pending expert reviews). Top-level REQUIREMENTS.md updated to summarize v4.5 (was still pointing at v4.0). STATE.md frontmatter reset (milestone v4.5, 4 phases, 0 plans). Workflow.research persisted false (no new external domain — v4.5 is structural hardening grounded in multi-lens audit findings already captured in NEXT-STEPS.md). v4.1 retains its archive entry; v4.5 ROADMAP.md and REQUIREMENTS.md continue to live at `.planning/milestones/v4.5-*.md` as authoritative source.
+
+Progress: [░░░░░░░░░░░░░░░░░░░░] 0/4 v4.5 phases | Phase 41 (DCR) → Phase 44 (VOC, parallel) → Phase 43 (BND, after DCR-08) → Phase 42 (SEC, gated on OAuth)
 
 ## Shipped Milestones
 
@@ -38,6 +40,7 @@ Progress: [████████████████████] 4/4 Pha
 | v3.0 Intelligence & Cross-Partner Comparison | 15-20 | 9 | 2026-04-14 |
 | v3.1 Stabilization & Code Quality | 21-24 | 8 | 2026-04-14 |
 | v4.0 Design System & Daily-Driver UX | 25-37 | 105 | 2026-04-24 |
+| v4.1 Feedback-Driven Polish | 38-40 + 40.1 | 14 | 2026-04-27 |
 
 ## Accumulated Context
 

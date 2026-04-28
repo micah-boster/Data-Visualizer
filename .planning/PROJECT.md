@@ -40,24 +40,31 @@ Surface abnormal account and batch performance data so the partnerships team can
 - ✓ All v3.0 integration bugs resolved, codebase production-grade — v3.1
 - ✓ Component patterns (StatCard, DataPanel, SectionHeader, ToolbarGroup/Divider, EmptyState) with CI-guarded enforcement — v4.0 Phase 29
 - ✓ v4.0 Design System & Daily-Driver UX shipped end-to-end (Phases 25-37: tokens, typography, surfaces, component patterns, motion, visual polish, URL navigation, accessibility, Partner Lists, Chart Schema/Builder, Metabase SQL Import) — v4.0 (2026-04-24)
+- ✓ v4.1 Feedback-Driven Polish shipped (Phases 38-40 + 40.1: branding/sidebar/columns/headers, chart correctness, KPI cascade, filters, laptop layout, Metabase chart-type override, `(partner, product)` canonical unit, segment config, Projected Curves v1, projection visibility scoping + table modeled+Δ columns) — v4.1 (2026-04-26)
 
-### Current Milestone: v4.1 Feedback-Driven Polish
+### Current Milestone: v4.5 Correctness & Foundation
 
-**Goal:** Close the 14 first-week feedback items against v4.0, enforce `(partner, product)` as the canonical unit of analysis (no cross-product blending), and ship a first-pass projected-curve line the team can benchmark against. Make the app feel like a tool the team reaches for first — not one that needs workarounds.
+**Goal:** Tight, structural hardening pass before v5.0 — every visible number matches a direct Snowflake query, the ingestion surface has a documented threat model, the compute layer operates on typed canonical rows (not bag-of-strings), localStorage state survives schema changes with explicit feedback, and 17 domain terms (12 existing + 5 v5.0-bound) are defined once and surfaced in-product. Holds only the work whose value *degrades* when deferred past v5.0; behavioral QA, component decomposition, and test pyramid inversion intentionally pushed to v5.5 where post-v5.0 observation informs them.
 
 **Target features:**
-- Polish + correctness pass: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness (axis + avg + hover + legend scroll), KPI cascade, filter fixes (date range, tooltips, partner dedup), laptop layout, Metabase Import chart-type override
-- Partner Config module: product-type derived from `ACCOUNT_TYPE` (no blending), per-`(partner, product)` segment config in localStorage, Setup UI, segment-aware charts/KPIs
-- Projected Curves v1: historical-average-based projection overlay + optional "vs projected curve" KPI baseline
+- Data Correctness Audit: seed bug fix + breadth-first metric verification + scope-rollup consistency + regression fixtures + aggregation contract docs + young-batch censoring + NULL-vs-zero semantics + polarity audit + apples-and-oranges runtime invariant + statistical threshold ADRs
+- Ingestion-Surface Security Review: existing-surface audit (credentials, client exposure, SQL injection) + forward threat model for v5.0 file-upload + Claude-extraction surface
+- Boundary Hardening: typed `BatchRow`/`AccountRow` parser + compute-layer signature change + versioned localStorage with migration chain + Snowflake reliability primitives + unified `<ChartFrame>` primitive + tuned caching
+- Vocabulary Lock & Glossary: `docs/GLOSSARY.md` + `TERMS` registry + `<Term>` component + List/View/Workspace ADR + REVENUE_MODEL surfacing as product dimension (gated on ETL)
 
 ### Active
 
-- [ ] Phase 38 — Polish + Correctness Pass (POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01)
-- [ ] Phase 39 — Partner Config Module (PCFG-01..07)
-- [ ] Phase 40 — Projected Curves v1 (PRJ-01..05)
+- [ ] Phase 41 — Data Correctness Audit (DCR-01..11)
+- [ ] Phase 42 — Ingestion-Surface Security Review (SEC-01..06; gated on OAuth on Vercel)
+- [ ] Phase 43 — Boundary Hardening (BND-01..06)
+- [ ] Phase 44 — Vocabulary Lock & Glossary (VOC-01..07; VOC-05/06/07 gated on REVENUE_MODEL ETL ~2026-05-03)
 
 ### Out of Scope
 
+- Behavioral QA from observed usage + in-situ research infrastructure (telemetry, confusion button) — v5.5 Phase 50 (effective only after v5.0 is in daily use; IUR-01..03 telemetry plumbing co-built into v5.0)
+- Decompose `data-display.tsx` (1458 lines), state consolidation (5 Contexts → Zustand), test pyramid inversion (Vitest + property tests), perf budget enforced in CI — v5.5 Phase 51 (right seams revealed by v5.0)
+- First-run onboarding tour, `?` overlay surfacing definitions on canvas, filter rail on canvas, sidebar IA reorganization, mobile/responsive policy, motion palette deployment — v6.0 (informed by v5.0 use)
+- Pure visual design review, performance specialist profile, production/SRE readiness, accessibility specialist deep-dive, full external security review, content strategy review — pending expert reviews (run after v5.0 ships when surface is feature-complete)
 - Target-anchored dynamic curve re-projection with confidence bands — v5.0 (Phase 49; v4.1 Phase 40 ships a simpler historical-average projection)
 - Partner scorecard ingestion & competitive intelligence — v5.0
 - Contractual target tracking & triangulation views — v5.0
@@ -79,7 +86,7 @@ Surface abnormal account and batch performance data so the partnerships team can
 ## Context
 
 - **Shipped:** v3.1 deployed 2026-04-14 at data-visualizer-micah-bosters-projects.vercel.app
-- **Codebase:** ~13,566 LOC TypeScript/React across 147 files
+- **Codebase:** ~25,875 LOC TypeScript/React (post-v4.0; v4.1 added segment config, projection overlay, table modeled+Δ cols)
 - **Stack:** Next.js 16, TanStack Table, React Query, Recharts, Tailwind CSS, shadcn/ui, base-ui, AI SDK (ai + @ai-sdk/anthropic + @ai-sdk/react), simple-statistics
 - **Data source:** `agg_batch_performance_summary` (61 columns), `master_accounts` (78 columns, drill-down)
 - **Static cache:** 477 batch rows + Affirm March account drill-down. Auto-switches to live Snowflake when credentials are added.
@@ -121,4 +128,4 @@ Surface abnormal account and batch performance data so the partnerships team can
 | Known issues documented comprehensively | Production-grade codebase snapshot | ✓ Good — 22 issues catalogued |
 
 ---
-*Last updated: 2026-04-23 — v4.1 activated. v4.0 shipped 2026-04-24 (Phases 25-37: design system + URL nav + a11y + Partner Lists + Chart Builder + Metabase Import). Current scope is Phases 38-40 (polish + correctness, partner config, projected curves v1).*
+*Last updated: 2026-04-27 — v4.5 activated via /gsd:new-milestone. v4.1 closed gap-clean 2026-04-26 (Phases 38-40 + 40.1, all PCFG/PRJ/POL/CHT/KPI/FLT/MBI requirements validated). Current scope is Phases 41-44: Data Correctness Audit (DCR-01..11), Ingestion-Surface Security Review (SEC-01..06, gated on OAuth), Boundary Hardening (BND-01..06), Vocabulary Lock & Glossary (VOC-01..07, VOC-05/06/07 gated on REVENUE_MODEL ETL). Wave 0 quick fixes shipped 2026-04-26 (MIN_GROUPS gate, matrix bar default, KPI denominator floor).*
