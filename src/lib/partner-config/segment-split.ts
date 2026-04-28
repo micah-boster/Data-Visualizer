@@ -26,7 +26,10 @@
  * surface a warning. The Setup UI prevents save-with-overlap by default.
  */
 
-import { computeKpis } from '@/lib/computation/compute-kpis';
+import {
+  computeKpis,
+  assertSegmentsNonOverlapping,
+} from '@/lib/computation/compute-kpis';
 import { reshapeCurves } from '@/lib/computation/reshape-curves';
 import type { BatchCurve, KpiAggregates } from '@/types/partner-stats';
 
@@ -123,13 +126,32 @@ export function kpiAggregatesPerSegment(
   rows: Array<Record<string, unknown>>,
   segments: SegmentRule[],
 ): SegmentKpiEntry[] {
-  return splitRowsBySegment(rows, segments).map(
+  const entries = splitRowsBySegment(rows, segments).map(
     ({ label, rows: segRows, isOther }) => ({
       label,
       kpis: computeKpis(segRows),
       isOther,
     }),
   );
+
+  // DCR-10: apples-and-oranges runtime invariant. Catches overlapping
+  // segment definitions that bypass the Setup UI overlap warning.
+  // Runs once per segment-split compute pass (callers wrap in useMemo) —
+  // not per render. totalCollected chosen as the canary scalar: it is the
+  // most user-visible KPI, sums monotonically across non-overlapping rows,
+  // and is always populated (no eligibility gating like rate3mo). When
+  // segments overlap, sum(segment totalCollected) > rolled-up total by the
+  // overlap count — assertion catches the drift in dev (throws) and logs
+  // telemetry in prod (never blocks render).
+  const allRowsTotal = computeKpis(rows).totalCollected;
+  const segmentTotals = entries.map((e) => e.kpis.totalCollected);
+  assertSegmentsNonOverlapping(
+    segmentTotals,
+    allRowsTotal,
+    'kpiAggregatesPerSegment',
+  );
+
+  return entries;
 }
 
 /**

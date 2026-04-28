@@ -1,5 +1,50 @@
 import type { KpiAggregates } from '@/types/partner-stats';
 
+/**
+ * DCR-10 — apples-and-oranges runtime invariant.
+ *
+ * The Phase 39 PCFG-07 segment-split feature relies on segments being
+ * non-overlapping (each row maps to at most one segment). When this
+ * holds:  sum(per-segment.totalCollected) === computeKpis(allRows).totalCollected
+ *
+ * The Setup UI shows an overlap warning, but it is advisory — a user
+ * who ignores it and ships overlapping segment definitions silently
+ * double-counts revenue. This assertion turns the load-bearing comment
+ * at the top of computeKpis into a runtime invariant: dev fails loud,
+ * prod logs telemetry, never blocks render.
+ *
+ * Tolerance: 1¢ ($0.01) absolute. Floating-point arithmetic on the
+ * sum-of-segment-sums vs. sum-of-all-rows can drift by a few cents on
+ * large datasets; that's not an apples-and-oranges violation.
+ */
+const APPLES_TOLERANCE_DOLLARS = 0.01;
+
+export function assertSegmentsNonOverlapping(
+  segmentTotals: number[],
+  allRowsTotal: number,
+  context: string = 'segments',
+): void {
+  const segSum = segmentTotals.reduce((a, b) => a + b, 0);
+  const drift = Math.abs(segSum - allRowsTotal);
+  if (drift <= APPLES_TOLERANCE_DOLLARS) return;
+
+  const msg =
+    `[apples-and-oranges] ${context}: segment sum ${segSum.toFixed(2)} ` +
+    `does not equal total ${allRowsTotal.toFixed(2)} ` +
+    `(drift ${drift.toFixed(2)}). Likely overlapping segments — ` +
+    `Setup UI overlap warning was ignored.`;
+
+  if (process.env.NODE_ENV !== 'production') {
+    // Dev: fail loud. Throw so the developer sees the violation in the
+    // browser console + error boundary surface.
+    throw new Error(msg);
+  }
+  // Prod: log telemetry. Never block render. The current logging surface
+  // is console.error; replace with a real telemetry hook (Sentry,
+  // Datadog) in v5.5 DEBT phase if observability primitives land then.
+  console.error(msg);
+}
+
 /** Cascade-tier keys the KPI strip selects from (Phase 38 KPI-01). */
 export type CascadeRateKey =
   | 'rate3mo'

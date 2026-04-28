@@ -8,7 +8,14 @@ import type {
 } from '@/types/partner-stats';
 import { computeNorms } from './compute-norms';
 import { getPolarity } from './metric-polarity';
-import { getPartnerName, getBatchName, getStringField } from '@/lib/utils';
+import { isMetricEligible } from './metric-eligibility';
+import {
+  getPartnerName,
+  getBatchName,
+  getStringField,
+  coerceAgeMonths,
+} from '@/lib/utils';
+import { isRateShapedNullable } from '@/lib/data/parse-batch-row';
 import {
   pairKey,
   displayNameForPair,
@@ -187,10 +194,40 @@ export function computeAnomalies(
   const batches: BatchAnomaly[] = sorted.map((row) => {
     const batchName = getBatchName(row);
 
+    // DCR-07: metric-age eligibility filter — derive once per row. Uses the
+    // shared coerceAgeMonths helper (handles legacy-days static-cache rows
+    // alongside live months). See src/lib/computation/metric-eligibility.ts
+    // and Phase 41 CONTEXT § Young-batch censoring for the architectural
+    // commitment to eligibility-filter (not per-age-bucket norms).
+    const batchAgeMonths = coerceAgeMonths(row.BATCH_AGE_IN_MONTHS);
+
     // Evaluate each curated metric
     const flags: MetricAnomaly[] = [];
     for (const metric of ANOMALY_METRICS) {
-      const anomaly = evaluateMetric(metric, row[metric], norms[metric]);
+      // DCR-07 eligibility gate: skip batches not yet old enough for this
+      // metric to be meaningfully comparable. Filters BEFORE the z-score
+      // check — the row is removed from evaluation entirely (NOT a "found 0"
+      // outcome). The MIN_GROUPS gate further down still applies; an
+      // ineligible (batch, metric) pair never produces a flag, so it can
+      // never contribute to the group count.
+      if (!isMetricEligible(batchAgeMonths, metric)) continue;
+
+      // DCR-08 null gate: rate-shaped fields can legitimately be null
+      // (partner has no activity on this channel — SMS/email/call/dispute).
+      // Distinguish "no activity" from "genuinely zero". The Number(x) || 0
+      // pattern previously coerced null → 0 and let the detector flag
+      // null-engagement partners as zero-engagement outliers. The gate
+      // skips the row for the metric without polluting norms (norms are
+      // computed upstream by computeNorms, which already filters null).
+      const rawValue = row[metric];
+      if (
+        isRateShapedNullable(metric) &&
+        (rawValue === null || rawValue === undefined || rawValue === '')
+      ) {
+        continue;
+      }
+
+      const anomaly = evaluateMetric(metric, rawValue, norms[metric]);
       if (anomaly) flags.push(anomaly);
     }
 
