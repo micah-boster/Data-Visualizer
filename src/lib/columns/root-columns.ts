@@ -20,6 +20,7 @@ import { getCellRenderer } from '@/components/table/formatted-cell';
 import type { TableDrillMeta } from './definitions';
 import { anomalyStatusColumn } from './anomaly-column';
 import { getPartnerName, getStringField } from '@/lib/utils';
+import type { AggregationStrategy } from '@/lib/table/aggregations';
 import {
   pairKey,
   sortPairs,
@@ -33,21 +34,47 @@ interface RootColumnConfig {
   label: string;
   type: 'text' | 'currency' | 'percentage' | 'count' | 'number';
   size: number;
+  /**
+   * Phase 41-01 (DCR-01) — explicit aggregation strategy for the footer
+   * + any downstream rollup. See docs/AGGREGATION-CONTRACT.md for the
+   * decision flowchart. Aligned with the `weightedByPlaced` / `sum`
+   * implementation in `buildPairSummaryRows` below.
+   */
+  aggregation: AggregationStrategy;
+  /** Snowflake column key for the per-row weight when aggregation === 'avgWeighted'. */
+  aggregationWeight?: string;
 }
 
 const ROOT_COLUMNS: RootColumnConfig[] = [
-  { key: 'PARTNER_NAME', label: 'Partner', type: 'text', size: 180 },
+  // Identity / label cols — never aggregate.
+  { key: 'PARTNER_NAME', label: 'Partner', type: 'text', size: 180, aggregation: 'none' },
   // Phase 39 PCFG-02: Product column distinguishes pair rows for multi-product
   // partners. Positioned right after PARTNER_NAME so visual scan reads
   // "Partner | Product | metrics".
-  { key: 'ACCOUNT_TYPE', label: 'Product', type: 'text', size: 110 },
-  { key: '__BATCH_COUNT', label: '# Batches', type: 'count', size: 90 },
-  { key: 'TOTAL_ACCOUNTS', label: 'Total Accounts', type: 'count', size: 120 },
-  { key: 'TOTAL_AMOUNT_PLACED', label: 'Total Placed', type: 'currency', size: 130 },
-  { key: 'TOTAL_COLLECTED_LIFE_TIME', label: 'Total Collected', type: 'currency', size: 130 },
-  { key: 'PENETRATION_RATE_POSSIBLE_AND_CONFIRMED', label: 'Penetration Rate', type: 'percentage', size: 130 },
-  { key: 'COLLECTION_AFTER_6_MONTH', label: '6mo Collection', type: 'currency', size: 130 },
-  { key: 'COLLECTION_AFTER_12_MONTH', label: '12mo Collection', type: 'currency', size: 130 },
+  { key: 'ACCOUNT_TYPE', label: 'Product', type: 'text', size: 110, aggregation: 'none' },
+
+  // Count / currency cols — sum across pair rows is meaningful.
+  { key: '__BATCH_COUNT', label: '# Batches', type: 'count', size: 90, aggregation: 'sum' },
+  { key: 'TOTAL_ACCOUNTS', label: 'Total Accounts', type: 'count', size: 120, aggregation: 'sum' },
+  { key: 'TOTAL_AMOUNT_PLACED', label: 'Total Placed', type: 'currency', size: 130, aggregation: 'sum' },
+  { key: 'TOTAL_COLLECTED_LIFE_TIME', label: 'Total Collected', type: 'currency', size: 130, aggregation: 'sum' },
+
+  // DCR-01: penetration rate is dollar-weighted by TOTAL_AMOUNT_PLACED.
+  // Arithmetic mean of percentages across pairs with different placed
+  // volumes is statistically meaningless. This footer declaration matches
+  // the `weightedByPlaced` helper in `buildPairSummaryRows`.
+  {
+    key: 'PENETRATION_RATE_POSSIBLE_AND_CONFIRMED',
+    label: 'Penetration Rate',
+    type: 'percentage',
+    size: 130,
+    aggregation: 'avgWeighted',
+    aggregationWeight: 'TOTAL_AMOUNT_PLACED',
+  },
+
+  // Currency cols — sum.
+  { key: 'COLLECTION_AFTER_6_MONTH', label: '6mo Collection', type: 'currency', size: 130, aggregation: 'sum' },
+  { key: 'COLLECTION_AFTER_12_MONTH', label: '12mo Collection', type: 'currency', size: 130, aggregation: 'sum' },
 ];
 
 export function buildRootColumnDefs(): ColumnDef<Record<string, unknown>>[] {
@@ -92,6 +119,10 @@ export function buildRootColumnDefs(): ColumnDef<Record<string, unknown>>[] {
     },
     meta: {
       type: col.type,
+      // Phase 41-01 DCR-01: footer dispatch reads meta.aggregation first.
+      // ROOT_COLUMNS declares each strategy explicitly above.
+      aggregation: col.aggregation,
+      aggregationWeight: col.aggregationWeight,
     },
   }));
   return [anomalyStatusColumn, ...dataColumns];
@@ -143,10 +174,27 @@ export function buildPairSummaryRows(
   for (const { pair, rows } of groups.values()) {
     const sum = (key: string) =>
       rows.reduce((s, r) => s + (Number(r[key]) || 0), 0);
-    const weightedAvg = (key: string) => {
-      const total = rows.length;
-      if (total === 0) return 0;
-      return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0) / total;
+
+    // DCR-01: dollar-weighted aggregation. Arithmetic mean of percentages
+    // is statistically meaningless across batches with different placed
+    // dollar volumes — a $50K-placed batch with 90% penetration would be
+    // averaged with equal weight against a $1M-placed batch with 10%.
+    // See docs/AGGREGATION-CONTRACT.md and the matching
+    // `meta.aggregation: 'avgWeighted'` declaration on the percentage
+    // ColumnDefs in definitions.ts (the strategy table that this helper
+    // mirrors at the partner-summary surface).
+    const weightedByPlaced = (key: string) => {
+      let weightedSum = 0;
+      let totalWeight = 0;
+      for (const r of rows) {
+        const v = Number(r[key]);
+        const w = Number(r['TOTAL_AMOUNT_PLACED']);
+        if (Number.isFinite(v) && Number.isFinite(w) && w > 0) {
+          weightedSum += v * w;
+          totalWeight += w;
+        }
+      }
+      return totalWeight > 0 ? weightedSum / totalWeight : 0;
     };
 
     const count = productsPerPartner.get(pair.partner) ?? 1;
@@ -159,7 +207,9 @@ export function buildPairSummaryRows(
       TOTAL_ACCOUNTS: sum('TOTAL_ACCOUNTS'),
       TOTAL_AMOUNT_PLACED: sum('TOTAL_AMOUNT_PLACED'),
       TOTAL_COLLECTED_LIFE_TIME: sum('TOTAL_COLLECTED_LIFE_TIME'),
-      PENETRATION_RATE_POSSIBLE_AND_CONFIRMED: weightedAvg('PENETRATION_RATE_POSSIBLE_AND_CONFIRMED'),
+      PENETRATION_RATE_POSSIBLE_AND_CONFIRMED: weightedByPlaced(
+        'PENETRATION_RATE_POSSIBLE_AND_CONFIRMED',
+      ),
       COLLECTION_AFTER_6_MONTH: sum('COLLECTION_AFTER_6_MONTH'),
       COLLECTION_AFTER_12_MONTH: sum('COLLECTION_AFTER_12_MONTH'),
     });

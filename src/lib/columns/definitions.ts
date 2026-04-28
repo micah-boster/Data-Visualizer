@@ -190,6 +190,13 @@ function buildModeledColumns(): ColumnDef<Record<string, unknown>>[] {
         },
         meta: {
           type: 'percentage',
+          // Phase 41-01 DCR-01 — modeled rate at the horizon. avgWeighted
+          // arithmetic mean (no weight) is the closest match to the existing
+          // footerFormatter intent — these are projected rates per batch, and
+          // the raw projected number is on 0..100 scale. footerFormatter wins
+          // downstream regardless; this declaration keeps the math story
+          // consistent with the AGGREGATION-CONTRACT.
+          aggregation: 'avgWeighted',
           // Phase 40.1 Plan 04 — Gap 1 (footer-aggregate-unit-mismatch).
           // The generic TableFooter path routes percentage cols through
           // formatPercentage (×100), but our modeled values are already on
@@ -231,6 +238,11 @@ function buildModeledColumns(): ColumnDef<Record<string, unknown>>[] {
         // FLAG FOR v4.2 follow-up if user feedback requests WYSIWYG delta format.
         meta: {
           type: 'percentage',
+          // Phase 41-01 DCR-01 — delta cells store signed pp values on the
+          // 0..100 scale. avgWeighted arithmetic mean (no weight) matches
+          // the existing footerFormatter intent for an "average delta"
+          // summary across visible batches.
+          aggregation: 'avgWeighted',
           // Phase 40.1 Plan 04 — Gap 1 (footer-aggregate-unit-mismatch).
           // Δ values are signed and on the 0..100 scale (Plan 01 contract;
           // ModeledDeltaCell does NOT divide). Footer must match body unit
@@ -248,6 +260,71 @@ function buildModeledColumns(): ColumnDef<Record<string, unknown>>[] {
   });
 }
 
+/**
+ * Phase 41-01 DCR-01 — Per-column aggregation strategy resolver. Maps a
+ * Snowflake column config to its declared strategy + optional weight.
+ *
+ * Decision rules (mirrored in docs/AGGREGATION-CONTRACT.md):
+ *   - LENDER_ID is an identifier — never sum (CONTEXT § "no more Lender ID
+ *     summing"). Returns 'none' to render em-dash.
+ *   - BATCH_AGE_IN_MONTHS is a bounded scalar where range (max−min) is the
+ *     interesting quantity across a portfolio; arithmetic mean of ages is
+ *     uninformative.
+ *   - All `*_RATE_*` percentage columns (penetration / collection / SMS /
+ *     email / phone / conversion) are dollar-weighted by TOTAL_AMOUNT_PLACED
+ *     by default. The dollar denominator is the volume that gives each rate
+ *     its meaning at portfolio scale. Channel rates (SMS/email/phone) are a
+ *     softer fit — a per-channel volume column would be more correct, but
+ *     none exists in the warehouse today; TOTAL_AMOUNT_PLACED weights by
+ *     batch size which is still better than equal-weighting batches of
+ *     wildly different sizes. Plan 05 metric audit will revisit per-rate
+ *     denominators.
+ *   - Identity / text / date cols → 'none' (Count: N preserved by aggregation
+ *     dispatch when meta.type is 'text' or 'date').
+ *   - Everything else (currency, count, additive numerics) → 'sum'.
+ */
+function aggregationFor(config: typeof COLUMN_CONFIGS[number]): {
+  aggregation: AggregationStrategy;
+  aggregationWeight?: string;
+} {
+  // Identity / label cols — never aggregate. PARTNER_NAME, BATCH, ACCOUNT_TYPE
+  // fall through to text/date branch below; LENDER_ID is also typed 'text' in
+  // config.ts, so the text fallback already covers it. Keeping explicit case
+  // here documents the CONTEXT lock inline.
+  if (config.key === 'LENDER_ID') {
+    return { aggregation: 'none' }; // no more Lender ID summing
+  }
+
+  // BATCH_AGE_IN_MONTHS — range across visible batches is the meaningful
+  // summary. Mean batch age is rarely useful at portfolio scope.
+  if (config.key === 'BATCH_AGE_IN_MONTHS') {
+    return { aggregation: 'range' };
+  }
+
+  // Rate / percentage cols — dollar-weighted by TOTAL_AMOUNT_PLACED. See
+  // function-level JSDoc above for the per-channel caveat.
+  if (config.type === 'percentage') {
+    return {
+      aggregation: 'avgWeighted',
+      aggregationWeight: 'TOTAL_AMOUNT_PLACED',
+    };
+  }
+
+  // Currency / count / additive numerics — sum.
+  if (
+    config.type === 'currency' ||
+    config.type === 'count' ||
+    config.type === 'number'
+  ) {
+    return { aggregation: 'sum' };
+  }
+
+  // text / date — none (text/date branch in computeAggregates renders
+  // "Count: N" when meta.type is set; the explicit 'none' here pins the
+  // strategy so future contributors don't need to re-derive from type).
+  return { aggregation: 'none' };
+}
+
 export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
   const dataColumns: ColumnDef<Record<string, unknown>>[] = COLUMN_CONFIGS.map((config) => {
     // Determine filter function based on column type
@@ -257,6 +334,8 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
     } else if (['currency', 'percentage', 'count', 'number'].includes(config.type)) {
       filterFn = rangeFilter;
     }
+
+    const aggMeta = aggregationFor(config);
 
     return {
     id: config.key,
@@ -316,6 +395,11 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
     meta: {
       type: config.type,
       identity: config.identity,
+      // Phase 41-01 DCR-01 — per-column aggregation strategy. See
+      // aggregationFor() above for the decision rules and
+      // docs/AGGREGATION-CONTRACT.md for the contract.
+      aggregation: aggMeta.aggregation,
+      aggregationWeight: aggMeta.aggregationWeight,
     },
   };
   });
