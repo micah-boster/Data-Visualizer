@@ -39,6 +39,37 @@ import type { TrendingData, MetricNorm, PartnerAnomaly, CrossPartnerData } from 
 import { anomalyStatusColumn } from './anomaly-column';
 import { getPartnerName, getStringField } from '@/lib/utils';
 import type { PartnerProductPair } from '@/lib/partner-config/pair';
+import type { AggregationStrategy } from '@/lib/table/aggregations';
+
+/**
+ * Phase 41-01 (DCR-01 / DCR-06) — Canonical shape for `meta` on a ColumnDef.
+ *
+ * `aggregation` drives the footer aggregate AND any downstream rollup
+ * (root-columns summary rows). When omitted, falls back to legacy
+ * `meta.type`-derived dispatch (currency/count/number → sum,
+ * percentage → avgWeighted with no weight = arithmetic mean,
+ * text/date → none/count). New columns SHOULD declare this explicitly per
+ * `docs/AGGREGATION-CONTRACT.md`.
+ *
+ * `aggregationWeight` is the Snowflake column key whose value is the per-row
+ * weight (required when `aggregation === 'avgWeighted'` for rate metrics
+ * with a natural dollar denominator — e.g. `'TOTAL_AMOUNT_PLACED'` for
+ * penetration rate).
+ *
+ * `footerFormatter` is the Phase 40.1 Plan 04 escape hatch — overrides
+ * footer display when the aggregate value is correct but the display unit
+ * doesn't match the body cell (e.g. modeled cols on 0..100 scale, delta
+ * cols emitting "pp" not "%"). Wins downstream of `computeAggregates`.
+ *
+ * `identity` flags the column as appearing in every preset.
+ */
+export interface ColumnMeta {
+  type?: 'text' | 'currency' | 'percentage' | 'count' | 'number' | 'date';
+  identity?: boolean;
+  aggregation?: AggregationStrategy;
+  aggregationWeight?: string;
+  footerFormatter?: (avg: number | null, label: string) => string;
+}
 
 /** Drill-down callbacks and trending data passed through TanStack Table meta */
 export interface TableDrillMeta {
