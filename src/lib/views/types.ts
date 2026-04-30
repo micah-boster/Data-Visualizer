@@ -88,6 +88,14 @@ export interface ViewSnapshot {
    * saved views load with listId: undefined. Sanitized on load by
    * useSavedViews: if the referenced list no longer exists, the field is
    * stripped (non-destructive; view still loads with no list activation).
+   *
+   * Phase 44 VOC-04 — this field is the View-contains-List binding. When set
+   * and the referenced List exists, the sidebar Views group renders the List
+   * as a nested expandable child row under the View. See
+   * docs/adr/0001-list-view-hierarchy.md for the conceptual model and
+   * Plan 44-02 for the sidebar render-layer wiring. The field itself is
+   * unchanged — Plan 44-02 adopts the existing Phase 34 field as the
+   * conceptual binding documented in the ADR.
    */
   listId?: string | null;
   /**

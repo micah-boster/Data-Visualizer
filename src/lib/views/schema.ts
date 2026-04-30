@@ -122,6 +122,11 @@ export const viewSnapshotSchema = z.object({
   // Phase 34 — optional partner-list reference. Mirrors the additive-optional
   // evolution used for `drill` in Phase 32-02: legacy saved views load with
   // listId: undefined and safeParse succeeds.
+  //
+  // Phase 44 VOC-04 — this field encodes the View-contains-List binding
+  // formalized in docs/adr/0001-list-view-hierarchy.md. The schema is
+  // unchanged from Phase 34; the ADR documents the conceptual model and
+  // Plan 44-02 wires the sidebar render layer to honor the binding.
   listId: z.string().nullable().optional(),
   /**
    * Phase 37 — optional audit field. Captures the original Metabase SQL
