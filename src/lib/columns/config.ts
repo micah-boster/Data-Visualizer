@@ -147,6 +147,28 @@ export const COLUMN_CONFIGS: ColumnConfig[] = [
   { key: 'OUTBOUND_EMAIL_CLICK_RATE_FROM_OPENED', label: 'Email Click Rate', type: 'percentage', defaultVisible: false, nullDisplay: '\u2014', identity: false },
   { key: 'OUTBOUND_PHONE_VERIFY_RATE_FROM_ANSWERED', label: 'Outbound Phone Verify Rate', type: 'percentage', defaultVisible: false, nullDisplay: '\u2014', identity: false },
   { key: 'INBOUND_PHONE_VERIFY_RATE_FROM_ANSWERED', label: 'Inbound Phone Verify Rate', type: 'percentage', defaultVisible: false, nullDisplay: '\u2014', identity: false },
+
+  // --- Phase 44-03 scope addendum (2026-04-29) — option (b): API allow-list
+  // registration only. ETL surfaced 4 new finance columns + 2 previously-
+  // unregistered commitment columns on AGG_BATCH_PERFORMANCE_SUMMARY. UI
+  // surfacing (presets, formatters, polarity registry, KPI cards, viable-
+  // columns visibility) deferred to a follow-up phase. Reference:
+  // COMMITMENT_RATE = (TOTAL_PAYMENT_PLAN_REMAINING_BALANCE +
+  // TOTAL_COLLECTED_LIFE_TIME) / TOTAL_AMOUNT_PLACED — Snowflake-derived
+  // value (NUMBER column on the source table); we don't compute it
+  // client-side. Type assignments are best-guess for option-b plumbing —
+  // FINANCE_PRICE / FINANCE_REV_SHARE semantics are not yet pinned and may
+  // need refinement once the follow-up phase samples real values.
+
+  // --- Commitment / payment-plan ---
+  { key: 'TOTAL_PAYMENT_PLAN_REMAINING_BALANCE', label: 'Plan Remaining Balance', type: 'currency', defaultVisible: false, nullDisplay: '\u2014', identity: false },
+  { key: 'COMMITMENT_RATE', label: 'Commitment Rate', type: 'percentage', defaultVisible: false, nullDisplay: '\u2014', identity: false },
+
+  // --- Revenue / finance ---
+  { key: 'FINANCE_PRICE', label: 'Finance Price', type: 'currency', defaultVisible: false, nullDisplay: '\u2014', identity: false },
+  { key: 'FINANCE_REV_SHARE', label: 'Finance Rev Share', type: 'percentage', defaultVisible: false, nullDisplay: '\u2014', identity: false },
+  { key: 'TOTAL_BOUNCE_REVENUE', label: 'Bounce Revenue', type: 'currency', defaultVisible: false, nullDisplay: '\u2014', identity: false },
+  { key: 'TOTAL_LENDER_REVENUE', label: 'Lender Revenue', type: 'currency', defaultVisible: false, nullDisplay: '\u2014', identity: false },
 ];
 
 /** All column keys for the API to fetch */
