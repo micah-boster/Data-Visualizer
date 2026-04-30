@@ -37,6 +37,7 @@
     "smoke:seed-bug-aggregation": "node --experimental-strip-types src/lib/computation/seed-bug-aggregation.smoke.ts",
     "smoke:null-semantics": "node --experimental-strip-types src/lib/computation/null-semantics.smoke.ts",
     "smoke:parser-parity": "node --experimental-strip-types src/lib/static-cache/parser-parity.smoke.ts",
+    "smoke:parse-batch-row": "node --experimental-strip-types src/lib/data/parse-batch-row.smoke.ts",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest"
   },

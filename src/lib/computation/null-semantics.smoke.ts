@@ -1,15 +1,22 @@
 /**
  * DCR-05 regression smoke for DCR-08 (null-vs-zero semantics).
  *
- * Pins these behaviors fixed in Plan 41-02:
+ * Pins these behaviors fixed in Plan 41-02 (and preserved by Phase 43 BND-01
+ * widening of `parseBatchRow` to return typed `BatchRow | null`):
  *   (a) parseBatchRow turns null/undefined/empty/NaN-string rate-shaped
- *       values into null
+ *       values into null on the typed surface
  *   (b) parseBatchRow preserves a genuine 0 as 0 (not null)
- *   (c) Non-rate-shaped fields pass through unchanged
+ *   (c) Non-rate-shaped fields pass through to `raw` unchanged
  *   (d) isRateShapedNullable type-guard returns true for the 7 rate-shaped
  *       fields, false otherwise
  *   (e) RATE_SHAPED_NULLABLE_FIELDS sentinel list matches what's documented
  *       in the polarity audit (DISPUTE_RATE present — Plan 41-03 cross-ref)
+ *
+ * Phase 43 BND-01 note: rows MUST carry identity fields (PARTNER_NAME,
+ * ACCOUNT_TYPE, BATCH) and a valid BATCH_AGE_IN_MONTHS or they will be
+ * dropped by the parser. The fixtures below include the minimum identity
+ * + age envelope so the rate-shaped null contract is the only thing under
+ * test.
  *
  * Cross-plan alignment: any change to the sentinel list MUST also update
  * docs/POLARITY-AUDIT.md (which lists the same 7 fields with their
@@ -23,62 +30,84 @@ import {
   RATE_SHAPED_NULLABLE_FIELDS,
 } from '../data/parse-batch-row.ts';
 
+/** Minimum identity envelope so the parser admits the row. */
+const IDENTITY = {
+  PARTNER_NAME: 'Acme',
+  ACCOUNT_TYPE: 'THIRD_PARTY',
+  BATCH: 'ACME_FEB_26',
+  BATCH_AGE_IN_MONTHS: 6,
+  TOTAL_AMOUNT_PLACED: 1000,
+};
+
 // (a) Nullish handling for rate-shaped fields
 const rowNullish: Record<string, unknown> = {
+  ...IDENTITY,
   SMS_OPEN_RATE: null,
   EMAIL_OPEN_RATE: undefined,
   CALL_CONNECT_RATE: '',
   DISPUTE_RATE: 'not-a-number',
 };
 const parsedNullish = parseBatchRow(rowNullish);
-assert.equal(parsedNullish.SMS_OPEN_RATE, null);
-assert.equal(parsedNullish.EMAIL_OPEN_RATE, null);
-assert.equal(parsedNullish.CALL_CONNECT_RATE, null);
+assert.ok(parsedNullish !== null, 'identity-complete row should parse');
+assert.equal(parsedNullish!.smsOpenRate, null);
+assert.equal(parsedNullish!.emailOpenRate, null);
+assert.equal(parsedNullish!.callConnectRate, null);
 assert.equal(
-  parsedNullish.DISPUTE_RATE,
+  parsedNullish!.disputeRate,
   null,
   'NaN string should parse to null, not 0',
 );
 
 // (b) Genuine zero preserved
 const rowZero: Record<string, unknown> = {
+  ...IDENTITY,
   SMS_OPEN_RATE: 0,
   EMAIL_OPEN_RATE: '0',
   CALL_CONNECT_RATE: 0.0,
 };
 const parsedZero = parseBatchRow(rowZero);
-assert.equal(parsedZero.SMS_OPEN_RATE, 0);
-assert.equal(parsedZero.EMAIL_OPEN_RATE, 0);
-assert.equal(parsedZero.CALL_CONNECT_RATE, 0);
+assert.ok(parsedZero !== null);
+assert.equal(parsedZero!.smsOpenRate, 0);
+assert.equal(parsedZero!.emailOpenRate, 0);
+assert.equal(parsedZero!.callConnectRate, 0);
 
 // (c) Genuine non-zero preserved
 const rowReal: Record<string, unknown> = {
+  ...IDENTITY,
   SMS_OPEN_RATE: '12.5',
   DISPUTE_RATE: 0.5,
 };
 const parsedReal = parseBatchRow(rowReal);
-assert.equal(parsedReal.SMS_OPEN_RATE, 12.5);
-assert.equal(parsedReal.DISPUTE_RATE, 0.5);
+assert.ok(parsedReal !== null);
+assert.equal(parsedReal!.smsOpenRate, 12.5);
+assert.equal(parsedReal!.disputeRate, 0.5);
 
-// (d) Non-rate-shaped fields pass through unchanged
+// (d) Non-rate-shaped fields pass through unchanged on `raw`
 const rowMixed: Record<string, unknown> = {
-  SMS_OPEN_RATE: null, // rate-shaped → null
-  TOTAL_AMOUNT_PLACED: '1000000', // not rate-shaped → unchanged
-  PARTNER_NAME: 'Acme', // not rate-shaped
+  ...IDENTITY,
+  SMS_OPEN_RATE: null, // rate-shaped → null on typed surface
+  TOTAL_AMOUNT_PLACED: '1000000', // not rate-shaped → unchanged on raw
   COLLECTION_AFTER_6_MONTH: '500000', // not rate-shaped (CONTEXT lock — collection rates remain `number`)
 };
 const parsedMixed = parseBatchRow(rowMixed);
-assert.equal(parsedMixed.SMS_OPEN_RATE, null);
+assert.ok(parsedMixed !== null);
+assert.equal(parsedMixed!.smsOpenRate, null);
 assert.equal(
-  parsedMixed.TOTAL_AMOUNT_PLACED,
+  parsedMixed!.raw.TOTAL_AMOUNT_PLACED,
   '1000000',
-  'non-rate-shaped passes through',
+  'non-rate-shaped passes through on raw',
 );
-assert.equal(parsedMixed.PARTNER_NAME, 'Acme');
+assert.equal(parsedMixed!.raw.PARTNER_NAME, 'Acme');
 assert.equal(
-  parsedMixed.COLLECTION_AFTER_6_MONTH,
+  parsedMixed!.raw.COLLECTION_AFTER_6_MONTH,
   '500000',
-  'collection rate is NOT in rate-shaped nullable list (CONTEXT lock)',
+  'collection rate is NOT in rate-shaped nullable list (CONTEXT lock); raw preserves source string',
+);
+// Typed surface coerces collection horizon to number | null.
+assert.equal(
+  parsedMixed!.collectionAfter6Month,
+  500000,
+  'typed surface coerces collection horizon to number',
 );
 
 // (e) isRateShapedNullable type-guard
