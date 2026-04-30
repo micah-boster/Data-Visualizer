@@ -111,7 +111,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 40. Projected Curves v1 | 3/3 | Complete    | 2026-04-25 | - |
 | 40.1. Projected Curves Polish | 4/4 | Complete    | 2026-04-28 | - |
 | Wave 0 (Data review quick fixes) | — | Complete | 2026-04-26 | MIN_GROUPS gate, matrix bar default, KPI denominator floor |
-| 41. Data Correctness Audit (expanded) | 4/5 (SUMMARYs landed for plans 01-04; 05 final audit pending) | In Progress |  | DCR-01..11 (was DCR-01..06) |
+| 41. Data Correctness Audit (expanded) | 5/5 | Complete   | 2026-04-30 | DCR-01..11 (was DCR-01..06) |
 | 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned (gated on OAuth landing on Vercel) |
 | 43. Boundary Hardening | v4.5 | 0/TBD | Planned | BND-01..06 (NEW — was reserved slack) |
 | 44. Vocabulary Lock & Glossary | v4.5 | 0/TBD | Planned | VOC-01..04 (NEW — was reserved slack) |

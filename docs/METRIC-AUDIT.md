@@ -89,7 +89,9 @@ Legend:
 | ------------------------------------------------------------------------------------------------ | ------------------------------- | --------------------------- |
 | Static cache JSON loaded via `parseBatchRow` produces identical KPIs to "live" Snowflake rows    | 🔧 (verified in this plan)       | `parser-parity.smoke.ts`    |
 
-**Observed cache shape (Plan 41-05 audit):** the current `batch-summary.json` fixture (477 rows × 36 pairs) does NOT carry any of the 7 rate-shaped nullable fields (`SMS_OPEN_RATE`, `SMS_CLICK_RATE`, `EMAIL_OPEN_RATE`, `EMAIL_CLICK_RATE`, `CALL_CONNECT_RATE`, `CALL_RPC_RATE`, `DISPUTE_RATE`). The cache was generated before DCR-08 widened the column inventory; future cache regenerations are expected to include them. The `parser-parity.smoke.ts` reports observed null/number counts on every run so a regeneration that introduces nullish values is detectable from CI output.
+**Observed cache shape (Plan 41-05 audit):** the current `batch-summary.json` fixture (477 rows × 36 pairs) does NOT carry any of the 7 rate-shaped nullable fields (`SMS_OPEN_RATE`, `SMS_CLICK_RATE`, `EMAIL_OPEN_RATE`, `EMAIL_CLICK_RATE`, `CALL_CONNECT_RATE`, `CALL_RPC_RATE`, `DISPUTE_RATE`) as raw keys. The cache was generated before DCR-08 widened the column inventory.
+
+After `parseBatchRow` runs, every parsed row gains these 7 keys with explicit `null` values (the parser proactively materializes the sentinel set so downstream consumers see a uniform shape). Today's `parser-parity.smoke.ts` reports `null=3339, number=0` — every (row, field) slot is null because every raw field is absent. Once the cache is regenerated to include these fields with real values, the same smoke will report a non-zero `number` count, and a future cache change that introduces *nullish* values for partners with no engagement data is detectable as a non-zero `null` count where today there are 3339 (i.e., the count must remain `null=3339` at the absent baseline OR transition to `null < 3339` with `number > 0` after regeneration).
 
 ## Bugs found + fixed during the audit
 
