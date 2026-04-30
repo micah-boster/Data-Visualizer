@@ -1,0 +1,21 @@
+# Dependabot configuration — security advisories ONLY.
+#
+# Rationale: bounce-data-visualizer is skunkworks; weekly version-bump PR noise
+# is a distraction. Security advisories from GitHub's database bypass the
+# `open-pull-requests-limit: 0` setting and still get filed automatically — so
+# we get notified about real CVEs without wading through dependency churn.
+#
+# See SEC-06-DEPENDENCIES.md for the dependency stance and v5.5 DEBT major-
+# upgrade backlog.
+
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Suppress regular version-update PRs. Security advisories ignore this
+    # limit and still get filed.
+    open-pull-requests-limit: 0
+    labels:
+      - "security"
