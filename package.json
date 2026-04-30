@@ -28,6 +28,11 @@
     "smoke:schema-additive-segment": "node --experimental-strip-types src/lib/partner-lists/schema.additive-segment.smoke.ts",
     "smoke:metric-eligibility": "node --experimental-strip-types src/lib/computation/metric-eligibility.smoke.ts",
     "smoke:apples-and-oranges": "node --experimental-strip-types src/lib/computation/apples-and-oranges.smoke.ts",
+    "smoke:penetration-rate": "node --experimental-strip-types src/lib/computation/penetration-rate.smoke.ts",
+    "smoke:collection-rate-3mo": "node --experimental-strip-types src/lib/computation/collection-rate-3mo.smoke.ts",
+    "smoke:collection-rate-6mo": "node --experimental-strip-types src/lib/computation/collection-rate-6mo.smoke.ts",
+    "smoke:collection-rate-12mo": "node --experimental-strip-types src/lib/computation/collection-rate-12mo.smoke.ts",
+    "smoke:totals-rollup": "node --experimental-strip-types src/lib/computation/totals-rollup.smoke.ts",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest"
   },
