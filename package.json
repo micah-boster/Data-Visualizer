@@ -33,6 +33,9 @@
     "smoke:collection-rate-6mo": "node --experimental-strip-types src/lib/computation/collection-rate-6mo.smoke.ts",
     "smoke:collection-rate-12mo": "node --experimental-strip-types src/lib/computation/collection-rate-12mo.smoke.ts",
     "smoke:totals-rollup": "node --experimental-strip-types src/lib/computation/totals-rollup.smoke.ts",
+    "smoke:scope-rollup": "node --experimental-strip-types src/lib/computation/scope-rollup.smoke.ts",
+    "smoke:seed-bug-aggregation": "node --experimental-strip-types src/lib/computation/seed-bug-aggregation.smoke.ts",
+    "smoke:null-semantics": "node --experimental-strip-types src/lib/computation/null-semantics.smoke.ts",
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest"
   },
