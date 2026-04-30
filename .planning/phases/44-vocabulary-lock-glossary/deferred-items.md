@@ -10,12 +10,17 @@ project owner / future plans.
 
 **Files:**
 
-- `src/components/layout/app-sidebar.tsx:106` — `setPartnersExpanded(true)`
-  inside hydration-effect (POL-02 pattern, Phase 38)
-- `src/components/layout/app-sidebar.tsx:124` — `setViewsExpanded(false)`
-  inside hydration-effect (same pattern, later phase)
+- `src/components/layout/app-sidebar.tsx:114` (was :106 pre-44-02) —
+  `setPartnersExpanded(true)` inside hydration-effect (POL-02 pattern, Phase 38)
+- `src/components/layout/app-sidebar.tsx:132` (was :124 pre-44-02) —
+  `setViewsExpanded(false)` inside hydration-effect (same pattern)
 - `src/components/partner-lists/partner-lists-sidebar-group.tsx:87` —
   `setExpanded(false)` inside hydration-effect (same pattern)
+- `src/components/layout/app-sidebar.tsx:86` (warning, pre-44-02) —
+  `react-hooks/exhaustive-deps` on `allRows` logical expression
+  (`const allRows = queryData?.data ?? [];` could change on every render
+  for the setupPairScopedRows useMemo). Pre-existing from Phase 39-02
+  PCFG-05 ContextMenu wiring.
 
 **Rule:** `react-hooks/set-state-in-effect`
 

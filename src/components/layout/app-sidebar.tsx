@@ -9,12 +9,14 @@ import {
   LayoutDashboard,
   Database,
   ChevronRight,
+  List as ListIcon,
 } from 'lucide-react';
 import { ContextMenu } from '@base-ui/react/context-menu';
 import { cn, getPartnerName, getStringField } from '@/lib/utils';
 import { Term } from '@/components/ui/term';
 import { useSidebarData } from '@/contexts/sidebar-data';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
+import { useActivePartnerList } from '@/contexts/active-partner-list';
 import { PartnerListsSidebarGroup } from '@/components/partner-lists/partner-lists-sidebar-group';
 import { CreateListDialog } from '@/components/partner-lists/create-list-dialog';
 import { ImportSheet } from '@/components/metabase-import/import-sheet';
@@ -58,6 +60,12 @@ export function AppSidebar() {
   // data-display read from the same usePartnerLists() call (single source
   // of truth for the persisted lists + CRUD actions).
   const { lists, deleteList, restoreList } = usePartnerListsContext();
+
+  // Phase 44 VOC-04 — nested-row activation handler. The Views group surfaces
+  // a View's bound List as an expandable child row (see ADR 0001); clicking
+  // the nested List row activates the same cross-app filter the standalone
+  // Partner Lists section uses, so the activation path stays single-source.
+  const { toggleList } = useActivePartnerList();
 
   // Phase 34-04: CreateListDialog open/edit state owned at the sidebar level so
   // the group header "+" and per-row pencil actions share a single mount of
@@ -130,6 +138,18 @@ export function AppSidebar() {
       localStorage.setItem('views-list-collapsed', String(!next));
       return next;
     });
+  }, []);
+
+  // Phase 44 VOC-04 — per-view nested-list expansion. Keyed by view.id so each
+  // View row toggles its bound-List child independently. Session-only state
+  // (NOT persisted) — the nested affordance is a quick-glance disclosure, not
+  // a setting users would expect to remember across reloads. See
+  // docs/adr/0001-list-view-hierarchy.md for the conceptual model.
+  const [viewsExpansionState, setViewsExpansionState] = useState<
+    Record<string, boolean>
+  >({});
+  const toggleViewExpansion = useCallback((viewId: string) => {
+    setViewsExpansionState((prev) => ({ ...prev, [viewId]: !prev[viewId] }));
   }, []);
 
   return (
@@ -415,34 +435,136 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                   )}
 
+                  {/*
+                    Phase 44 VOC-04 — View-contains-List explicit hierarchy.
+                    A View row carries an expand chevron when its `listId`
+                    references a List that exists in the current `lists`
+                    array. Expanding reveals the bound List as a nested
+                    child row; clicking the nested row activates the List
+                    via the same toggleList path the standalone Partner
+                    Lists section uses. Views without a `listId` (every
+                    pre-Phase-44 saved view falls in this bucket) render
+                    as leaf rows — current behavior preserved. Views with
+                    a `listId` that references a missing List degrade to
+                    leaf + console.warn (no crash). See
+                    docs/adr/0001-list-view-hierarchy.md.
+
+                    Looking up the bound list inside the .map() body is
+                    cheap (lists.length is typically <20) and keeps the
+                    render-path branch in one place. Same render shape
+                    when the binding is absent or invalid — single
+                    SidebarMenuButton, no chevron.
+                  */}
                   {isReady &&
-                    views.map((view) => (
-                      <SidebarMenuItem key={view.id}>
-                        <SidebarMenuButton
-                          tooltip={view.name}
-                          onClick={() => onLoadView(view)}
-                        >
-                          {view.isDefault ? (
-                            <Star className="h-4 w-4 text-amber-500" aria-hidden="true" />
-                          ) : (
-                            <Bookmark className="h-4 w-4" aria-hidden="true" />
-                          )}
-                          <span className="truncate">{view.name}</span>
-                        </SidebarMenuButton>
-                        {!view.isDefault && (
-                          <SidebarMenuAction
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onDeleteView(view.id);
-                            }}
-                            showOnHover
-                            aria-label={`Delete saved view ${view.name}`}
+                    views.map((view) => {
+                      const boundList = view.snapshot.listId
+                        ? lists.find((l) => l.id === view.snapshot.listId)
+                        : undefined;
+                      // Missing-list reference = saved view points at a
+                      // List the user deleted. Don't crash, don't render
+                      // the chevron — fall back to the leaf-row recipe
+                      // and warn once for diagnostic visibility.
+                      if (view.snapshot.listId && !boundList) {
+                        console.warn(
+                          `[44-02] View ${view.id} references missing list ${view.snapshot.listId}`,
+                        );
+                      }
+                      const hasBinding = !!boundList;
+                      const isExpanded = !!viewsExpansionState[view.id];
+
+                      return (
+                        <SidebarMenuItem key={view.id}>
+                          <SidebarMenuButton
+                            tooltip={view.name}
+                            onClick={() => onLoadView(view)}
                           >
-                            <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                          </SidebarMenuAction>
-                        )}
-                      </SidebarMenuItem>
-                    ))}
+                            {hasBinding ? (
+                              // Inline chevron toggles only this view's
+                              // nested-list expansion. stopPropagation
+                              // prevents the parent SidebarMenuButton
+                              // onClick (load view) from firing alongside.
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleViewExpansion(view.id);
+                                }}
+                                aria-expanded={isExpanded}
+                                aria-label={
+                                  isExpanded
+                                    ? `Collapse list bound to ${view.name}`
+                                    : `Expand list bound to ${view.name}`
+                                }
+                                className="-ml-0.5 flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground hover:text-foreground"
+                              >
+                                <ChevronRight
+                                  aria-hidden="true"
+                                  className={cn(
+                                    'h-3.5 w-3.5 transition-transform duration-quick ease-default',
+                                    isExpanded && 'rotate-90',
+                                  )}
+                                />
+                              </button>
+                            ) : view.isDefault ? (
+                              <Star
+                                className="h-4 w-4 text-amber-500"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <Bookmark
+                                className="h-4 w-4"
+                                aria-hidden="true"
+                              />
+                            )}
+                            <span className="truncate">{view.name}</span>
+                          </SidebarMenuButton>
+                          {!view.isDefault && (
+                            <SidebarMenuAction
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteView(view.id);
+                              }}
+                              showOnHover
+                              aria-label={`Delete saved view ${view.name}`}
+                            >
+                              <Trash2
+                                className="h-3.5 w-3.5"
+                                aria-hidden="true"
+                              />
+                            </SidebarMenuAction>
+                          )}
+                          {/*
+                            Nested bound-List row. Renders when the view
+                            has a valid binding AND the user has expanded
+                            it. Indented via pl-6 to read as a child of
+                            the View row above. Clicking activates the
+                            list via toggleList — same code path the
+                            standalone Partner Lists group uses, so the
+                            cross-app filter behavior is identical.
+                          */}
+                          {hasBinding && isExpanded && boundList && (
+                            <SidebarMenuItem>
+                              <SidebarMenuButton
+                                tooltip={`${boundList.name} (List)`}
+                                onClick={() => toggleList(boundList.id)}
+                                className="pl-6"
+                              >
+                                <ListIcon
+                                  className="h-3.5 w-3.5"
+                                  aria-hidden="true"
+                                />
+                                <span className="truncate text-body">
+                                  {boundList.name}
+                                </span>
+                                <span className="ml-auto text-caption text-muted-foreground">
+                                  List
+                                </span>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          )}
+                        </SidebarMenuItem>
+                      );
+                    })}
                 </SidebarMenu>
               </SidebarGroupContent>
             </div>
