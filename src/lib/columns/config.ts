@@ -44,12 +44,32 @@ export const ACCOUNT_TYPE_VALUES = [
   'PRE_CHARGE_OFF_THIRD_PARTY',
 ] as const;
 
+/**
+ * Phase 44 (VOC-05) — REVENUE_MODEL enum, sourced from distinct values landing
+ * in agg_batch_performance_summary on 2026-04-29. Mirrors the
+ * ACCOUNT_TYPE_VALUES pattern (closed enum, hard-coded, smoke-asserted).
+ *
+ * Honors the apples-and-oranges rule: Contingency and Debt Sale economics
+ * differ enough that aggregations across this dimension are meaningless.
+ * See docs/adr/0002-revenue-model-scoping.md for the third-dimension scoping
+ * decision and the four multi-model partners (Advance Financial, Happy Money,
+ * Imprint, PatientFi) at adoption.
+ */
+export const REVENUE_MODEL_VALUES = [
+  'CONTINGENCY',
+  'DEBT_SALE',
+] as const;
+
 export const COLUMN_CONFIGS: ColumnConfig[] = [
   // --- Identity columns (appear in every preset) ---
   { key: 'PARTNER_NAME', label: 'Partner', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'LENDER_ID', label: 'Lender ID', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'BATCH', label: 'Batch', type: 'text', defaultVisible: true, nullDisplay: '\u2014', identity: true },
   { key: 'ACCOUNT_TYPE', label: 'Account Type', type: 'text', defaultVisible: false, nullDisplay: '\u2014', identity: false, enumValues: ACCOUNT_TYPE_VALUES },
+  // Phase 44 VOC-05: REVENUE_MODEL is identity:false (filterable, not always-shown);
+  // the AttributeFilterBar surface in Plan 44-04 carries the first-instance <Term> wrap.
+  // See docs/adr/0002-revenue-model-scoping.md.
+  { key: 'REVENUE_MODEL', label: 'Revenue Model', type: 'text', defaultVisible: false, nullDisplay: '\u2014', identity: false, enumValues: REVENUE_MODEL_VALUES },
   { key: 'BATCH_AGE_IN_MONTHS', label: 'Batch Age (Mo)', type: 'number', defaultVisible: true, nullDisplay: '\u2014', identity: true },
 
   // --- Account counts ---

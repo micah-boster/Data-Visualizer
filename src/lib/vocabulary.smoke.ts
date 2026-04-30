@@ -70,6 +70,9 @@ for (const [key, entry] of ENTRIES) {
 // ---------------------------------------------------------------------------
 // 3. Exhaustiveness — registry contents match the hard-coded v4.5 checklist.
 //    Sorted-equality so diff is legible on failure.
+//
+//    Plan 44-01 seeded the first 12 terms; Plan 44-03 added revenueModel,
+//    contingency, debtSale alongside the REVENUE_MODEL plumbing for VOC-05.
 // ---------------------------------------------------------------------------
 const EXPECTED_TERMS: TermName[] = [
   'partner',
@@ -84,6 +87,10 @@ const EXPECTED_TERMS: TermName[] = [
   'view',
   'preset',
   'percentile',
+  // Plan 44-03 (VOC-05) — REVENUE_MODEL third-dimension scoping
+  'revenueModel',
+  'contingency',
+  'debtSale',
 ];
 
 const actualKeys = Object.keys(TERMS).slice().sort();

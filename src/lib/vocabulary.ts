@@ -8,7 +8,9 @@
  * What lives here:
  *   - Conceptual primitives that surface in UI <Term> popovers: partner,
  *     product, batch, account, metric, curve, anomaly, norm, list, view,
- *     preset, percentile (12 terms total — locked by Phase 44 CONTEXT.md).
+ *     preset, percentile (Plan 44-01, 12 terms) plus Plan 44-03 additions
+ *     revenueModel, contingency, debtSale (15 terms total — checklist locked
+ *     by Phase 44 CONTEXT.md and the smoke-test exhaustiveness assertion).
  *
  * What does NOT live here:
  *   - Derived terms (Modeled rate, Delta vs modeled, Cascade tier, Anomaly
@@ -136,6 +138,27 @@ export const TERMS = {
       "Where a value falls within its peer group's distribution; e.g. P50 is the median and P90 is the top decile.",
     synonyms: ['rank', 'percentile rank'],
     seeAlso: ['norm', 'metric'],
+  },
+  revenueModel: {
+    label: 'Revenue Model',
+    definition:
+      'A third dimension of the unit of analysis (Contingency or Debt Sale) that distinguishes how a partner is paid for the placement; we never blend across revenue models because their economics differ.',
+    synonyms: ['revenue model', 'pricing model'],
+    seeAlso: ['contingency', 'debtSale', 'product', 'partner'],
+  },
+  contingency: {
+    label: 'Contingency',
+    definition:
+      'A revenue model where Bounce earns a percentage of collected funds; the partner pays only when Bounce recovers money.',
+    synonyms: [],
+    seeAlso: ['revenueModel', 'debtSale'],
+  },
+  debtSale: {
+    label: 'Debt Sale',
+    definition:
+      'A revenue model where the partner sells the debt outright; Bounce keeps everything it collects on the purchased portfolio.',
+    synonyms: ['debt sale', 'portfolio purchase'],
+    seeAlso: ['revenueModel', 'contingency'],
   },
 } as const satisfies Record<string, TermDefinition>;
 
