@@ -112,9 +112,10 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 40.1. Projected Curves Polish | 4/4 | Complete    | 2026-04-28 | - |
 | Wave 0 (Data review quick fixes) | — | Complete | 2026-04-26 | MIN_GROUPS gate, matrix bar default, KPI denominator floor |
 | 41. Data Correctness Audit (expanded) | 5/5 | Complete    | 2026-04-30 | DCR-01..11 (was DCR-01..06) |
-| 42. Ingestion-Surface Security Review | v4.5 | 0/TBD | Planned (gated on OAuth landing on Vercel) |
+| 42a. Security Review (OAuth-independent) | v4.5 | 0/2 | Planned | SEC-01/03/04/06 — runs during v4.5 (split 2026-04-30) |
+| 42b. Deployed-Surface Security Review | v4.5 | 0/TBD | Deferred (OAuth-gated) | SEC-02/05 — out-of-band, NOT a v5.0 entry blocker |
 | 43. Boundary Hardening | v4.5 | 0/4 | Planned | BND-01..06 (NEW — was reserved slack); plan 02 split into 02a (BND-03) + 02b (BND-04) |
-| 44. Vocabulary Lock & Glossary | 2/4 | In Progress|  | VOC-01..04 (NEW — was reserved slack) |
+| 44. Vocabulary Lock & Glossary | 3/4 | In Progress|  | VOC-01..06 (44-04 wires VOC-07 UI) |
 | 45. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
 | 46. Contractual Target Management | v5.0 | 0/TBD | Planned | - |
 | 47. Triangulation Views | v5.0 | 0/TBD | Planned | - |
