@@ -37,9 +37,15 @@ export interface TermDefinition {
   /** One-sentence definition surfaced in <Term> popovers. New-analyst tone. */
   definition: string;
   /** Informal names that map to this term (e.g. "curve" / "collection curve" / "recovery curve"). */
-  synonyms: string[];
-  /** Term names (keys of this registry) that share conceptual context. Powers cross-references in popovers. */
-  seeAlso: TermName[];
+  synonyms: readonly string[];
+  /**
+   * Term names (keys of this registry) that share conceptual context. Powers
+   * cross-references in popovers. Typed `readonly string[]` here (not
+   * `TermName[]`) to break the circular reference between this interface and
+   * `TermName` (derived from `typeof TERMS`); the smoke test asserts that
+   * every entry resolves to a valid TermName at runtime.
+   */
+  seeAlso: readonly string[];
 }
 
 // Derived terms (Modeled rate, Delta vs modeled, Cascade tier, Anomaly score)

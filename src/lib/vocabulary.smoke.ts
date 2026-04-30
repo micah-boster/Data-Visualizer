@@ -21,12 +21,17 @@
 
 import assert from 'node:assert/strict';
 
-import { TERMS, type TermName } from './vocabulary.ts';
+import { TERMS, type TermDefinition, type TermName } from './vocabulary.ts';
+
+// `Object.entries(TERMS)` widens to `[string, unknown][]` under TS strict
+// mode because TERMS is an `as const` object literal — re-cast through
+// the known shape so the assertions below see the typed entry.
+const ENTRIES = Object.entries(TERMS) as Array<[string, TermDefinition]>;
 
 // ---------------------------------------------------------------------------
 // 1. Per-entry shape assertions: non-empty label/definition, sentence period.
 // ---------------------------------------------------------------------------
-for (const [key, entry] of Object.entries(TERMS)) {
+for (const [key, entry] of ENTRIES) {
   assert.ok(
     entry.label.length > 0,
     `TERMS[${key}].label must be non-empty`,
@@ -53,7 +58,7 @@ for (const [key, entry] of Object.entries(TERMS)) {
 // 2. Cross-reference integrity — every seeAlso entry is a registered TermName.
 // ---------------------------------------------------------------------------
 const validKeys = new Set(Object.keys(TERMS));
-for (const [key, entry] of Object.entries(TERMS)) {
+for (const [key, entry] of ENTRIES) {
   for (const ref of entry.seeAlso) {
     assert.ok(
       validKeys.has(ref),
