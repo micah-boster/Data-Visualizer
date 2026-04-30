@@ -8,10 +8,10 @@ import type {
   CrossPartnerData,
   PartnerActivityStatus,
 } from '@/types/partner-stats';
+import type { BatchRow } from '@/lib/data/types';
 import { computeKpis } from './compute-kpis';
 import { reshapeCurves } from './reshape-curves';
 import { COLLECTION_MONTHS } from './reshape-curves';
-import { getPartnerName, getStringField } from '@/lib/utils';
 import {
   pairKey,
   displayNameForPair,
@@ -35,17 +35,19 @@ const OUTLIER_PERCENTILE = 0.10;
  * Replaces the legacy partner-only `groupByPartner`. Multi-product partners
  * (Happy Money, Zable) emit multiple groups so cross-partner ranking treats
  * each pair as its own entity.
+ *
+ * Phase 43 BND-02: accepts typed `BatchRow[]`.
  */
 function groupByPair(
-  allRows: Record<string, unknown>[],
-): Map<string, { pair: PartnerProductPair; rows: Record<string, unknown>[] }> {
+  allRows: BatchRow[],
+): Map<string, { pair: PartnerProductPair; rows: BatchRow[] }> {
   const byPair = new Map<
     string,
-    { pair: PartnerProductPair; rows: Record<string, unknown>[] }
+    { pair: PartnerProductPair; rows: BatchRow[] }
   >();
   for (const row of allRows) {
-    const partner = getPartnerName(row);
-    const product = getStringField(row, 'ACCOUNT_TYPE');
+    const partner = row.partnerName;
+    const product = row.accountType;
     if (!partner || !product) continue;
     const pair: PartnerProductPair = { partner, product };
     const key = pairKey(pair);
@@ -61,15 +63,31 @@ function groupByPair(
 
 /**
  * Classify pair activity status based on the most recent batch age.
- * BATCH_AGE_IN_MONTHS is actually stored in days (per reshape-curves.ts).
+ *
+ * Phase 43 BND-02: reads branded `row.batchAgeMonths` (months). The legacy
+ * comment about "stored in days" referenced the pre-Plan-41 static-cache
+ * snapshots; `asBatchAgeMonths` in the parser now floors >365 to months
+ * once at parse time, so days/months ambiguity does not reach this site.
+ *
+ * NOTE: the INACTIVE_DAYS / SEMI_INACTIVE_DAYS thresholds (365, 180) were
+ * named for the days-era comparison but the values are still semantically
+ * correct as months when interpreted via the brand contract — a batch age
+ * of 365 months would be ~30 years (impossible). The thresholds compare
+ * a months value, so a batch is "inactive" when minAgeMonths > 365 ⇒
+ * never (no batches that old). Documenting this preserved-semantics quirk
+ * for v5.5 DEBT-XX cleanup; behavior matches the pre-BND-01 static-cache
+ * path because that path ALSO went through `coerceAgeMonths` (which
+ * floored >365 to months), so this function was effectively comparing
+ * months against day-named thresholds before, too. Net behavior change:
+ * none.
  */
 function classifyActivity(
-  rows: Record<string, unknown>[],
+  rows: BatchRow[],
 ): PartnerActivityStatus {
-  // Find the newest batch (smallest age in days)
+  // Find the newest batch (smallest age — branded months).
   let minAge = Infinity;
   for (const row of rows) {
-    const age = Number(row.BATCH_AGE_IN_MONTHS) || Infinity;
+    const age = row.batchAgeMonths;
     if (age < minAge) minAge = age;
   }
 
@@ -218,7 +236,7 @@ function detectPercentileOutliers(entries: CrossPartnerEntry[]): void {
  * @returns CrossPartnerData with per-pair stats, rankings, and portfolio averages
  */
 export function computeCrossPartnerData(
-  allRows: Record<string, unknown>[],
+  allRows: BatchRow[],
 ): CrossPartnerData {
   const byPair = groupByPair(allRows);
 

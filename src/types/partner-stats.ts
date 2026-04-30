@@ -172,13 +172,18 @@ export interface PartnerStats {
   trending: TrendingData;
   anomalies?: AnomalyReport;
   /**
-   * Phase 39 PCFG-07 — pair-filtered raw rows used internally to compute
+   * Phase 39 PCFG-07 — pair-filtered rows used internally to compute
    * `kpis` / `curves` / etc. Exposed so segment-split consumers (chart,
    * KPI cards) can call `splitRowsBySegment(rawRows, segments)` without
    * re-implementing the pair-filter predicate. Same invariant: every entry
-   * in this array satisfies `(PARTNER_NAME, ACCOUNT_TYPE) === pair`.
+   * in this array satisfies `(partnerName, accountType) === pair`.
+   *
+   * Phase 43 BND-02: typed as `BatchRow[]`. Consumers that historically
+   * read SCREAMING_SNAKE keys (chart-panel row-prep, KPI cards) keep
+   * working by reading off `row.raw[KEY]` — the parser preserves the
+   * original Snowflake row on every BatchRow's `raw` passthrough.
    */
-  rawRows: Array<Record<string, unknown>>;
+  rawRows: import('@/lib/data/types').BatchRow[];
 }
 
 /** Activity status for cross-partner ranking eligibility */

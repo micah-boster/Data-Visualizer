@@ -32,6 +32,7 @@ import {
 } from '@/lib/computation/compute-kpis';
 import { reshapeCurves } from '@/lib/computation/reshape-curves';
 import type { BatchCurve, KpiAggregates } from '@/types/partner-stats';
+import type { BatchRow } from '@/lib/data/types';
 
 import { evaluateSegments } from './segment-evaluator';
 import type { SegmentRule } from './types';
@@ -60,7 +61,7 @@ export const OTHER_BUCKET_LABEL = 'Other';
 /** A single segment-bucket entry — segment label + rows + isOther flag. */
 export interface SegmentBucket {
   label: string;
-  rows: Array<Record<string, unknown>>;
+  rows: BatchRow[];
   isOther: boolean;
 }
 
@@ -93,7 +94,7 @@ export interface SegmentCurveEntry {
  *     Other bucket (no rows to be "other" of).
  */
 export function splitRowsBySegment(
-  rows: Array<Record<string, unknown>>,
+  rows: BatchRow[],
   segments: SegmentRule[],
 ): SegmentBucket[] {
   // Empty-segments fallback — single Other bucket carrying all rows.
@@ -101,14 +102,35 @@ export function splitRowsBySegment(
     return [{ label: OTHER_BUCKET_LABEL, rows: [...rows], isOther: true }];
   }
 
-  const { bySegment, other } = evaluateSegments(rows, segments);
+  // `evaluateSegments` keys on raw column values from the original Snowflake
+  // row (e.g. `LANG`, `ACCOUNT_TYPE`); thread the raw passthrough through
+  // it so the column-based predicates continue to match. We then re-walk
+  // the bucketed RAW rows to find the corresponding BatchRow via reference
+  // identity (the parser preserves the original row on `BatchRow.raw`).
+  const rawRows = rows.map((r) => r.raw);
+  const { bySegment, other } = evaluateSegments(rawRows, segments);
+
+  // Build a Map keyed on raw-row reference identity for cheap reverse lookup.
+  // The parser (`parseBatchRow`) sets `parsed.raw = row` (no clone), so each
+  // raw object has exactly one BatchRow counterpart in the input array.
+  const byRaw = new Map<Record<string, unknown>, BatchRow>();
+  for (const r of rows) byRaw.set(r.raw, r);
+
   const buckets: SegmentBucket[] = segments.map((s) => ({
     label: s.name,
-    rows: bySegment.get(s.name) ?? [],
+    rows: (bySegment.get(s.name) ?? [])
+      .map((raw) => byRaw.get(raw))
+      .filter((r): r is BatchRow => r !== undefined),
     isOther: false,
   }));
   if (other.length > 0) {
-    buckets.push({ label: OTHER_BUCKET_LABEL, rows: other, isOther: true });
+    buckets.push({
+      label: OTHER_BUCKET_LABEL,
+      rows: other
+        .map((raw) => byRaw.get(raw))
+        .filter((r): r is BatchRow => r !== undefined),
+      isOther: true,
+    });
   }
   return buckets;
 }
@@ -123,7 +145,7 @@ export function splitRowsBySegment(
  * segment granularity).
  */
 export function kpiAggregatesPerSegment(
-  rows: Array<Record<string, unknown>>,
+  rows: BatchRow[],
   segments: SegmentRule[],
 ): SegmentKpiEntry[] {
   const entries = splitRowsBySegment(rows, segments).map(
@@ -164,7 +186,7 @@ export function kpiAggregatesPerSegment(
  * averaging when the chart is in segment-overlay mode.
  */
 export function reshapeCurvesPerSegment(
-  rows: Array<Record<string, unknown>>,
+  rows: BatchRow[],
   segments: SegmentRule[],
 ): SegmentCurveEntry[] {
   return splitRowsBySegment(rows, segments).map(
@@ -200,7 +222,7 @@ export interface SegmentAverageCurve {
 }
 
 export function averageCurvesPerSegment(
-  rows: Array<Record<string, unknown>>,
+  rows: BatchRow[],
   segments: SegmentRule[],
 ): SegmentAverageCurve[] {
   const perSegment = reshapeCurvesPerSegment(rows, segments);
@@ -268,6 +290,12 @@ export function tagRowsWithSegment(
   rows: Array<Record<string, unknown>>,
   segments: SegmentRule[],
 ): Array<Record<string, unknown>> {
+  // Note: this helper still consumes Array<Record<string, unknown>> rather
+  // than BatchRow[] because its only call site (GenericChart's row-prep
+  // pipeline in `chart-panel.tsx` → series-pivot) feeds rows into the chart
+  // schema layer which is keyed on raw Snowflake column names. v5.5
+  // DEBT-07/08 will migrate the chart-side row-prep pipeline to BatchRow;
+  // until then this helper stays untyped at its boundary.
   if (segments.length === 0) {
     return rows.map((r) => ({ ...r, [SEGMENT_VIRTUAL_COLUMN]: OTHER_BUCKET_LABEL }));
   }

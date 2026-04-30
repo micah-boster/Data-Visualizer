@@ -3,6 +3,7 @@ import type {
   SuppressDeltaFlags,
   TrendingData,
 } from '@/types/partner-stats';
+import type { BatchRow } from '@/lib/data/types';
 
 /** Metrics to compute trending for. */
 export const TRENDING_METRICS = [
@@ -17,17 +18,12 @@ export const TRENDING_METRICS = [
 // ADR: .planning/adr/003-trending-pct.md
 const THRESHOLD = 0.05;
 
-/**
- * Legacy-days → months age coercion. Mirrors `reshape-curves.ts:23` and
- * `compute-kpis.ts`. Applied to raw `BATCH_AGE_IN_MONTHS` so suppression
- * decisions are correct against static-cache rows stored in days.
- *
- * TODO(Phase 38 Plan 05): consolidate into a shared helper.
+/*
+ * Phase 43 BND-02: the local `coerceAgeMonths` helper that previously
+ * lived here was deleted. The branded `BatchRow.batchAgeMonths` from the
+ * parser is now the single source of truth — see
+ * `asBatchAgeMonths` in `@/lib/data/types`.
  */
-function coerceAgeMonths(raw: unknown): number {
-  const n = Number(raw) || 0;
-  return n > 365 ? Math.floor(n / 30) : n;
-}
 
 /** Minimal shape `computeSuppression` needs from each batch. */
 export interface SuppressionInput {
@@ -72,15 +68,20 @@ export function computeSuppression(
  * the previous 2-4 batches (fixed 4-batch window, uses fewer if
  * partner has < 5 total batches). Returns up/down/flat based on
  * a 5% relative threshold.
+ *
+ * Phase 43 BND-02: accepts typed `BatchRow[]`. Age reads off the branded
+ * `row.batchAgeMonths`; metric reads use `row.raw[metric]` because
+ * TRENDING_METRICS keys are Snowflake column names not all promoted to
+ * the typed surface.
  */
 export function computeTrending(
-  rows: Record<string, unknown>[],
+  rows: BatchRow[],
 ): TrendingData {
   // Per-horizon suppression computed once from raw rows; reused on every
   // return path (including early-returns) so KpiSummaryCards can make
   // per-card decisions regardless of legacy insufficientHistory shortcuts.
   const suppressDelta = computeSuppression(
-    rows.map((r) => ({ ageInMonths: coerceAgeMonths(r.BATCH_AGE_IN_MONTHS) })),
+    rows.map((r) => ({ ageInMonths: r.batchAgeMonths })),
   );
 
   // Need at least 3 batches to compute meaningful trends (2 baseline + 1 current)
@@ -95,11 +96,11 @@ export function computeTrending(
 
   // Sort by BATCH name (string sort is fine -- batch names contain dates like MAR_26)
   const sorted = [...rows].sort((a, b) =>
-    String(a.BATCH ?? '').localeCompare(String(b.BATCH ?? '')),
+    a.batchName.localeCompare(b.batchName),
   );
 
   const latestRow = sorted[sorted.length - 1];
-  const latestBatch = String(latestRow.BATCH ?? '');
+  const latestBatch = latestRow.batchName;
 
   // Use up to 4 prior batches for rolling average (minimum 2)
   // ADR: .planning/adr/004-baseline-window.md
@@ -120,11 +121,11 @@ export function computeTrending(
   const trends: BatchTrend[] = [];
 
   for (const metric of TRENDING_METRICS) {
-    const value = Number(latestRow[metric]) || 0;
+    const value = Number(latestRow.raw[metric]) || 0;
 
     // Compute rolling average from prior batches
     const priorValues = priorRows
-      .map((r) => Number(r[metric]) || 0)
+      .map((r) => Number(r.raw[metric]) || 0)
       .filter((v) => !Number.isNaN(v));
 
     if (priorValues.length === 0) continue;

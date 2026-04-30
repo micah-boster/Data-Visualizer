@@ -1,4 +1,5 @@
 import type { MetricNorm } from '@/types/partner-stats';
+import type { BatchRow } from '@/lib/data/types';
 import { COLLECTION_MONTHS } from './reshape-curves';
 
 /** Metric columns to compute norms for. */
@@ -25,9 +26,15 @@ const ALL_METRICS = [
  *
  * Uses population stddev (divide by n, not n-1) because these are all
  * the partner's batches, not a sample from a larger population.
+ *
+ * Phase 43 BND-02: accepts typed `BatchRow[]`. Metric reads pull from
+ * `row.raw[metricKey]` because the metric set is keyed on Snowflake
+ * column names (PENETRATION_RATE_POSSIBLE_AND_CONFIRMED,
+ * COLLECTION_AFTER_X_MONTH, ...) — these aren't all promoted to the
+ * typed BatchRow surface, but the raw passthrough preserves them.
  */
 export function computeNorms(
-  rows: Record<string, unknown>[],
+  rows: BatchRow[],
 ): Record<string, MetricNorm> {
   const result: Record<string, MetricNorm> = {};
 
@@ -35,7 +42,7 @@ export function computeNorms(
     // Extract valid numeric values, filtering out NaN/null
     const values: number[] = [];
     for (const row of rows) {
-      const raw = row[metric];
+      const raw = row.raw[metric];
       if (raw == null) continue;
       const num = Number(raw);
       if (!Number.isNaN(num)) {

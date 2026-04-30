@@ -34,6 +34,8 @@ const METRIC_HORIZON_MONTHS: Record<string, number> = {
   // lookback horizon required (always evaluable). Default to 0.
 };
 
+import type { BatchAgeMonths } from '@/lib/data/types';
+
 /** Months a batch must have aged before this metric is comparable. */
 export function metricHorizonMonths(metric: string): number {
   return METRIC_HORIZON_MONTHS[metric] ?? 0;
@@ -42,9 +44,15 @@ export function metricHorizonMonths(metric: string): number {
 /**
  * Strict eligibility — `batchAgeMonths >= metricHorizonMonths(metric)`.
  * Returns false when batchAgeMonths is NaN or negative.
+ *
+ * Phase 43 BND-02: accepts the branded `BatchAgeMonths` type so callers
+ * cannot accidentally pass an un-branded number (would surface a TS error
+ * if they tried). Plain `number` continues to flow through at runtime;
+ * the brand is type-level only. Construct via `asBatchAgeMonths` in
+ * `@/lib/data/types`.
  */
 export function isMetricEligible(
-  batchAgeMonths: number,
+  batchAgeMonths: BatchAgeMonths,
   metric: string,
 ): boolean {
   if (!Number.isFinite(batchAgeMonths) || batchAgeMonths < 0) return false;

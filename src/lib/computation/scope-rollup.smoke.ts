@@ -25,6 +25,21 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { computeKpis } from './compute-kpis.ts';
+import { parseBatchRows } from '../data/parse-batch-row.ts';
+import type { BatchRow } from '../data/types.ts';
+
+/**
+ * Phase 43 BND-02: computeKpis now accepts `BatchRow[]`. The fixture is
+ * loaded as raw `Record<string, unknown>[]` (Snowflake-shaped JSON), so
+ * we route every compute call through `parseBatchRows` here. The
+ * `buildPairSummaryReplica` and per-pair grouping below still read raw
+ * SCREAMING_SNAKE keys (mirroring the production `buildPairSummaryRows`
+ * helper which is similarly raw-keyed pre-BND-02 — UI surfaces still
+ * read raw and are migrated separately in v5.5 DEBT-07/08).
+ */
+function toBatchRows(rows: Record<string, unknown>[]): BatchRow[] {
+  return parseBatchRows(rows).rows;
+}
 
 const FIXTURE_PATH = resolve(import.meta.dirname, '../static-cache/batch-summary.json');
 const fixture = JSON.parse(readFileSync(FIXTURE_PATH, 'utf-8')) as {
@@ -140,7 +155,7 @@ for (const [partner, partnerRows] of multiProductPartners) {
 
   // INVARIANT 2: pair-level computeKpis on matching rows === pair-summary numbers.
   for (const [product, rows] of byProduct.entries()) {
-    const kpis = computeKpis(rows);
+    const kpis = computeKpis(toBatchRows(rows));
     const summary = summaries.get(`${partner}::${product}`);
     assert(summary, `summary row missing for ${partner}::${product}`);
 
@@ -166,20 +181,20 @@ for (const [partner, partnerRows] of multiProductPartners) {
   // would have appeared pre-Phase-39 — Phase 39 PCFG-04 split it into pair
   // rows but the legitimate sum is still derivable.
   const sumOfPerProductCollected = [...byProduct.values()].reduce(
-    (s, rows) => s + computeKpis(rows).totalCollected,
+    (s, rows) => s + computeKpis(toBatchRows(rows)).totalCollected,
     0,
   );
-  const partnerWideCollected = computeKpis(partnerRows).totalCollected;
+  const partnerWideCollected = computeKpis(toBatchRows(partnerRows)).totalCollected;
   assert.ok(
     Math.abs(sumOfPerProductCollected - partnerWideCollected) < TOLERANCE_DOLLARS,
     `[DCR-04 / DCR-10] ${partner}: sum-of-per-product totalCollected=${sumOfPerProductCollected} !== partner-wide=${partnerWideCollected}`,
   );
 
   const sumOfPerProductPlaced = [...byProduct.values()].reduce(
-    (s, rows) => s + computeKpis(rows).totalPlaced,
+    (s, rows) => s + computeKpis(toBatchRows(rows)).totalPlaced,
     0,
   );
-  const partnerWidePlaced = computeKpis(partnerRows).totalPlaced;
+  const partnerWidePlaced = computeKpis(toBatchRows(partnerRows)).totalPlaced;
   assert.ok(
     Math.abs(sumOfPerProductPlaced - partnerWidePlaced) < TOLERANCE_DOLLARS,
     `[DCR-04 / DCR-10] ${partner}: sum-of-per-product totalPlaced=${sumOfPerProductPlaced} !== partner-wide=${partnerWidePlaced}`,

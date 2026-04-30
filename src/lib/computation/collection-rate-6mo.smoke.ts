@@ -20,6 +20,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { computeKpis } from './compute-kpis.ts';
+import { parseBatchRows } from '../data/parse-batch-row.ts';
+import type { BatchRow } from '../data/types.ts';
+
+/** Phase 43 BND-02 — route raw fixture rows through the canonical parser. */
+function toBatchRows(rows: Record<string, unknown>[]): BatchRow[] {
+  return parseBatchRows(rows).rows;
+}
 
 const FIXTURE_PATH = resolve(import.meta.dirname, '../static-cache/batch-summary.json');
 const fixture = JSON.parse(readFileSync(FIXTURE_PATH, 'utf-8')) as {
@@ -68,7 +75,7 @@ assert.ok(
 );
 
 // (3) KPI rate matches
-const kpis = computeKpis(pair.rows);
+const kpis = computeKpis(toBatchRows(pair.rows));
 assert.ok(
   Math.abs(kpis.collectionRate6mo - directRate6mo) < TOLERANCE,
   `direct rate (${directRate6mo}) !== kpi.collectionRate6mo (${kpis.collectionRate6mo}) for ${pair.key}`,

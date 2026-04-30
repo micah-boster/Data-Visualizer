@@ -25,6 +25,13 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { computeKpis } from './compute-kpis.ts';
+import { parseBatchRows } from '../data/parse-batch-row.ts';
+import { asBatchAgeMonths, type BatchRow } from '../data/types.ts';
+
+/** Phase 43 BND-02 — route raw fixture rows through the canonical parser. */
+function toBatchRows(rows: Record<string, unknown>[]): BatchRow[] {
+  return parseBatchRows(rows).rows;
+}
 import { isMetricEligible } from './metric-eligibility.ts';
 
 const FIXTURE_PATH = resolve(import.meta.dirname, '../static-cache/batch-summary.json');
@@ -79,7 +86,7 @@ assert.ok(
 );
 
 // (3) KPI rate matches
-const kpis = computeKpis(pair.rows);
+const kpis = computeKpis(toBatchRows(pair.rows));
 assert.ok(
   Math.abs(kpis.collectionRate12mo - directRate12mo) < TOLERANCE,
   `direct rate (${directRate12mo}) !== kpi.collectionRate12mo (${kpis.collectionRate12mo}) for ${pair.key}`,
@@ -93,7 +100,7 @@ const youngBatch = pair.rows.find(
 assert(youngBatch, 'fixture invariant: pair must include at least one <12mo batch');
 const youngAge = Number(youngBatch.BATCH_AGE_IN_MONTHS);
 assert.equal(
-  isMetricEligible(youngAge, 'COLLECTION_AFTER_12_MONTH'),
+  isMetricEligible(asBatchAgeMonths(youngAge), 'COLLECTION_AFTER_12_MONTH'),
   false,
   `young batch (age=${youngAge}) must NOT be eligible for COLLECTION_AFTER_12_MONTH`,
 );
@@ -104,7 +111,7 @@ const matureBatch = pair.rows.find(
 assert(matureBatch, 'fixture invariant: pair must include at least one >=12mo batch');
 const matureAge = Number(matureBatch.BATCH_AGE_IN_MONTHS);
 assert.equal(
-  isMetricEligible(matureAge, 'COLLECTION_AFTER_12_MONTH'),
+  isMetricEligible(asBatchAgeMonths(matureAge), 'COLLECTION_AFTER_12_MONTH'),
   true,
   `mature batch (age=${matureAge}) must be eligible for COLLECTION_AFTER_12_MONTH`,
 );

@@ -6,15 +6,10 @@ import type {
   PartnerAnomaly,
   AnomalyReport,
 } from '@/types/partner-stats';
+import type { BatchRow } from '@/lib/data/types';
 import { computeNorms } from './compute-norms';
 import { getPolarity } from './metric-polarity';
 import { isMetricEligible } from './metric-eligibility';
-import {
-  getPartnerName,
-  getBatchName,
-  getStringField,
-  coerceAgeMonths,
-} from '@/lib/utils';
 import { isRateShapedNullable } from '@/lib/data/parse-batch-row';
 import {
   pairKey,
@@ -180,28 +175,35 @@ function groupFlags(flags: MetricAnomaly[]): AnomalyGroup[] {
 /**
  * Compute anomaly detection for a single partner's batch rows.
  *
- * @param rows - All batch rows for one partner
+ * Phase 43 BND-02: accepts typed `BatchRow[]`. The branded
+ * `row.batchAgeMonths` is passed directly to `isMetricEligible` —
+ * the legacy `coerceAgeMonths(row.BATCH_AGE_IN_MONTHS)` site
+ * collapses to one source of truth (`asBatchAgeMonths` in the parser).
+ *
+ * @param rows - All batch rows for one partner (typed)
  * @param norms - Partner-specific norms (or portfolio norms for fallback)
  * @returns AnomalyReport with batch-level flags, groups, and severity
  */
 export function computeAnomalies(
-  rows: Record<string, unknown>[],
+  rows: BatchRow[],
   norms: Record<string, MetricNorm>,
 ): AnomalyReport {
   // Sort batches by BATCH string (chronological, same as compute-trending.ts)
   const sorted = [...rows].sort((a, b) =>
-    getBatchName(a).localeCompare(getBatchName(b)),
+    a.batchName.localeCompare(b.batchName),
   );
 
   const batches: BatchAnomaly[] = sorted.map((row) => {
-    const batchName = getBatchName(row);
+    const batchName = row.batchName;
 
-    // DCR-07: metric-age eligibility filter — derive once per row. Uses the
-    // shared coerceAgeMonths helper (handles legacy-days static-cache rows
-    // alongside live months). See src/lib/computation/metric-eligibility.ts
-    // and Phase 41 CONTEXT § Young-batch censoring for the architectural
-    // commitment to eligibility-filter (not per-age-bucket norms).
-    const batchAgeMonths = coerceAgeMonths(row.BATCH_AGE_IN_MONTHS);
+    // DCR-07: metric-age eligibility filter — derive once per row. The
+    // branded `batchAgeMonths` is built at parse time by `asBatchAgeMonths`
+    // (single coercion site; replaces the three duplicate `coerceAgeMonths`
+    // helpers that previously lived inside compute-anomalies / compute-kpis
+    // / compute-trending). See Phase 41 CONTEXT § Young-batch censoring for
+    // the architectural commitment to eligibility-filter (not per-age-bucket
+    // norms).
+    const batchAgeMonths = row.batchAgeMonths;
 
     // Evaluate each curated metric
     const flags: MetricAnomaly[] = [];
@@ -221,7 +223,9 @@ export function computeAnomalies(
       // null-engagement partners as zero-engagement outliers. The gate
       // skips the row for the metric without polluting norms (norms are
       // computed upstream by computeNorms, which already filters null).
-      const rawValue = row[metric];
+      // Read off raw passthrough — ANOMALY_METRICS is keyed on Snowflake
+      // column names, not all of which are promoted to the typed surface.
+      const rawValue = row.raw[metric];
       if (
         isRateShapedNullable(metric) &&
         (rawValue === null || rawValue === undefined || rawValue === '')
@@ -246,7 +250,7 @@ export function computeAnomalies(
     if (isFlagged && flags.length > 0) {
       const avgDeviation =
         flags.reduce((sum, f) => sum + Math.abs(f.zScore), 0) / flags.length;
-      const totalPlaced = Number(row.TOTAL_AMOUNT_PLACED) || 0;
+      const totalPlaced = row.totalAmountPlaced;
       severityScore =
         flags.length * avgDeviation * Math.log(Math.max(totalPlaced, 1));
     }
@@ -284,18 +288,18 @@ export function computeAnomalies(
  *   multi-product partners) so UI consumers don't have to recompute it.
  */
 export function computeAllPartnerAnomalies(
-  allRows: Record<string, unknown>[],
+  allRows: BatchRow[],
 ): Map<string, PartnerAnomaly> {
   const result = new Map<string, PartnerAnomaly>();
 
   // Group rows by (partner, product) pair (PCFG-04 — no cross-product blending).
   const byPair = new Map<
     string,
-    { pair: PartnerProductPair; rows: Record<string, unknown>[] }
+    { pair: PartnerProductPair; rows: BatchRow[] }
   >();
   for (const row of allRows) {
-    const partner = getPartnerName(row);
-    const product = getStringField(row, 'ACCOUNT_TYPE');
+    const partner = row.partnerName;
+    const product = row.accountType;
     if (!partner || !product) continue;
     const pair: PartnerProductPair = { partner, product };
     const key = pairKey(pair);

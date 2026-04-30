@@ -1,4 +1,5 @@
 import type { KpiAggregates } from '@/types/partner-stats';
+import type { BatchRow } from '@/lib/data/types';
 
 /**
  * DCR-10 — apples-and-oranges runtime invariant.
@@ -53,22 +54,6 @@ export type CascadeRateKey =
   | 'rateSinceInception';
 
 /**
- * Legacy-days → months age coercion.
- *
- * Snowflake live rows return batch age in actual months (e.g. 7, 33). Static
- * cache rows may carry the pre-coercion days value (>365). Mirrors the rule
- * in `reshape-curves.ts:23` so cascade selection is correct regardless of
- * data source.
- *
- * TODO(Phase 38 Plan 05): extract a shared age-coercion helper and consume
- * it from both this file and `reshape-curves.ts`.
- */
-function coerceAgeMonths(raw: unknown): number {
-  const n = Number(raw) || 0;
-  return n > 365 ? Math.floor(n / 30) : n;
-}
-
-/**
  * Wave 0 (Phase 41-pre) — minimum eligibility-gated denominator below which
  * a rate is too noisy to display as a confident percentage.
  *
@@ -106,7 +91,11 @@ export function selectCascadeTier(
 /**
  * Compute aggregate KPI metrics across all partner rows.
  *
- * All row values are strings from Snowflake -- Number() conversion on every read.
+ * Phase 43 BND-02: accepts typed `BatchRow[]`. Volume + collection-horizon
+ * fields read off the typed surface (camelCase). Penetration rate
+ * (`PENETRATION_RATE_POSSIBLE_AND_CONFIRMED`) is not yet on the typed
+ * surface — read via `row.raw[...]` per the BatchRow.raw passthrough
+ * contract.
  *
  * Phase 39 PCFG-07 — segment-level aggregates are computed by
  * `kpiAggregatesPerSegment` in `src/lib/partner-config/segment-split.ts`,
@@ -117,7 +106,7 @@ export function selectCascadeTier(
  * the Setup UI's overlap-warning gate).
  */
 export function computeKpis(
-  rows: Record<string, unknown>[],
+  rows: BatchRow[],
 ): KpiAggregates {
   const totalBatches = rows.length;
 
@@ -135,14 +124,21 @@ export function computeKpis(
   let weightDenominator = 0;
 
   for (const row of rows) {
-    const accounts = Number(row.TOTAL_ACCOUNTS) || 0;
-    const placed = Number(row.TOTAL_AMOUNT_PLACED) || 0;
-    const collected = Number(row.TOTAL_COLLECTED_LIFE_TIME) || 0;
-    const pen = Number(row.PENETRATION_RATE_POSSIBLE_AND_CONFIRMED) || 0;
-    const col3 = Number(row.COLLECTION_AFTER_3_MONTH) || 0;
-    const col6 = Number(row.COLLECTION_AFTER_6_MONTH) || 0;
-    const col12 = Number(row.COLLECTION_AFTER_12_MONTH) || 0;
-    const ageMonths = coerceAgeMonths(row.BATCH_AGE_IN_MONTHS);
+    const accounts = row.totalAccounts;
+    const placed = row.totalAmountPlaced;
+    const collected = row.totalCollectedLifeTime;
+    // Penetration rate not yet on the typed surface (no rate-shaped null
+    // contract for it) — read via raw passthrough.
+    const pen =
+      Number(row.raw.PENETRATION_RATE_POSSIBLE_AND_CONFIRMED) || 0;
+    // Horizon collection: typed surface is `number | null`. Coerce null → 0
+    // for the cumulative aggregator (the eligibility-gated 3mo branch
+    // below filters age first, so null-young-batch contributions don't
+    // pollute placed3mo when the batch hasn't reached the horizon).
+    const col3 = row.collectionAfter3Month ?? 0;
+    const col6 = row.collectionAfter6Month ?? 0;
+    const col12 = row.collectionAfter12Month ?? 0;
+    const ageMonths = row.batchAgeMonths;
 
     totalAccounts += accounts;
     totalPlaced += placed;

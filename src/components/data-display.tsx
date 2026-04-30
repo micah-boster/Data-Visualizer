@@ -38,6 +38,8 @@ import { useFilterState } from '@/hooks/use-filter-state';
 import { useBaselineMode } from '@/hooks/use-baseline-mode';
 import { buildDataContext, type PartnerSummary } from '@/lib/ai/context-builder';
 import { computeKpis } from '@/lib/computation/compute-kpis';
+import { parseBatchRows } from '@/lib/data/parse-batch-row';
+import type { BatchRow } from '@/lib/data/types';
 import { modeledRateAtMonth } from '@/lib/computation/compute-projection';
 import { getPartnerName, getBatchName, getStringField, coerceAgeMonths } from '@/lib/utils';
 import { SectionErrorBoundary } from '@/components/section-error-boundary';
@@ -1172,6 +1174,11 @@ export function DataDisplay() {
                               definition={chartDefinition}
                               onDefinitionChange={setChartDefinition}
                               rows={partnerRows}
+                              // Phase 43 BND-02 — typed pair-filtered rows
+                              // for the segment-split path inside
+                              // CollectionCurveChart. Sourced from
+                              // partnerStats.rawRows (already typed BatchRow[]).
+                              typedRows={partnerStats.rawRows}
                               curves={partnerStats.curves}
                               chartSnapshotRef={chartSnapshotRef}
                               chartLoadRef={chartLoadRef}
@@ -1192,6 +1199,13 @@ export function DataDisplay() {
                         definition={chartDefinition}
                         onDefinitionChange={setChartDefinition}
                         rows={batchRows}
+                        // Phase 43 BND-02 — at batch drill, the typed
+                        // partnerStats.rawRows still scopes the parent
+                        // pair; further filtering by batch is purely a
+                        // chart-side concern and the segment toggle is
+                        // hidden at batch level anyway, so we just thread
+                        // the pair-level rawRows through here.
+                        typedRows={partnerStats?.rawRows}
                         curves={batchCurve}
                         chartSnapshotRef={chartSnapshotRef}
                         chartLoadRef={chartLoadRef}
@@ -1672,14 +1686,22 @@ function QueryCommandDialogWithContext({
   const dataContext = useMemo(() => {
     if (!allData || allData.length === 0) return '';
 
+    // Phase 43 BND-02 — route through the canonical parser before compute.
+    // computeKpis accepts BatchRow[] only after this phase. Drops are
+    // surfaced via the dev console warning inside parseBatchRows itself; no
+    // user-facing toast here (this code path builds the AI-context string
+    // for the query dialog, not the main render pipeline — toasts are
+    // emitted from use-partner-stats).
+    const { rows: parsedAllData } = parseBatchRows(allData);
+
     // Phase 39 PCFG-04: build per-pair summaries (no cross-product blending).
     const pairGroups = new Map<
       string,
-      { pair: PartnerProductPair; rows: Record<string, unknown>[] }
+      { pair: PartnerProductPair; rows: BatchRow[] }
     >();
-    for (const row of allData) {
-      const partner = getPartnerName(row);
-      const product = getStringField(row, 'ACCOUNT_TYPE');
+    for (const row of parsedAllData) {
+      const partner = row.partnerName;
+      const product = row.accountType;
       if (!partner || !product) continue;
       const pair: PartnerProductPair = { partner, product };
       const key = pairKey(pair);

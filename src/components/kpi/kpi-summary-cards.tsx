@@ -187,11 +187,14 @@ interface KpiSummaryCardsProps {
    */
   pair?: PartnerProductPair | null;
   /**
-   * Phase 39 PCFG-07 — pair-filtered raw rows used to compute per-segment
+   * Phase 39 PCFG-07 — pair-filtered typed rows used to compute per-segment
    * KPIs when split is on. Required when `pair` is non-null and the pair has
    * segments. Sourced from `usePartnerStats(pair).rawRows` in the parent.
+   *
+   * Phase 43 BND-02: typed as `BatchRow[]`; consumers reading SCREAMING_SNAKE
+   * keys access them via `row.raw[KEY]`.
    */
-  rawRows?: Array<Record<string, unknown>>;
+  rawRows?: import('@/lib/data/types').BatchRow[];
 }
 
 /**

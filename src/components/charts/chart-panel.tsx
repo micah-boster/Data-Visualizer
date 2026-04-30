@@ -35,6 +35,7 @@ import type {
   GenericChartDefinition,
 } from '@/lib/views/types';
 import type { BatchCurve } from '@/types/partner-stats';
+import type { BatchRow } from '@/lib/data/types';
 import type { PartnerProductPair } from '@/lib/partner-config/pair';
 import type { DrillLevel } from '@/hooks/use-drill-down';
 import type { BaselineMode } from '@/components/kpi/baseline-selector';
@@ -52,6 +53,15 @@ export interface ChartPanelProps {
   onDefinitionChange: (next: ChartDefinition) => void;
   /** Row source for the generic renderer — passed through to GenericChart. */
   rows: Array<Record<string, unknown>>;
+  /**
+   * Phase 43 BND-02 — typed pair-filtered rows for the preset renderer's
+   * split-by-segment toggle. Sourced from `partnerStats.rawRows` upstream
+   * (already pair-filtered + typed). Optional: when absent (root scope or
+   * batch drill), the segment toggle simply doesn't appear. The legacy
+   * `rows` prop continues to feed GenericChart's row-prep pipeline, which
+   * keys on raw Snowflake column names — those two surfaces split here.
+   */
+  typedRows?: BatchRow[];
   /** Curve source for the preset renderer — passed through to CollectionCurveChart. */
   curves?: BatchCurve[];
   /** Snapshot ref wired by CollectionCurveChart on the preset branch. */
@@ -81,6 +91,7 @@ export function ChartPanel({
   definition,
   onDefinitionChange,
   rows,
+  typedRows,
   curves,
   chartSnapshotRef,
   chartLoadRef,
@@ -118,7 +129,7 @@ export function ChartPanel({
         chartSnapshotRef={chartSnapshotRef}
         chartLoadRef={chartLoadRef}
         pair={pair ?? null}
-        rawRows={rows}
+        rawRows={typedRows}
         drillLevel={drillLevel}
         baselineMode={baselineMode}
         chartTypeSelector={

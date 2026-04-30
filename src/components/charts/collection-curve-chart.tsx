@@ -59,11 +59,13 @@ interface CollectionCurveChartProps {
    */
   pair?: PartnerProductPair | null;
   /**
-   * Phase 39 PCFG-07 — pair-filtered raw rows used to compute per-segment
+   * Phase 39 PCFG-07 — pair-filtered typed rows used to compute per-segment
    * curves when the split toggle is on. Required when `pair` is non-null.
    * Sourced from `usePartnerStats(pair).rawRows` in the parent.
+   *
+   * Phase 43 BND-02: typed as `BatchRow[]`.
    */
-  rawRows?: Array<Record<string, unknown>>;
+  rawRows?: import('@/lib/data/types').BatchRow[];
   /**
    * Phase 40.1 PRJ-09 — drill level from the parent. Gates projection
    * visibility together with `baselineMode` and `visibleBatchKeys.length`.

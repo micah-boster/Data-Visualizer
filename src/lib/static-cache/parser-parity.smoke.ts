@@ -36,6 +36,7 @@ import { resolve } from 'node:path';
 
 import {
   parseBatchRow,
+  parseBatchRows,
   RATE_SHAPED_NULLABLE_FIELDS,
   type RateShapedNullableField,
 } from '../data/parse-batch-row.ts';
@@ -102,12 +103,15 @@ for (const row of parsedRows) {
 }
 
 // (b) Non-nullable metrics: compute parity. Parsing must NOT change values
-// for fields outside the rate-shaped sentinel list. computeKpis still
-// consumes the SCREAMING_SNAKE shape until Phase 43 BND-02 Task 3 migrates
-// it to BatchRow[], so we feed the preserved `raw` passthrough here.
+// for fields outside the rate-shaped sentinel list. Phase 43 BND-02 Task 3
+// migrated computeKpis to consume BatchRow[]; both sides go through the
+// parser, but the "raw" baseline maps the parsed rows back through the
+// same parser to confirm round-tripping preserves the sums (BatchRow.raw
+// passthrough is reference-equal to the input row, so reparsing the same
+// input twice MUST produce field-identical typed rows).
 const TOLERANCE = 0.01;
-const kpisRaw = computeKpis(rawRows);
-const kpisParsed = computeKpis(parsedRows.map((r) => r.raw));
+const kpisRaw = computeKpis(parseBatchRows(rawRows).rows);
+const kpisParsed = computeKpis(parsedRows);
 
 assert.equal(
   kpisRaw.totalAccounts,

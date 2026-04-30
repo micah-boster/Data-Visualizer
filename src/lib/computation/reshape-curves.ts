@@ -1,5 +1,5 @@
 import type { BatchCurve, CurvePoint } from '@/types/partner-stats';
-import { getBatchName, coerceAgeMonths } from '@/lib/utils';
+import type { BatchRow } from '@/lib/data/types';
 
 /** The 20 collection month milestones tracked in Snowflake. */
 export const COLLECTION_MONTHS = [
@@ -12,19 +12,24 @@ export const COLLECTION_MONTHS = [
  * Each row has 20 `COLLECTION_AFTER_X_MONTH` columns (wide format).
  * This converts them to an array of CurvePoint objects truncated at
  * the batch's actual age so young batches don't show false zero cliffs.
+ *
+ * Phase 43 BND-02: accepts typed `BatchRow[]`. Identity + age + totalPlaced
+ * read off the typed surface; the 20 wide `COLLECTION_AFTER_X_MONTH`
+ * columns are read off `row.raw` (BatchRow.curve carries the rate-only
+ * long form built at parse time, but BatchCurve here also wants per-month
+ * `amount` which the typed `curve` does not carry — see `BatchRow.curve`
+ * JSDoc and `types.ts` CurvePoint comment).
+ *
+ * The duplicate `coerceAgeMonths` import was removed — branded
+ * `row.batchAgeMonths` from the parser is the single source of truth.
  */
 export function reshapeCurves(
-  rows: Record<string, unknown>[],
+  rows: BatchRow[],
 ): BatchCurve[] {
   return rows.map((row) => {
-    const batchName = getBatchName(row);
-    const totalPlaced = Number(row.TOTAL_AMOUNT_PLACED) || 0;
-
-    // Phase 38 FLT-01: extracted into `coerceAgeMonths` (@/lib/utils) so the
-    // new age-bucket filter in data-display.tsx can reuse the same days->months
-    // fallback. Behavior unchanged: values > 365 (legacy cached days) are
-    // floored to months; live Snowflake months pass through as-is.
-    const ageInMonths = coerceAgeMonths(row.BATCH_AGE_IN_MONTHS);
+    const batchName = row.batchName;
+    const totalPlaced = row.totalAmountPlaced;
+    const ageInMonths = row.batchAgeMonths;
 
     const points: CurvePoint[] = [];
 
@@ -38,7 +43,7 @@ export function reshapeCurves(
       if (month > ageInMonths) break;
 
       const colKey = `COLLECTION_AFTER_${month}_MONTH`;
-      const amount = Number(row[colKey]) || 0;
+      const amount = Number(row.raw[colKey]) || 0;
 
       // Recovery rate % = (collection / totalPlaced) * 100, guard division by zero
       const recoveryRate = totalPlaced > 0 ? (amount / totalPlaced) * 100 : 0;

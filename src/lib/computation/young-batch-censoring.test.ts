@@ -27,6 +27,13 @@
 import { describe, it, expect } from 'vitest';
 import { computeAnomalies } from './compute-anomalies';
 import { computeNorms } from './compute-norms';
+import { parseBatchRows } from '../data/parse-batch-row';
+import type { BatchRow } from '../data/types';
+
+/** Phase 43 BND-02 — route raw fixture rows through the canonical parser. */
+function toBatchRows(rows: Record<string, unknown>[]): BatchRow[] {
+  return parseBatchRows(rows).rows;
+}
 
 const PARTNER = 'TestPartner';
 const PRODUCT = '3P';
@@ -82,10 +89,12 @@ describe('DCR-07 — young-batch censoring', () => {
     const oldBatches = [0, 1, 2, 3, 4].map((i) =>
       makeBatch(`old_${i}`, OLD_BATCH_AGE, 200_000, 400_000, 600_000 + i * 5_000),
     );
-    const allBatches = [...youngBatches, ...oldBatches] as unknown as Record<
-      string,
-      unknown
-    >[];
+    const allBatches = toBatchRows(
+      [...youngBatches, ...oldBatches] as unknown as Record<
+        string,
+        unknown
+      >[],
+    );
 
     const norms = computeNorms(allBatches);
     const report = computeAnomalies(allBatches, norms);
@@ -137,11 +146,11 @@ describe('DCR-07 — young-batch censoring', () => {
       b.PENETRATION_RATE_POSSIBLE_AND_CONFIRMED = HOMO + i * 0.1;
       return b;
     });
-    const allBatches = [
+    const allBatches = toBatchRows([
       ...youngHomogeneous,
       youngOutlier,
       ...oldHomogeneous,
-    ] as unknown as Record<string, unknown>[];
+    ] as unknown as Record<string, unknown>[]);
 
     const norms = computeNorms(allBatches);
     const report = computeAnomalies(allBatches, norms);
