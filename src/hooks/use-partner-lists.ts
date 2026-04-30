@@ -41,6 +41,7 @@ import type { PartnerList, PartnerListFilters } from '@/lib/partner-lists/types'
 import {
   loadPartnerLists,
   persistPartnerLists,
+  subscribePartnerLists,
 } from '@/lib/partner-lists/storage';
 import { evaluateFilters } from '@/lib/partner-lists/filter-evaluator';
 import {
@@ -102,6 +103,18 @@ export function usePartnerLists(
       storedLists.filter((l) => !l.id.startsWith(DERIVED_LIST_ID_PREFIX)),
     );
   }, [storedLists]);
+
+  // Phase 43 BND-03 — cross-tab sync. When another tab writes the same key,
+  // mirror the user-stored lists locally. Derived lists are recomputed from
+  // `rows` in the useMemo above, so we only need to sync the stored slice.
+  useEffect(() => {
+    const unsub = subscribePartnerLists((next) => {
+      setStoredLists(
+        next.filter((l) => !l.id.startsWith(DERIVED_LIST_ID_PREFIX)),
+      );
+    });
+    return unsub;
+  }, []);
 
   // Phase 39 — derived auto-lists. Recomputed on every rows change. Stable
   // IDs (DERIVED_LIST_ID_PREFIX + ACCOUNT_TYPE_VALUE) ensure that subsequent

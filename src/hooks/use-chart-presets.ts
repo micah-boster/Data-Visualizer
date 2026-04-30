@@ -30,6 +30,7 @@ import { chartPresetSchema } from '@/lib/chart-presets/schema';
 import {
   loadChartPresets,
   persistChartPresets,
+  subscribeChartPresets,
 } from '@/lib/chart-presets/storage';
 import { BUILTIN_PRESETS } from '@/lib/chart-presets/defaults';
 
@@ -73,6 +74,17 @@ export function useChartPresets() {
     if (!hasHydrated.current) return;
     persistChartPresets(presets.filter((p) => !p.locked));
   }, [presets]);
+
+  // Phase 43 BND-03 — cross-tab sync. When another tab writes the same key,
+  // re-merge built-ins ahead of the sanitized user presets so this tab
+  // matches the other tab's view of the merged list.
+  useEffect(() => {
+    const unsub = subscribeChartPresets((nextRawUser) => {
+      const sanitizedUser = sanitizeUserPresets(nextRawUser);
+      setPresets([...BUILTIN_PRESETS, ...sanitizedUser]);
+    });
+    return unsub;
+  }, []);
 
   const savePreset = useCallback(
     (name: string, definition: ChartDefinition): ChartPreset => {

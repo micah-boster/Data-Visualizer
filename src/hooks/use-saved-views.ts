@@ -10,7 +10,11 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { SavedView, ViewSnapshot } from '@/lib/views/types';
-import { loadSavedViews, persistSavedViews } from '@/lib/views/storage';
+import {
+  loadSavedViews,
+  persistSavedViews,
+  subscribeSavedViews,
+} from '@/lib/views/storage';
 import { getDefaultViews } from '@/lib/views/defaults';
 import { migrateChartState } from '@/lib/views/migrate-chart';
 import { COLUMN_CONFIGS } from '@/lib/columns/config';
@@ -246,6 +250,19 @@ export function useSavedViews(
     if (!hasHydrated.current) return;
     persistSavedViews(views);
   }, [views]);
+
+  // Phase 43 BND-03 — cross-tab sync. When another tab writes the same key,
+  // re-sanitize against the current dataset and replace local state. The
+  // subscriber fires post-validation, so the parsed payload here is already
+  // schema-valid; we still run sanitizeViews to strip stale listIds/columns
+  // against THIS tab's runtime data.
+  useEffect(() => {
+    const ids = knownListIds ?? new Set<string>();
+    const unsub = subscribeSavedViews((next) => {
+      setViews(sanitizeViews(next, ids, pairs));
+    });
+    return unsub;
+  }, [knownListIds, pairs]);
 
   const saveView = useCallback(
     (name: string, snapshot: ViewSnapshot): void => {

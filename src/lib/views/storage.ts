@@ -1,45 +1,52 @@
 /**
- * localStorage CRUD for saved views.
+ * localStorage CRUD for saved views — Phase 43 BND-03 wired through
+ * `createVersionedStore`.
  *
- * Reads/writes are wrapped in try-catch to handle SSR,
- * private browsing, and quota errors gracefully.
- * Follows the same SSR-safe pattern as columns/persistence.ts.
+ * Public API (loadSavedViews / persistSavedViews) UNCHANGED — every existing
+ * consumer compiles without edits. The internal implementation now ships an
+ * envelope `{ _meta: { schemaVersion, savedAt }, payload }`, runs the
+ * (currently-empty) `viewsMigrations` chain on load, verifies writes, and
+ * exposes `subscribeSavedViews` for cross-tab sync.
  */
 
 import type { SavedView } from './types';
 import { savedViewsArraySchema } from './schema';
+import { createVersionedStore } from '../persistence/versioned-storage';
+import { VIEWS_SCHEMA_VERSION, viewsMigrations } from './migrations';
 
 export const VIEWS_STORAGE_KEY = 'bounce-dv-saved-views';
+
+const store = createVersionedStore<SavedView[]>({
+  key: VIEWS_STORAGE_KEY,
+  schemaVersion: VIEWS_SCHEMA_VERSION,
+  migrations: viewsMigrations,
+  schema: savedViewsArraySchema as unknown as import('zod').ZodType<SavedView[]>,
+  defaultValue: [],
+});
 
 /**
  * Load saved views from localStorage.
  * Returns empty array if missing, corrupt, or in SSR.
  */
 export function loadSavedViews(): SavedView[] {
-  try {
-    if (typeof window === 'undefined') return [];
-    const raw = localStorage.getItem(VIEWS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    const result = savedViewsArraySchema.safeParse(parsed);
-    if (result.success) {
-      return result.data as SavedView[];
-    }
-    return [];
-  } catch {
-    return [];
-  }
+  return store.load();
 }
 
 /**
  * Persist saved views to localStorage.
- * Silently fails on SSR, quota errors, or private browsing.
+ * Silently fails on SSR; surfaces a non-blocking toast on quota / verified-write
+ * mismatch.
  */
 export function persistSavedViews(views: SavedView[]): void {
-  try {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(VIEWS_STORAGE_KEY, JSON.stringify(views));
-  } catch {
-    // Silent fail — quota exceeded, private browsing, etc.
-  }
+  store.persist(views);
+}
+
+/**
+ * Cross-tab subscription. Fires when another tab writes the same key.
+ * Returns an unsubscribe function. SSR-safe (no-op when window is undefined).
+ */
+export function subscribeSavedViews(
+  listener: (views: SavedView[]) => void,
+): () => void {
+  return store.subscribe(listener);
 }

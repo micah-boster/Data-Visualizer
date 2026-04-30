@@ -15,7 +15,11 @@ import {
   getDefaultVisibility,
   getDefaultColumnOrder,
 } from '@/lib/columns/groups';
-import { loadColumnState, saveColumnState } from '@/lib/columns/persistence';
+import {
+  loadColumnState,
+  saveColumnState,
+  subscribeColumnState,
+} from '@/lib/columns/persistence';
 
 const identitySet = new Set(IDENTITY_COLUMNS);
 
@@ -51,6 +55,22 @@ export function useColumnManagement(
     if (!hasHydrated.current) return;
     saveColumnState({ visibility: columnVisibility, order: columnOrder });
   }, [columnVisibility, columnOrder]);
+
+  // Phase 43 BND-03 — cross-tab sync. When another tab writes the column
+  // state, mirror it locally. Null next-value means the key was removed in
+  // the other tab — fall back to defaults to keep both tabs aligned.
+  useEffect(() => {
+    const unsub = subscribeColumnState((next) => {
+      if (next) {
+        setColumnVisibility(next.visibility);
+        setColumnOrder(next.order);
+      } else {
+        setColumnVisibility(getDefaultVisibility());
+        setColumnOrder(getDefaultColumnOrder());
+      }
+    });
+    return unsub;
+  }, []);
 
   const visibleCount = useMemo(() => {
     return Object.values(columnVisibility).filter(Boolean).length;

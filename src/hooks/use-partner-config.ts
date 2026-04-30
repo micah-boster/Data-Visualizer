@@ -26,6 +26,7 @@ import type { PartnerProductPair } from '@/lib/partner-config/pair';
 import {
   loadPartnerConfig,
   persistPartnerConfig,
+  subscribePartnerConfig,
 } from '@/lib/partner-config/storage';
 import type {
   PartnerConfigArray,
@@ -59,6 +60,15 @@ export function usePartnerConfig(): UsePartnerConfigResult {
     if (!hasHydrated.current) return;
     persistPartnerConfig(configs);
   }, [configs]);
+
+  // Phase 43 BND-03 — cross-tab sync. When another tab writes the same key,
+  // mirror it locally so segment definitions stay aligned across tabs.
+  useEffect(() => {
+    const unsub = subscribePartnerConfig((next) => {
+      setConfigs(next);
+    });
+    return unsub;
+  }, []);
 
   const getConfig = useCallback(
     (pair: PartnerProductPair): PartnerConfigEntry | undefined => {

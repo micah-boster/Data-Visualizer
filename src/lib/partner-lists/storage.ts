@@ -1,45 +1,49 @@
 /**
- * localStorage CRUD for partner lists.
+ * localStorage CRUD for partner lists — Phase 43 BND-03 wired through
+ * `createVersionedStore`.
  *
- * Reads/writes are wrapped in try-catch to handle SSR,
- * private browsing, and quota errors gracefully.
- * Mirrors the SSR-safe pattern in src/lib/views/storage.ts.
+ * Public API (loadPartnerLists / persistPartnerLists) UNCHANGED — every
+ * existing consumer compiles without edits.
  */
 
 import type { PartnerList } from './types';
 import { partnerListsArraySchema } from './schema';
+import { createVersionedStore } from '../persistence/versioned-storage';
+import { LISTS_SCHEMA_VERSION, listsMigrations } from './migrations';
 
 export const PARTNER_LISTS_STORAGE_KEY = 'bounce-dv-partner-lists';
+
+const store = createVersionedStore<PartnerList[]>({
+  key: PARTNER_LISTS_STORAGE_KEY,
+  schemaVersion: LISTS_SCHEMA_VERSION,
+  migrations: listsMigrations,
+  schema: partnerListsArraySchema as unknown as import('zod').ZodType<PartnerList[]>,
+  defaultValue: [],
+});
 
 /**
  * Load partner lists from localStorage.
  * Returns empty array if missing, corrupt, or in SSR.
  */
 export function loadPartnerLists(): PartnerList[] {
-  try {
-    if (typeof window === 'undefined') return [];
-    const raw = localStorage.getItem(PARTNER_LISTS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    const result = partnerListsArraySchema.safeParse(parsed);
-    if (result.success) {
-      return result.data as PartnerList[];
-    }
-    return [];
-  } catch {
-    return [];
-  }
+  return store.load();
 }
 
 /**
  * Persist partner lists to localStorage.
- * Silently fails on SSR, quota errors, or private browsing.
+ * Silently fails on SSR; surfaces a non-blocking toast on quota / verified-
+ * write mismatch.
  */
 export function persistPartnerLists(lists: PartnerList[]): void {
-  try {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(PARTNER_LISTS_STORAGE_KEY, JSON.stringify(lists));
-  } catch {
-    // Silent fail — quota exceeded, private browsing, etc.
-  }
+  store.persist(lists);
+}
+
+/**
+ * Cross-tab subscription. Fires when another tab writes the same key.
+ * Returns an unsubscribe function. SSR-safe (no-op when window is undefined).
+ */
+export function subscribePartnerLists(
+  listener: (lists: PartnerList[]) => void,
+): () => void {
+  return store.subscribe(listener);
 }
