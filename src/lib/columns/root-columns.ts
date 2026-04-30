@@ -183,6 +183,7 @@ export function buildPairSummaryRows(
     // `meta.aggregation: 'avgWeighted'` declaration on the percentage
     // ColumnDefs in definitions.ts (the strategy table that this helper
     // mirrors at the partner-summary surface).
+    // ADR: .planning/adr/007-penetration-weighting.md
     const weightedByPlaced = (key: string) => {
       let weightedSum = 0;
       let totalWeight = 0;

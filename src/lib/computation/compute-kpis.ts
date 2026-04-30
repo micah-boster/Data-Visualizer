@@ -81,6 +81,7 @@ function coerceAgeMonths(raw: unknown): number {
  * per-horizon and potentially per-partner once realistic batch-size
  * distributions inform the choice.
  */
+// ADR: .planning/adr/006-min-placed-denom.md
 const MIN_PLACED_DENOMINATOR_DOLLARS = 100_000;
 
 /**
@@ -92,6 +93,7 @@ const MIN_PLACED_DENOMINATOR_DOLLARS = 100_000;
  *   - 6 ≤ maxBatchAgeMonths < 12 → ['rate3mo', 'rate6mo']
  *   - maxBatchAgeMonths ≥ 12     → ['rate6mo', 'rate12mo']
  */
+// ADR: .planning/adr/005-cascade-tiers.md
 export function selectCascadeTier(
   maxBatchAgeMonths: number,
 ): CascadeRateKey[] {

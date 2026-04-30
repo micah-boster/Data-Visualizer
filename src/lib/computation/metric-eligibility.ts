@@ -1,6 +1,8 @@
 /**
  * DCR-07 — young-batch censoring fix.
  *
+ * ADR: .planning/adr/008-young-batch-censoring.md
+ *
  * A batch is eligible for evaluation against a metric only when its age
  * has reached the metric's lookback horizon. A 4-month-old batch's
  * `COLLECTION_AFTER_12_MONTH` is structurally near-zero — not because

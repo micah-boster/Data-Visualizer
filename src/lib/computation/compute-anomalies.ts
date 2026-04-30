@@ -80,6 +80,7 @@ export const METRIC_GROUPS: Record<
 };
 
 /** Z-score threshold: flag only when abs(z) exceeds this. */
+// ADR: .planning/adr/001-z-threshold.md
 const Z_THRESHOLD = 2;
 
 /**
@@ -94,6 +95,7 @@ const Z_THRESHOLD = 2;
  * collection, portfolio_quality, engagement, other) before raising an
  * anomaly.
  */
+// ADR: .planning/adr/002-min-groups.md
 const MIN_GROUPS = 2;
 
 /**

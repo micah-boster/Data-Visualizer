@@ -14,6 +14,7 @@ export const TRENDING_METRICS = [
 ] as const;
 
 /** 5% relative threshold for determining trend direction. */
+// ADR: .planning/adr/003-trending-pct.md
 const THRESHOLD = 0.05;
 
 /**
@@ -101,6 +102,7 @@ export function computeTrending(
   const latestBatch = String(latestRow.BATCH ?? '');
 
   // Use up to 4 prior batches for rolling average (minimum 2)
+  // ADR: .planning/adr/004-baseline-window.md
   const priorRows = sorted.slice(
     Math.max(0, sorted.length - 5),
     sorted.length - 1,
