@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import { Providers } from './providers';
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { Header } from '@/components/layout/header';
+import { DegradedBanner } from '@/components/layout/degraded-banner';
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { Toaster } from '@/components/ui/sonner';
 import { PartnerConfigProvider } from '@/contexts/partner-config';
@@ -64,6 +65,13 @@ export default function RootLayout({
             <SidebarProvider>
               <AppSidebar />
               <SidebarInset>
+                {/*
+                  Phase 43 BND-04 — DegradedBanner mounts ABOVE the Header so
+                  it pushes content down when the Snowflake circuit breaker
+                  trips, instead of overlapping the chrome. Renders null in
+                  the healthy path (no layout cost).
+                */}
+                <DegradedBanner />
                 <Header />
                 <main
                   id="main"

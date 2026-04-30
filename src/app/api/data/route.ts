@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/snowflake/queries';
+import {
+  executeWithReliability,
+  generateRequestId,
+  CircuitBreakerOpenError,
+} from '@/lib/snowflake/reliability';
 import { ALLOWED_COLUMNS } from '@/lib/columns/config';
 import { validateSchema } from '@/lib/columns/schema-validator';
 import { isStaticMode, getStaticBatchData } from '@/lib/static-cache/fallback';
@@ -8,9 +13,17 @@ import type { DataResponse } from '@/types/data';
 export const dynamic = 'force-dynamic'; // Never cache API responses
 
 export async function GET(request: NextRequest) {
-  // Serve cached data when Snowflake credentials are not configured
+  // Phase 43 BND-04: every response carries a request-id so a sanitized
+  // client error correlates back to a server log line.
+  const requestId = generateRequestId();
+
+  // Serve cached data when Snowflake credentials are not configured. The
+  // reliability wrapper deliberately does NOT fire in static mode — there's
+  // no Snowflake call to retry/circuit-break against.
   if (isStaticMode()) {
-    return NextResponse.json(getStaticBatchData());
+    return NextResponse.json(getStaticBatchData(), {
+      headers: { 'X-Request-Id': requestId },
+    });
   }
 
   try {
@@ -30,8 +43,8 @@ export async function GET(request: NextRequest) {
 
       if (selectedColumns.length === 0) {
         return NextResponse.json(
-          { error: 'No valid columns specified', details: 'None of the requested columns matched the allowed column list.' },
-          { status: 400 }
+          { error: 'No valid columns specified', details: 'None of the requested columns matched the allowed column list.', requestId },
+          { status: 400, headers: { 'X-Request-Id': requestId } }
         );
       }
     }
@@ -41,9 +54,11 @@ export async function GET(request: NextRequest) {
 
     // Build safe SQL -- column names are validated against the allow-list
     const columnList = selectedColumns.join(', ');
-    const rows = await executeQuery(
-      `SELECT ${columnList} FROM agg_batch_performance_summary`
+    const result = await executeWithReliability(
+      () => executeQuery(`SELECT ${columnList} FROM agg_batch_performance_summary`),
+      { requestId, queryDescription: 'data:batch-summary' }
     );
+    const rows = result.rows;
 
     const response: DataResponse = {
       data: rows,
@@ -62,21 +77,37 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        'X-Request-Id': requestId,
+        'Server-Timing': `queue;dur=${result.queueWaitMs}, execute;dur=${result.executeMs}`,
+      },
+    });
   } catch (error) {
-    // Log full error for debugging (server-side only)
-    console.error('Snowflake query error:', {
+    // Server-side log carries full detail and the requestId; the client
+    // response stays sanitized.
+    console.error('[api/data] Snowflake query error:', {
+      requestId,
       message: error instanceof Error ? error.message : 'Unknown error',
-      // Never log credentials or connection strings
     });
 
-    // Return safe error to client -- never expose credentials
+    if (error instanceof CircuitBreakerOpenError) {
+      return NextResponse.json(
+        { error: 'Source temporarily unavailable. Showing cached data while we reconnect.', requestId },
+        {
+          status: 503,
+          headers: {
+            'X-Request-Id': requestId,
+            'X-Circuit-Breaker': 'open',
+          },
+        }
+      );
+    }
+
+    // Sanitized — never expose internal Snowflake table/column names.
     return NextResponse.json(
-      {
-        error: 'Failed to fetch data from Snowflake',
-        details: error instanceof Error ? error.message : 'An unexpected error occurred',
-      },
-      { status: 500 }
+      { error: 'Failed to load data. Try again or refresh.', requestId },
+      { status: 500, headers: { 'X-Request-Id': requestId } }
     );
   }
 }

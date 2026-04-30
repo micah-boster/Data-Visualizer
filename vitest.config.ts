@@ -22,7 +22,12 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    // *.test.ts is the v5.5 DEBT-09 target; src/lib/snowflake/*.smoke.ts is
+    // narrowly opted-in for Phase 43 BND-04's reliability wrapper which
+    // uses vitest's mocking primitives (vi.fn, vi.spyOn) that the existing
+    // node --experimental-strip-types runner can't host. Other *.smoke.ts
+    // files keep running via their `npm run smoke:*` scripts.
+    include: ['src/**/*.test.ts', 'src/lib/snowflake/*.smoke.ts'],
     exclude: ['**/node_modules/**', '**/dist/**', '**/.next/**'],
     environment: 'node', // pure-compute tests; no DOM needed
     globals: false, // explicit imports — no global describe/it

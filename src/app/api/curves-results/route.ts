@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/snowflake/queries';
+import {
+  executeWithReliability,
+  generateRequestId,
+  CircuitBreakerOpenError,
+} from '@/lib/snowflake/reliability';
 import { isStaticMode } from '@/lib/static-cache/fallback';
 import type { CurvesResultsWireRow } from '@/types/curves-results';
 
@@ -68,32 +73,64 @@ const CURVES_SQL = `
 `;
 
 export async function GET() {
+  // Phase 43 BND-04 — request-id stamped on every response.
+  const requestId = generateRequestId();
+
   // Static-mode graceful degradation: chart renders actuals only when there
   // are no Snowflake creds (per CONTEXT lock + Pitfall 4 — absent projection
   // is always a valid state on the consumer side).
   if (isStaticMode()) {
-    return NextResponse.json({
-      data: [],
-      meta: { rowCount: 0, fetchedAt: new Date().toISOString() },
-    });
+    return NextResponse.json(
+      {
+        data: [],
+        meta: { rowCount: 0, fetchedAt: new Date().toISOString() },
+      },
+      { headers: { 'X-Request-Id': requestId } }
+    );
   }
 
   try {
-    const rows = await executeQuery<CurvesResultsWireRow>(CURVES_SQL);
-    return NextResponse.json({
-      data: rows,
-      meta: {
-        rowCount: rows.length,
-        fetchedAt: new Date().toISOString(),
+    const result = await executeWithReliability<CurvesResultsWireRow[]>(
+      () => executeQuery<CurvesResultsWireRow>(CURVES_SQL),
+      { requestId, queryDescription: 'curves-results' }
+    );
+    const rows = result.rows;
+    return NextResponse.json(
+      {
+        data: rows,
+        meta: {
+          rowCount: rows.length,
+          fetchedAt: new Date().toISOString(),
+        },
       },
-    });
+      {
+        headers: {
+          'X-Request-Id': requestId,
+          'Server-Timing': `queue;dur=${result.queueWaitMs}, execute;dur=${result.executeMs}`,
+        },
+      }
+    );
   } catch (error) {
     console.error(
-      `Curves results query error: ${error instanceof Error ? error.message : String(error)}`
+      `[api/curves-results] Snowflake query error: requestId=${requestId} message=${error instanceof Error ? error.message : String(error)}`
     );
+
+    if (error instanceof CircuitBreakerOpenError) {
+      return NextResponse.json(
+        { error: 'Source temporarily unavailable. Showing cached data while we reconnect.', requestId },
+        {
+          status: 503,
+          headers: {
+            'X-Request-Id': requestId,
+            'X-Circuit-Breaker': 'open',
+          },
+        }
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to fetch projections' },
-      { status: 500 }
+      { error: 'Failed to load projections. Try again or refresh.', requestId },
+      { status: 500, headers: { 'X-Request-Id': requestId } }
     );
   }
 }
