@@ -54,8 +54,14 @@ export interface StatCardTrend {
 }
 
 export interface StatCardProps {
-  /** Overline label (e.g. "Penetration"). Always rendered uppercase. */
-  label: string;
+  /**
+   * Overline label (e.g. "Penetration"). Always rendered uppercase.
+   *
+   * Phase 44 VOC-03 — widened to ReactNode so callers can wrap a domain term
+   * with `<Term name="...">` (the popover trigger renders as inline text and
+   * inherits the surrounding `.text-label uppercase` styling).
+   */
+  label: ReactNode;
   /** Pre-formatted headline value (e.g. "42.3%"). Caller owns formatting. */
   value: string;
   /** Optional trend with direction + delta; null/undefined hides the trend line. */
@@ -154,7 +160,7 @@ function LabelRow({
   icon,
   stale,
 }: {
-  label: string;
+  label: ReactNode;
   icon?: ReactNode;
   stale?: boolean;
 }) {

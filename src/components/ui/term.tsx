@@ -21,8 +21,14 @@
  *   - Mobile / touch: tap-to-pin. Base UI Popover's openOnHover does not
  *     fire on touch devices; the click-to-pin path is the same code path
  *     and works identically.
- *   - Keyboard: trigger is a real <button> (Base UI primitive), so
- *     tabIndex / Enter / Space / Esc all wire up automatically.
+ *   - Keyboard: trigger renders as a `<span role="button" tabIndex={0}>` so
+ *     it composes safely inside any text context (breadcrumb buttons, table
+ *     header sort buttons, sidebar menu buttons — all of which are themselves
+ *     `<button>` elements; HTML disallows nested `<button>`). The popover
+ *     primitive is told `nativeButton={false}` so Base UI doesn't insert a
+ *     real button; we wire focus/Enter/Space/Esc via the role + tabIndex +
+ *     a keydown handler that also clicks for Enter (Space is built in for
+ *     elements with role="button").
  *
  * Type tokens (Phase 27): src/components/ui/** is in the Phase 27
  * allowlist, but this component still uses the named tokens (text-title /
@@ -61,13 +67,14 @@ const HOVER_OPEN_DELAY = 400;
  * hover/focus. The `border-b border-dotted` recipe inherits color from
  * `border-muted-foreground` (subtle, intentionally). focus-visible (not
  * focus) so mouse clicks don't leave a visible focus ring after release.
+ *
+ * Renders as a `<span>`, NOT a `<button>` — see component docstring above
+ * for why (nested-button HTML invariant).
  */
 const TRIGGER_CLASSNAME = cn(
   'inline cursor-help border-b border-dotted border-transparent outline-none',
   'hover:border-muted-foreground',
   'focus-visible:border-muted-foreground',
-  // Reset native button defaults so the trigger sits inline like text.
-  'bg-transparent p-0 font-inherit text-inherit',
 );
 
 export function Term({ name, children, className }: TermProps): React.JSX.Element {
@@ -81,10 +88,19 @@ export function Term({ name, children, className }: TermProps): React.JSX.Elemen
         // outside-press / Esc, which Base UI dismisses for us.
         openOnHover
         delay={HOVER_OPEN_DELAY}
-        // nativeButton={false} would let us render a <span>, but the
-        // default <button> gives us proper focus + Enter/Space semantics
-        // for free. The reset classes above strip the native button look.
-        className={cn(TRIGGER_CLASSNAME, className)}
+        // Render as a <span>, not the default <button>, so this composes
+        // safely inside other interactive ancestors (breadcrumb buttons,
+        // sortable table headers, sidebar menu buttons). nativeButton=false
+        // tells Base UI not to assume a native button; role + tabIndex give
+        // us keyboard activation (Space is built in for role="button").
+        nativeButton={false}
+        render={
+          <span
+            role="button"
+            tabIndex={0}
+            className={cn(TRIGGER_CLASSNAME, className)}
+          />
+        }
       >
         {children}
       </PopoverPrimitive.Trigger>

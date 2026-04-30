@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { ContextMenu } from '@base-ui/react/context-menu';
 import { cn, getPartnerName, getStringField } from '@/lib/utils';
+import { Term } from '@/components/ui/term';
 import { useSidebarData } from '@/contexts/sidebar-data';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { PartnerListsSidebarGroup } from '@/components/partner-lists/partner-lists-sidebar-group';
@@ -368,7 +369,17 @@ export function AppSidebar() {
                 viewsExpanded && 'rotate-90',
               )}
             />
-            <span>Views</span>
+            {/*
+              Phase 44 VOC-03 — first-instance-per-surface rule: this is the
+              FIRST occurrence of the `view` term on the sidebar surface
+              (Partner Lists group above carries `partner` + `list`; Views
+              label carries `view`). "Partners" group label below +
+              "All Partners" menu button + saved-view names are subsequent
+              instances and stay plain.
+            */}
+            <span>
+              <Term name="view">Views</Term>
+            </span>
             {views.length > 0 && (
               <span className="ml-auto text-label-numeric text-muted-foreground">
                 {views.length}

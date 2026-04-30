@@ -1,6 +1,8 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
+import { Term } from '@/components/ui/term';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
 
 interface BreadcrumbTrailProps {
@@ -11,10 +13,16 @@ interface BreadcrumbTrailProps {
 
 /**
  * Breadcrumb trail for drill-down navigation. Always renders at least the
- * root segment ("All Batches"). Adds segments for partner and batch levels.
+ * root segment ("All Partners"). Adds segments for partner and batch levels.
  *
  * Active (current) segment: bold, not clickable.
  * Non-active segments: muted text, clickable, hover:underline.
+ *
+ * Phase 44 VOC-03 — first-instance-per-surface rule: the literal-prefix words
+ * "Partners" (in "All Partners"), "Partner" (in "Partner: …"), and "Batch"
+ * (in "Batch: …") are wrapped in `<Term>` so a hover/focus surfaces the
+ * registry definition. The drill VALUES (state.partner, state.batch) stay
+ * plain text — they're data, not vocabulary.
  */
 export function BreadcrumbTrail({
   state,
@@ -22,13 +30,21 @@ export function BreadcrumbTrail({
   onNavigate,
 }: BreadcrumbTrailProps) {
   const segments: {
-    label: string;
+    /** Visual breadcrumb body — JSX so first-instance terms can be wrapped. */
+    label: ReactNode;
+    /** ARIA-friendly plain-string variant for keys + non-visual contexts. */
+    labelText: string;
     level: DrillLevel;
     count?: number;
     active: boolean;
   }[] = [
     {
-      label: 'All Partners',
+      label: (
+        <>
+          All <Term name="partner">Partners</Term>
+        </>
+      ),
+      labelText: 'All Partners',
       level: 'root',
       count: rowCounts.root,
       active: state.level === 'root',
@@ -37,7 +53,12 @@ export function BreadcrumbTrail({
 
   if (state.partner) {
     segments.push({
-      label: `Partner: ${state.partner}`,
+      label: (
+        <>
+          <Term name="partner">Partner</Term>: {state.partner}
+        </>
+      ),
+      labelText: `Partner: ${state.partner}`,
       level: 'partner',
       count: rowCounts.partner,
       active: state.level === 'partner',
@@ -46,7 +67,12 @@ export function BreadcrumbTrail({
 
   if (state.batch) {
     segments.push({
-      label: `Batch: ${state.batch}`,
+      label: (
+        <>
+          <Term name="batch">Batch</Term>: {state.batch}
+        </>
+      ),
+      labelText: `Batch: ${state.batch}`,
       level: 'batch',
       count: rowCounts.batch,
       active: state.level === 'batch',
@@ -78,6 +104,7 @@ export function BreadcrumbTrail({
           ) : (
             <button
               onClick={() => onNavigate(seg.level)}
+              aria-label={seg.labelText}
               className="text-body text-muted-foreground hover:text-foreground hover:underline"
             >
               {seg.label}

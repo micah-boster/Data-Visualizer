@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { StatCard } from '@/components/patterns/stat-card';
 import { Switch } from '@/components/ui/switch';
+import { Term } from '@/components/ui/term';
 import {
   formatCount,
   formatPercentage,
@@ -35,7 +36,12 @@ type NumericKpiKey = Exclude<keyof KpiAggregates, 'insufficientDenominator'>;
 interface IdentityCardSpec {
   kind: 'identity';
   key: NumericKpiKey;
-  label: string;
+  /**
+   * Card label. Phase 44 VOC-03 — widened to ReactNode so first-instance
+   * domain terms (Batches, Accounts) can be wrapped in `<Term>` while other
+   * cards stay as plain strings.
+   */
+  label: ReactNode;
   format: (v: number) => string;
 }
 
@@ -45,7 +51,7 @@ interface RateCardSpec {
   key: CascadeRateKey;
   /** KPI-aggregate field backing this rate (also used for trend metric lookup). */
   aggregateKey: NumericKpiKey;
-  label: string;
+  label: ReactNode;
   format: (v: number) => string;
   /** Snowflake column name for rolling-avg trend lookup. */
   trendMetric?: string;
@@ -53,10 +59,28 @@ interface RateCardSpec {
 
 type CardSpec = IdentityCardSpec | RateCardSpec;
 
-/** Identity/volume cards — always shown. */
+/**
+ * Identity/volume cards — always shown.
+ *
+ * Phase 44 VOC-03 — first-instance-per-surface rule: the cohort's "Batches"
+ * (totalBatches) and "Accounts" (totalAccounts) cards are the FIRST place
+ * those terms appear in the KPI summary surface, so they're wrapped in
+ * `<Term>`. Penetration / Total Collected aren't domain-vocabulary terms
+ * that warrant a popover (they're metric names, not concepts in the registry).
+ */
 const IDENTITY_CARDS: IdentityCardSpec[] = [
-  { kind: 'identity', key: 'totalBatches', label: 'Batches', format: formatCount },
-  { kind: 'identity', key: 'totalAccounts', label: 'Accounts', format: formatCount },
+  {
+    kind: 'identity',
+    key: 'totalBatches',
+    label: <Term name="batch">Batches</Term>,
+    format: formatCount,
+  },
+  {
+    kind: 'identity',
+    key: 'totalAccounts',
+    label: <Term name="account">Accounts</Term>,
+    format: formatCount,
+  },
   {
     kind: 'identity',
     key: 'weightedPenetrationRate',

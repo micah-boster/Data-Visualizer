@@ -34,6 +34,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ChevronRight, List, Plus, Pencil, Sparkles, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { Term } from '@/components/ui/term';
 import {
   SidebarGroup,
   SidebarGroupAction,
@@ -129,7 +130,17 @@ export function PartnerListsSidebarGroup({
             expanded && 'rotate-90',
           )}
         />
-        <span>Partner Lists</span>
+        {/*
+          Phase 44 VOC-03 — first-instance-per-surface rule: Partner Lists
+          renders ABOVE the Partners group on the sidebar (CONTEXT lock), so
+          this is the FIRST occurrence of both `partner` and `list` on the
+          sidebar surface. Both terms wrapped here; the Partners group label
+          + "All Partners" menu button below stay plain.
+        */}
+        <span>
+          <Term name="partner">Partner</Term>{' '}
+          <Term name="list">Lists</Term>
+        </span>
       </SidebarGroupLabel>
       <SidebarGroupAction onClick={onCreateList} aria-label="Create partner list">
         <Plus className="h-4 w-4" aria-hidden="true" />
