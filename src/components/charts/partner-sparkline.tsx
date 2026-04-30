@@ -25,5 +25,16 @@ export function PartnerSparkline({ curves }: PartnerSparklineProps) {
     return { data: pivoted, lineKeys: keys };
   }, [curves]);
 
-  return <ChartSparkline data={data} lineKeys={lineKeys} />;
+  // Phase 41-03 (DCR-09) — recoveryRate is the chart's value axis; the closest
+  // canonical Snowflake metric key for polarity intent is COLLECTION_AFTER_6_MONTH
+  // (the headline collection-rate metric, higher_is_better). Passing it
+  // surfaces the audit hook for BND-05 forward compatibility; today's
+  // rotational palette ignores polarity.
+  return (
+    <ChartSparkline
+      data={data}
+      lineKeys={lineKeys}
+      metric="COLLECTION_AFTER_6_MONTH"
+    />
+  );
 }

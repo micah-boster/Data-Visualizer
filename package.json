@@ -27,7 +27,9 @@
     "smoke:derived-lists": "node --experimental-strip-types src/lib/partner-lists/derived-lists.smoke.ts",
     "smoke:schema-additive-segment": "node --experimental-strip-types src/lib/partner-lists/schema.additive-segment.smoke.ts",
     "smoke:metric-eligibility": "node --experimental-strip-types src/lib/computation/metric-eligibility.smoke.ts",
-    "smoke:apples-and-oranges": "node --experimental-strip-types src/lib/computation/apples-and-oranges.smoke.ts"
+    "smoke:apples-and-oranges": "node --experimental-strip-types src/lib/computation/apples-and-oranges.smoke.ts",
+    "test:vitest": "vitest run",
+    "test:vitest:watch": "vitest"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.69",
@@ -65,6 +67,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.9"
   }
 }

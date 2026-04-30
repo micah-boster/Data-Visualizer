@@ -157,7 +157,6 @@ export function getPolarityWithAuditWarning(metric: string): MetricPolarity {
     !warnedMetrics.has(metric)
   ) {
     warnedMetrics.add(metric);
-    // eslint-disable-next-line no-console
     console.warn(
       `[polarity-audit] Metric "${metric}" is not registered in POLARITY_REGISTRY. ` +
         `Falling back to higher_is_better. Register explicitly per docs/POLARITY-AUDIT.md ` +
