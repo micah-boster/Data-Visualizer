@@ -66,10 +66,19 @@ export function buildCSVFromTable(
   lines.push(`${escapeCSV('Active Filters')},${escapeCSV(filterString)}`);
 
   // Row 4: Column mapping (display name -> Snowflake key)
+  // Phase 44 VOC-03 — when a column header is JSX (PARTNER_NAME, BATCH carry
+  // <Term> wrappers as of Plan 44-01 Task 4), fall back to the plain
+  // `config.label` string for CSV-friendly output instead of the raw
+  // Snowflake key. Plain-string headers pass through unchanged.
   const configLookup = new Map(COLUMN_CONFIGS.map((c) => [c.key, c]));
+  const headerStringFor = (col: { id: string; columnDef: { header?: unknown } }): string => {
+    if (typeof col.columnDef.header === 'string') return col.columnDef.header;
+    const config = configLookup.get(col.id);
+    if (config && typeof config.label === 'string') return config.label;
+    return col.id;
+  };
   const mappingPairs = visibleColumns.map((col) => {
-    const header =
-      typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id;
+    const header = headerStringFor(col);
     const config = configLookup.get(col.id);
     const snowflakeKey = config?.key ?? col.id;
     return `${header} = ${snowflakeKey}`;
@@ -82,11 +91,7 @@ export function buildCSVFromTable(
   lines.push('');
 
   // --- Header row ---
-  const headers = visibleColumns.map((col) =>
-    escapeCSV(
-      typeof col.columnDef.header === 'string' ? col.columnDef.header : col.id
-    )
-  );
+  const headers = visibleColumns.map((col) => escapeCSV(headerStringFor(col)));
   lines.push(headers.join(','));
 
   // --- Data rows ---

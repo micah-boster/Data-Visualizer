@@ -30,6 +30,8 @@ import { WIDTH_BY_TYPE, IDENTITY_WIDTH } from './widths';
 import { checklistFilter, rangeFilter } from './filter-functions';
 import { getCellRenderer } from '@/components/table/formatted-cell';
 import { DrillableCell } from '@/components/navigation/drillable-cell';
+import { Term } from '@/components/ui/term';
+import type { TermName } from '@/lib/vocabulary';
 import { TrendIndicator, InsufficientTrendIndicator } from '@/components/table/trend-indicator';
 import { ModeledDeltaCell } from '@/components/table/modeled-delta-cell';
 import { TRENDING_METRICS } from '@/lib/computation/compute-trending';
@@ -325,6 +327,48 @@ function aggregationFor(config: typeof COLUMN_CONFIGS[number]): {
   return { aggregation: 'none' };
 }
 
+/**
+ * Phase 44 VOC-03 — first-instance-per-surface table-header wrapping.
+ *
+ * Returns the header value to use for a given config. PARTNER_NAME and
+ * BATCH (the only two table-header instances of `partner` and `batch` on
+ * the data table surface) get a `() => <Term>` render function that
+ * surfaces the registry definition on hover/focus. All other headers
+ * pass through as the plain `config.label` string.
+ *
+ * Why a function (not a JSX element directly): TanStack Table's
+ * `ColumnDefTemplate<TProps>` is typed `string | ((props: TProps) => any)`.
+ * It does NOT accept a ReactElement directly — non-string headers must be
+ * cell-shaped render functions. (This is the same shape the `cell` field
+ * uses; see ColumnDef in @tanstack/table-core/types.d.ts.)
+ *
+ * Why here and not in `config.ts`: the configs file is imported by
+ * smoke tests run under `node --experimental-strip-types`, which cannot
+ * parse JSX. Keeping `config.ts` plain TS preserves the smoke-test
+ * runtime; the Term wrap lives at the column-def builder which is only
+ * ever bundled by Next.js / Vite (full JSX-aware toolchain).
+ */
+const TERM_HEADER_BY_KEY: Record<string, TermName> = {
+  PARTNER_NAME: 'partner',
+  BATCH: 'batch',
+};
+
+function headerForConfig(config: typeof COLUMN_CONFIGS[number]) {
+  const termName = TERM_HEADER_BY_KEY[config.key];
+  if (termName) {
+    // children-as-prop satisfies TermProps's required children field; the
+    // alternative (createElement(Term, props, ...children)) hits TS's overload
+    // resolution because Term's children prop is non-optional. eslint
+    // react/no-children-prop disabled here for that interop reason.
+    const TermHeader = () =>
+      // eslint-disable-next-line react/no-children-prop
+      createElement(Term, { name: termName, children: config.label });
+    TermHeader.displayName = `TermHeader(${config.key})`;
+    return TermHeader;
+  }
+  return config.label;
+}
+
 export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
   const dataColumns: ColumnDef<Record<string, unknown>>[] = COLUMN_CONFIGS.map((config) => {
     // Determine filter function based on column type
@@ -340,7 +384,7 @@ export function buildColumnDefs(): ColumnDef<Record<string, unknown>>[] {
     return {
     id: config.key,
     accessorKey: config.key,
-    header: config.label,
+    header: headerForConfig(config),
     size: config.identity ? IDENTITY_WIDTH : (WIDTH_BY_TYPE[config.type] ?? 110),
     minSize: 60,
     maxSize: 400,

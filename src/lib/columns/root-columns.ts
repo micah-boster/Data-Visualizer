@@ -21,6 +21,8 @@ import type { TableDrillMeta } from './definitions';
 import { anomalyStatusColumn } from './anomaly-column';
 import { getPartnerName, getStringField } from '@/lib/utils';
 import type { AggregationStrategy } from '@/lib/table/aggregations';
+import { Term } from '@/components/ui/term';
+import type { TermName } from '@/lib/vocabulary';
 import {
   pairKey,
   sortPairs,
@@ -77,11 +79,40 @@ const ROOT_COLUMNS: RootColumnConfig[] = [
   { key: 'COLLECTION_AFTER_12_MONTH', label: '12mo Collection', type: 'currency', size: 130, aggregation: 'sum' },
 ];
 
+/**
+ * Phase 44 VOC-03 — first-instance-per-surface table-header wrapping for
+ * the root partner-summary table. Mirrors the same map in `definitions.ts`
+ * (per-surface scope: each table is its own surface, so PARTNER_NAME wraps
+ * here AND in definitions.ts; the first-instance rule applies per surface,
+ * not globally). BATCH does not appear at root level — root rows are pair
+ * summaries, not batch rows.
+ */
+const TERM_HEADER_BY_KEY: Record<string, TermName> = {
+  PARTNER_NAME: 'partner',
+};
+
+function rootHeaderForCol(col: typeof ROOT_COLUMNS[number]) {
+  const termName = TERM_HEADER_BY_KEY[col.key];
+  if (termName) {
+    // TanStack Table accepts string OR function for `header`; a render
+    // function (not a JSX element directly) is the only way to embed JSX.
+    // children-as-prop is used (vs the third-arg form) so TS picks Term's
+    // required `children: ReactNode` overload cleanly. eslint
+    // react/no-children-prop disabled for that interop reason.
+    const TermHeader = () =>
+      // eslint-disable-next-line react/no-children-prop
+      createElement(Term, { name: termName, children: col.label });
+    TermHeader.displayName = `RootTermHeader(${col.key})`;
+    return TermHeader;
+  }
+  return col.label;
+}
+
 export function buildRootColumnDefs(): ColumnDef<Record<string, unknown>>[] {
   const dataColumns = ROOT_COLUMNS.map((col) => ({
     id: col.key,
     accessorKey: col.key,
-    header: col.label,
+    header: rootHeaderForCol(col),
     size: col.size,
     minSize: 60,
     maxSize: 400,
