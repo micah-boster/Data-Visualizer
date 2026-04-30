@@ -9,13 +9,18 @@
  * value in the dataset).
  *
  * Phase 39 attribute scope: ACCOUNT_TYPE, PRODUCT_TYPE (display alias),
- * SEGMENT (references SegmentRule.name from usePartnerConfig). New keys
- * land here as `.optional()` fields (additive evolution) so legacy
- * pre-Phase-39 lists parse cleanly.
+ * SEGMENT (references SegmentRule.name from usePartnerConfig). Phase 44 VOC-05
+ * extends with REVENUE_MODEL as the third unit-of-analysis dimension; see
+ * docs/adr/0002-revenue-model-scoping.md. New keys land here as `.optional()`
+ * fields (additive evolution) so legacy pre-Phase-39/44 lists parse cleanly.
  */
 
 /** Supported attribute keys for attribute-driven partner lists. */
-export type AttributeKey = 'ACCOUNT_TYPE' | 'PRODUCT_TYPE' | 'SEGMENT';
+export type AttributeKey =
+  | 'ACCOUNT_TYPE'
+  | 'PRODUCT_TYPE'
+  | 'SEGMENT'
+  | 'REVENUE_MODEL';
 
 /**
  * Multi-select filter shape used to derive attribute lists.
@@ -38,6 +43,17 @@ export interface PartnerListFilters {
    * the SEGMENT filter is skipped with a warning.
    */
   SEGMENT?: string[];
+  /**
+   * Phase 44 VOC-05 — REVENUE_MODEL multi-select against the third dimension
+   * of the unit of analysis (CONTINGENCY, DEBT_SALE). Evaluator handles this
+   * with the same cross-attribute AND / within-array OR semantics as
+   * ACCOUNT_TYPE; rows missing a REVENUE_MODEL field degrade defensively
+   * (no match) — same convention as missing PRODUCT_TYPE today.
+   *
+   * Additive `.optional()` Phase 39 schema-evolution pattern: legacy lists
+   * (no REVENUE_MODEL key) parse and evaluate identically to pre-change.
+   */
+  REVENUE_MODEL?: string[];
   // Future attributes added here as `.optional()` fields (additive evolution).
 }
 

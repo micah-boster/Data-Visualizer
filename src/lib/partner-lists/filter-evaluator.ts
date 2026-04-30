@@ -18,6 +18,13 @@
  *   in `filters.SEGMENT`. Without a resolver, the SEGMENT check is
  *   skipped with a console warning so the evaluator stays pure.
  *
+ * Phase 44 VOC-05 addition (docs/adr/0002-revenue-model-scoping.md):
+ * - REVENUE_MODEL is the third unit-of-analysis dimension (CONTINGENCY,
+ *   DEBT_SALE). Evaluator treats it with the same cross-attribute AND /
+ *   within-array OR semantics as ACCOUNT_TYPE. Rows missing a REVENUE_MODEL
+ *   field degrade defensively (no match) — same convention as missing
+ *   PRODUCT_TYPE today.
+ *
  * This module has zero React / Next / Snowflake coupling so it can be
  * consumed by hooks, UI, and (future) tests without pulling in a runtime.
  */
@@ -61,6 +68,8 @@ export function evaluateFilters(
   const accountTypeFilter = filters.ACCOUNT_TYPE;
   const productTypeFilter = filters.PRODUCT_TYPE;
   const segmentFilter = filters.SEGMENT;
+  // Phase 44 VOC-05 — REVENUE_MODEL third unit-of-analysis dimension.
+  const revenueModelFilter = filters.REVENUE_MODEL;
 
   // Defensive: if SEGMENT was requested without a resolver, warn once and
   // skip the check rather than crashing or silently dropping all rows.
@@ -86,6 +95,22 @@ export function evaluateFilters(
     if (productTypeFilter && productTypeFilter.length > 0) {
       const rowAccountType = getStringField(row, 'ACCOUNT_TYPE');
       if (!productTypeFilter.some((value) => value === rowAccountType)) {
+        continue;
+      }
+    }
+
+    // Phase 44 VOC-05 — REVENUE_MODEL: third unit-of-analysis dimension.
+    // Cross-attribute AND with ACCOUNT_TYPE / PRODUCT_TYPE / SEGMENT;
+    // within-array OR. Rows missing REVENUE_MODEL degrade defensively to
+    // no-match — same convention as missing PRODUCT_TYPE today. The
+    // apples-and-oranges rule (Contingency vs Debt Sale economics differ)
+    // forbids letting mismatched rows leak through, so the predicate
+    // explicitly excludes rows lacking the field rather than skipping the
+    // check. See docs/adr/0002-revenue-model-scoping.md.
+    if (revenueModelFilter && revenueModelFilter.length > 0) {
+      const rowRevenueModel = getStringField(row, 'REVENUE_MODEL');
+      if (!rowRevenueModel) continue; // missing field → no match
+      if (!revenueModelFilter.some((value) => value === rowRevenueModel)) {
         continue;
       }
     }

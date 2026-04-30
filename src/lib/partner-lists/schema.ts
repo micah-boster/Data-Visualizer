@@ -16,18 +16,23 @@ import { z } from 'zod';
 /**
  * Attribute-driven filter shape.
  *
- * - ACCOUNT_TYPE: legacy raw partner classification (pre-Phase-39).
- * - PRODUCT_TYPE: Phase 39 display alias of ACCOUNT_TYPE.
- * - SEGMENT:      Phase 39 reference to SegmentRule.name from usePartnerConfig.
+ * - ACCOUNT_TYPE:  legacy raw partner classification (pre-Phase-39).
+ * - PRODUCT_TYPE:  Phase 39 display alias of ACCOUNT_TYPE.
+ * - SEGMENT:       Phase 39 reference to SegmentRule.name from usePartnerConfig.
+ * - REVENUE_MODEL: Phase 44 VOC-05 third unit-of-analysis dimension
+ *                  (CONTINGENCY, DEBT_SALE). See
+ *                  docs/adr/0002-revenue-model-scoping.md.
  *
  * All fields are `.optional()` for additive evolution — legacy lists missing
- * the new keys parse cleanly.
+ * the new keys parse cleanly. Phase 44 keeps the .strict() guard so unknown
+ * attribute keys still fail at parse time; no schemaVersion bump.
  */
 const attributeFiltersSchema = z
   .object({
     ACCOUNT_TYPE: z.array(z.string()).optional(),
     PRODUCT_TYPE: z.array(z.string()).optional(),
     SEGMENT: z.array(z.string()).optional(),
+    REVENUE_MODEL: z.array(z.string()).optional(),
     // Future attributes append here as `.optional()` fields for additive evolution.
   })
   .strict();
