@@ -9,10 +9,11 @@
  *
  * Pitfall 3 lock (36-RESEARCH): this function is READ-ONLY. It NEVER mutates
  * `ChartDefinition` and NEVER dispatches `onDefinitionChange`. The renderer
- * surfaces the stale flag via `StaleColumnWarning`, and the user's explicit
- * toolbar pick (landed by Plan 36-04) is what eventually overwrites the stale
- * ref. Auto-healing would turn every render into a save and smear the user's
- * explicit choice across re-renders.
+ * surfaces the stale flag via ChartFrame's title-row stale-columns chip
+ * (Phase 43 BND-05 — absorbed the prior `StaleColumnWarning` standalone
+ * banner), and the user's explicit toolbar pick (landed by Plan 36-04) is
+ * what eventually overwrites the stale ref. Auto-healing would turn every
+ * render into a save and smear the user's explicit choice across re-renders.
  *
  * Contract:
  * - `requested === null` → `null`. Caller renders EmptyState (axis not picked).

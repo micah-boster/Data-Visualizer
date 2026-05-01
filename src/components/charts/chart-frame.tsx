@@ -9,7 +9,7 @@
  *   - state-driven render: ready / loading (skeleton) / fetching (overlay) /
  *     empty (centered text + suggestion) / error (sanitized message + request id)
  *   - stale-column warning chip in the title row (absorbs the standalone
- *     <StaleColumnWarning> component this plan deletes)
+ *     stale-column warning component this plan deletes)
  *   - polarity prop (defaults via `getPolarity(metric)` per DCR-09); exposed via
  *     React context so chart bodies can read direction-aware coloring without
  *     prop-threading

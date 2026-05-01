@@ -26,6 +26,7 @@ and when to revisit.
 | 006 | `MIN_PLACED_DENOMINATOR_DOLLARS = $100K`                                                             | `src/lib/computation/compute-kpis.ts:84`                        | Accepted (Wave 0)                   |
 | 007 | Dollar-weighted penetration is canonical primary; account-weighted is column-picker only            | `src/lib/columns/root-columns.ts:186` (`weightedByPlaced`)      | Accepted                            |
 | 008 | Young-batch censoring via metric-age-eligibility filter (strict rule)                                | `src/lib/computation/metric-eligibility.ts` (`isMetricEligible`) | Accepted                            |
+| 009 | Caching layers — Next route cache + React Query + Snowflake; locked RefreshButton path              | `src/app/api/data/route.ts:13` (`revalidate = 3600`)            | Accepted (Phase 43-03 / BND-06)     |
 
 ## Adding new ADRs
 

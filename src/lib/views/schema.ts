@@ -34,8 +34,9 @@ const collectionCurveVariantSchema = z.object({
  * Phase 36 — axis reference used by the three generic chart variants.
  * `column` is a Snowflake column name (uppercase) from COLUMN_CONFIGS. No
  * regex constraint: saved views may legitimately carry stale keys after a
- * column rename, and those are handled at the UI layer by Plan 03's
- * StaleColumnWarning, not at the schema layer.
+ * column rename, and those are handled at the UI layer by Phase 43 BND-05
+ * ChartFrame's stale-columns chip (which absorbed the prior Plan 36-03
+ * StaleColumnWarning standalone banner), not at the schema layer.
  */
 const axisRefSchema = z.object({
   column: z.string(),

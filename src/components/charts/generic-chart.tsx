@@ -10,11 +10,11 @@
  *
  * Pure props-in / JSX-out: no internal state, no side effects, no write-backs
  * to the parent. Pitfall 3 is enforced here — the renderer NEVER invokes
- * `onDefinitionChange`. Stale column refs are surfaced visually (above the
- * chart) via <StaleColumnWarning>, and the axes render against the first
- * eligible fallback column from `resolveColumnWithFallback`. The user's
- * explicit column pick (via Plan 36-04's toolbar) is the only thing that
- * overwrites the stored ref.
+ * `onDefinitionChange`. Stale column refs are surfaced via the ChartFrame
+ * title-row chip (Phase 43 BND-05 absorbs the prior standalone stale-column
+ * warning banner), and the axes render against the first eligible fallback
+ * column from `resolveColumnWithFallback`. The user's explicit column pick
+ * (via Plan 36-04's toolbar) is the only thing that overwrites the stored ref.
  *
  * Pitfall 5 is handled by the local `rechartsAxisType` helper: the Recharts
  * `<XAxis type>` attribute is derived from the resolved column's
@@ -35,7 +35,6 @@
  * through its existing component; this dispatcher is line/scatter/bar only.
  */
 
-import type { ReactElement } from 'react';
 import { useMemo } from 'react';
 import {
   LineChart,
@@ -55,11 +54,10 @@ import {
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import { NumericTick } from './numeric-tick';
-import { StaleColumnWarning } from './stale-column-warning';
+import { ChartFrame } from './chart-frame';
 import { CHART_COLORS } from './curve-tooltip';
 import { GenericChartLegend } from './generic-chart-legend';
 import { ScatterTooltip } from './scatter-tooltip';
-import { EmptyState } from '@/components/patterns/empty-state';
 import { resolveColumnWithFallback } from '@/lib/charts/stale-column';
 import { usePartnerConfigContext } from '@/contexts/partner-config';
 import {
@@ -197,56 +195,57 @@ export function GenericChart({
     definition.y,
   );
 
-  // --- Guard: axes not picked yet → EmptyState --------------------------------
+  // --- Guard: axes not picked yet → ChartFrame empty state ---------------------
+  // Phase 43 BND-05: shell concerns (empty / loading / error) are unified
+  // through ChartFrame. The pre-43 EmptyState path is replaced by passing
+  // `state={{ kind: 'empty', ... }}` and letting ChartFrame render the
+  // centered message + suggestion.
   if (xResolved === null || yResolved === null) {
     return (
-      <div className="h-[40vh] w-full">
-        <EmptyState
-          variant="no-data"
-          title="Pick axes to render"
-          description="Select an X and Y column from the toolbar."
-        />
-      </div>
+      <ChartFrame
+        title=""
+        state={{
+          kind: 'empty',
+          message: 'Pick axes to render',
+          suggestion: 'Select an X and Y column from the toolbar.',
+        }}
+      >
+        {null}
+      </ChartFrame>
     );
   }
 
   // --- Guard: empty dataset ---------------------------------------------------
   if (rows.length === 0) {
     return (
-      <div className="h-[40vh] w-full">
-        <EmptyState
-          variant="no-data"
-          title="No data for current filters"
-          description="Adjust filters or load a dataset with matching rows."
-        />
-      </div>
+      <ChartFrame
+        title=""
+        state={{
+          kind: 'empty',
+          message: 'No data for current filters',
+          suggestion: 'Adjust filters or load a dataset with matching rows.',
+        }}
+      >
+        {null}
+      </ChartFrame>
     );
   }
 
   const xCol = xResolved.config;
   const yCol = yResolved.config;
 
-  // --- Stale-column banners ---------------------------------------------------
-  const banners: ReactElement[] = [];
+  // --- Stale-column collection (Phase 43 BND-05) -------------------------------
+  // The standalone stale-column warning banner is gone; ChartFrame's
+  // title-row amber chip is the canonical surface. We collect the requested
+  // (i.e. user-picked but no-longer-eligible) column keys and pass them
+  // through `staleColumns`. The chart still renders against the resolver's
+  // fallback columns — same fail-soft behavior.
+  const staleColumns: string[] = [];
   if (xResolved.stale && xResolved.requested) {
-    banners.push(
-      <StaleColumnWarning
-        key="x-stale"
-        axis="X"
-        missing={xResolved.requested}
-        fallback={xCol.key}
-      />,
-    );
+    staleColumns.push(xResolved.requested);
   }
   if (yResolved.stale && yResolved.requested) {
-    banners.push(
-      <StaleColumnWarning
-        key="y-stale"
-        axis="Y"
-        missing={yResolved.requested}
-        fallback={yCol.key}
-      />,
-    );
+    staleColumns.push(yResolved.requested);
   }
 
   // --- Series / color (Phase 36.x) -------------------------------------------
@@ -282,14 +281,7 @@ export function GenericChart({
       }
     : seriesResolved?.config ?? null;
   if (seriesResolved?.stale && seriesResolved.requested) {
-    banners.push(
-      <StaleColumnWarning
-        key="series-stale"
-        axis="Series"
-        missing={seriesResolved.requested}
-        fallback={seriesResolved.config.key}
-      />,
-    );
+    staleColumns.push(seriesResolved.requested);
   }
 
   const { pivoted, seriesKeys } = pivotForSeries(effectiveRows, xCol.key, yCol.key, seriesCol?.key ?? null);
@@ -334,10 +326,20 @@ export function GenericChart({
   };
 
   // --- Variant dispatch (Pitfall 6 — one primitive per ChartContainer) --------
+  // Phase 43 BND-05: each variant wraps in <ChartFrame> with title="" so the
+  // outer DataPanel (chart-panel.tsx) keeps owning the panel-level title.
+  // ChartFrame contributes the stale-column chip, polarity context (driven by
+  // yCol.key as the metric proxy), and forward-compat for loading/fetching
+  // states once chart-panel.tsx wires TanStack Query phases through.
+  const frameMetric = yCol.key;
   if (definition.type === 'line') {
     return (
-      <>
-        {banners}
+      <ChartFrame
+        title=""
+        staleColumns={staleColumns}
+        metric={frameMetric}
+        state={{ kind: 'ready' }}
+      >
         <div className="flex gap-2">
           <ChartContainer config={chartConfig} className={chartClassName}>
             <LineChart data={pivoted} margin={chartMargin}>
@@ -414,7 +416,7 @@ export function GenericChart({
             />
           )}
         </div>
-      </>
+      </ChartFrame>
     );
   }
 
@@ -446,8 +448,12 @@ export function GenericChart({
     const scatterHasSeries = seriesCol !== null && scatterGroups.length > 0;
 
     return (
-      <>
-        {banners}
+      <ChartFrame
+        title=""
+        staleColumns={staleColumns}
+        metric={frameMetric}
+        state={{ kind: 'ready' }}
+      >
         <div className="flex gap-2">
           <ChartContainer config={chartConfig} className={chartClassName}>
             <ScatterChart margin={chartMargin}>
@@ -500,14 +506,18 @@ export function GenericChart({
             />
           )}
         </div>
-      </>
+      </ChartFrame>
     );
   }
 
   // definition.type === 'bar'
   return (
-    <>
-      {banners}
+    <ChartFrame
+      title=""
+      staleColumns={staleColumns}
+      metric={frameMetric}
+      state={{ kind: 'ready' }}
+    >
       <div className="flex gap-2">
         <ChartContainer config={chartConfig} className={chartClassName}>
           <BarChart data={pivoted} margin={chartMargin}>
@@ -596,7 +606,7 @@ export function GenericChart({
           />
         )}
       </div>
-    </>
+    </ChartFrame>
   );
 }
 

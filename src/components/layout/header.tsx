@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useDataFreshness } from '@/contexts/data-freshness';
 import { useHealthProbe } from './degraded-banner';
+import { RefreshButton } from './refresh-button';
 
 /** Format ISO timestamp to local time like "2:30 PM" */
 function formatTime(isoString: string): string {
@@ -29,6 +31,29 @@ export function Header() {
   // <DegradedBanner>; TanStack dedupes the fetch.
   const { data: health } = useHealthProbe();
   const sourceDegraded = health ? !health.ok || health.circuitOpen : false;
+
+  // Phase 43 BND-06 — quiet "Data updated." toast on background refetch.
+  // Fires when `fetchedAt` advances WHILE not user-initiated. The simple
+  // change-detection here is fetchedAt advancing on a transition where
+  // isFetching went true → false — i.e. a refetch landed. We track the
+  // last-toasted timestamp to dedupe the very-first paint (when fetchedAt
+  // first lands) and to avoid re-firing on hover-induced renders that
+  // don't actually change the timestamp.
+  const lastToastedAtRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!fetchedAt) return;
+    if (lastToastedAtRef.current === null) {
+      // First-paint baseline — record but don't toast on initial load.
+      lastToastedAtRef.current = fetchedAt;
+      return;
+    }
+    if (fetchedAt !== lastToastedAtRef.current && !isFetching) {
+      // A new fetch landed while the user was looking at the app — quiet
+      // ambient toast so they notice but aren't interrupted.
+      toast('Data updated.', { duration: 2000 });
+      lastToastedAtRef.current = fetchedAt;
+    }
+  }, [fetchedAt, isFetching]);
 
   const stale = useMemo(() => {
     return fetchedAt ? isStale(fetchedAt) : false;
@@ -74,6 +99,11 @@ export function Header() {
               )}
             </div>
           )}
+          {/* Phase 43 BND-06 — Manual Refresh affordance. Mounts AFTER the
+              freshness indicator so the indicator stays the leftmost
+              cluster element (visual hierarchy: freshness state, then
+              manual control, then theme toggle). */}
+          <RefreshButton />
           <ThemeToggle />
         </div>
       </div>

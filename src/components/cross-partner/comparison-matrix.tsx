@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { ChartFrame } from '@/components/charts/chart-frame';
 import { useCrossPartnerContext } from '@/contexts/cross-partner-provider';
 import type { PercentileRanks } from '@/types/partner-stats';
 import { MATRIX_METRICS, polarityForMatrixMetric } from './matrix-types';
@@ -129,6 +130,15 @@ export function PartnerComparisonMatrix() {
         </div>
       }
     >
+      {/* Phase 43 BND-05 — ChartFrame composes inside the existing DataPanel
+          shell. DataPanel keeps owning the panel-level chrome (rounded
+          surface, shadow, padding) + title + actions row; ChartFrame
+          contributes shell concerns (state-driven render, polarity context
+          via the active sort metric, density="comfortable" padding). The
+          existing per-cell polarity logic (polarityForMatrixMetric) inside
+          MatrixHeatmap / MatrixBarRanking remains the source of truth for
+          tile coloring — ChartFrame's polarity context is additive forward-
+          compat (DCR-09 future tiles can read it via useChartFramePolarity). */}
       <div className="flex items-center gap-1.5 mb-stack">
         <TooltipProvider>
           <Tooltip>
@@ -146,14 +156,20 @@ export function PartnerComparisonMatrix() {
           {sortedPartners.length} partners
         </span>
       </div>
-      <div
-        role="img"
-        aria-label={`Partner comparison matrix: ${sortedPartners.length} partners across ${MATRIX_METRICS.length} metrics, view mode ${viewMode}. Sibling data table provides the same data in accessible tabular form.`}
+      <ChartFrame
+        title=""
+        metric={String(sortMetric)}
+        state={{ kind: 'ready' }}
       >
-        {viewMode === 'heatmap' && <MatrixHeatmap {...viewProps} />}
-        {viewMode === 'bar' && <MatrixBarRanking {...viewProps} />}
-        {viewMode === 'plain' && <MatrixPlainTable {...viewProps} />}
-      </div>
+        <div
+          role="img"
+          aria-label={`Partner comparison matrix: ${sortedPartners.length} partners across ${MATRIX_METRICS.length} metrics, view mode ${viewMode}. Sibling data table provides the same data in accessible tabular form.`}
+        >
+          {viewMode === 'heatmap' && <MatrixHeatmap {...viewProps} />}
+          {viewMode === 'bar' && <MatrixBarRanking {...viewProps} />}
+          {viewMode === 'plain' && <MatrixPlainTable {...viewProps} />}
+        </div>
+      </ChartFrame>
     </DataPanel>
   );
 }

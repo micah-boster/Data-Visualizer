@@ -22,6 +22,7 @@
 
 import { ResponsiveContainer, LineChart, Line } from 'recharts';
 import { CHART_COLORS } from '@/components/charts/curve-tooltip';
+import { ChartFrame } from '@/components/charts/chart-frame';
 import { getPolarityWithAuditWarning } from '@/lib/computation/metric-polarity';
 
 interface SparklineProps {
@@ -49,24 +50,33 @@ export function ChartSparkline({ data, lineKeys, metric }: SparklineProps) {
     getPolarityWithAuditWarning(metric);
   }
 
+  // Phase 43 BND-05 — sparklines compose from <ChartFrame density="compact">.
+  // title="" suppresses the title row entirely (the surrounding card owns
+  // the title); compact density tightens the body padding to match the
+  // tiny preview footprint. The polarity context is published from the
+  // metric prop so future direction-aware tinting (BND-05 single-line
+  // trend mode, deferred per the doc-block above) can read it without
+  // re-deriving the rule.
   return (
-    <div className="mt-1 opacity-60">
-      <ResponsiveContainer width="100%" height={80}>
-        <LineChart data={data}>
-          {lineKeys.map((key, i) => (
-            <Line
-              key={key}
-              dataKey={key}
-              type="monotone"
-              stroke={CHART_COLORS[i % CHART_COLORS.length]}
-              strokeWidth={1}
-              dot={false}
-              isAnimationActive={false}
-              connectNulls={false}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartFrame title="" metric={metric} density="compact" state={{ kind: 'ready' }}>
+      <div className="mt-1 opacity-60">
+        <ResponsiveContainer width="100%" height={80}>
+          <LineChart data={data}>
+            {lineKeys.map((key, i) => (
+              <Line
+                key={key}
+                dataKey={key}
+                type="monotone"
+                stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                strokeWidth={1}
+                dot={false}
+                isAnimationActive={false}
+                connectNulls={false}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </ChartFrame>
   );
 }

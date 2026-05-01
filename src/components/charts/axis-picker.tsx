@@ -104,7 +104,9 @@ export function AxisPicker({
 
   // Label for the trigger. When the saved value is no longer eligible (stale
   // key after a chart-type switch), show the raw key so the user can tell
-  // something's off — Plan 03's StaleColumnWarning renders the full banner.
+  // something's off — Phase 43 BND-05 ChartFrame surfaces the amber stale-
+  // columns chip in the title row (replaces the prior StaleColumnWarning
+  // standalone banner).
   const triggerLabel = value
     ? currentSynthetic?.label ?? current?.label ?? value.column
     : placeholder;
