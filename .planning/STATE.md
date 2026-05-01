@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Feedback-Driven Polish
 status: unknown
-last_updated: "2026-04-30T18:35:00Z"
+last_updated: "2026-05-01T03:41:55.834Z"
 progress:
-  total_phases: 44
-  completed_phases: 42
-  total_plans: 134
-  completed_plans: 132
+  total_phases: 45
+  completed_phases: 43
+  total_plans: 136
+  completed_plans: 134
 ---
 
 # Project State
@@ -18,7 +18,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-27)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** v4.5 Correctness & Foundation — Phase 41 (Data Correctness Audit) ✅ closed; Phase 44 (Vocabulary Lock, 3/4) in flight; Phase 43 (Boundary Hardening, 3/4) in flight; Phase 42a (Security Review, OAuth-independent) — both plans complete (42a-01 SEC-01/03/06 audits + Dependabot ✅; 42a-02 SEC-04 forward threat model ✅ — load-bearing v5.0 Phase 45 gate closed) — pending phase verification; Phase 42b (Security Review, OAuth-dependent) still gated on OAuth on Vercel. Two non-blocking bugs from 40.1 UAT carried over to v4.5 Phase 41.2 (React duplicate-key warning under DataDisplay re-render path; possible 4-trailing-empty-cell artifact at All Partners root drill).
+**Current focus:** v4.5 Correctness & Foundation — Phase 41 (Data Correctness Audit) ✅ closed; Phase 42a (Security Review, OAuth-independent) ✅ closed (verifier 9/9 passed 2026-05-01; SEC-01/03/04/06 all shipped); Phase 44 (Vocabulary Lock, 3/4) in flight; Phase 43 (Boundary Hardening, 3/4) in flight; Phase 42b (Security Review, OAuth-dependent) still gated on OAuth on Vercel. Two non-blocking bugs from 40.1 UAT carried over to v4.5 Phase 41.2 (React duplicate-key warning under DataDisplay re-render path; possible 4-trailing-empty-cell artifact at All Partners root drill).
 
 ## Current Position
 
