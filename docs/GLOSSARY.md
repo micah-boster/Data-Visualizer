@@ -27,7 +27,25 @@ See also: [Product](#product), [Batch](#batch).
 
 An `ACCOUNT_TYPE` within a partner — `THIRD_PARTY`, `PRE_CHARGE_OFF_FIRST_PARTY`, or `PRE_CHARGE_OFF_THIRD_PARTY`. Paired with a partner forms the canonical unit of analysis: **the apples-and-oranges rule means we never blend products within a partner.** A 1st-party debt collection has different economics from a 3rd-party placement; averaging them produces numbers nobody can interpret. The `(partner, product)` pair shows up as the row identity at the root data table, the drill-state shape, the saved-list filter, and the anomaly-detection cohort definition. Single-product partners look unchanged in the UI; multi-product partners render as `Partner Name (1st Party)` / `Partner Name (3rd Party)` rows.
 
-See also: [Partner](#partner), [Batch](#batch).
+See also: [Partner](#partner), [Revenue Model](#revenue-model), [Batch](#batch).
+
+### Revenue Model
+
+A third dimension of the unit-of-analysis (`REVENUE_MODEL` in Snowflake) alongside partner and product, with two values: `CONTINGENCY` and `DEBT_SALE`. The economics of contingency placements differ fundamentally from debt-sale placements — the partner is paid differently, recovery incentives differ, and reconciliation cuts at different points — so we never blend them in aggregations. Locked as a third dimension by [ADR 0002](adr/0002-revenue-model-scoping.md). 4 partners (Advance Financial, Happy Money, Imprint, PatientFi) carry both revenue models for the same product and render as two sidebar rows with a `-Contingency` / `-DebtSale` suffix; the other 34 partners are single-model and render unchanged. Mixed-revenue-model batches are not expected in current data (zero observed at audit) but the UI carries a defensive warning chip in case a future ETL anomaly produces one.
+
+See also: [Contingency](#contingency), [Debt Sale](#debt-sale), [Product](#product).
+
+### Contingency
+
+A revenue model where Bounce earns a percentage of collected funds — the partner pays Bounce only when Bounce recovers money. The partner retains ownership of the underlying debt; Bounce acts as a collection agent on that portfolio. Most partners in the platform run on contingency.
+
+See also: [Revenue Model](#revenue-model), [Debt Sale](#debt-sale).
+
+### Debt Sale
+
+A revenue model where the partner sells the debt outright to Bounce; Bounce keeps everything it collects on the purchased portfolio. Economics are upside/downside-symmetric for Bounce (vs. percentage-of-collected for contingency), and the recovery profile is judged against the purchase price rather than against placement balance. About a third of placements run on debt-sale terms.
+
+See also: [Revenue Model](#revenue-model), [Contingency](#contingency).
 
 ## Batches & Accounts
 
