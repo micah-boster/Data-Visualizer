@@ -568,6 +568,21 @@
     --row-padding-y: var(--spacing-3);  /* 12px */
     --row-padding-x: var(--spacing-4);  /* 16px */
   }
+
+  /* Phase 43 BND-05 — ChartFrame density-aware padding.
+     `compact` is for sparklines and tiny inline charts; `comfortable` is the
+     default for app-level chart panels; `spacious` is a larger-breathing
+     variant available for hero/feature charts. Tokens kept distinct from the
+     row-height tokens above because charts pad their body, not their rows. */
+  [data-density="compact"] {
+    --chart-pad: var(--spacing-2);  /* 8px */
+  }
+  [data-density="comfortable"] {
+    --chart-pad: var(--spacing-3);  /* 12px */
+  }
+  [data-density="spacious"] {
+    --chart-pad: var(--spacing-5);  /* 20px */
+  }
 }
 
 /* =============================================================================

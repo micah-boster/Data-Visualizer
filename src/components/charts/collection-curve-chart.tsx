@@ -30,8 +30,7 @@ import { CurveLegend } from "@/components/charts/curve-legend";
 import { NumericTick } from "@/components/charts/numeric-tick";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { DataPanel } from "@/components/patterns/data-panel";
-import { BarChart3 } from "lucide-react";
+import { ChartFrame } from "@/components/charts/chart-frame";
 
 interface CollectionCurveChartProps {
   curves: BatchCurve[];
@@ -367,28 +366,34 @@ function CollectionCurveChartInner({ curves, chartSnapshotRef, chartLoadRef, cha
     setHoveredLineKey(null);
   }, []);
 
-  // Empty state: no curves at all
-  // TODO(29-03): consider replacing empty body with <EmptyState variant="no-data" />
-  // once Plan 29-03 ships. Not imported here to keep waves parallel.
-  if (curves.length === 0) {
-    return (
-      <DataPanel title="Collection Curves">
-        <div className="flex h-[clamp(180px,24vh,280px)] w-full flex-col items-center justify-center gap-2 text-muted-foreground">
-          <BarChart3 className="h-10 w-10 opacity-30" />
-          <p className="text-body">No collection curve data available</p>
-        </div>
-      </DataPanel>
-    );
-  }
+  // Empty state is now expressed via ChartFrame's `state` prop — the shell
+  // owns the centered "no data" message + suggestion. No early-return; the
+  // single render path below routes through ChartFrame regardless.
 
   // Metric-toggle cluster drives the UI-04 view switch. Toggling between
   // Recovery Rate % and Dollars Collected updates the chart data, Y-axis
   // formatting, and tooltip values reactively via `metric` state in
-  // useCurveChartState. Flows through DataPanel's actions slot.
+  // useCurveChartState. Flows through ChartFrame's actions slot.
+  //
+  // Phase 43 BND-05 — ChartFrame shell migration:
+  //   - Replaces the prior <DataPanel> wrapper for this consumer.
+  //   - State derivation: `ready` when curves are present, `empty` when not.
+  //     `loading`/`fetching` derivation belongs at the parent (chart-panel.tsx
+  //     reads TanStack Query's isLoading/isFetching) — this leaf consumer just
+  //     reflects whether it received curves to render.
+  //   - `metric="COLLECTION_AFTER_6_MONTH"` resolves polarity to
+  //     'higher_is_better' via getPolarity() per DCR-09. Future polarity-aware
+  //     coloring inside the chart body can read it via useChartFramePolarity().
+  //   - Surface chrome (rounded-lg + bg-surface-raised + shadow + padding) is
+  //     applied at the ChartFrame level via className, replacing what
+  //     DataPanel previously contributed.
+  const isEmpty = curves.length === 0;
   return (
-    <DataPanel
+    <ChartFrame
       title="Collection Curves"
-      contentClassName="space-y-2"
+      metric="COLLECTION_AFTER_6_MONTH"
+      state={isEmpty ? { kind: 'empty', message: 'No collection curve data available' } : { kind: 'ready' }}
+      className="rounded-lg bg-surface-raised p-card-padding shadow-elevation-raised"
       actions={
         <div className="flex items-center gap-inline">
           {chartTypeSelector ?? null}
@@ -570,6 +575,6 @@ function CollectionCurveChartInner({ curves, chartSnapshotRef, chartLoadRef, cha
           onToggleShowAll={toggleShowAll}
         />
       </div>
-    </DataPanel>
+    </ChartFrame>
   );
 }
