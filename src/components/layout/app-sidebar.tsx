@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import {
   Users,
   Bookmark,
@@ -10,10 +10,12 @@ import {
   Database,
   ChevronRight,
   List as ListIcon,
+  AlertTriangle,
 } from 'lucide-react';
 import { ContextMenu } from '@base-ui/react/context-menu';
 import { cn, getPartnerName, getStringField } from '@/lib/utils';
 import { Term } from '@/components/ui/term';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useSidebarData } from '@/contexts/sidebar-data';
 import { usePartnerListsContext } from '@/contexts/partner-lists';
 import { useActivePartnerList } from '@/contexts/active-partner-list';
@@ -39,6 +41,67 @@ import {
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 
+/**
+ * Phase 44 VOC-07 — defensive substrate for the mixed-revenue-model batch
+ * outlier flagged in Phase 44 CONTEXT.md ("the 1/550 batch with mixed
+ * revenue models"). The Wave 3 ETL audit (Plan 44-03 ADR 0002) found ZERO
+ * batches mixing revenue models on real data — every batch maps cleanly
+ * to one of CONTINGENCY / DEBT_SALE. This helper is the substrate for
+ * future ETL anomalies; no current call site exercises it.
+ *
+ * Returns true when a single batch row carries multiple distinct
+ * REVENUE_MODEL values across its constituent accounts. Caller decides
+ * how to render the warning (the MixedRevenueModelChip below renders the
+ * canonical Phase 44 amber-warning treatment).
+ */
+export function isMixedRevenueModelBatch(
+  batchRows: Array<Record<string, unknown>>,
+): boolean {
+  const seen = new Set<string>();
+  for (const row of batchRows) {
+    const rm = getStringField(row, 'REVENUE_MODEL');
+    if (rm) seen.add(rm);
+    if (seen.size > 1) return true;
+  }
+  return false;
+}
+
+/**
+ * Phase 44 VOC-07 — small "Mixed" warning chip with explanatory tooltip.
+ * Defensive substrate: renders when a batch row carries multiple revenue
+ * models (the 1/550 outlier anticipated by CONTEXT.md). UNEXERCISED on
+ * current data — the Wave 3 ETL audit found ZERO mixed-model batches at
+ * the (partner, batch) grain. Kept here so future ETL anomalies don't
+ * silently mis-attribute mixed batches to a single model.
+ *
+ * Type tokens (Phase 27): `text-caption` for the chip body. NO
+ * font-weight pairing — `text-caption` owns weight per the Phase 27 rule.
+ * Semantic warning tokens `bg-warning-bg` / `text-warning-fg` exist in
+ * `src/app/globals.css` (Phase 28+ design tokens) — using them keeps
+ * dark-mode parity automatic.
+ */
+export function MixedRevenueModelChip(): JSX.Element {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span
+            className="ml-1 inline-flex items-center gap-1 rounded-sm bg-warning-bg px-1 text-caption text-warning-fg"
+            aria-label="Mixed revenue model batch"
+          >
+            <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+            <span>Mixed</span>
+          </span>
+        }
+      />
+      <TooltipContent>
+        This batch contains accounts from multiple revenue models — a known
+        data-quality issue. Displayed under the dominant model.
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 export function AppSidebar() {
   // Phase 37 — Metabase import entry + Sheet mount.
   // Phase 39 PCFG-02..04: sidebar reads pairs (not partners). drillToPair
@@ -46,6 +109,7 @@ export function AppSidebar() {
   // (Happy Money, Zable) become two peer rows.
   const {
     pairs,
+    revenueModelsPerPair,
     drillState,
     drillToPair,
     navigateToLevel,
@@ -300,15 +364,34 @@ export function AppSidebar() {
                       preserved on the trigger. */}
                   {isReady &&
                     pairs.map((p) => {
+                      // Phase 44 VOC-07 — active-state matching extends to
+                      // revenueModel for multi-model pairs. Single-model
+                      // pairs (rmCount === 1) match on partner+product
+                      // only — revenueModel is meaningless when the
+                      // (partner, product) is structurally bound to a
+                      // single model. Multi-model pairs (rmCount > 1)
+                      // require all three to match, so 3P-Contingency stays
+                      // inactive when 3P-DebtSale is selected and vice
+                      // versa.
+                      const ppKey = `${p.partner}::${p.product}`;
+                      const rmCount = revenueModelsPerPair.get(ppKey) ?? 1;
                       const isActive =
                         drillState.partner === p.partner &&
-                        drillState.product === p.product;
+                        drillState.product === p.product &&
+                        (rmCount === 1 ||
+                          drillState.revenueModel === (p.revenueModel ?? null));
                       const pairForMenu: PartnerProductPair = {
                         partner: p.partner,
                         product: p.product,
+                        // Carry revenueModel into the per-pair Setup sheet
+                        // entry-point so the Partner Setup sheet shows the
+                        // right pair (Step 4 below reads pair.revenueModel).
+                        revenueModel: p.revenueModel,
                       };
                       return (
-                        <SidebarMenuItem key={`${p.partner}::${p.product}`}>
+                        <SidebarMenuItem
+                          key={`${p.partner}::${p.product}::${p.revenueModel ?? ''}`}
+                        >
                           <ContextMenu.Root>
                             <ContextMenu.Trigger
                               render={
@@ -324,6 +407,13 @@ export function AppSidebar() {
                                     drillToPair({
                                       partner: p.partner,
                                       product: p.product,
+                                      // Phase 44 VOC-07 — pair.revenueModel
+                                      // travels into URL ?rm= via drillToPair
+                                      // (Task 1 wire). Single-model pairs
+                                      // pass undefined → drillToPair clears
+                                      // ?rm=; multi-model pairs push the
+                                      // value (Contingency / DebtSale).
+                                      revenueModel: p.revenueModel,
                                     })
                                   }
                                 >

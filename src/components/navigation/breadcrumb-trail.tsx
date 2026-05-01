@@ -3,7 +3,9 @@
 import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { Term } from '@/components/ui/term';
+import { useSidebarData } from '@/contexts/sidebar-data';
 import type { DrillState, DrillLevel } from '@/hooks/use-drill-down';
+import { labelForRevenueModel } from '@/lib/partner-config/pair';
 
 interface BreadcrumbTrailProps {
   state: DrillState;
@@ -23,12 +25,28 @@ interface BreadcrumbTrailProps {
  * (in "Batch: …") are wrapped in `<Term>` so a hover/focus surfaces the
  * registry definition. The drill VALUES (state.partner, state.batch) stay
  * plain text — they're data, not vocabulary.
+ *
+ * Phase 44 VOC-07 — partner segment shows the revenue-model suffix when the
+ * (partner, product) carries multiple distinct revenue models in the dataset
+ * (i.e. `revenueModelsPerPair > 1`) AND the active drill state has a
+ * revenueModel set. Single-model partners (the 34 of 38 on current data)
+ * render unchanged. Reads `revenueModelsPerPair` from useSidebarData() so
+ * the suffix decision uses the same source-of-truth Map the sidebar pair-
+ * row split logic consumes.
  */
 export function BreadcrumbTrail({
   state,
   rowCounts,
   onNavigate,
 }: BreadcrumbTrailProps) {
+  // Phase 44 VOC-07 — the revenueModelsPerPair Map is sourced from
+  // useSidebarData() (data-display.tsx pushes it via setSidebarData). When
+  // the sidebar data context isn't yet initialized (first render before
+  // setSidebarData fires), the Map is empty and the suffix decision falls
+  // through to "single model" — same as pre-Phase-44 behavior, which is
+  // the correct backward-compat default.
+  const { revenueModelsPerPair } = useSidebarData();
+
   const segments: {
     /** Visual breadcrumb body — JSX so first-instance terms can be wrapped. */
     label: ReactNode;
@@ -52,13 +70,29 @@ export function BreadcrumbTrail({
   ];
 
   if (state.partner) {
+    // Phase 44 VOC-07 — compute revenue-model suffix when relevant.
+    // Suffix appears only when:
+    //   1. The active (partner, product) carries multiple revenue models
+    //      in the dataset (revenueModelsPerPair > 1).
+    //   2. The drill state has a revenueModel set (URL ?rm= round-trip).
+    // Single-model breadcrumbs render unchanged.
+    const ppKey = state.product
+      ? `${state.partner}::${state.product}`
+      : null;
+    const rmCount =
+      ppKey !== null ? revenueModelsPerPair.get(ppKey) ?? 1 : 1;
+    const rmSuffix =
+      rmCount > 1 && state.revenueModel
+        ? `-${labelForRevenueModel(state.revenueModel)}`
+        : '';
+    const partnerWithSuffix = `${state.partner}${rmSuffix}`;
     segments.push({
       label: (
         <>
-          <Term name="partner">Partner</Term>: {state.partner}
+          <Term name="partner">Partner</Term>: {partnerWithSuffix}
         </>
       ),
-      labelText: `Partner: ${state.partner}`,
+      labelText: `Partner: ${partnerWithSuffix}`,
       level: 'partner',
       count: rowCounts.partner,
       active: state.level === 'partner',

@@ -29,8 +29,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Term } from '@/components/ui/term';
 import {
   labelForProduct,
+  labelForRevenueModel,
   type PartnerProductPair,
 } from '@/lib/partner-config/pair';
 
@@ -111,6 +113,34 @@ export function PartnerSetupSheet({
               Product type
             </span>
             <span className="text-body">{labelForProduct(pair.product)}</span>
+            <span className="text-caption text-muted-foreground">
+              Data-derived, not editable
+            </span>
+          </div>
+          {/*
+            Phase 44 VOC-07 — Revenue Model read-only section. Mirrors the
+            Product type read-out above (data-derived, not editable). The
+            section header carries the FIRST-INSTANCE-PER-SURFACE <Term>
+            wrap on this Partner Setup surface (per Plan 44-01 first-instance
+            rule). The value comes from labelForRevenueModel for known enums
+            (Contingency / DebtSale); falls back to "Not specified" when the
+            pair has no revenue model — pre-ETL fixtures and the 34
+            single-model partners on current data flow through this branch.
+
+            Type tokens: text-label uppercase for the section overline (KPI
+            card / read-only-section convention); text-body for the value;
+            text-caption for the "Data-derived, not editable" help text. NO
+            font-weight pairings (Phase 27 rule — tokens own weight).
+          */}
+          <div className="mt-stack flex flex-col gap-0.5">
+            <span className="text-label text-muted-foreground uppercase">
+              <Term name="revenueModel">Revenue Model</Term>
+            </span>
+            <span className="text-body">
+              {pair.revenueModel
+                ? labelForRevenueModel(pair.revenueModel)
+                : 'Not specified'}
+            </span>
             <span className="text-caption text-muted-foreground">
               Data-derived, not editable
             </span>
