@@ -112,7 +112,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 40.1. Projected Curves Polish | 4/4 | Complete    | 2026-04-28 | - |
 | Wave 0 (Data review quick fixes) | — | Complete | 2026-04-26 | MIN_GROUPS gate, matrix bar default, KPI denominator floor |
 | 41. Data Correctness Audit (expanded) | 5/5 | Complete    | 2026-04-30 | DCR-01..11 (was DCR-01..06) |
-| 42a. Security Review (OAuth-independent) | 1/2 | In Progress | | SEC-01/03/04/06 — runs during v4.5 (split 2026-04-30); 42a-02 (SEC-04 forward threat model) ✅; 42a-01 (SEC-01/03/06 audits + Dependabot) downstream |
+| 42a. Security Review (OAuth-independent) | 2/2 | In Progress | | SEC-01/03/04/06 — runs during v4.5 (split 2026-04-30); 42a-01 (SEC-01/03/06 audits + Dependabot security-only + 9→0 advisories via pnpm-workspace overrides) ✅; 42a-02 (SEC-04 forward threat model — 13 LOCK mitigations for v5.0 Phase 45) ✅; pending verification + phase close |
 | 42b. Deployed-Surface Security Review | v4.5 | 0/TBD | Deferred (OAuth-gated) | SEC-02/05 — out-of-band, NOT a v5.0 entry blocker |
 | 43. Boundary Hardening | 3/4 | In Progress|  | BND-01..06; 43-01 (BND-01/02) + 43-02a (BND-03) + 43-02b (BND-04) ✅; 43-03 (BND-05) downstream |
 | 44. Vocabulary Lock & Glossary | 3/4 | In Progress|  | VOC-01..06 (44-04 wires VOC-07 UI) |
