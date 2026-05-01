@@ -405,7 +405,7 @@ export function DataTable({
     <div className="flex h-full flex-col">
       {/* Unified toolbar — single row replacing old toolbar + filters + breadcrumb */}
       <UnifiedToolbar
-        drillState={drillState ?? { level: 'root', partner: null, product: null, batch: null }}
+        drillState={drillState ?? { level: 'root', partner: null, product: null, batch: null, revenueModel: null }}
         onNavigateToLevel={onNavigateToLevel ?? (() => {})}
         onDrillToPair={onDrillToPair ?? (() => {})}
         breadcrumbRowCounts={breadcrumbRowCounts}

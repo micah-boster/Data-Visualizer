@@ -120,13 +120,25 @@ export function CreateListDialog({
   // - SEGMENT pulls SegmentRule.name across all configured pairs (deduped).
   //   Empty when no segments are configured anywhere; AttributeFilterBar
   //   hides the SEGMENT combobox in that case.
+  // - Phase 44 VOC-07 — REVENUE_MODEL distinct values from the dataset
+  //   (CONTINGENCY / DEBT_SALE on production data; possibly empty on
+  //   pre-ETL fixtures, in which case AttributeFilterBar auto-hides the
+  //   chip).
   const availableValues = useMemo<
-    Partial<Record<'ACCOUNT_TYPE' | 'PRODUCT_TYPE' | 'SEGMENT', string[]>>
+    Partial<
+      Record<
+        'ACCOUNT_TYPE' | 'PRODUCT_TYPE' | 'SEGMENT' | 'REVENUE_MODEL',
+        string[]
+      >
+    >
   >(() => {
     const accountTypeValues = new Set<string>();
+    const revenueModelValues = new Set<string>();
     for (const row of allRows) {
       const accountType = getStringField(row, 'ACCOUNT_TYPE');
       if (accountType) accountTypeValues.add(accountType);
+      const revenueModel = getStringField(row, 'REVENUE_MODEL');
+      if (revenueModel) revenueModelValues.add(revenueModel);
     }
     const sortedAccountTypes = Array.from(accountTypeValues).sort((a, b) =>
       a.localeCompare(b),
@@ -141,6 +153,9 @@ export function CreateListDialog({
       ACCOUNT_TYPE: sortedAccountTypes,
       PRODUCT_TYPE: sortedAccountTypes,
       SEGMENT: Array.from(segmentNames).sort((a, b) => a.localeCompare(b)),
+      REVENUE_MODEL: Array.from(revenueModelValues).sort((a, b) =>
+        a.localeCompare(b),
+      ),
     };
   }, [allRows, configs]);
 

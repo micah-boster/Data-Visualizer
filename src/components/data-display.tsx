@@ -8,7 +8,7 @@ import { useData } from '@/hooks/use-data';
 import { useAccountData } from '@/hooks/use-account-data';
 import { useDrillDown } from '@/hooks/use-drill-down';
 import { useDataFreshness } from '@/contexts/data-freshness';
-import { useSidebarData } from '@/contexts/sidebar-data';
+import { useSidebarData, type SidebarPair } from '@/contexts/sidebar-data';
 import { accountColumnDefs } from '@/lib/columns/account-definitions';
 import { buildRootColumnDefs, buildPairSummaryRows } from '@/lib/columns/root-columns';
 import dynamic from 'next/dynamic';
@@ -1393,8 +1393,21 @@ function SidebarDataPopulator({
   // suffixed display names; single-product partners stay visually unchanged
   // (name only, product revealed on hover). Pair anomaly flags read from
   // the pair-keyed anomaly map (compute-anomalies.ts).
-  const pairs = useMemo(() => {
-    // Group rows by pairKey, count batches.
+  //
+  // Phase 44 VOC-07: pairs are now (partner, product, revenue_model) triples
+  // — multi-revenue-model partners (Advance Financial, Happy Money, Imprint,
+  // PatientFi on current data; 4 of 38) split each (partner, product) row
+  // into one row per revenue model (e.g. Happy Money 3P-Contingency vs
+  // 3P-DebtSale render as TWO rows). Single-revenue-model pairs remain a
+  // single row with no suffix. The producer also exposes
+  // `productsPerPartner` + `revenueModelsPerPair` Maps so downstream
+  // consumers (sidebar pair rows, breadcrumb) can pass the correct
+  // counts to displayNameForPair and decide whether the suffix renders.
+  const { pairs, productsPerPartner, revenueModelsPerPair } = useMemo(() => {
+    // Group rows by pairKey (now 3-segment per Plan 44-03), count batches.
+    // BatchRow.REVENUE_MODEL feeds the third pair segment when present;
+    // legacy rows missing the field flow through with revenueModel:
+    // undefined, identical to pre-Phase-44 behavior.
     const pairBatchCounts = new Map<
       string,
       { pair: PartnerProductPair; batchCount: number }
@@ -1403,19 +1416,47 @@ function SidebarDataPopulator({
       const partner = getPartnerName(row);
       const product = getStringField(row, 'ACCOUNT_TYPE');
       if (!partner || !product) continue;
-      const pair: PartnerProductPair = { partner, product };
+      const revenueModelRaw = getStringField(row, 'REVENUE_MODEL');
+      const pair: PartnerProductPair = revenueModelRaw
+        ? { partner, product, revenueModel: revenueModelRaw }
+        : { partner, product };
       const key = pairKey(pair);
       const existing = pairBatchCounts.get(key);
       if (existing) existing.batchCount += 1;
       else pairBatchCounts.set(key, { pair, batchCount: 1 });
     }
 
-    // Count products per partner so display name knows whether to suffix.
-    const productsPerPartner = new Map<string, number>();
+    // Phase 44 VOC-07: compute the per-(partner, product) revenue-model count
+    // BEFORE per-partner product count, so the display-name decision can
+    // see both signals. revenueModelsPerPair Map keyed by `${partner}::${product}`
+    // — `size > 1` ⇒ split into multiple rows + emit suffix. On real data:
+    // 38 entries, 34 map to {1}, 4 map to {2}.
+    const revenueModelsPerPairSet = new Map<string, Set<string>>();
     for (const { pair } of pairBatchCounts.values()) {
+      const ppKey = `${pair.partner}::${pair.product}`;
+      const set = revenueModelsPerPairSet.get(ppKey) ?? new Set<string>();
+      if (pair.revenueModel) set.add(pair.revenueModel);
+      revenueModelsPerPairSet.set(ppKey, set);
+    }
+    // Convert Set→count Map; an empty set (no revenueModel anywhere on this
+    // pair) maps to 1 so the default-arg displayNameForPair behavior holds.
+    const revenueModelsPerPair = new Map<string, number>();
+    for (const [k, set] of revenueModelsPerPairSet) {
+      revenueModelsPerPair.set(k, Math.max(set.size, 1));
+    }
+
+    // Count DISTINCT (partner, product) combos per partner so display name
+    // knows whether the product suffix should render. This MUST count
+    // distinct (partner, product) pairs, not pair-row tuples — otherwise
+    // a partner with one product but two revenue models would falsely
+    // surface a product-suffix. Compute by partner from the keys of
+    // revenueModelsPerPairSet (which is already deduped to (partner, product)).
+    const productsPerPartner = new Map<string, number>();
+    for (const ppKey of revenueModelsPerPairSet.keys()) {
+      const partner = ppKey.split('::', 1)[0];
       productsPerPartner.set(
-        pair.partner,
-        (productsPerPartner.get(pair.partner) ?? 0) + 1,
+        partner,
+        (productsPerPartner.get(partner) ?? 0) + 1,
       );
     }
 
@@ -1426,18 +1467,22 @@ function SidebarDataPopulator({
         .map(([key]) => key),
     );
 
-    // Sort by canonical pair order, then build sidebar rows.
+    // Sort by canonical pair order (third comparator layer is REVENUE_MODEL_ORDER
+    // per Plan 44-03), then build sidebar rows.
     const sortedPairs = sortPairs(
       [...pairBatchCounts.values()].map(({ pair }) => pair),
     );
-    const rows = sortedPairs.map((pair) => {
+    const rows: SidebarPair[] = sortedPairs.map((pair) => {
       const key = pairKey(pair);
       const entry = pairBatchCounts.get(key)!;
-      const count = productsPerPartner.get(pair.partner) ?? 1;
+      const productCount = productsPerPartner.get(pair.partner) ?? 1;
+      const ppKey = `${pair.partner}::${pair.product}`;
+      const rmCount = revenueModelsPerPair.get(ppKey) ?? 1;
       return {
         partner: pair.partner,
         product: pair.product,
-        displayName: displayNameForPair(pair, count),
+        revenueModel: pair.revenueModel,
+        displayName: displayNameForPair(pair, productCount, rmCount),
         productTooltip: labelForProduct(pair.product),
         batchCount: entry.batchCount,
         isFlagged: flaggedSet.has(key),
@@ -1449,10 +1494,20 @@ function SidebarDataPopulator({
     // source is still `allData` (Phase 25 navigation-integrity lock — drill
     // into partners inside the active list still works; partners outside
     // it are simply not shown). Partner-list membership is partner-level by
-    // design; both pair rows of a multi-product partner ride along together.
-    if (!allowedPartnerIds) return rows;
-    const allow = new Set(allowedPartnerIds);
-    return rows.filter((p) => allow.has(p.partner));
+    // design; all pair rows (across products + revenue models) of a partner
+    // in the allow-list ride along together.
+    const filteredRows = !allowedPartnerIds
+      ? rows
+      : (() => {
+          const allow = new Set(allowedPartnerIds);
+          return rows.filter((p) => allow.has(p.partner));
+        })();
+
+    return {
+      pairs: filteredRows,
+      productsPerPartner,
+      revenueModelsPerPair,
+    };
   }, [allData, partnerAnomalies, allowedPartnerIds]);
 
   const anomalyCount = useMemo(
@@ -1463,6 +1518,11 @@ function SidebarDataPopulator({
   useEffect(() => {
     setSidebarData({
       pairs,
+      // Phase 44 VOC-07: push the count Maps so downstream consumers
+      // (sidebar active-state matching, BreadcrumbTrail suffix logic)
+      // can read them via useSidebarData() without re-deriving.
+      productsPerPartner,
+      revenueModelsPerPair,
       drillState,
       drillToPair,
       navigateToLevel,
@@ -1473,7 +1533,7 @@ function SidebarDataPopulator({
       onImportSql,
       anomalyCount,
     });
-  }, [pairs, drillState, drillToPair, navigateToLevel, views, onLoadView, onDeleteView, onSaveView, onImportSql, anomalyCount, setSidebarData]);
+  }, [pairs, productsPerPartner, revenueModelsPerPair, drillState, drillToPair, navigateToLevel, views, onLoadView, onDeleteView, onSaveView, onImportSql, anomalyCount, setSidebarData]);
 
   return null;
 }

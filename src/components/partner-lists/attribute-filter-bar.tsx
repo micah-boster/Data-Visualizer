@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import type { PartnerListFilters } from '@/lib/partner-lists/types';
+import { Term } from '@/components/ui/term';
+import type {
+  AttributeKey,
+  PartnerListFilters,
+} from '@/lib/partner-lists/types';
 
 /**
  * AttributeFilterBar — additive row of attribute multi-selects.
@@ -34,6 +38,15 @@ import type { PartnerListFilters } from '@/lib/partner-lists/types';
  *     empty array). Requires a segment resolver in evaluateFilters
  *     (wired by the create-list dialog from usePartnerConfigContext).
  *
+ * Phase 44 VOC-07 attribute scope:
+ *   - REVENUE_MODEL — third unit-of-analysis dimension (CONTINGENCY /
+ *     DEBT_SALE). Hidden when no values exist in the dataset (parent
+ *     supplies empty array — same hide-on-empty pattern as the other
+ *     attributes). The control's label is wrapped in `<Term name="revenueModel">`
+ *     as the first-instance-per-surface wrap on the Partner Lists / Create
+ *     List dialog surface (per Plan 44-01 first-instance rule); subsequent
+ *     occurrences of "Revenue Model" stay plain.
+ *
  * Adaptation note: the existing `@/components/filters/filter-combobox`
  * primitive is SINGLE-select. This feature requires MULTI-select per
  * attribute, so we compose a small local multi-select combobox using the
@@ -44,23 +57,46 @@ export interface AttributeFilterBarProps {
    * Available values per attribute — derived from the dataset (and config)
    * by the parent. Phase 39 supplies ACCOUNT_TYPE + PRODUCT_TYPE (same
    * values, different label) and SEGMENT (rule names from partner-config).
-   * Future attributes land here without any component signature change.
+   * Phase 44 VOC-07 adds REVENUE_MODEL. Future attributes land here without
+   * any component signature change.
    */
-  availableValues: Partial<
-    Record<'ACCOUNT_TYPE' | 'PRODUCT_TYPE' | 'SEGMENT', string[]>
-  >;
+  availableValues: Partial<Record<AttributeKey, string[]>>;
   value: PartnerListFilters;
   onChange: (next: PartnerListFilters) => void;
 }
 
+/**
+ * Phase 44 VOC-07 — `label` widened from `string` to `ReactNode` so the
+ * REVENUE_MODEL entry can carry a `<Term>` wrap on its first-instance label.
+ * The other entries still pass plain strings — no change in their visual
+ * treatment.
+ */
 const ATTRIBUTES = [
-  { key: 'ACCOUNT_TYPE', label: 'Account Type' },
-  { key: 'PRODUCT_TYPE', label: 'Product Type' },
-  { key: 'SEGMENT', label: 'Segment' },
+  { key: 'ACCOUNT_TYPE', label: 'Account Type' as ReactNode },
+  { key: 'PRODUCT_TYPE', label: 'Product Type' as ReactNode },
+  { key: 'SEGMENT', label: 'Segment' as ReactNode },
+  {
+    key: 'REVENUE_MODEL',
+    label: <Term name="revenueModel">Revenue Model</Term> as ReactNode,
+  },
 ] as const satisfies ReadonlyArray<{
-  key: keyof PartnerListFilters;
-  label: string;
+  key: AttributeKey;
+  label: ReactNode;
 }>;
+
+/**
+ * Phase 44 VOC-07 — plain-string fallback for the trigger / popover header
+ * text content. The visible chip text uses this string (e.g. "Filter by
+ * Revenue Model"); the in-popover header reuses the JSX label for the
+ * `<Term>` wrap. Keeps the trigger string accessible to screen readers
+ * without requiring them to traverse the popover trigger element.
+ */
+const ATTRIBUTE_TEXT_LABELS: Record<AttributeKey, string> = {
+  ACCOUNT_TYPE: 'Account Type',
+  PRODUCT_TYPE: 'Product Type',
+  SEGMENT: 'Segment',
+  REVENUE_MODEL: 'Revenue Model',
+};
 
 export function AttributeFilterBar({
   availableValues,
@@ -72,7 +108,10 @@ export function AttributeFilterBar({
       {ATTRIBUTES.map((attr) => {
         const options = availableValues[attr.key] ?? [];
         // Hide the control entirely when no values exist for this attribute
-        // (e.g. column missing from the current dataset).
+        // (e.g. column missing from the current dataset). Phase 44 VOC-07:
+        // the REVENUE_MODEL entry inherits this auto-hide — when the parent
+        // supplies an empty array (no REVENUE_MODEL values in current
+        // dataset), the chip never renders.
         if (options.length === 0) return null;
 
         const selected = value[attr.key] ?? [];
@@ -80,6 +119,7 @@ export function AttributeFilterBar({
           <AttributeMultiSelect
             key={attr.key}
             label={attr.label}
+            labelText={ATTRIBUTE_TEXT_LABELS[attr.key]}
             options={options}
             selected={selected}
             onChange={(next) => onChange({ ...value, [attr.key]: next })}
@@ -91,7 +131,10 @@ export function AttributeFilterBar({
 }
 
 interface AttributeMultiSelectProps {
-  label: string;
+  /** Visual label — JSX so the REVENUE_MODEL entry can wrap in `<Term>`. */
+  label: ReactNode;
+  /** Plain-string variant for the chip text + tooltip / aria contexts. */
+  labelText: string;
   options: string[];
   selected: string[];
   onChange: (next: string[]) => void;
@@ -99,6 +142,7 @@ interface AttributeMultiSelectProps {
 
 function AttributeMultiSelect({
   label,
+  labelText,
   options,
   selected,
   onChange,
@@ -115,12 +159,16 @@ function AttributeMultiSelect({
 
   const clear = () => onChange([]);
 
+  // Phase 44 VOC-07 — chip text uses plain `labelText` so the trigger
+  // remains a clean string-only render. The popover header carries the
+  // JSX `label` (which may be a `<Term>` wrap) as the first-instance
+  // discoverability surface for the term.
   const triggerText =
     selected.length === 0
-      ? `Filter by ${label}`
+      ? `Filter by ${labelText}`
       : selected.length === 1
-        ? `${label}: ${selected[0]}`
-        : `${label}: ${selected.length} selected`;
+        ? `${labelText}: ${selected[0]}`
+        : `${labelText}: ${selected.length} selected`;
 
   return (
     <Popover>
@@ -145,7 +193,9 @@ function AttributeMultiSelect({
           <div className="py-1">
             {options.map((option) => {
               const isChecked = selectedSet.has(option);
-              const rowId = `attr-${label}-${option}`;
+              // Phase 44 VOC-07: use labelText (plain string), not label
+              // (now ReactNode), to interpolate a stable id.
+              const rowId = `attr-${labelText}-${option}`;
               return (
                 <div
                   key={option}

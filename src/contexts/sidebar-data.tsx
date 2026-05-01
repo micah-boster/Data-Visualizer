@@ -12,10 +12,23 @@ import type { PartnerProductPair } from '@/lib/partner-config/pair';
  * displayName. Single-product partners emit a single row (displayName equals
  * the bare partner name; productTooltip carries the product label for the
  * hover treatment per CONTEXT lock).
+ *
+ * Phase 44 VOC-07: pairs gain an optional `revenueModel` so multi-model
+ * partners (Advance Financial, Happy Money, Imprint, PatientFi) emit one row
+ * per (partner, product, revenue_model) tuple. The `displayName` carries the
+ * `-Contingency` / `-DebtSale` suffix when relevant (decided by the producer
+ * via `displayNameForPair(pair, productsPerPartner, revenueModelsPerPair)`);
+ * single-model pair rows continue to render unchanged.
  */
 export interface SidebarPair {
   partner: string;
   product: string;
+  /**
+   * Phase 44 VOC-07 — REVENUE_MODEL of this pair row, or undefined for the
+   * 34 single-model partners on current data. Carries through to drill state
+   * (URL `?rm=`), active-state matching, and the breadcrumb suffix.
+   */
+  revenueModel?: string;
   /** Bare partner name (single-product) OR "Partner — Product Label" (multi). */
   displayName: string;
   /** Always-present product label for the hover tooltip. */
@@ -25,8 +38,29 @@ export interface SidebarPair {
 }
 
 interface SidebarDataState {
-  /** Phase 39 PCFG-02 — list of (partner, product) pair rows. */
+  /** Phase 39 PCFG-02 — list of (partner, product[, revenue_model]) pair rows. */
   pairs: SidebarPair[];
+  /**
+   * Phase 44 VOC-07 — number of distinct products per partner. Drives the
+   * sidebar pair-row product-suffix treatment (single-product → no suffix;
+   * multi-product → "Partner — Product Label"). The breadcrumb consumes
+   * this for its partner-segment label too. Producer (data-display.tsx)
+   * computes once across all pairs; consumers read by partner key.
+   */
+  productsPerPartner: Map<string, number>;
+  /**
+   * Phase 44 VOC-07 — number of distinct revenue models per (partner,
+   * product). Map keyed by `${partner}::${product}` so consumers can
+   * compute the suffix decision (`size > 1` → split + suffix). Producer
+   * fills this from the dataset rows; consumers (sidebar pair rows,
+   * breadcrumb, mixed-model chip future-readiness) read by composite key.
+   *
+   * On current data: 34 entries map to 1; 4 entries map to 2 (the
+   * multi-model partners). The mixed-model batch chip is unexercised
+   * (every batch maps cleanly to a single model; ZERO mixed-model
+   * batches per the Wave 3 ETL audit captured in ADR 0002).
+   */
+  revenueModelsPerPair: Map<string, number>;
   /** Current drill-down state */
   drillState: DrillState;
   /** Phase 39 PCFG-03 — pair-aware drill setter. */
@@ -66,6 +100,9 @@ const DEFAULT_DRILL: DrillState = {
   partner: null,
   product: null,
   batch: null,
+  // Phase 44 VOC-07 — third-dimension slot in DrillState. Always null at
+  // root level; producers set this for multi-revenue-model pair rows.
+  revenueModel: null,
 };
 
 const SidebarDataContext = createContext<SidebarDataContextValue | null>(null);
@@ -73,6 +110,10 @@ const SidebarDataContext = createContext<SidebarDataContextValue | null>(null);
 export function SidebarDataProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<SidebarDataState>({
     pairs: [],
+    // Phase 44 VOC-07 — Maps default to empty; producer (data-display.tsx)
+    // fills them from the dataset on every render and pushes via setSidebarData.
+    productsPerPartner: new Map<string, number>(),
+    revenueModelsPerPair: new Map<string, number>(),
     drillState: DEFAULT_DRILL,
     drillToPair: () => {},
     navigateToLevel: () => {},

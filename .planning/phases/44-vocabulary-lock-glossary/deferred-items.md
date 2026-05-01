@@ -38,3 +38,30 @@ same 3 errors + 1 warning on the unmodified files (44-01 Task 3 only added
 pre-existing).
 
 **Owning phase:** Future hooks-cleanup pass; not a Phase 44 deliverable.
+
+## Pre-existing lint warnings on use-drill-down.ts deprecation shim
+
+**Discovered:** 44-04 Task 1 lint pass
+
+**Files:**
+
+- `src/hooks/use-drill-down.ts:188` (was :119 pre-44-04) —
+  `'_partnerName' is defined but never used` (`@typescript-eslint/no-unused-vars`)
+- `src/hooks/use-drill-down.ts:195` (was :126 pre-44-04) —
+  Unused `eslint-disable-next-line no-console` directive
+
+**Why pre-existing:** Phase 39 PCFG-03 added a deprecation shim for the
+legacy `drillToPartner(name)` API that throws in development; the param
+is intentionally prefixed `_` to mark it unused, but the workspace ESLint
+config doesn't honor the `_` convention. The unused-disable directive on
+the `console.error` fallback was added defensively — neither lint warning
+indicates a real problem.
+
+**Verified pre-existing via:** `git stash push src/hooks/use-drill-down.ts
+&& npm run lint -- src/hooks/use-drill-down.ts` reproduces the same 2
+warnings on the unmodified file (44-04 Task 1 only extended the file
+additively; the warnings are on unmodified lines).
+
+**Owning phase:** Future eslint-config tweak (configure
+`argsIgnorePattern: '^_'` in @typescript-eslint/no-unused-vars) or
+deprecation-shim removal pass; not a Phase 44 deliverable.
