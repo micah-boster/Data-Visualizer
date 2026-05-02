@@ -79,5 +79,11 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^2.1.9"
+  },
+  "pnpm": {
+    "overrides": {
+      "vitest>vite": "^5.4.21",
+      "@vitest/mocker>vite": "^5.4.21"
+    }
   }
 }
