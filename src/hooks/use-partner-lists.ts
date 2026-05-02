@@ -83,6 +83,10 @@ export function usePartnerLists(
   // Initialize empty for SSR/hydration safety
   const [storedLists, setStoredLists] = useState<PartnerList[]>([]);
   const hasHydrated = useRef(false);
+  // Phase 43 gap-closure: skip the next persist round when the state change
+  // came from cross-tab subscribe — prevents the ping-pong loop between tabs.
+  // See 43-UAT.md Test 5/6 for diagnosis.
+  const externalUpdateRef = useRef(false);
 
   // Hydration-safe: initializes with an empty array in useState, then applies
   // localStorage values in useEffect to avoid Next.js hydration mismatch.
@@ -96,9 +100,14 @@ export function usePartnerLists(
   // Persist to localStorage after hydration on every change. Filter out any
   // derived lists defensively — they should never be in storedLists, but if a
   // future code path accidentally shovels one into setStoredLists, this strips
-  // it before it lands on disk.
+  // it before it lands on disk. The externalUpdateRef guard short-circuits
+  // when the change came from the cross-tab listener.
   useEffect(() => {
     if (!hasHydrated.current) return;
+    if (externalUpdateRef.current) {
+      externalUpdateRef.current = false;
+      return;
+    }
     persistPartnerLists(
       storedLists.filter((l) => !l.id.startsWith(DERIVED_LIST_ID_PREFIX)),
     );
@@ -107,8 +116,10 @@ export function usePartnerLists(
   // Phase 43 BND-03 — cross-tab sync. When another tab writes the same key,
   // mirror the user-stored lists locally. Derived lists are recomputed from
   // `rows` in the useMemo above, so we only need to sync the stored slice.
+  // Mark the update as external so persist skips one round (no echo).
   useEffect(() => {
     const unsub = subscribePartnerLists((next) => {
+      externalUpdateRef.current = true;
       setStoredLists(
         next.filter((l) => !l.id.startsWith(DERIVED_LIST_ID_PREFIX)),
       );

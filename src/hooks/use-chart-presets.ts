@@ -57,6 +57,9 @@ export function useChartPresets() {
   // during render.
   const [presets, setPresets] = useState<ChartPreset[]>([]);
   const hasHydrated = useRef(false);
+  // Phase 43 gap-closure: skip the next persist round when the state change
+  // came from cross-tab subscribe — prevents the ping-pong loop between tabs.
+  const externalUpdateRef = useRef(false);
 
   // Hydration: load user presets, sanitize, merge ahead-of-user-presets
   // with BUILTIN_PRESETS. Built-ins are NEVER persisted, so they're
@@ -68,18 +71,25 @@ export function useChartPresets() {
     hasHydrated.current = true;
   }, []);
 
-  // Persist after hydration. Strip locked built-ins so localStorage
-  // only ever carries user presets.
+  // Persist after hydration. Strip locked built-ins so localStorage only
+  // ever carries user presets. The externalUpdateRef guard short-circuits
+  // when the change came from the cross-tab listener (no echo).
   useEffect(() => {
     if (!hasHydrated.current) return;
+    if (externalUpdateRef.current) {
+      externalUpdateRef.current = false;
+      return;
+    }
     persistChartPresets(presets.filter((p) => !p.locked));
   }, [presets]);
 
   // Phase 43 BND-03 — cross-tab sync. When another tab writes the same key,
   // re-merge built-ins ahead of the sanitized user presets so this tab
-  // matches the other tab's view of the merged list.
+  // matches the other tab's view of the merged list. Mark the update as
+  // external so persist skips one round.
   useEffect(() => {
     const unsub = subscribeChartPresets((nextRawUser) => {
+      externalUpdateRef.current = true;
       const sanitizedUser = sanitizeUserPresets(nextRawUser);
       setPresets([...BUILTIN_PRESETS, ...sanitizedUser]);
     });

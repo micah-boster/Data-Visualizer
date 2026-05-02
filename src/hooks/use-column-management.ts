@@ -36,6 +36,11 @@ export function useColumnManagement(
 
   // Track whether we've loaded from localStorage yet
   const hasHydrated = useRef(false);
+  // Phase 43 gap-closure: skip the next persist round when the state change
+  // came from the cross-tab subscribe handler. Prevents the ping-pong loop
+  // between tabs (subscribe → setState → persist → storage event in OTHER
+  // tab → that tab's subscribe → ... infinite). See 43-UAT.md Test 6.
+  const externalUpdateRef = useRef(false);
 
   // Hydration-safe: initializes with defaults in useState, then applies
   // localStorage values in useEffect to avoid Next.js hydration mismatch.
@@ -50,17 +55,25 @@ export function useColumnManagement(
     hasHydrated.current = true;
   }, []);
 
-  // Persist to localStorage when state changes (after hydration)
+  // Persist to localStorage when state changes (after hydration). The
+  // externalUpdateRef guard short-circuits when the change came from the
+  // cross-tab listener, breaking the ping-pong loop.
   useEffect(() => {
     if (!hasHydrated.current) return;
+    if (externalUpdateRef.current) {
+      externalUpdateRef.current = false;
+      return;
+    }
     saveColumnState({ visibility: columnVisibility, order: columnOrder });
   }, [columnVisibility, columnOrder]);
 
   // Phase 43 BND-03 — cross-tab sync. When another tab writes the column
   // state, mirror it locally. Null next-value means the key was removed in
   // the other tab — fall back to defaults to keep both tabs aligned.
+  // Mark the update as external so the persist effect skips one round.
   useEffect(() => {
     const unsub = subscribeColumnState((next) => {
+      externalUpdateRef.current = true;
       if (next) {
         setColumnVisibility(next.visibility);
         setColumnOrder(next.order);

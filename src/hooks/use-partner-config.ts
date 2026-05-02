@@ -46,6 +46,9 @@ export function usePartnerConfig(): UsePartnerConfigResult {
   // Plan D — reading localStorage during render breaks SSR).
   const [configs, setConfigs] = useState<PartnerConfigArray>([]);
   const hasHydrated = useRef(false);
+  // Phase 43 gap-closure: skip the next persist round when the state change
+  // came from cross-tab subscribe — prevents the ping-pong loop between tabs.
+  const externalUpdateRef = useRef(false);
 
   // Hydrate from localStorage on first mount, then mark hasHydrated so the
   // persistence effect below knows it's safe to write.
@@ -54,17 +57,25 @@ export function usePartnerConfig(): UsePartnerConfigResult {
     hasHydrated.current = true;
   }, []);
 
-  // Persist to localStorage after hydration on every change. The guard
-  // prevents persisting the empty default over real saved data on first mount.
+  // Persist to localStorage after hydration on every change. The hasHydrated
+  // guard prevents persisting the empty default over real saved data on
+  // first mount; the externalUpdateRef guard short-circuits when the change
+  // came from the cross-tab listener (no echo back to localStorage).
   useEffect(() => {
     if (!hasHydrated.current) return;
+    if (externalUpdateRef.current) {
+      externalUpdateRef.current = false;
+      return;
+    }
     persistPartnerConfig(configs);
   }, [configs]);
 
   // Phase 43 BND-03 — cross-tab sync. When another tab writes the same key,
-  // mirror it locally so segment definitions stay aligned across tabs.
+  // mirror it locally so segment definitions stay aligned across tabs. Mark
+  // the update as external so persist skips one round.
   useEffect(() => {
     const unsub = subscribePartnerConfig((next) => {
+      externalUpdateRef.current = true;
       setConfigs(next);
     });
     return unsub;

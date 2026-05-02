@@ -222,20 +222,32 @@ export function useSavedViews(
   // Initialize empty for SSR/hydration safety
   const [views, setViews] = useState<SavedView[]>([]);
   const hasHydrated = useRef(false);
+  // Phase 43 gap-closure: skip the next persist round when the state change
+  // came from the cross-tab subscribe handler. Without this guard, every
+  // received `storage` event triggers a setState that triggers persist that
+  // triggers another `storage` event in the OTHER tab — an infinite ping-pong
+  // (Test 5 in 43-UAT.md).
+  const externalUpdateRef = useRef(false);
 
   // Hydration-safe: initializes with an empty array in useState, then applies
   // localStorage values in useEffect to avoid Next.js hydration mismatch.
   // Do NOT convert to derived state — reading localStorage during render
   // breaks SSR. (KI-13 deferred: see Phase 25 Plan D.)
   //
-  // Phase 34: re-runs when knownListIds changes (e.g. a partner list is
-  // created/deleted), so stale listIds get sanitized without a page reload.
   // Phase 39 PCFG-03 — stable empty Map sentinel so the effect doesn't re-run
   // on every render when the caller doesn't supply knownPairs.
   const stableEmptyPairs = useMemo(() => new Map<string, string[]>(), []);
   const pairs = knownPairs ?? stableEmptyPairs;
 
+  // Phase 43 gap-closure: hydrate-once. The previous version re-ran on every
+  // change to `knownListIds` or `pairs` and re-loaded from localStorage,
+  // which clobbered freshly-saved in-memory state when the timing crossed a
+  // React Query refetch (`pairs` rebuilds whenever `data?.data` changes).
+  // Stale listIds and column keys are handled gracefully at the consumer
+  // level — no need to re-sanitize the whole list every time the dataset
+  // identity changes.
   useEffect(() => {
+    if (hasHydrated.current) return;
     let loaded = loadSavedViews();
     if (loaded.length === 0) {
       loaded = getDefaultViews();
@@ -245,20 +257,27 @@ export function useSavedViews(
     hasHydrated.current = true;
   }, [knownListIds, pairs]);
 
-  // Persist to localStorage after hydration on every change
+  // Persist to localStorage after hydration on every change.
+  // The externalUpdateRef guard prevents the cross-tab ping-pong loop —
+  // see the ref declaration above and the subscribe effect below.
   useEffect(() => {
     if (!hasHydrated.current) return;
+    if (externalUpdateRef.current) {
+      externalUpdateRef.current = false;
+      return;
+    }
     persistSavedViews(views);
   }, [views]);
 
   // Phase 43 BND-03 — cross-tab sync. When another tab writes the same key,
-  // re-sanitize against the current dataset and replace local state. The
-  // subscriber fires post-validation, so the parsed payload here is already
-  // schema-valid; we still run sanitizeViews to strip stale listIds/columns
-  // against THIS tab's runtime data.
+  // re-sanitize against the current dataset and replace local state. We
+  // mark the update as external so the persist effect skips one round and
+  // does NOT echo the value back to localStorage (which would fire a
+  // storage event in the originating tab and bounce forever).
   useEffect(() => {
     const ids = knownListIds ?? new Set<string>();
     const unsub = subscribeSavedViews((next) => {
+      externalUpdateRef.current = true;
       setViews(sanitizeViews(next, ids, pairs));
     });
     return unsub;
