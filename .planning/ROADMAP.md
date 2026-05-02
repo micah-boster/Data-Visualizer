@@ -114,7 +114,7 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 | 41. Data Correctness Audit (expanded) | 5/5 | Complete    | 2026-04-30 | DCR-01..11 (was DCR-01..06) |
 | 42a. Security Review (OAuth-independent) | 2/2 | Complete    | 2026-05-01 | SEC-01/03/04/06 — split from Phase 42 on 2026-04-30; 42a-01 (SEC-01/03/06 audits + Dependabot security-only + 9→0 advisories via pnpm-workspace overrides) ✅; 42a-02 (SEC-04 forward threat model — 13 LOCK mitigations for v5.0 Phase 45) ✅; verifier 9/9 passed |
 | 42b. Deployed-Surface Security Review | v4.5 | 0/TBD | Deferred (OAuth-gated) | SEC-02/05 — out-of-band, NOT a v5.0 entry blocker |
-| 43. Boundary Hardening | 4/4 | Complete   | 2026-05-01 | BND-01..06; 43-01 (BND-01/02) + 43-02a (BND-03) + 43-02b (BND-04) + 43-03 (BND-05/06) ✅ |
+| 43. Boundary Hardening | 4/4 | Complete    | 2026-05-02 | BND-01..06; 43-01 (BND-01/02) + 43-02a (BND-03) + 43-02b (BND-04) + 43-03 (BND-05/06) ✅ |
 | 44. Vocabulary Lock & Glossary | 4/4 | Complete    | 2026-05-01 | VOC-01..06 (44-04 wires VOC-07 UI) |
 | 45. Scorecard Ingestion Pipeline | v5.0 | 0/TBD | Planned | - |
 | 46. Contractual Target Management | v5.0 | 0/TBD | Planned | - |

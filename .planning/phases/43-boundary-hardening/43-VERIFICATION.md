@@ -1,29 +1,17 @@
 ---
 phase: 43-boundary-hardening
 verified: 2026-05-01T21:45:00Z
-status: gaps_found
-score: 5/6 must-haves verified
-re_verification: false
-gaps:
-  - truth: "BND-03 and BND-04 requirements are marked complete in code but REQUIREMENTS.md tracking still shows them as Pending / unchecked"
-    status: partial
-    reason: "v4.5-REQUIREMENTS.md lines 44-45 show '- [ ] BND-03' and '- [ ] BND-04' (unchecked) and the tracking table at lines 139-140 reads 'Pending'. The code for both requirements is fully implemented and verified. This is a documentation gap, not a code gap — but the requirements file is the milestone contract and it reads as incomplete."
-    artifacts:
-      - path: ".planning/milestones/v4.5-REQUIREMENTS.md"
-        issue: "BND-03 checkbox not checked ([  ] vs [x]); BND-04 checkbox not checked; tracking table shows 'Pending' for both"
-    missing:
-      - "Mark BND-03 checkbox as [x] in v4.5-REQUIREMENTS.md with same format as BND-05/06 (add implementation note inline)"
-      - "Mark BND-04 checkbox as [x] in v4.5-REQUIREMENTS.md with same format as BND-05/06"
-      - "Update tracking table rows for BND-03 and BND-04 from 'Pending' to '✅ Complete' with phase/date"
-  - truth: "vitest reliability smoke (BND-04) must pass green"
-    status: failed
-    reason: "npm run test:vitest -- reliability fails with 'ReferenceError: __vite_ssr_exportName__ is not defined' in both reliability.smoke.ts and the pre-existing young-batch-censoring.test.ts. Root cause: Node 24.14.0 + Next.js 16.2.3 vite transform pipeline conflicts with vitest 2.1.9's module loading for files that transitively import Next.js-transformed modules. This is a pre-existing environmental issue (the young-batch test was introduced in Phase 41-02 and fails identically). The reliability.ts module itself loads cleanly under node --experimental-strip-types; the logic is sound. The vitest runner is broken by the environment, not by the code."
-    artifacts:
-      - path: "src/lib/snowflake/reliability.smoke.ts"
-        issue: "Cannot run under vitest 2.1.9 + Node 24 due to Next.js vite SSR transform collision (__vite_ssr_exportName__ not defined). Pre-existing across ALL vitest tests."
-    missing:
-      - "Document this as a known v5.5 DEBT-09 environment issue in STATE.md or a tracking note"
-      - "OR fix vitest.config.ts to exclude the Next.js vite transform for test files (e.g. add 'server': { deps: { external: [...] } } to prevent Next.js plugin from processing test imports)"
+gap_closure_verified: 2026-05-01T22:10:00Z
+status: passed
+score: 6/6 must-haves verified
+re_verification: true
+gap_closure:
+  - truth: "BND-03 and BND-04 marked complete in REQUIREMENTS.md"
+    status: resolved
+    resolution: "Commit 34d27c4 (docs(43): mark BND-03 and BND-04 complete in milestone REQUIREMENTS) — checkboxes flipped to [x], tracking table rows now read '✅ Complete (Phase 43-02a/02b, 2026-05-01)' with implementation notes matching the BND-05/06 format."
+  - truth: "vitest reliability smoke (BND-04) passes green"
+    status: resolved
+    resolution: "Commit 8ec6616 (fix(43): pin vitest's vite peer to ^5.4 to fix SSR helper mismatch). Root cause was NOT a Node-24 incompatibility but a pnpm peer-dep resolution glitch: vitest 2.1.9's @vitest/mocker had been linked to vite@8.0.10 (pulled in by other peers), whose SSR transform emits `__vite_ssr_exportName__()` calls that vite-node 2.1.9's runtime client doesn't understand (it provides `__vite_ssr_exports__` only). Fix: pnpm.overrides pin `vitest>vite` and `@vitest/mocker>vite` to `^5.4.21`. After reinstall, all 13 vitest tests pass (11 reliability + 2 young-batch from Phase 41-02 — the latter was failing for the same reason)."
 human_verification:
   - test: "Cross-tab localStorage sync (BND-03)"
     expected: "Open app in two browser tabs. Create a saved view in tab 1. Tab 2's saved view list should update within ~500ms without a page reload."
