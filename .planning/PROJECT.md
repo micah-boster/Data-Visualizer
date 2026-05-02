@@ -41,23 +41,18 @@ Surface abnormal account and batch performance data so the partnerships team can
 - ✓ Component patterns (StatCard, DataPanel, SectionHeader, ToolbarGroup/Divider, EmptyState) with CI-guarded enforcement — v4.0 Phase 29
 - ✓ v4.0 Design System & Daily-Driver UX shipped end-to-end (Phases 25-37: tokens, typography, surfaces, component patterns, motion, visual polish, URL navigation, accessibility, Partner Lists, Chart Schema/Builder, Metabase SQL Import) — v4.0 (2026-04-24)
 - ✓ v4.1 Feedback-Driven Polish shipped (Phases 38-40 + 40.1: branding/sidebar/columns/headers, chart correctness, KPI cascade, filters, laptop layout, Metabase chart-type override, `(partner, product)` canonical unit, segment config, Projected Curves v1, projection visibility scoping + table modeled+Δ columns) — v4.1 (2026-04-26)
+- ✓ v4.5 Correctness & Foundation shipped (Phases 41 / 42a / 43 / 44; 42b OAuth-deferred): aggregation contract + per-column strategies (DCR-01/06), narrow parser + metric-eligibility + apples-and-oranges runtime invariant (DCR-07/08/10), polarity registry (DCR-09), eight statistical-threshold ADRs (DCR-11), metric-audit doc + 9 regression smokes (DCR-02..05), credential / SQL-injection / dependency audits (SEC-01/03/06), forward threat model for v5.0 ingestion (SEC-04 — load-bearing), canonical `BatchRow`/`AccountRow` typed substrate + compute-layer signature change (BND-01/02), versioned `createVersionedStore` persistence with migrations + verified writes + cross-tab sync (BND-03), Snowflake reliability primitives (retry / circuit-breaker / `X-Request-Id` / `Server-Timing` / `<DegradedBanner>`) (BND-04), unified `<ChartFrame>` primitive with polarity context (BND-05), tuned `unstable_cache` + `<RefreshButton>` + ADR 009 (BND-06), `TERMS` registry + `<Term>` primitive + `docs/GLOSSARY.md` (VOC-01/02/03), List-View hierarchy ADR (VOC-04), REVENUE_MODEL as third unit-of-analysis dimension with ADR + plumbing + sidebar/breadcrumb/Partner Setup UI (VOC-05/06/07) — v4.5 (2026-05-02)
 
-### Current Milestone: v4.5 Correctness & Foundation
+### Current Milestone — none active
 
-**Goal:** Tight, structural hardening pass before v5.0 — every visible number matches a direct Snowflake query, the ingestion surface has a documented threat model, the compute layer operates on typed canonical rows (not bag-of-strings), localStorage state survives schema changes with explicit feedback, and 17 domain terms (12 existing + 5 v5.0-bound) are defined once and surfaced in-product. Holds only the work whose value *degrades* when deferred past v5.0; behavioral QA, component decomposition, and test pyramid inversion intentionally pushed to v5.5 where post-v5.0 observation informs them.
-
-**Target features:**
-- Data Correctness Audit: seed bug fix + breadth-first metric verification + scope-rollup consistency + regression fixtures + aggregation contract docs + young-batch censoring + NULL-vs-zero semantics + polarity audit + apples-and-oranges runtime invariant + statistical threshold ADRs
-- Ingestion-Surface Security Review: existing-surface audit (credentials, client exposure, SQL injection) + forward threat model for v5.0 file-upload + Claude-extraction surface
-- Boundary Hardening: typed `BatchRow`/`AccountRow` parser + compute-layer signature change + versioned localStorage with migration chain + Snowflake reliability primitives + unified `<ChartFrame>` primitive + tuned caching
-- Vocabulary Lock & Glossary: `docs/GLOSSARY.md` + `TERMS` registry + `<Term>` component + List/View/Workspace ADR + REVENUE_MODEL surfacing as product dimension (gated on ETL)
+v4.5 closed 2026-05-02. v5.0 (External Intelligence) kicks off via `/gsd:new-milestone`. Phase 45 architecture must consume the v4.5 SEC-04 forward threat model (`.planning/phases/42a-security-review-oauth-independent/SEC-04-THREAT-MODEL.md`).
 
 ### Active
 
-- [ ] Phase 41 — Data Correctness Audit (DCR-01..11)
-- [ ] Phase 42 — Ingestion-Surface Security Review (SEC-01..06; gated on OAuth on Vercel)
-- [ ] Phase 43 — Boundary Hardening (BND-01..06)
-- [ ] Phase 44 — Vocabulary Lock & Glossary (VOC-01..07; VOC-05/06/07 gated on REVENUE_MODEL ETL ~2026-05-03)
+- [ ] **Phase 42b — Deployed-Surface Security Review** (SEC-02 client-side data exposure audit, SEC-05 auth/access state docs) — DEFERRED, gated on OAuth on Vercel. NOT a v5.0 entry blocker; slots in mid-v5.0 or post-v5.0 whenever OAuth lands.
+- [ ] **DCR-11 tracking-line cleanup** — eight statistical-threshold ADRs (`.planning/adr/001`..`008`) shipped via Plan 41-04 with inline `// ADR:` callsite comments; requirement-line checkbox in `v4.5-REQUIREMENTS.md` archive stays unchecked. Cosmetic only.
+
+(Active section will repopulate when v5.0 is defined via `/gsd:new-milestone`.)
 
 ### Out of Scope
 
@@ -85,13 +80,14 @@ Surface abnormal account and batch performance data so the partnerships team can
 
 ## Context
 
-- **Shipped:** v3.1 deployed 2026-04-14 at data-visualizer-micah-bosters-projects.vercel.app
-- **Codebase:** ~25,875 LOC TypeScript/React (post-v4.0; v4.1 added segment config, projection overlay, table modeled+Δ cols)
-- **Stack:** Next.js 16, TanStack Table, React Query, Recharts, Tailwind CSS, shadcn/ui, base-ui, AI SDK (ai + @ai-sdk/anthropic + @ai-sdk/react), simple-statistics
-- **Data source:** `agg_batch_performance_summary` (61 columns), `master_accounts` (78 columns, drill-down)
-- **Static cache:** 477 batch rows + Affirm March account drill-down. Auto-switches to live Snowflake when credentials are added.
+- **Shipped:** v4.5 deployed 2026-05-02 at data-visualizer-micah-bosters-projects.vercel.app
+- **Codebase:** ~41,085 LOC TypeScript/React (post-v4.5; +8,198 / −740 vs v4.1 close — driven by typed `BatchRow` substrate, versioned persistence, Snowflake reliability primitives, ChartFrame, REVENUE_MODEL plumbing)
+- **Stack:** Next.js 16, TanStack Table, React Query, Recharts, Tailwind CSS, shadcn/ui, base-ui, AI SDK (ai + @ai-sdk/anthropic + @ai-sdk/react), simple-statistics. Vitest installed in v4.5 (Plan 41-02) — first unit-test infra in the codebase; v5.5 DEBT-09 expansion seed.
+- **Data source:** `agg_batch_performance_summary` (now 62 columns post-REVENUE_MODEL ETL 2026-04-29), `master_accounts` (78 columns, drill-down). REVENUE_MODEL surfaced as third dimension of `(partner, product, revenue_model)` per ADR 0002.
+- **Static cache:** 477 batch rows + Affirm March account drill-down, routed through `parseBatchRow` at boot (v4.5 BND-01) so fixture corruption surfaces at startup. Auto-switches to live Snowflake when credentials are added.
 - **Team:** 2-3 internal partnerships team members
-- **Known tech debt:** 22 items in docs/KNOWN-ISSUES.md (0 high, 9 medium, 13 low). Drill-down uses React state not URL params (v4.0 Phase 32). ANTHROPIC_API_KEY and Snowflake credentials pending Vercel provisioning.
+- **Known tech debt:** 22 items in docs/KNOWN-ISSUES.md (0 high, 9 medium, 13 low). Drill-down still uses React state not URL params at root (v4.0 Phase 32 partial; `?p=&pr=&b=&rm=` round-trip exists for sidebar pair selection). ANTHROPIC_API_KEY and Snowflake credentials pending Vercel provisioning. OAuth on Vercel still pending — gates Phase 42b. v5.5 DEBT major-upgrade backlog captured in Plan 42a-01: TanStack v9, Vitest v4, ESLint v10, TypeScript v6.
+- **Correctness baseline:** `docs/METRIC-AUDIT.md` (130-line living doc, 36 audit rows × 3 scopes; ✅ 17 / 🔧 17 / ⏭ 1 / ❌ 0) is what v5.0 triangulation reads to know which metrics are app-vs-Snowflake equal.
 
 ## Constraints
 
@@ -126,6 +122,15 @@ Surface abnormal account and batch performance data so the partnerships team can
 | Comparison matrix shared types in matrix-types.ts | DRY across 3 view modes | ✓ Good — clean code |
 | getPartnerName/getBatchName utilities | DRY, eliminated 14+ raw String coercions | ✓ Good — v3.1 cleanup |
 | Known issues documented comprehensively | Production-grade codebase snapshot | ✓ Good — 22 issues catalogued |
+| v4.5 expanded from 2 phases to 4 (boundary hardening + vocabulary lock added) | Multi-lens audit (data, structural, design-thinking, code-quality) surfaced two more "degrades-when-deferred" categories. v5.0 adds 3 new data shapes × 5 new terms — without typed boundaries and locked vocabulary first, debt compounds | ✓ Good — landed all four phases in 5 days |
+| Phase 42 split into 42a (do now) + 42b (OAuth-deferred) on 2026-04-30 | OAuth on Vercel still pending. SEC-04 (forward threat model) is load-bearing for v5.0 Phase 45 and is OAuth-independent; SEC-02/05 genuinely need a deployed surface. Splitting let v4.5 close cleanly with the load-bearing piece preserved | ✓ Good — Phase 45 unblocked; 42b decoupled from v5.0 entry |
+| Eight statistical-threshold ADRs with global no-partner-overrides convention | Locks v4.5 against p-hacking and preserves v5.0 triangulation comparability across partners. Every threshold (`Z_THRESHOLD`, `MIN_GROUPS`, 5% trending, 3-batch baseline, cascade tier breakpoints, `MIN_PLACED_DENOMINATOR_DOLLARS`) gets a record, every callsite gets an inline `// ADR:` comment | ✓ Good — single source of truth for stat thresholds; trending baseline discrepancy (up-to-4 not 3) discovered + captured in ADR 004 |
+| `BatchRow`/`AccountRow` canonical substrate (branded `BatchAgeMonths`, `number \| null` for rate-shaped fields, long-format curve baked in) over the prior `Record<string, unknown>[]` | v5.0 introduces 3 new data shapes (scorecards, targets, triangulation) — without a typed parser pattern first, v5.0 inherits and amplifies bag-of-strings debt × 3 | ✓ Good — three duplicate `coerceAgeMonths` collapsed to one; static cache routes through parser at boot |
+| `createVersionedStore<T>` with envelope + migration chain + verified writes + cross-tab sync | localStorage was previously direct reads/writes scattered across views/columns/lists/presets. v5.0 adds scorecard library + target versions + reconciliation flags — schema migration must be loud and recoverable, not silent drop | ✓ Good — 5 modules wrapped at schemaVersion 1; `MissingMigratorError` throws in dev / drops in prod with console.error |
+| Snowflake reliability wrapper (retry + circuit breaker + `Server-Timing` + `X-Request-Id`) on every Snowflake-touching API route | Single-user-but-shared-infra means transient failures must self-heal; a circuit breaker prevents cascading slow paths from hammering a degraded warehouse. Request-id correlation makes ops debugging tractable | ✓ Good — `<DegradedBanner>` + `(stale)` badge surface stale-data state; sanitized client errors prevent schema leak |
+| `<ChartFrame>` primitive composing all four current charts (Curve, Trajectory, Matrix, Sparkline) | v5.0 triangulation visualizations would otherwise repeat the title/legend/empty/loading/stale-column/polarity-context shell N times. Lift the shell once; chart bodies stay focused on data → marks | ✓ Good — `useChartFramePolarity()` hook eliminates prop-threading; `<StaleColumnWarning>` deleted (absorbed into ChartFrame title row) |
+| REVENUE_MODEL as third dimension of unit-of-analysis `(partner, product, revenue_model)` (ADR 0002) | "Just a product" framing — a contingency-only deal and a debt-sale deal have different economics and shouldn't blend at the rollup. Sidebar audit recorded 38→42 rows (max 2 per partner; 4 multi-model partners), under the 50-row scanability ceiling — third-dimension threshold check passed | ✓ Good — pairKey emits 3-segment `::` key; legacy 2-segment keys still parsed; ZERO mixed-revenue-model batches in audit (defensive `MixedRevenueModelChip` substrate available) |
+| Behavioral QA + component decomposition + test pyramid inversion + perf budget moved to v5.5 (DEBT-07..10) | These audits *grow* in value with post-v5.0 observation. The right component seams are the ones v5.0 reveals; the right test surface is the one v5.0 actually has; QA scripts written before v5.0 audit hypothetical flows. Build from observed use, not imagined use | — Pending — re-evaluate after v5.0 ships |
 
 ---
-*Last updated: 2026-04-27 — v4.5 activated via /gsd:new-milestone. v4.1 closed gap-clean 2026-04-26 (Phases 38-40 + 40.1, all PCFG/PRJ/POL/CHT/KPI/FLT/MBI requirements validated). Current scope is Phases 41-44: Data Correctness Audit (DCR-01..11), Ingestion-Surface Security Review (SEC-01..06, gated on OAuth), Boundary Hardening (BND-01..06), Vocabulary Lock & Glossary (VOC-01..07, VOC-05/06/07 gated on REVENUE_MODEL ETL). Wave 0 quick fixes shipped 2026-04-26 (MIN_GROUPS gate, matrix bar default, KPI denominator floor).*
+*Last updated: 2026-05-02 after v4.5 milestone — Correctness & Foundation shipped. 25/28 in-scope requirements closed across Phases 41 / 42a / 43 / 44; Phase 42b (SEC-02/05) deferred until OAuth lands on Vercel; DCR-11 ADRs implemented under Plan 41-04 with requirement-line cleanup pending. Codebase grew to ~41,085 LOC (typed `BatchRow` substrate, versioned persistence, Snowflake reliability primitives, `<ChartFrame>`, REVENUE_MODEL plumbing). Vitest installed (first unit-test infra; v5.5 DEBT-09 expansion seed). Next: `/gsd:new-milestone` for v5.0 External Intelligence (Phases 45-49 — Scorecard ingestion, contractual targets, triangulation, reconciliation, dynamic curve re-projection). Phase 45 architecture must consume the SEC-04 forward threat model.*

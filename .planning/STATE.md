@@ -1,9 +1,9 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: Feedback-Driven Polish
-status: unknown
-last_updated: "2026-05-02T02:09:05.048Z"
+milestone: none
+milestone_name: "v4.5 Correctness & Foundation (shipped 2026-05-02)"
+status: between_milestones
+last_updated: "2026-05-02T03:58:15.233Z"
 progress:
   total_phases: 45
   completed_phases: 45
@@ -15,16 +15,16 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-27)
+See: .planning/PROJECT.md (updated 2026-05-02 after v4.5 close)
 
 **Core value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
-**Current focus:** v4.5 Correctness & Foundation — Phase 41 (Data Correctness Audit) ✅ closed; Phase 42a (Security Review, OAuth-independent) ✅ closed (verifier 9/9 passed 2026-05-01; SEC-01/03/04/06 all shipped); Phase 44 (Vocabulary Lock, 4/4) — phase verification pending; Phase 43 (Boundary Hardening, 4/4) — phase verification pending; Phase 42b (Security Review, OAuth-dependent) still gated on OAuth on Vercel. Two non-blocking bugs from 40.1 UAT carried over to v4.5 Phase 41.2 (React duplicate-key warning under DataDisplay re-render path; possible 4-trailing-empty-cell artifact at All Partners root drill).
+**Current focus:** No active milestone. v4.5 Correctness & Foundation shipped 2026-05-02 (Phases 41 / 42a / 43 / 44 closed; Phase 42b OAuth-deferred; DCR-11 ADRs implemented under Plan 41-04 — requirement-line tracking cleanup pending). Next: `/gsd:new-milestone` for v5.0 External Intelligence (scorecard ingestion, contractual targets, triangulation, reconciliation, dynamic curve re-projection). Phase 45 must consume the SEC-04 forward threat model.
 
 ## Current Position
 
-Phase: 44 (Vocabulary Lock & Glossary) — 4/4 plans complete (44-01 ✅, 44-02 ✅, 44-03 ✅, 44-04 ✅) — phase verification pending || Phase 43 (Boundary Hardening) — 4/4 plans complete (43-01 ✅, 43-02a ✅, 43-02b ✅, 43-03 ✅) — phase verification pending || Phase 42a (Security Review, OAuth-independent) — 2/2 plans complete (42a-01 SEC-01/03/06 audits + Dependabot ✅; 42a-02 SEC-04 forward threat model ✅) — phase verification pending
-Plan: 43-03 ✅ SUMMARY landed (BND-05 ChartFrame primitive + BND-06 cache tuning — unified <ChartFrame> shell adopted by CollectionCurveChart / GenericChart / ComparisonMatrix / Sparkline trio; /api/data ships revalidate=3600 + unstable_cache(tag:'batch-data'); /api/revalidate POST endpoint with shared-secret auth; <RefreshButton> with locked client cache-bust path + ⌘R interceptor; ADR 009 documents three-layer caching); BND-05 + BND-06 satisfied
-Status: Phase 44 fully landed (4/4 plans); pending verification + phase close. Phase 43 fully landed (4/4 plans); pending verification + phase close. Phase 42a (SEC, OAuth-independent) — both plans complete; pending verification + phase close. Phase 41 (DCR) ✅ closed. Phase 42b (SEC, OAuth-dependent) still gated on OAuth.
+Phase: none active — between milestones.
+Plan: none active.
+Status: v4.5 closed 2026-05-02. Phases 41 / 42a / 43 / 44 verified + archived. Phase 42b deferred (OAuth on Vercel still pending). Awaiting `/gsd:new-milestone` to define v5.0.
 
 Last activity: 2026-05-01 — Plan 43-03 (Boundary Hardening BND-05 ChartFrame + BND-06 cache tuning) complete. Two atomic commits: `67268da feat(43-03): ChartFrame primitive + CollectionCurveChart migration (BND-05)` (Task 1), `1fe6461 feat(43-03): chart consumer migration + cache tuning + RefreshButton + ADR (BND-05/06)` (Task 2). **`<ChartFrame>` primitive** at `src/components/charts/chart-frame.tsx` owns title / subtitle / actions / legend / state-driven render (ready / loading / fetching / empty / error) / stale-column chip / polarity context / density-aware padding. **`useChartFramePolarity()`** hook exposes the active polarity to chart bodies without prop-threading; defaults via `getPolarity(metric)` per DCR-09; explicit prop overrides. **All four existing chart implementations migrated:** CollectionCurveChart replaces DataPanel entirely (single owner; surface chrome via className); GenericChart / ComparisonMatrix / ChartSparkline compose INSIDE existing DataPanel wrappers (`title=""` suppresses ChartFrame's title row so DataPanel keeps the heading); PartnerSparkline / RootSparkline inherit ChartFrame transitively via ChartSparkline (no double-frame). **Standalone `<StaleColumnWarning>` deleted** — ChartFrame's title-row amber chip is the canonical surface. **Shape-only smoke** at `src/components/charts/chart-frame.smoke.tsx` (jsdom NOT installed locally per `ls node_modules/jsdom`); 12 typed cases pin the props contract via `tsc --noEmit`; runtime test ports to v5.5 DEBT-09 when jsdom lands. **`/api/data` cache tuning:** force-dynamic dropped, `revalidate = 3600` + `unstable_cache(fetcher, [keyParts], { revalidate: 3600, tags: ['batch-data'] })` wrap; cache hits skip Plan 02b's `executeWithReliability` retry + circuit-breaker entirely (cache miss = wrapper fires; cache hit = pure memory read). **`/api/revalidate` POST endpoint** at `src/app/api/revalidate/route.ts` with shared-secret auth (`Authorization: Bearer ${REVALIDATE_SECRET}`, default-denied if env var unset); calls `revalidateTag(tag, 'max')` per Next 16 two-arg signature. **NEVER called from the client.** **`<RefreshButton>`** at `src/components/layout/refresh-button.tsx` mounts in header.tsx after the freshness indicator; onClick calls `queryClient.invalidateQueries({ queryKey: ['data'] })` ONLY (locked path per ADR 009); ⌘R / Ctrl+R interceptor with two escape hatches (Cmd+Shift+R hard reload; input/textarea focus). **Auto-toast** "Data updated." (sonner, 2s) on background refetch via fetchedAt change-detection in header.tsx. **ADR 009** at `.planning/adr/009-caching-layers.md` documents Layer 1 (Next route cache + revalidateTag), Layer 2 (React Query 5min staleTime + no focus-refetch), Layer 3 (Snowflake warehouse cache); inline backlink in `/api/data/route.ts`; index row added to `.planning/adr/README.md`. **Deviations (3 bounded adaptations, NONE blocking):** (1) CollectionCurveChart legend stays right-side inline (not in `legend` slot which renders below) — interactive legend reads better next to lines; documented in SUMMARY per-consumer migration table. (2) `.env.example` REVALIDATE_SECRET doc deferred — pre-existing dirty state at session start said leave it alone. (3) Sparkline trio top-level wrappers don't re-wrap (ChartSparkline carries the wrap; PartnerSparkline / RootSparkline inherit). **Concurrent-session note:** during Task 1 a parallel agent committed unrelated 44-04 work (`5fd1052`, `e098afd`) and reset the working tree, wiping mid-edit changes to `globals.css` + `collection-curve-chart.tsx`. Re-applied + committed Task 1 fast (`67268da`) before another reset could land. Future executors with parallel activity should commit per-task aggressively. **Verification gates:** `! grep -rn "force-dynamic" src/app/api/data/` succeeds (zero hits); `! grep -rn "<StaleColumnWarning" src/` succeeds (zero hits); `test -f .planning/adr/009-caching-layers.md` succeeds; `npx tsc --noEmit` clean (only pre-existing axe-core error in tests/a11y, out of scope per SCOPE BOUNDARY rule). With 43-03 done, **Phase 43 is fully closed pending verifier pass + roadmap close**.
 
@@ -63,6 +63,7 @@ Progress: [██████████████████░░] v4.5 in
 | v3.1 Stabilization & Code Quality | 21-24 | 8 | 2026-04-14 |
 | v4.0 Design System & Daily-Driver UX | 25-37 | 105 | 2026-04-24 |
 | v4.1 Feedback-Driven Polish | 38-40 + 40.1 | 14 | 2026-04-27 |
+| v4.5 Correctness & Foundation | 41 / 42a / 43 / 44 (42b deferred) | 15 | 2026-05-02 |
 
 ## Accumulated Context
 
@@ -469,6 +470,8 @@ Progress: [██████████████████░░] v4.5 in
 
 ### Pending Todos
 
+- **OAuth on Vercel** — gates Phase 42b (SEC-02 client-side data exposure audit, SEC-05 auth/access state docs). NOT a v5.0 entry blocker; slots in mid-v5.0 or post-v5.0.
+- **DCR-11 tracking-line cleanup** — eight ADRs at `.planning/adr/001..008` are implemented under Plan 41-04 with inline `// ADR:` callsite comments; the requirement-line checkbox in `milestones/v4.5-REQUIREMENTS.md` stays `[ ]` because evidence was claimed against the plan rather than re-claimed against DCR-11. Cosmetic.
 - Snowflake credentials need to be provisioned in Vercel env vars
 - ANTHROPIC_API_KEY needs to be provisioned in Vercel env vars
 - Visual UAT of remaining 25-03 scenarios (ACCOUNT_TYPE filter proves upstream-of-aggregate, drilldown cascade preserves root filter, zero-match FilterEmptyState + Clear filter click) — primary scenario (single-partner filter) verified this session and surfaced the trajectory-chart <2 partners guard (fixed in d9aa14b)
@@ -483,7 +486,10 @@ Progress: [██████████████████░░] v4.5 in
 
 ## Session Continuity
 
-Last session: 2026-04-30
+Last session: 2026-05-02
+Stopped at: Completed `/gsd:complete-milestone --auto` for v4.5 Correctness & Foundation. Archives at `.planning/milestones/v4.5-ROADMAP.md` + `.planning/milestones/v4.5-REQUIREMENTS.md` flipped to SHIPPED with completion stamps and Known Gaps notes. Main `ROADMAP.md` v4.5 entry flipped 📋→✅ + collapsed into `<details>` block; inline v4.1 phase details collapsed into archive pointer. Main `REQUIREMENTS.md` Current-Milestone block cleared; v4.5 added to Shipped Milestones with 25/28 closure note. PROJECT.md Active section repointed to Phase 42b deferred + DCR-11 tracking-line cleanup; Validated section appended; Context section bumped to v4.5 codebase state (~41,085 LOC, Vitest installed, REVENUE_MODEL ETL live); 9 v4.5 decisions added to Key Decisions table. RETROSPECTIVE.md v4.5 section appended with Built/Worked/Inefficient/Patterns/Lessons/Cost; Cross-Milestone Trends extended with v4.1 + v4.5 columns; Durable Takeaways extended. STATE.md frontmatter flipped to `between_milestones`. Git tag + commit pending. Resume file: None.
+
+Prior session: 2026-04-30
 Stopped at: Completed 44-03-PLAN.md (REVENUE_MODEL third-dimension scoping plumbing, VOC-05/06). Three atomic commits (`4be17f1` Task 1 ADR 0002 + REVENUE_MODEL column + pair helpers + TERMS extensions, `6a14c5f` Task 2 PartnerListFilters + filter-evaluator additive REVENUE_MODEL, `001f0af` Task 3 6-column scope addendum). ETL gate verified at orchestration time via direct Snowflake query: REVENUE_MODEL live with 552 rows (354 CONTINGENCY / 198 DEBT_SALE), 38 distinct (partner, product) pairs, 4 multi-model partners (Advance Financial, Happy Money, Imprint, PatientFi), ZERO mixed-revenue-model batches at the (partner, batch) grain. ADR 0002 records 38→42 sidebar audit + threshold-check passed (max 2 rows per partner, well under 50/5 ceilings) + closes three rejected alternatives. Plumbing primitives shipped: REVENUE_MODEL_VALUES enum, COLUMN_CONFIGS entry feeding ALLOWED_COLUMNS automatically, optional revenueModel on PartnerProductPair, 3-segment pairKey with backward-compat parsePairKey, REVENUE_MODEL_ORDER comparator in sortPairs, displayNameForPair revenueModelsPerPair=1 default arg (every Phase 39 caller byte-identical), REVENUE_MODEL_LABELS + labelForRevenueModel, TERMS 12→15 entries (revenueModel/contingency/debtSale), PartnerListFilters.REVENUE_MODEL?: string[] additive .optional() (Phase 39 evolution pattern third application; .strict() preserved; no schemaVersion bump), filter-evaluator REVENUE_MODEL block with defensive missing-field handling. Scope addendum (option b): 6 columns at COLUMN_CONFIGS — TOTAL_PAYMENT_PLAN_REMAINING_BALANCE, COMMITMENT_RATE, FINANCE_PRICE, FINANCE_REV_SHARE, TOTAL_BOUNCE_REVENUE, TOTAL_LENDER_REVENUE — UI/formatter/polarity wiring deferred. COMMITMENT_RATE formula captured: `(TOTAL_PAYMENT_PLAN_REMAINING_BALANCE + TOTAL_COLLECTED_LIFE_TIME) / TOTAL_AMOUNT_PLACED` Snowflake-derived. Rule 3 deviation: first Task 2 commit accidentally swept up 27 unrelated Phase 43 working-tree files via a `git stash` dance — caught immediately, reset + unstage + individual `git add` produced clean re-commit (3 files, 54 insertions). All Phase 43 working-tree drift (.env.example, snowflake/*, parse-batch-row, .planning/phases/43-*) NEVER staged into any 44-03 commit. Verification gates: tsc clean (only pre-existing axe-core), pair.smoke.ts 16 cases pass, vocabulary.smoke.ts 15-entry checklist passes, lint clean on partner-lists/* files. Plan 44-04 setup: SUMMARY contains precise integration-point map for sidebar pair-row split, breadcrumb prefix wraps, Partner Setup section, AttributeFilterBar control, mixed-model warning chip (defensive — unexercised on current data), useDrillDown extension. Phase 44 progress: 44-01 ✅, 44-02 ✅, 44-03 ✅, 44-04 (vocabulary coverage sweep + REVENUE_MODEL UI wiring) downstream.
 Resume file: None
 

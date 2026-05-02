@@ -1,19 +1,13 @@
 # Requirements: Bounce Data Visualizer
 
-**Defined:** 2026-04-16 — Last revised 2026-04-27 on v4.5 activation
+**Defined:** 2026-04-16 — Last revised 2026-05-02 on v4.5 close
 **Core Value:** Surface abnormal account and batch performance data so the partnerships team can focus energy where it matters most — before problems compound.
 
-## Current Milestone — v4.5 Correctness & Foundation
+## Current Milestone — none active
 
-Tight, structural hardening pass before v5.0. Holds only the work whose value *degrades* when deferred past v5.0. Full detail in [v4.5 Requirements](milestones/v4.5-REQUIREMENTS.md).
+v4.5 closed 2026-05-02. v5.0 (External Intelligence — scorecard ingestion, contractual targets, triangulation, reconciliation, dynamic curve re-projection) requirements will be defined via `/gsd:new-milestone` when it kicks off.
 
-**30 requirements across 4 phases:**
-- Data Correctness Audit: DCR-01 through DCR-11 (Phase 41)
-- Ingestion-Surface Security Review: SEC-01 through SEC-06 (Phase 42 — gated on OAuth on Vercel)
-- Boundary Hardening: BND-01 through BND-06 (Phase 43)
-- Vocabulary Lock & Glossary: VOC-01 through VOC-07 (Phase 44 — VOC-05/06/07 gated on REVENUE_MODEL ETL)
-
-**Wave 0 (shipped 2026-04-26 in advance of Phase 41):** MIN_GROUPS gate on anomaly detection, comparison-matrix bar default, KPI suppression on insufficient 3mo denominator (`MIN_PLACED_DENOMINATOR_DOLLARS = $100K`).
+Phase 45 architecture must consume the v4.5 SEC-04 forward threat model (`.planning/phases/42a-security-review-oauth-independent/SEC-04-THREAT-MODEL.md`).
 
 ## Shipped Milestones
 
@@ -23,6 +17,7 @@ Tight, structural hardening pass before v5.0. Holds only the work whose value *d
 - **v3.1 Stabilization & Code Quality** — 4 phases / 8 plans, shipped 2026-04-14
 - **v4.0 Design System & Daily-Driver UX** — 13 phases / 105 plans / 67 reqs, shipped 2026-04-24 — [Archive](milestones/v4.0-REQUIREMENTS.md)
 - **v4.1 Feedback-Driven Polish** — 4 phases (38-40 + 40.1) / 14 plans / 35 reqs (POL/CHT/KPI/FLT/MBI/PCFG/PRJ), shipped 2026-04-27 — [Archive](milestones/v4.1-REQUIREMENTS.md)
+- **v4.5 Correctness & Foundation** — 4 phases (41 / 42a / 43 / 44) / 15 plans / 28 reqs (DCR/SEC/BND/VOC) — 25/28 closed, shipped 2026-05-02 — [Archive](milestones/v4.5-REQUIREMENTS.md). Known gaps: DCR-11 ADR-line tracking pending (ADRs themselves shipped); Phase 42b (SEC-02/05) deferred until OAuth on Vercel — NOT a v5.0 entry blocker.
 
 ## Future Requirements
 
@@ -93,16 +88,16 @@ Explicitly excluded. Documented to prevent scope creep.
 ## Traceability
 
 See per-milestone files for full traceability tables:
-- [v4.5 Requirements](milestones/v4.5-REQUIREMENTS.md) — current
+- [v4.5 Requirements](milestones/v4.5-REQUIREMENTS.md) — shipped
 - [v4.1 Requirements](milestones/v4.1-REQUIREMENTS.md) — shipped
 - [v4.0 Requirements](milestones/v4.0-REQUIREMENTS.md) — shipped
 
-**v4.5 coverage:**
-- Total: 30 requirements (DCR-01..11 + SEC-01..06 + BND-01..06 + VOC-01..07)
-- Mapped to phases: 30
-- Unmapped: 0
-- Blocked on external: VOC-05/06/07 (REVENUE_MODEL ETL ~2026-05-03), SEC review depth (OAuth on Vercel)
+**v4.5 final coverage:**
+- Total: 28 in-scope requirements (DCR-01..11 + SEC-01..06 + BND-01..06 + VOC-01..07; SEC-02 + SEC-05 split out into Phase 42b at milestone close)
+- Closed: 25 (DCR-01..10 + SEC-01/03/04/06 + BND-01..06 + VOC-01..07)
+- Deferred: 2 (SEC-02 + SEC-05 — gated on OAuth on Vercel; Phase 42b)
+- Tracking-line pending: 1 (DCR-11 — ADR set is *implemented* under Plan 41-04 with inline `// ADR:` callsite comments; requirement-line cleanup deferred)
 
 ---
 *Requirements defined: 2026-04-16 — v3.5 absorbed into v4.0*
-*Last updated: 2026-04-27 — v4.5 activated via /gsd:new-milestone; v4.1 archived to milestones/v4.1-REQUIREMENTS.md*
+*Last updated: 2026-05-02 — v4.5 closed; v4.5 archived to milestones/v4.5-REQUIREMENTS.md; current-milestone block cleared pending v5.0 kickoff via /gsd:new-milestone*

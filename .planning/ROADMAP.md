@@ -9,7 +9,7 @@
 - ~~v3.5 Flexible Charts & Metabase Import~~ — Absorbed into v4.0 before work started
 - ✅ **v4.0 Design System & Daily-Driver UX** — Phases 25-37 (shipped 2026-04-24) — [Archive](milestones/v4.0-ROADMAP.md)
 - ✅ **v4.1 Feedback-Driven Polish** — Phases 38-40 + 40.1 (shipped 2026-04-27) — [Archive](milestones/v4.1-ROADMAP.md)
-- 📋 **v4.5 Correctness & Foundation** — Phases 41-44 (planned; expanded from 41-42 on 2026-04-26 to absorb multi-lens audit findings) — [Roadmap](milestones/v4.5-ROADMAP.md)
+- ✅ **v4.5 Correctness & Foundation** — Phases 41 / 42a / 43 / 44 (shipped 2026-05-02; 42b OAuth-deferred) — [Archive](milestones/v4.5-ROADMAP.md)
 - 📋 **v5.0 External Intelligence** — Phases 45-49 (planned) — [Roadmap](milestones/v5.0-ROADMAP.md)
 - 📋 **v5.5 Real-Use Hardening** — Phases 50-51 (expanded scope) — [Roadmap](milestones/v5.5-ROADMAP.md)
 - 📋 **v6.0 Proactive Intelligence & Action** — Phases 52-57 (planned) — [Roadmap](milestones/v6.0-ROADMAP.md)
@@ -85,6 +85,32 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 
 </details>
 
+<details>
+<summary>✅ v4.1 Feedback-Driven Polish (Phases 38-40 + 40.1) — SHIPPED 2026-04-27</summary>
+
+- [x] Phase 38: Polish + Correctness Pass (5/5 plans) — completed 2026-04-25
+- [x] Phase 39: Partner Config Module (4/4 plans) — completed 2026-04-25
+- [x] Phase 40: Projected Curves v1 (3/3 plans) — completed 2026-04-25
+- [x] Phase 40.1: Projected Curves Polish (4/4 plans) — completed 2026-04-28
+
+Full details: [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md)
+
+</details>
+
+<details>
+<summary>✅ v4.5 Correctness & Foundation (Phases 41 / 42a / 43 / 44) — SHIPPED 2026-05-02</summary>
+
+- [x] Wave 0 (data review quick fixes) — MIN_GROUPS gate, matrix bar default, KPI denominator floor — completed 2026-04-26
+- [x] Phase 41: Data Correctness Audit (5/5 plans) — DCR-01..10 ✅; DCR-11 ADRs implemented under Plan 41-04 (requirement-line stays unchecked) — completed 2026-04-30
+- [x] Phase 42a: Security Review, OAuth-independent (2/2 plans) — SEC-01/03/04/06 — completed 2026-05-01
+- [ ] Phase 42b: Deployed-Surface Security Review — DEFERRED (OAuth-gated; SEC-02/05; not a v5.0 entry blocker)
+- [x] Phase 43: Boundary Hardening (4/4 plans) — BND-01..06 — completed 2026-05-01
+- [x] Phase 44: Vocabulary Lock & Glossary (4/4 plans) — VOC-01..07 — completed 2026-05-01
+
+Full details: [milestones/v4.5-ROADMAP.md](milestones/v4.5-ROADMAP.md)
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -134,139 +160,13 @@ Full details: [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)
 
 ## Phase Details
 
-*Archived v4.0 phase details (26-37): [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)*
+*Archived phase details:*
+- *v4.0 (Phases 26-37): [milestones/v4.0-ROADMAP.md](milestones/v4.0-ROADMAP.md)*
+- *v4.1 (Phases 38-40 + 40.1): [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md)*
+- *v4.5 (Phases 41 / 42a / 43 / 44; 42b deferred): [milestones/v4.5-ROADMAP.md](milestones/v4.5-ROADMAP.md)*
+
+*No inline phase details — all currently planned milestones (v5.0 / v5.5 / v6.0) keep their roadmaps in `milestones/v*-ROADMAP.md`. Inline detail returns when a phase is opened for active work.*
 
 ---
 
-
-### ✅ v4.1 Feedback-Driven Polish (Shipped 2026-04-27)
-
-**Milestone Goal:** Close the 14 first-week feedback items, enforce `(partner, product)` as the canonical unit of analysis (no cross-product blending), and ship a first-pass projected-curve line the team can benchmark against. Full detail: [milestones/v4.1-ROADMAP.md](milestones/v4.1-ROADMAP.md).
-
-**Phases:**
-- [x] **Phase 38: Polish + Correctness Pass** — 18 feedback items: branding, sidebar UX, column lock, number formatting, header truncation, chart correctness, KPI cascade, filter fixes, laptop layout, Metabase Import chart-type override (completed 2026-04-24)
-- [x] **Phase 39: Partner Config Module** — Product-type derived from `ACCOUNT_TYPE` (no blending), segment config per `(partner, product)` pair, sub-cohort analysis (Snap EN/ES, Happy Money banks) (completed 2026-04-25)
-- [x] **Phase 40: Projected Curves v1** — Per-batch modeled projection lines from `BOUNCE.FINANCE.CURVES_RESULTS` + optional panel-level "vs modeled curve" KPI baseline (completed 2026-04-25)
-- [x] **Phase 40.1: Projected Curves Polish** — Tighten chart projection visibility (batch-level OR aggregate-narrowed-to-one only) + surface modeled + Δ vs modeled columns in the data table; unify chart + KPIs + table under a single BaselineSelector with localStorage persistence (planned) (completed 2026-04-26)
-
-### Phase 38: Polish + Correctness Pass
-
-**Goal**: Close 17 small-but-high-friction issues in one batched phase — branding, sidebar UX, column lock, number formatting, header truncation, chart correctness (axis + avg truncation + hover + legend scroll), KPI clarity (graduated age-aware cascade + delta labels + rolling-avg suppression), filter fixes (date range, tooltips, partner dedup), laptop layout, and Metabase Import chart-type override. KPI-03 (matching-horizon commitment rate) deferred to Phase 41 pending new Snowflake column.
-**Depends on**: v4.0 complete (design system, surface tokens, StatCard pattern). MBI-01 also depends on Phase 36 (Chart Builder) for the `ChartBuilderToolbar` segmented control that MBI-01 mirrors.
-**Effort**: Medium (many small edits, mostly 1-file each; chart/table layout fix may need browser iteration)
-**Requirements**: POL-01..06, CHT-01..04, KPI-01..04, FLT-01..03, MBI-01
-**Success Criteria** (what must be TRUE):
-  1. Bounce logo replaces the "B" letter-mark in the sidebar
-  2. Partner list in sidebar is collapsible and pre-collapsed
-  3. All columns in the column picker are toggleable (no more locked identity columns)
-  4. `formatPercentage` applies the 2-decimal-under-10 / 1-decimal-at-10+ rule everywhere percentages render
-  5. Heatmap toggle has an explanatory tooltip
-  6. Column headers truncate cleanly with ellipsis at a readable max-width, full label on hover, stable header-row height across columns (no mid-word cuts, no weird multi-line wraps)
-  7. Chart x-axis domain AND average-series line both clip to the max age of currently-displayed vintages — no empty whitespace past actual data; chart renders ASAP with whatever data exists (no minimum-age gate)
-  8. Partner-average line is included in chart proximity hover tooltips
-  9. Curve legend scrolls instead of overflowing off-screen when "show all" is selected
-  10. Chart and table remain simultaneously usable on laptop-height viewports when chart is expanded
-  11. KPI cards render a graduated cascade based on max batch age in scope: `< 3mo` → "Rate since inception" only; `3-6mo` → "3mo + since inception"; `6-12mo` → "3mo + 6mo"; `≥ 12mo` → "6mo + 12mo"; non-applicable cards are not rendered
-  12. KPI delta labels explicitly state the comparison baseline
-  13. ~~6mo and 12mo rate cards display the matching-horizon commitment rate as a secondary line (only when the card itself is shown per the cascade)~~ *Deferred to Phase 41 — requires new Snowflake column (`ACCOUNTS_WITH_PLANS_AT_{6,12}_MONTH`); see `.planning/phases/38-polish-correctness-pass/38-CONTEXT.md`.*
-  14. Rolling-average deltas are suppressed when the cohort is too young to support a meaningful rolling avg at the card's horizon — no "vs N/A" or misleading 0% deltas
-  15. Batch filter is replaced with a date-range filter
-  16. Each filter has an inline help tooltip
-  17. PARTNER_NAME column auto-hides in the main table when sidebar is scoped to a single partner
-  18. Metabase Import Preview step exposes a chart-type override control (defaults to the Phase 37 heuristic; user can pick line / scatter / bar / none before Apply, and pick axes when heuristic leaves them ambiguous), with helper text showing the inference reason
-**Plans**: 5 plans (2 waves)
-- [x] 38-01-PLAN.md — Branding + Sidebar (POL-01 brand mark, POL-02 partners collapse) — Wave 1 ✅ 2026-04-24
-- [x] 38-02-PLAN.md — Columns + Formatting + Headers (POL-03 identity unlock, POL-04 percentage rule, POL-05 heatmap tooltip, POL-06 header truncation) — Wave 1 ✅ 2026-04-24
-- [x] 38-03-PLAN.md — Chart Correctness + Laptop Layout (CHT-01 visible-scope clip, CHT-02 avg in hover, CHT-03 legend scroll, CHT-04 ≤900px caps) — Wave 1 ✅ 2026-04-24
-- [x] 38-04-PLAN.md — KPI Clarity + KPI-03 Deferral Doc (KPI-01 cascade, KPI-02 delta copy, KPI-04 suppression; KPI-03 doc-only defer to Phase 41) — Wave 1 ✅ 2026-04-24
-- [x] 38-05-PLAN.md — Filters + Metabase Import Override (FLT-01 date-range chips + migration, FLT-02 tooltips, FLT-03 PARTNER_NAME auto-hide, MBI-01 chart-type override) — Wave 2 ✅ 2026-04-24
-
-**After Phase 38, kick off simultaneously:**
-- **Phase 39** (Partner Config) — independent, foundational feature
-- **Phase 40** (Projected Curves v1) — independent of 39, but stronger when 39 is done
-
----
-
-### Phase 39: Partner Config Module
-
-**Goal**: Enforce `(partner, product)` as the canonical unit of analysis across the app — no cross-product blending for a single partner, ever — and add a per-pair segment config in localStorage for sub-cohort analysis (Snap EN/ES, Happy Money banks within a single product)
-**Depends on**: Phase 34 (Partner Lists, for `PartnerListFilters` extension). Independent of Phase 38 and 40.
-**Effort**: Medium-Large (sidebar restructure, selection-state rewrite, segment config schema, Setup UI, filter/list extension, segment-aware computation layer, chart/KPI plumbing)
-**Requirements**: PCFG-01 through PCFG-07
-**Success Criteria** (what must be TRUE):
-  1. Product type is derived from Snowflake `ACCOUNT_TYPE` (no config record, not editable); canonical unit of analysis is the `(PARTNER_NAME, ACCOUNT_TYPE)` pair
-  2. Sidebar partner list shows one row per `(partner, product)` pair derived from data — single-product partners look unchanged, multi-product partners split into N rows
-  3. Partner selection state carries both `partner` and `product`; all downstream scoping (KPIs, charts, table, drill-downs, filters, Partner Lists) keys off the pair
-  4. No UI path produces a cross-product blended view for a single partner — blending is blocked at the selection layer, not a user-controllable toggle
-  5. Each `(partner, product)` pair has an editable segment list persisted in localStorage; Partner Setup UI reachable from the sidebar partner context menu edits only segments (product type is data-derived)
-  6. `PartnerListFilters` extended with `PRODUCT_TYPE` (auto-derived from data) and `SEGMENT` (from config) attribute filters; pre-populated Partner Lists auto-maintain one list per distinct product-type value
-  7. Charts and KPIs gain an optional "split by segment" mode; pairs without segments fall back to the pair-rolled-up view (segment-level zero-regression; pair-level splitting is NOT opt-in, it's enforced)
-**Plans**: 4 plans (3 waves)
-- [x] 39-01-PLAN.md — Pair migration: sidebar + drill state + root table + cross-partner + anomalies + saved-view schema (PCFG-01/02/03/04) — Wave 1 gate (Done 2026-04-25)
-- [x] 39-02-PLAN.md — Segment config schema + storage + usePartnerConfig + Partner Setup slide-over Sheet (PCFG-05) — Wave 2 (Done 2026-04-25)
-- [x] 39-03-PLAN.md — Partner Lists extension: PRODUCT_TYPE + SEGMENT filters + derived auto-lists (PCFG-06) — Wave 2 (Done 2026-04-25)
-- [ ] 39-04-PLAN.md — Segment-split dimension on Collection Curve chart + KPIs + Chart Builder (PCFG-07) — Wave 3
-
-**After Phase 39:** Enables Phase 40's PRJ-05 (segment-aware projections) and v5.0 Phase 49 Dynamic Curve Re-Projection to operate at segment granularity.
-
----
-
-### Phase 40: Projected Curves v1
-
-**Goal**: Per-batch modeled collection-curve overlays (sourced from `BOUNCE.FINANCE.CURVES_RESULTS.PROJECTED_FRACTIONAL`) that the team can benchmark against, and an optional panel-level KPI delta baseline ("vs modeled curve") that joins — rather than replaces — the existing "vs rolling avg" option
-**Depends on**: Phase 36 (Chart Builder — projections overlay on the generic chart renderer). Phase 39 is optional (enables PRJ-05 segment-aware projections). Independent of Phase 38.
-**Effort**: Medium (projection computation + chart overlay + KPI baseline wiring)
-**Requirements**: PRJ-01 through PRJ-05
-**Success Criteria** (what must be TRUE):
-  1. Collection curve chart renders per-batch modeled projection lines alongside actual batch curves (sourced from `BOUNCE.FINANCE.CURVES_RESULTS`; batches without modeled data render actuals only)
-  2. Modeled projection renders as a full shadow from month 1 through the chart's maxAge (visible-vintage truncation contract, same as CHT-01)
-  3. Each modeled line is dashed, same hue as its batch's actual line, ~60% opacity; labeled "Modeled" in the proximity tooltip with delta-vs-actual on the same row; one legend entry per batch (toggling actual silently toggles modeled)
-  4. KPI cards gain a panel-level baseline selector (Rolling avg | Modeled curve); default remains Rolling avg; "Modeled curve" is disabled when no batch at any KPI horizon has modeled coverage; per-card baseline-absent state renders value-only with a "No modeled curve for this scope" caption + inline "Switch to rolling avg" recovery action
-  5. When Phase 39 segment-split is active, segment filtering affects actuals only; per-batch modeled curves stay at batch grain and remain the benchmark (no segment-specific modeled data required from the warehouse for v1; graceful degradation when Phase 39 has not shipped)
-**Plans**: 3 plans (2 waves)
-- [x] 40-01-PLAN.md — Data Foundation: API route + useCurvesResults hook + BatchCurve.projection merge in usePartnerStats (PRJ-01 data) — Wave 1 — COMPLETE 2026-04-25
-- [x] 40-02-PLAN.md — Chart Overlay: dashed per-batch modeled <Line>, maxAge truncation reuse, tooltip 'Modeled' row, legend-coupling (PRJ-01 visual + PRJ-02 + PRJ-03 + PRJ-05) — Wave 2 — COMPLETE 2026-04-25
-- [x] 40-03-PLAN.md — KPI Baseline Selector + ROADMAP/REQUIREMENTS doc re-sync (PRJ-04 + all 5 PRJ wording updates) — Wave 2 — COMPLETE 2026-04-25
-
-**After Phase 40:** Feeds into v5.0 Phase 49 Dynamic Curve Re-Projection, which extends this with target-anchored, partner-reported, and confidence-band variants.
-
----
-*Last updated: 2026-04-26 — Phase 40.1 Plan 04 added (gap closure, Wave 1) addressing two browser-UAT blockers: (a) footer "Avg" row under the 4 modeled+delta cols rendering ~100x too large + wrong unit suffix (Gap 1, PRJ-11 incomplete delivery) — fix via `meta.footerFormatter` escape hatch on the col defs + `TableFooter` honoring it; (b) header label truncation illegible across all columns (Gap 2, POL-06 reversal) — fix via global swap of `truncate min-w-0 max-w-[180px]` → `line-clamp-2 break-words leading-snug min-w-0` in `draggable-header.tsx`, native `title` retained as fallback. Single plan, 2 tasks, 3 files modified (`definitions.ts`, `table-footer.tsx`, `draggable-header.tsx`). Phase 40.1 row flipped 3/3 Complete → 3/4 Gap-closure pending. Prior: 2026-04-25 — Phase 40.1 (Projected Curves Polish) plans broken down: 3 plans / 3 waves / 5 new requirements (PRJ-09..PRJ-13). v4.0 milestone closed: phase details (26-37) collapsed into `<details>` block + archived to milestones/v4.0-ROADMAP.md; MILESTONES.md v4.0 entry flipped in-progress → shipped (13 phases / 105 plans / 67 requirements / ~25,875 LOC / 281 commits / 12 days); RETROSPECTIVE.md appended; git tag v4.0 created. Prior: v4.1 activated (Phases 38-40 detail sections retained). v4.0 scope: design system + URL nav + a11y + Partner Lists + Chart Builder + Metabase Import.*
-
-### Phase 40.1: Projected Curves Polish — visibility scoping + table integration
-
-**Goal:** Tighten projection-line visibility on the curve chart (render only when `drillState.level === 'batch'` OR partner-aggregate is narrowed to one batch in modeled mode) and surface modeled values + actual-vs-modeled deviations in the data table — gated by a unified `BaselineSelector` (chart + KPIs + table single source of truth) with localStorage persistence (`gsd:baselineMode`, default `'rolling'`).
-**Depends on:** Phase 40 (data pipeline + chart overlay + KPI baseline shipped 2026-04-25)
-**Effort:** Small-Medium (consumer-side polish — no data-pipeline changes; ~5 surgical edits across `collection-curve-chart.tsx`, `chart-panel.tsx`, `data-display.tsx`, `definitions.ts`, `data-table.tsx` + 2 new files: `useBaselineMode` hook + `ModeledDeltaCell`)
-**Requirements**: PRJ-09 through PRJ-13 (extends v4.1 PRJ family; PRJ-06..08 reserved for v5.0 Phase 49)
-
-**Requirement → behavior → primary plan mapping (locked 2026-04-25 to disambiguate cross-plan claims):**
-
-| ID | Behavior | Primary plan(s) |
-|----|----------|-----------------|
-| PRJ-09 | Chart projection visibility scoping — projections render only when `drillState.level === 'batch'` OR (`drillLevel === 'partner'` AND `baselineMode === 'modeled'` AND `visibleBatchKeys.length === 1`); otherwise hidden | Plan 02 |
-| PRJ-10 | Coverage-absent caption — "No modeled curve for this batch" appears in the chart's DataPanel actions slot when the gate says "should render" but the focused batch has no `BatchCurve.projection` | Plan 02 |
-| PRJ-11 | Table modeled + Δ columns — at partner-level drill in modeled mode, four virtual columns appear (Modeled 6mo, Δ vs Modeled 6mo, Modeled 12mo, Δ vs Modeled 12mo); hidden at root + batch + rolling mode | Plan 03 |
-| PRJ-12 | localStorage persistence (`gsd:baselineMode`, default `'rolling'`) + cross-lender batch-name collision audit gate (Pitfall 3) — collision audit is the precondition for safe persisted-mode behavior across drills, so it lives in the same ID | Plans 01, 02 |
-| PRJ-13 | BaselineSelector unification — one toggle controls chart + KPIs + table together (chart half lands in Plan 02 via `drillLevel`+`baselineMode` props; table half lands in Plan 03 via the visibility-effect on `__MODELED_*` / `__DELTA_*` column ids) | Plans 02, 03 |
-
-**Success Criteria** (what must be TRUE):
-  1. Aggregate (partner-level multi-batch) chart view renders ZERO projection `<Line>`s — restoring legibility lost in Phase 40 (CONTEXT § Phase Boundary issue 1)
-  2. Batch-level drill always renders projection when coverage exists (decoupled from `baselineMode` per RESEARCH § Pitfall 7 Option 2 — drilling in IS the inspection act)
-  3. Partner-level legend narrowed to one batch in modeled mode renders that one projection
-  4. Coverage-absent caption ("No modeled curve for this batch") shows in DataPanel actions slot when projection should-have-rendered but the focused batch has no `BatchCurve.projection`
-  5. Partner-level data table in modeled mode shows 4 new columns: Modeled 6mo, Δ vs Modeled 6mo, Modeled 12mo, Δ vs Modeled 12mo (polarity-colored Δ via `ModeledDeltaCell`); rolling mode hides them; root + batch level never show them (CONTEXT lock § Aggregate-row scope)
-  6. CSV export carries the new columns when visible (verified manually post-implementation; relies on `accessorKey` + row-stamping path per RESEARCH § Pitfall 4)
-  7. `baselineMode` persists across sessions via localStorage (`gsd:baselineMode`); legacy reset-to-rolling effect at `data-display.tsx:298-306` REMOVED (per-card "Switch to rolling avg" recovery action handles partial-coverage scopes without stomping persisted intent)
-  8. Cross-lender batch-name collision audit (Pitfall 3) shipped: zero collisions → audit doc + `use-partner-stats.ts` annotated; non-zero → defensive fix to `Map<string, Set<string>>` lookup
-
-**Plans**: 4 plans (4 waves — Plan 04 added 2026-04-26 as gap closure after browser UAT)
-- [x] 40.1-01-PLAN.md — Foundation primitives: cross-lender collision audit (gate) + `useBaselineMode` localStorage hook + `ModeledDeltaCell` polarity-colored cell — Wave 1 (completed 2026-04-26)
-- [x] 40.1-02-PLAN.md — Chart polish: visibility-scope gate + coverage-absent caption + `useBaselineMode` integration in data-display + reset-effect removal + `drillLevel`/`baselineMode` prop threading through ChartPanel → CollectionCurveChart — Wave 2 (completed 2026-04-26)
-- [x] 40.1-03-PLAN.md — Table integration: 4 virtual modeled+delta ColumnDefs + row-stamping in `data-display.tsx` + `baselineMode`-gated visibility effect in `data-table.tsx` + CSV export verification — Wave 3 (completed 2026-04-26)
-- [x] 40.1-04-PLAN.md — Gap closure: footer aggregate unit fix on the 4 modeled+delta cols (`meta.footerFormatter` escape hatch in `TableFooter`) + global header truncation reversal (POL-06 → `line-clamp-2` in `draggable-header.tsx`, native `title` retained as fallback) — Wave 1 (gap_closure) (completed 2026-04-26)
-
-**After Phase 40.1:** v4.1 milestone closes. v4.5 Phase 41 (Data Correctness Audit) + Phase 42 (Ingestion-Surface Security Review) up next.
-
-CONTEXT: `.planning/phases/40.1-projected-curves-polish/40.1-CONTEXT.md`
-RESEARCH: `.planning/phases/40.1-projected-curves-polish/40.1-RESEARCH.md`
+*Last updated: 2026-05-02 — v4.5 milestone shipped (Phases 41 / 42a / 43 / 44 closed; 42b OAuth-deferred). v4.5 collapsed into `<details>` block + archived to `milestones/v4.5-ROADMAP.md`. Inline v4.1 phase details collapsed into archive pointer (full detail at `milestones/v4.1-ROADMAP.md`). Next: `/gsd:new-milestone` for v5.0 External Intelligence (Phases 45-49 — Scorecard ingestion, contractual targets, triangulation views, reconciliation, dynamic curve re-projection). Phase 45 architecture must consume `SEC-04` forward threat model.*
