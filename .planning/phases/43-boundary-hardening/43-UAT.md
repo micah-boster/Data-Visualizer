@@ -1,9 +1,9 @@
 ---
-status: complete
+status: resolved
 phase: 43-boundary-hardening
 source: [43-01-SUMMARY.md, 43-02a-SUMMARY.md, 43-02b-SUMMARY.md, 43-03-SUMMARY.md]
 started: 2026-05-02T00:00:00Z
-updated: 2026-05-02T03:30:00Z
+updated: 2026-05-02T04:00:00Z
 ---
 
 ## Current Test
@@ -26,22 +26,25 @@ result: pass
 
 ### 4. "Last updated" timestamp persistent in header
 expected: A muted-gray "Last updated {time}" line is always visible in the toolbar — never hidden, never blocking. Updates after a refresh.
-result: issue
+result: resolved
 reported: "it just has the time - not Last updated"
 severity: minor
+resolution: "Commit 81bea61 — added 'Last updated ' prefix to the freshness-indicator span in src/components/layout/header.tsx. Verified live."
 
 ### 5. Cross-tab localStorage sync — Saved Views
 expected: Open the app in two browser tabs. In tab 1, save a new view (e.g. "Test Sync"). Within ~500ms, tab 2's sidebar Views group shows the new "Test Sync" entry without a manual reload.
-result: issue
+result: resolved
 reported: "when i saved the view, it flashed a few times in the views list and then disappeared"
 severity: major
+resolution: "Commit e484814 — fixed two distinct bugs in the consumer hook (src/hooks/use-saved-views.ts): (1) cross-tab ping-pong (subscribe→setState→persist→storage event→other tab→...→infinite) closed via externalUpdateRef pattern; (2) hydration loop (effect re-running on every React Query refetch and overwriting in-memory state from stale localStorage) closed via early-return on hasHydrated. Verified live: save view in tab 1 → persists once, list stable; tab 2 mirrors within ~500ms, no flash."
 
 ### 6. Cross-tab localStorage sync — Column visibility
 expected: With both tabs still open, change column visibility in tab 1 (hide a column via the Columns panel). Within ~500ms, tab 2's table reflects the same hidden column.
-result: issue
+result: resolved
 reported: "it flashes when i click a column in the picker and doesn't seem to work right"
 severity: major
 related_to: Test 5 (same root cause — versioned-storage feedback loop affecting all wrapped modules)
+resolution: "Commit e484814 — same fix as Test 5, applied to use-column-management.ts. Verified live: column toggle works on first click, no flash. Drill-down column flash also resolved as a side effect (single root cause). Same externalUpdateRef pattern also applied to use-partner-lists.ts, use-partner-config.ts, and use-chart-presets.ts so all 5 BND-03 surfaces are healed."
 
 ### 7. Empty-state — filtered to no data
 expected: Filter the table or charts to a combination that produces zero rows (e.g., a partner with no batches in a date range). Charts show centered muted text "No data matches these filters." with no illustration.
@@ -67,7 +70,8 @@ reason: 11 vitest tests already cover the reliability wrapper logic (commit 8ec6
 
 total: 10
 passed: 4
-issues: 3
+issues: 0
+resolved: 3
 pending: 0
 skipped: 3
 
