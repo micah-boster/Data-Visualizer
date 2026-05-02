@@ -87,8 +87,11 @@ export function Header() {
                         : 'bg-success-fg'
                     }`}
                   />
+                  {/* Phase 43 gap-closure: prefix label per BND-06 spec —
+                      bare timestamp is ambiguous to first-time readers.
+                      See 43-UAT.md Test 4. */}
                   <span className={showStaleBadge ? 'text-warning-fg' : ''}>
-                    {formatTime(fetchedAt)}
+                    Last updated {formatTime(fetchedAt)}
                   </span>
                   {sourceDegraded && (
                     <span className="rounded bg-warning-bg px-1 text-caption text-warning-fg">
