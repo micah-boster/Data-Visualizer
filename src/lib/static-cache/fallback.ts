@@ -34,12 +34,26 @@ function normalizeData(response: DataResponse): DataResponse {
 }
 
 /**
- * Minimum env vars that signal Snowflake is configured.
- * Auth-mode-specific vars (password, private key, etc.) are validated
- * at connection time in connection.ts — here we just need to know
- * whether the user intends to connect at all.
+ * Env vars that signal Snowflake is configured for the active auth mode.
+ * Mirrors the validation in `src/lib/snowflake/connection.ts` so a partial
+ * credential set falls back to the static cache instead of returning 500.
+ *
+ * Modes (selected by SNOWFLAKE_AUTH, default `password`):
+ *   - password         → ACCOUNT + USERNAME + PASSWORD
+ *   - externalbrowser  → ACCOUNT + USERNAME (browser handles auth)
+ *   - keypair          → ACCOUNT + USERNAME + PRIVATE_KEY
+ *
+ * If any mode-required var is missing, isStaticMode() returns true so the
+ * API routes serve cached JSON. The user gets a working app instead of a
+ * 500 — and the actual connection-layer error never fires because we
+ * never call into it.
  */
-const REQUIRED_ENV = ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USERNAME'] as const;
+const COMMON_REQUIRED = ['SNOWFLAKE_ACCOUNT', 'SNOWFLAKE_USERNAME'] as const;
+const MODE_EXTRA: Record<string, readonly string[]> = {
+  password: ['SNOWFLAKE_PASSWORD'],
+  externalbrowser: [],
+  keypair: ['SNOWFLAKE_PRIVATE_KEY'],
+};
 
 /** Cached account data keyed by "partner||batch" */
 const ACCOUNT_CACHE: Record<string, DataResponse> = {
@@ -50,9 +64,12 @@ const ACCOUNT_CACHE: Record<string, DataResponse> = {
   'American First Finance||AFF_FEB_26_LTO_TERTIARY': accountsAff as unknown as DataResponse,
 };
 
-/** True when Snowflake credentials are NOT configured */
+/** True when Snowflake credentials are NOT configured for the chosen auth mode */
 export function isStaticMode(): boolean {
-  return REQUIRED_ENV.some((key) => !process.env[key]);
+  const mode = (process.env.SNOWFLAKE_AUTH ?? 'password').trim().toLowerCase();
+  const extra = MODE_EXTRA[mode] ?? MODE_EXTRA.password;
+  const required = [...COMMON_REQUIRED, ...extra];
+  return required.some((key) => !process.env[key]);
 }
 
 /**
